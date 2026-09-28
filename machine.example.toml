@@ -1,0 +1,5 @@
+# Per-machine settings. Copy this file to machine.toml (gitignored) and edit it.
+# The recipe and this file are the generator's only two inputs (CLAUDE.md §4).
+
+# data_root: folder where real source data lives on this machine.
+# data_root = "C:/Users/<you>/Data/swm"

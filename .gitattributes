@@ -1,0 +1,11 @@
+# Every text file is stored and checked out with LF, so a Windows checkout
+# holds the same bytes as a Linux one (CLAUDE.md §4).
+* text=auto eol=lf
+
+# Binary formats: never convert.
+*.png binary
+*.jpg binary
+*.pdf binary
+*.pbf binary
+*.gpkg binary
+*.zip binary
