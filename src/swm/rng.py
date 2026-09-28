@@ -1,0 +1,197 @@
+"""Spawn tree: every random stream the generator uses, fixed by name off the root seed."""
+
+import hashlib
+from collections.abc import Mapping
+from typing import TypedDict
+
+import numpy as np
+
+from swm.recipe.schema import Hazard, Layer, Source
+
+STABLE_ID_BYTES = 8
+"""Bytes of the SHA-256 digest kept by ``stable_id`` (Work Order 1, item 1)."""
+
+SEED_UPPER_BOUND = 2**64
+"""Seeds lie in ``0 <= seed < 2**64`` (ruling C4, decision 0003)."""
+
+RECORD_DRAW_COUNT = 4
+"""Raw 64-bit draws kept per stream in the stream record (Work Order 1, item 1)."""
+
+TERRAIN_ROOT = "terrain"
+"""Top-level path segment whose streams also take the terrain seed (ruling A1, decision 0003)."""
+
+
+def _registry() -> dict[str, str]:
+    paths = {
+        "terrain/elevation": "Elevation, including the mountain spine.",
+        "terrain/coastline": "Coastline and outlying islands.",
+        "terrain/drainage": "Rivers and drainage.",
+        "terrain/land_cover": "Land cover: forest, wetland, aridity.",
+        "terrain/urban_extents": "Urban extents used for siting.",
+        "layers/dual_membership": "Which assets belong to two layers.",
+    }
+    for layer in Layer:
+        paths[f"layers/{layer}/siting"] = f"Siting and node classes of {layer} nodes."
+        paths[f"layers/{layer}/attributes"] = f"Observed attributes of {layer} nodes."
+        paths[f"layers/{layer}/links"] = f"Intra-layer links of the {layer} layer."
+        paths[f"layers/{layer}/overlap"] = f"Which {layer} assets appear in more than one source."
+    paths |= {
+        "couplings/edges": "Which consumers draw on which suppliers across layers.",
+        "couplings/supplier_not_nearest": "Consumers whose true supplier is not the nearest one.",
+        "couplings/feed_configuration": "Single, two full or two half feeds per consumer.",
+        "couplings/two_way": "Which dependencies run both ways.",
+        "shared_causes/scenarios": "Element failures drawn conditionally on the hazard fields.",
+        "unobserved/reserves": "Reserves, drawn per element from context.",
+        "unobserved/requirements": "Node requirements per commodity, drawn from context.",
+        "unobserved/repair_rates": "Repair rates, drawn per element from context.",
+        "unobserved/failure_mode": "Failure mode (throttle or trip) per element.",
+        "unobserved/links_on_nodes_only_layers": "Links on layers whose sources report nodes only.",
+        "unobserved/crews_and_depots": "Siting of repair crews and depots.",
+    }
+    for hazard in Hazard:
+        paths[f"shared_causes/{hazard}/field"] = f"Latent {hazard} field with distance decay."
+    for source in Source:
+        paths[f"errors/{source}"] = f"Error induction on the {source} source."
+    return paths
+
+
+STREAM_REGISTRY: Mapping[str, str] = _registry()
+"""Every stream path the generator uses, with its purpose. Spec: structure v0.2 §3, §4."""
+
+
+class StreamRecordEntry(TypedDict):
+    """One stream in the stream record."""
+
+    path: str
+    spawn_key: list[int]
+    first_draws: list[int]
+
+
+class StreamRecord(TypedDict):
+    """The spawn tree as the identity check compares it."""
+
+    root_seed: int
+    terrain_seed: int
+    streams: list[StreamRecordEntry]
+
+
+def stable_id(name: str) -> int:
+    """Return a fixed integer for a stream-path segment.
+
+    Parameters
+    ----------
+    name : str
+        One segment of a stream path.
+
+    Returns
+    -------
+    int
+        The first 8 bytes of SHA-256 of the UTF-8 name, as a big-endian unsigned integer.
+
+    Spec: CLAUDE.md §4; Work Order 1, item 1.
+    """
+    digest = hashlib.sha256(name.encode("utf-8")).digest()
+    return int.from_bytes(digest[:STABLE_ID_BYTES], "big")
+
+
+def spawn_key(path: str, terrain_seed: int = 0) -> tuple[int, ...]:
+    """Return the spawn key for a stream path.
+
+    Parameters
+    ----------
+    path : str
+        Slash-separated hierarchical stream path, such as ``"layers/power/siting"``.
+    terrain_seed : int
+        The recipe's terrain seed. Appended to the key of ``terrain/*`` paths only.
+
+    Returns
+    -------
+    tuple of int
+        ``stable_id`` of each path segment, then the terrain seed for terrain paths.
+
+    Spec: CLAUDE.md §4; Work Order 1, item 1; ruling A1 (decision 0003).
+    """
+    parts = path.split("/")
+    if any(part == "" for part in parts):
+        raise ValueError(f"stream path {path!r} has an empty segment")
+    _check_seed("terrain_seed", terrain_seed)
+    key = tuple(stable_id(part) for part in parts)
+    if parts[0] == TERRAIN_ROOT:
+        return (*key, terrain_seed)
+    return key
+
+
+def stream(
+    root_seed: int,
+    path: str,
+    terrain_seed: int = 0,
+    registry: Mapping[str, str] = STREAM_REGISTRY,
+) -> np.random.Generator:
+    """Return the random stream for a registered path.
+
+    Parameters
+    ----------
+    root_seed : int
+        The recipe's root seed, ``0 <= root_seed < 2**64``.
+    path : str
+        A path in ``registry``.
+    terrain_seed : int
+        The recipe's terrain seed; used by ``terrain/*`` paths only.
+    registry : Mapping[str, str]
+        The registered stream paths. Unregistered paths are refused so every stream is recorded.
+
+    Returns
+    -------
+    numpy.random.Generator
+        A PCG64 generator seeded by ``SeedSequence(root_seed, spawn_key=spawn_key(path))``.
+
+    Spec: CLAUDE.md §4; Work Order 1, item 1.
+    """
+    if path not in registry:
+        raise ValueError(f"stream path {path!r} is not in the stream registry")
+    _check_seed("root_seed", root_seed)
+    sequence = np.random.SeedSequence(root_seed, spawn_key=spawn_key(path, terrain_seed))
+    return np.random.Generator(np.random.PCG64(sequence))
+
+
+def stream_record(
+    root_seed: int,
+    terrain_seed: int = 0,
+    registry: Mapping[str, str] = STREAM_REGISTRY,
+) -> StreamRecord:
+    """Return every registered stream's spawn key and first raw draws, sorted by path.
+
+    Parameters
+    ----------
+    root_seed : int
+        The recipe's root seed.
+    terrain_seed : int
+        The recipe's terrain seed.
+    registry : Mapping[str, str]
+        The registered stream paths.
+
+    Returns
+    -------
+    StreamRecord
+        The seeds and, per path, its spawn key and its first four raw 64-bit outputs.
+
+    Spec: CLAUDE.md §7 (identity check); Work Order 1, item 1.
+    """
+    entries: list[StreamRecordEntry] = []
+    for path in sorted(registry):
+        generator = stream(root_seed, path, terrain_seed, registry)
+        # Raw bit-generator output does not depend on numpy's sampling algorithms.
+        draws = generator.bit_generator.random_raw(RECORD_DRAW_COUNT)
+        entries.append(
+            {
+                "path": path,
+                "spawn_key": list(spawn_key(path, terrain_seed)),
+                "first_draws": [int(value) for value in draws],
+            }
+        )
+    return {"root_seed": root_seed, "terrain_seed": terrain_seed, "streams": entries}
+
+
+def _check_seed(name: str, value: int) -> None:
+    if not 0 <= value < SEED_UPPER_BOUND:
+        raise ValueError(f"{name} must satisfy 0 <= {name} < 2**64, got {value}")
