@@ -32,7 +32,7 @@ The answer-key solver never imports error induction, and the generator never imp
 - **Byte-identical output.** Sort before writing, use fixed float formatting, and fix timestamps and metadata inside emitted files (PBF, GeoPackage and CSV headers included).
 - **Only two inputs:** the recipe and the per-machine data-path file (`machine.toml`, gitignored, with `machine.example.toml` checked in). Defaults live in the recipe schema. The resolved recipe, with every default filled in, is written beside every world.
 - **Pinned environment:** Python version pinned, dependencies locked with `uv`.
-- Same bytes on every platform. Development runs on Windows; CI runs on Windows and Linux. Use pathlib for every path, write text with newline='\n' and explicit UTF-8, and never let output depend on the operating system, locale or path separator. The identity check must pass on both.
+- **Same bytes on every platform.** Development runs on Windows; CI runs on Windows and Linux. Use pathlib for every path, write text with newline='\n' and explicit UTF-8, and never let output depend on the operating system, locale or path separator. The identity check must pass on both.
 
 ## 5. Structure
 
@@ -50,7 +50,7 @@ src/swm/
 tests/
   unit/  property/  fixtures/  golden/
 docs/
-  design/  decisions/  trace/
+  design/  decisions/  trace/  work_orders/
 ```
 
 - **Stages are pure functions:** `(recipe section, upstream outputs, rng) -> stage output` (a frozen dataclass). No stage reads another stage's stream. Only `emit/` and `manifest/` write files.
