@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from swm.recipe.buildability import (
+    BUILT_FEATURES,
     FEATURE_ARRIVALS,
     Arrival,
     features_used,
@@ -15,7 +16,7 @@ from swm.recipe.schema import ErrorMechanism, MapType, Recipe
 PILOT_FEATURES = {
     "map_type:spine_island",
     "terrain_character",
-    "size:hand_check",
+    "size:up_to_small",
     "layer_siting_and_links",
     "nodes_only",
     "emission",
@@ -36,7 +37,7 @@ PILOT_FEATURES = {
     "model:sequence_repair_crews",
     "model:observe_uncertain_couplings",
     "objective:unserved_demand_hours",
-    "service_weights:healthcare_first",
+    "service_weights:lifeline",
 }
 
 
@@ -48,11 +49,17 @@ def arrivals(recipe: Recipe) -> dict[str, Arrival]:
     return {status.feature: status.arrival for status in unbuilt_features(recipe)}
 
 
-def test_pilot_reports_exactly_its_features_in_phases_1_to_3(pilot_path: Path) -> None:
+def test_pilot_uses_exactly_its_features_in_phases_1_to_3(pilot_path: Path) -> None:
     recipe = resolve(load_recipe(pilot_path)).recipe
-    reported = arrivals(recipe)
-    assert set(reported) == PILOT_FEATURES
-    assert set(reported.values()) == {Arrival.PHASE_1, Arrival.PHASE_2, Arrival.PHASE_3}
+    assert set(features_used(recipe)) == PILOT_FEATURES
+    phases = {FEATURE_ARRIVALS[feature] for feature in PILOT_FEATURES}
+    assert phases == {Arrival.PHASE_1, Arrival.PHASE_2, Arrival.PHASE_3}
+
+
+def test_pilot_reports_every_feature_not_yet_built(pilot_path: Path) -> None:
+    reported = arrivals(resolve(load_recipe(pilot_path)).recipe)
+    assert set(reported) == PILOT_FEATURES - BUILT_FEATURES
+    assert {"map_type:spine_island", "terrain_character"} <= BUILT_FEATURES
 
 
 def test_every_map_type_and_mechanism_is_in_the_table() -> None:
@@ -64,8 +71,8 @@ def test_every_map_type_and_mechanism_is_in_the_table() -> None:
     ("text", "feature", "arrival"),
     [
         ("terrain:\n  map_type: archipelago\n", "map_type:archipelago", Arrival.PHASE_5),
-        ("terrain:\n  size_preset: huge\n", "size:huge", Arrival.PHASE_5),
-        ("terrain:\n  area_km2: 900\n", "size:custom", Arrival.PHASE_5),
+        ("terrain:\n  size_preset: huge\n", "size:larger_than_small", Arrival.PHASE_5),
+        ("terrain:\n  area_km2: 2500\n", "size:larger_than_small", Arrival.PHASE_5),
         ("dynamics:\n  tier: simulation\n", "tier:simulation", Arrival.PHASE_5),
         (
             "shared_causes:\n  hazards:\n    flood_plain:\n      switched_on: true\n",
@@ -77,7 +84,7 @@ def test_every_map_type_and_mechanism_is_in_the_table() -> None:
         (
             "dynamics:\n  transfer_forms:\n    service: concave\n",
             "transfer_form:concave",
-            Arrival.NOT_YET_SCHEDULED,
+            Arrival.PHASE_5,
         ),
         (
             "answer_key_requests:\n  - model: drain_reserves\n",
@@ -95,6 +102,30 @@ def test_later_phase_feature_is_reported_with_its_phase(
     text: str, feature: str, arrival: Arrival
 ) -> None:
     assert arrivals(resolved(text))[feature] == arrival
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "terrain:\n  area_km2: 900\n",
+        "terrain:\n  size_preset: small\n",
+        "terrain:\n  size_preset: custom\n  area_km2: 1500\nlayers:\n"
+        + "".join(
+            f"  {layer}:\n    node_count: 17\n"
+            for layer in ("power", "telecom", "water", "transport", "fuel", "healthcare")
+        ),
+    ],
+)
+def test_sizes_up_to_small_are_phase_1(text: str) -> None:
+    assert FEATURE_ARRIVALS["size:up_to_small"] == Arrival.PHASE_1
+    assert "size:up_to_small" in features_used(resolved(text))
+
+
+def test_concave_on_the_exact_tier_is_valid_but_refused_with_a_reason() -> None:
+    recipe = resolved("dynamics:\n  tier: exact\n  transfer_forms:\n    control: concave\n")
+    status = next(s for s in unbuilt_features(recipe) if s.feature == "transfer_form:concave")
+    assert status.arrival == Arrival.PHASE_5
+    assert "simulation tier" in status.note
 
 
 def test_adversarial_error_is_always_refused() -> None:

@@ -1,18 +1,32 @@
-"""Identity check (golden): the pilot recipe resolves to the checked-in bytes on every platform."""
+"""Identity check (golden): the pilot recipe reproduces the checked-in bytes on every platform."""
 
 import hashlib
 from pathlib import Path
 
-from swm.recipe.io import canonical_yaml, load_recipe, recipe_bytes
-from swm.recipe.resolve import resolve
-from swm.rng import stream_record
+import pytest
 
-GOLDEN_FILES = ("resolved_recipe.yaml", "stream_record.yaml")
+from swm.cli import main
+
+GOLDEN_FILES = (
+    "resolved_recipe.yaml",
+    "stream_record.yaml",
+    "terrain_stats.yaml",
+    "terrain_sha256.txt",
+)
 
 
 def recorded_hashes(golden_dir: Path) -> dict[str, str]:
     lines = (golden_dir / "SHA256SUMS").read_text(encoding="utf-8").splitlines()
     return {name: digest for digest, name in (line.split("  ") for line in lines)}
+
+
+@pytest.fixture(scope="module")
+def produced(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    pilot = Path(__file__).resolve().parents[1] / "fixtures" / "pilot_hand_check.yaml"
+    out_dir = tmp_path_factory.mktemp("identity")
+    assert main(["resolve", str(pilot), "-o", str(out_dir)]) == 0
+    assert main(["terrain", str(pilot), "-o", str(out_dir)]) == 0
+    return out_dir
 
 
 def test_golden_files_match_their_recorded_hashes(golden_dir: Path) -> None:
@@ -22,15 +36,8 @@ def test_golden_files_match_their_recorded_hashes(golden_dir: Path) -> None:
         assert hashlib.sha256((golden_dir / name).read_bytes()).hexdigest() == hashes[name]
 
 
-def test_pilot_reproduces_the_golden_resolved_recipe(pilot_path: Path, golden_dir: Path) -> None:
-    recipe = resolve(load_recipe(pilot_path)).recipe
-    produced = recipe_bytes(recipe)
-    assert hashlib.sha256(produced).hexdigest() == recorded_hashes(golden_dir)[GOLDEN_FILES[0]]
-    assert produced == (golden_dir / GOLDEN_FILES[0]).read_bytes()
-
-
-def test_pilot_reproduces_the_golden_stream_record(pilot_path: Path, golden_dir: Path) -> None:
-    recipe = resolve(load_recipe(pilot_path)).recipe
-    produced = canonical_yaml(stream_record(recipe.root_seed, recipe.terrain.terrain_seed))
-    assert hashlib.sha256(produced).hexdigest() == recorded_hashes(golden_dir)[GOLDEN_FILES[1]]
-    assert produced == (golden_dir / GOLDEN_FILES[1]).read_bytes()
+@pytest.mark.parametrize("name", GOLDEN_FILES)
+def test_pilot_reproduces_the_golden_file(name: str, produced: Path, golden_dir: Path) -> None:
+    content = (produced / name).read_bytes()
+    assert hashlib.sha256(content).hexdigest() == recorded_hashes(golden_dir)[name]
+    assert content == (golden_dir / name).read_bytes()

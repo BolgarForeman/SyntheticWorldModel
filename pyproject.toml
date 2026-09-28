@@ -13,6 +13,11 @@ dependencies = [
 [project.scripts]
 swm = "swm.cli:main"
 
+[project.optional-dependencies]
+preview = [
+    "matplotlib>=3.11.2",
+]
+
 [dependency-groups]
 dev = [
     "hypothesis>=6.100",
@@ -71,6 +76,7 @@ plugins = ["pydantic.mypy"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["tests"]
 addopts = ["--import-mode=importlib", "--cov=swm", "--cov-report=term-missing"]
 
 [tool.coverage.run]

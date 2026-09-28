@@ -215,7 +215,12 @@ class MemberClass(StrEnum):
 
 
 class Objective(StrEnum):
-    """What an answer-key request optimizes."""
+    """What an answer-key request optimizes.
+
+    Unserved demand-hours are weighted service-hours at end-use nodes: for each end-use node,
+    the hours it is out of service (a fraction when supply is partial) times its class weight,
+    summed over the window. Spec: structure v0.3 §5.
+    """
 
     UNSERVED_DEMAND_HOURS = "unserved_demand_hours"
     TIME_TO_RESTORE_80_PCT = "time_to_restore_80_pct"
@@ -223,14 +228,50 @@ class Objective(StrEnum):
 
 
 class WeightPreset(StrEnum):
-    """Service-weight presets."""
+    """Service-weight presets (structure v0.3 §5)."""
 
+    LIFELINE = "lifeline"
     EQUAL = "equal"
-    HEALTHCARE_FIRST = "healthcare_first"
     CUSTOM = "custom"
 
 
+class EndUseClass(StrEnum):
+    """Node classes whose outage is scored; only these take service weights (v0.3 §5)."""
+
+    TERTIARY = "tertiary"
+    REGIONAL = "regional"
+    SEAPORT = "seaport"
+    BLOOD_BANK = "blood_bank"
+    AIRPORT = "airport"
+    DISTRIBUTION_SUBSTATION = "distribution_substation"
+    STORAGE = "storage"
+    DEPOT = "depot"
+    CLINIC = "clinic"
+    MAST = "mast"
+
+
 # --- Fixed tables ---------------------------------------------------------------------------
+
+
+LIFELINE_WEIGHTS: Mapping[EndUseClass, float] = {
+    EndUseClass.TERTIARY: 10.0,
+    EndUseClass.REGIONAL: 7.0,
+    EndUseClass.SEAPORT: 7.0,
+    EndUseClass.BLOOD_BANK: 6.0,
+    EndUseClass.AIRPORT: 6.0,
+    EndUseClass.DISTRIBUTION_SUBSTATION: 5.0,
+    EndUseClass.STORAGE: 5.0,
+    EndUseClass.DEPOT: 4.0,
+    EndUseClass.CLINIC: 3.0,
+    EndUseClass.MAST: 1.0,
+}
+"""Lifeline service weights per end-use class.
+
+Source: structure v0.3 §5; the author's judgment on FEMA Community Lifelines categories.
+"""
+
+EQUAL_WEIGHTS: Mapping[EndUseClass, float] = dict.fromkeys(EndUseClass, 1.0)
+"""Equal service weights: every end-use class counts 1. Source: structure v0.3 §5."""
 
 
 @dataclass(frozen=True)
@@ -673,14 +714,15 @@ class SharedCauses(_Section):
 
 
 class ContinuousDrawnQuantity(_Section):
-    """A quantity drawn per element around its design target. Spec: structure v0.2 §4.4."""
+    """A quantity drawn per element around its design target. Spec: structure v0.3 §4.4."""
 
-    heterogeneity: int = Field(
+    heterogeneity_pct: int = Field(
         0,
         ge=0,
         le=100,
-        description="How much elements with the same target differ. 0 = every element of a "
-        "class gets the same value.",
+        description="Spread of element values around their context-adjusted target, as a "
+        "percent of the target. 0: every element sits on its target; 100: the spread equals "
+        "the target.",
     )
     compliance_gap_pct: int = Field(
         0,
@@ -712,16 +754,20 @@ class Unobserved(_Section):
     """Real but unobserved quantities: drawn per element, never emitted. Spec: v0.2 §4.4."""
 
     reserves: ContinuousDrawnQuantity = Field(
-        default_factory=lambda: ContinuousDrawnQuantity(heterogeneity=50, compliance_gap_pct=30),
+        default_factory=lambda: ContinuousDrawnQuantity(
+            heterogeneity_pct=50, compliance_gap_pct=30
+        ),
         description="Reserves. Buffer time is the reserve divided by the draw, computed in the "
         "run.",
     )
     requirements: ContinuousDrawnQuantity = Field(
-        default_factory=lambda: ContinuousDrawnQuantity(heterogeneity=40),
+        default_factory=lambda: ContinuousDrawnQuantity(heterogeneity_pct=40),
         description="Node requirements per commodity.",
     )
     repair_rates: ContinuousDrawnQuantity = Field(
-        default_factory=lambda: ContinuousDrawnQuantity(heterogeneity=45, compliance_gap_pct=20),
+        default_factory=lambda: ContinuousDrawnQuantity(
+            heterogeneity_pct=45, compliance_gap_pct=20
+        ),
         description="Repair rates.",
     )
     failure_mode: CategoricalDrawnQuantity = Field(
@@ -779,9 +825,12 @@ class SourceErrors(_Section):
         None, description="The mechanism for this source. Default: errors.default_mechanism."
     )
     coverage_pct: int = Field(
-        90, ge=30, le=100, description="Share of the region or asset range covered at all."
+        90,
+        ge=0,
+        le=100,
+        description="Share of the region or asset range covered at all. 0 carries nothing.",
     )
-    snapshot_age_y: int = Field(2, ge=0, le=10, description="How old the source's data is.")
+    snapshot_age_y: int = Field(2, ge=0, le=30, description="How old the source's data is.")
     phantom_pct: int = Field(
         2, ge=0, le=100, description="Share of true assets for which the source invents a record."
     )
@@ -852,20 +901,22 @@ class Ensemble(_Section):
 
 
 class _Request(_Section):
-    """Fields every model request carries. Spec: structure v0.2 §5; rulings A5, C5, C6."""
+    """Fields every model request carries. Spec: structure v0.3 §5; decisions 0003, 0004."""
 
     model: str = Field(description="The model within the member-class.")
     member_class: MemberClass = Field(description="The optimization member-class.")
     objective: Objective = Field(
-        Objective.UNSERVED_DEMAND_HOURS, description="What the request optimizes."
+        Objective.UNSERVED_DEMAND_HOURS,
+        description="What the request optimizes. Unserved demand-hours: weighted service-hours "
+        "at end-use nodes, summed over the window.",
     )
     service_weights: WeightPreset = Field(
-        WeightPreset.HEALTHCARE_FIRST,
-        description="How much a unit of unserved demand counts at each node class.",
+        WeightPreset.LIFELINE,
+        description="How much an hour of outage counts at each end-use class.",
     )
-    custom_weights: dict[NodeClass, ServiceWeight] | None = Field(
+    custom_weights: dict[EndUseClass, ServiceWeight] | None = Field(
         None,
-        description="A weight (0-100) for every node class. Required with custom weights only.",
+        description="A weight (0-100) for every end-use class. Required with custom weights only.",
     )
     window_h: int = Field(
         72, ge=6, le=336, description="The horizon the objective is scored over, in hours."
@@ -885,8 +936,8 @@ class _Request(_Section):
                 raise ValueError("custom_weights is set only with service_weights: custom")
             return
         if self.custom_weights is None:
-            raise ValueError("service_weights: custom needs custom_weights for every node class")
-        missing = [node_class for node_class in NodeClass if node_class not in self.custom_weights]
+            raise ValueError("service_weights: custom needs custom_weights for every end-use class")
+        missing = [end_use for end_use in EndUseClass if end_use not in self.custom_weights]
         if missing:
             raise ValueError(f"custom_weights is missing {', '.join(missing)}")
 

@@ -138,13 +138,13 @@ shared_causes:
   scenarios: 8
 unobserved:
   reserves:
-    heterogeneity: 50
+    heterogeneity_pct: 50
     compliance_gap_pct: 30
   requirements:
-    heterogeneity: 40
+    heterogeneity_pct: 40
     compliance_gap_pct: 0
   repair_rates:
-    heterogeneity: 45
+    heterogeneity_pct: 45
     compliance_gap_pct: 20
   failure_mode:
     heterogeneity_pct: 30
@@ -264,7 +264,7 @@ answer_key_requests:
 - model: protect_condition_and_add_reserve
   member_class: defensive
   objective: unserved_demand_hours
-  service_weights: healthcare_first
+  service_weights: lifeline
   custom_weights: null
   window_h: 72
   budget_cost_units: 3
@@ -273,7 +273,7 @@ answer_key_requests:
 - model: protect_condition_and_add_reserve
   member_class: defensive
   objective: unserved_demand_hours
-  service_weights: healthcare_first
+  service_weights: lifeline
   custom_weights: null
   window_h: 72
   budget_cost_units: 4
@@ -282,27 +282,27 @@ answer_key_requests:
 - model: strike_nodes
   member_class: offensive
   objective: unserved_demand_hours
-  service_weights: healthcare_first
+  service_weights: lifeline
   custom_weights: null
   window_h: 72
   strikes_k: 2
 - model: strike_nodes
   member_class: offensive
   objective: unserved_demand_hours
-  service_weights: healthcare_first
+  service_weights: lifeline
   custom_weights: null
   window_h: 72
   strikes_k: 3
 - model: sequence_repair_crews
   member_class: restorative
   objective: unserved_demand_hours
-  service_weights: healthcare_first
+  service_weights: lifeline
   custom_weights: null
   window_h: 72
 - model: observe_uncertain_couplings
   member_class: informative
   objective: unserved_demand_hours
-  service_weights: healthcare_first
+  service_weights: lifeline
   custom_weights: null
   window_h: 72
   observations_n: 1

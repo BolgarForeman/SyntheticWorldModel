@@ -1,0 +1,13 @@
+grid_cells: 256
+cell_size_m: 205.228
+land_area_km2: 400.0
+max_elevation_m: 2046.5
+river_length_km: 52.602
+island_count: 3
+city_count: 3
+cover_shares:
+  open: 0.535853
+  urban: 0.090028
+  forest: 0.220491
+  wetland: 0.060019
+  barren: 0.093609

@@ -207,7 +207,10 @@ def _error_notes(errors: Errors, layers: Layers) -> list[str]:
         layer = layer_of(source)
         if source not in active:
             notes.append(f"errors.sources.{source} is ignored: the source is not emitted")
-        elif layers.get(layer).nodes_only:
+            continue
+        if errors.sources[source].coverage_pct == 0:
+            notes.append(f"errors.sources.{source}.coverage_pct is 0: the source carries nothing")
+        if layers.get(layer).nodes_only:
             notes.append(
                 f"errors.sources.{source}.links_pct is ignored: {layer} sources report nodes only"
             )
