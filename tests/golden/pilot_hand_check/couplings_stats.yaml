@@ -1,3 +1,7 @@
+modeling_rules:
+  registry_version: '0.1'
+  registry_sha256: 67ba0cf0cb94734c85863552b04277ef410529316a3d82efe17c187a22a70a3c
+  overrides: {}
 pairs:
   power-telecom:
     switched_on: true
@@ -48,23 +52,24 @@ pairs:
     switched_on: false
     dependencies: 2
     absent: 0
-    edges: 3
+    edges: 2
     feed_counts:
-      single: 1
-      two_full: 1
+      single: 2
+      two_full: 0
       two_half: 0
       any_reachable: 0
       none: 0
     feed_shares:
-      single: 0.5
-      two_full: 0.5
+      single: 1.0
+      two_full: 0.0
       two_half: 0.0
-    non_nearest_share: 0.5
-    hub: SWM-POW-0003
-    hub_share: 0.5
+    non_nearest_share: 0.0
+    hub: SWM-POW-0002
+    hub_share: 1.0
     mutual_pairs_allowed: 0
     mutual_pairs: 0
-    notes: []
+    notes:
+    - supplier_not_nearest asks for 1 first feeds off the nearest supplier; only 0 could be (too few dependencies with two eligible suppliers)
   power-fuel:
     switched_on: false
     dependencies: 4
@@ -456,7 +461,7 @@ pairs:
     mutual_pairs: 0
     notes: []
 totals:
-  coupling_edges: 72
+  coupling_edges: 71
   switched_on_coupling_edges: 27
   intra_layer_links: 23
   total_edges: 50

@@ -6,8 +6,10 @@ from typing import Any
 
 from layers_helpers import build_world
 from swm.recipe.schema import Couplings, Layer, NodeClass, Recipe
+from swm.rules.registry import load_registry
 from swm.stages.couplings import CouplingsResult, build_couplings, couplings_streams
 from swm.stages.layers import LayersResult, Node
+from swm.stages.requirements import build_requirements, requirements_streams
 from swm.stages.terrain import TerrainResult
 
 World = tuple[Recipe, TerrainResult, LayersResult]
@@ -29,7 +31,20 @@ def rich_world() -> World:
     return build_world(terrain={"area_km2": 1500}, layers=RICH_LAYERS)
 
 
-def couple(world: World, **settings: Any) -> CouplingsResult:
+def requirements_of(world: World, overrides: Mapping[str, float] | None = None) -> Any:
+    """Draw a world's requirements under the recipe's levers and the given rule overrides."""
+    recipe, _, layers = world
+    return build_requirements(
+        recipe.unobserved.requirements,
+        layers,
+        load_registry().with_overrides(overrides or {}),
+        requirements_streams(recipe.root_seed),
+    )
+
+
+def couple(
+    world: World, overrides: Mapping[str, float] | None = None, **settings: Any
+) -> CouplingsResult:
     """Build a world's couplings under couplings settings given in part."""
     recipe, terrain, layers = world
     return build_couplings(
@@ -37,6 +52,8 @@ def couple(world: World, **settings: Any) -> CouplingsResult:
         recipe.dynamics.transfer_forms,
         terrain,
         layers,
+        requirements_of(world, overrides),
+        load_registry().with_overrides(overrides or {}),
         couplings_streams(recipe.root_seed),
     )
 

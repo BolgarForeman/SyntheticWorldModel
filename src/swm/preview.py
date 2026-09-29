@@ -235,6 +235,10 @@ def couplings_preview_png(layers: LayersResult, couplings: CouplingsResult, titl
     rows = _schematic_rows(layers)
     positions = _schematic_positions(layers, rows)
     edges = [edge for edge in couplings.edges if edge.switched_on]
+    widest = max((sum(n.layer == layer for n in layers.nodes) for layer in rows), default=1)
+    # Limits first: the arcs and their midpoints are laid out in display space.
+    axes.set_xlim(-1.3, widest + 0.1)
+    axes.set_ylim(-0.8, len(rows) - 0.3)
     for edge in edges:
         start, end = positions[edge.supplier_id], positions[edge.consumer_id]
         style, width = _schematic_style(edge)
@@ -248,9 +252,9 @@ def couplings_preview_png(layers: LayersResult, couplings: CouplingsResult, titl
             )
         )  # fmt: skip
         if edge.mutual_partner is not None:
-            middle = ((start[0] + end[0]) / 2, (start[1] + end[1]) / 2)
-            axes.plot(*middle, marker="o", markersize=9, markerfacecolor="none",
-                      markeredgecolor="black", linestyle="")  # fmt: skip
+            axes.plot(*_arc_point(axes, start, end, bend), marker="o", markersize=9,
+                      markerfacecolor="none", markeredgecolor="black", linestyle="",
+                      zorder=6)  # fmt: skip
     for node in layers.nodes:
         x, y = positions[node.node_id]
         axes.plot(x, y, marker=CLASS_MARKERS.get(node.node_class, "o"), markersize=13,
@@ -262,9 +266,6 @@ def couplings_preview_png(layers: LayersResult, couplings: CouplingsResult, titl
     for layer, row in rows.items():
         axes.text(-0.2, row, layer.value, ha="right", va="center", fontsize=10,
                   color=LAYER_COLOURS[layer], fontweight="bold")  # fmt: skip
-    widest = max((sum(n.layer == layer for n in layers.nodes) for layer in rows), default=1)
-    axes.set_xlim(-1.3, widest + 0.1)
-    axes.set_ylim(-0.8, len(rows) - 0.3)
     axes.set_axis_off()
     axes.set_title(title)
     axes.legend(handles=_schematic_legend(edges), loc="upper left", bbox_to_anchor=(1.0, 1.0),
@@ -296,6 +297,29 @@ def _edge_table_text(rows: list[dict[str, object]]) -> str:
         "  ".join(cell.ljust(width) for cell, width in zip(cells, widths, strict=True)).rstrip()
         for cells in [header, *lines]
     )
+
+
+MUTUAL_MARK_AT = 0.75
+"""Where a mutual pair's ring sits along each arrow: near the consumer, clear of labels."""
+
+
+def _arc_point(
+    axes: "Axes", start: tuple[float, float], end: tuple[float, float], bend: float
+) -> tuple[float, float]:
+    """Return a point on an arc3 arrow in data units, so a marker sits on the arrow itself.
+
+    Matplotlib bends arc3 connections in display space: the control point is the chord's
+    middle offset by bend times the chord turned a quarter clockwise, and the arrow is
+    the quadratic curve through it, evaluated here at MUTUAL_MARK_AT.
+    """
+    (x1, y1), (x2, y2) = axes.transData.transform([start, end])
+    control_x = (x1 + x2) / 2 + bend * (y2 - y1)
+    control_y = (y1 + y2) / 2 - bend * (x2 - x1)
+    t = MUTUAL_MARK_AT
+    x = (1 - t) * (1 - t) * x1 + 2 * t * (1 - t) * control_x + t * t * x2
+    y = (1 - t) * (1 - t) * y1 + 2 * t * (1 - t) * control_y + t * t * y2
+    data_x, data_y = axes.transData.inverted().transform((x, y))
+    return float(data_x), float(data_y)
 
 
 def _schematic_rows(layers: LayersResult) -> dict[Layer, int]:

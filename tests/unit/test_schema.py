@@ -241,8 +241,7 @@ def test_custom_size_needs_area_and_every_count() -> None:
 def test_couplings_settings_have_their_defaults() -> None:
     couplings = Recipe().couplings
     assert couplings.two_way_pct == 50
-    assert couplings.tertiary_second_feed_pct == 50
-    assert couplings.transmission_connection_threshold_mw == 5.0
+    assert couplings.distribution_voltage_kv == 11.4
     share = couplings.public_telecom_share
     assert (share.generation_pct, share.transmission_pct) == (20, 20)
     assert (share.distribution_pct, share.water_pct, share.pipelines_pct) == (50, 50, 50)
@@ -252,8 +251,7 @@ def test_couplings_settings_have_their_defaults() -> None:
     ("couplings", "field"),
     [
         ({"two_way_pct": 101}, "two_way_pct"),
-        ({"tertiary_second_feed_pct": -1}, "tertiary_second_feed_pct"),
-        ({"transmission_connection_threshold_mw": -0.5}, "transmission_connection_threshold_mw"),
+        ({"distribution_voltage_kv": 13.2}, "distribution_voltage_kv"),
         ({"public_telecom_share": {"water_pct": 120}}, "water_pct"),
     ],
 )

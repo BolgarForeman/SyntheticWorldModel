@@ -16,6 +16,8 @@ GOLDEN_FILES = (
     "layers_nodes.yaml",
     "layers_links.yaml",
     "layers_sha256.txt",
+    "requirements_stats.yaml",
+    "requirements_sha256.txt",
     "couplings_stats.yaml",
     "couplings_sha256.txt",
 )
@@ -33,6 +35,7 @@ def produced(tmp_path_factory: pytest.TempPathFactory) -> Path:
     assert main(["resolve", str(pilot), "-o", str(out_dir)]) == 0
     assert main(["terrain", str(pilot), "-o", str(out_dir)]) == 0
     assert main(["layers", str(pilot), "-o", str(out_dir)]) == 0
+    assert main(["requirements", str(pilot), "-o", str(out_dir)]) == 0
     assert main(["couplings", str(pilot), "-o", str(out_dir)]) == 0
     return out_dir
 

@@ -39,7 +39,8 @@ def test_couplings_writes_statistics_and_hashes_and_prints_the_total(
 ) -> None:
     assert main(["couplings", str(pilot_path), "-o", str(tmp_path)]) == 0
     stats = (tmp_path / "couplings_stats.yaml").read_text(encoding="utf-8")
-    assert stats.startswith("pairs:\n  power-telecom:\n")
+    assert stats.startswith("modeling_rules:\n  registry_version:")
+    assert "\npairs:\n  power-telecom:\n" in stats
     assert "  total_edges: 50\n" in stats
     table = (tmp_path / "couplings_edges.csv").read_bytes()
     assert b"\r" not in table
@@ -55,6 +56,29 @@ def test_couplings_writes_statistics_and_hashes_and_prints_the_total(
     hashes = (tmp_path / "couplings_sha256.txt").read_text(encoding="utf-8").splitlines()
     assert [line.split("  ")[1] for line in hashes] == ["edges", "dependencies"]
     assert "total edges 50: 23 intra-layer links and 27 switched-on" in capsys.readouterr().out
+
+
+def test_requirements_writes_statistics_and_a_hash(
+    pilot_path: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["requirements", str(pilot_path), "-o", str(tmp_path)]) == 0
+    stats = (tmp_path / "requirements_stats.yaml").read_text(encoding="utf-8")
+    assert stats.startswith("modeling_rules:\n  registry_version:")
+    assert "\nelectricity_mw:\n" in stats
+    hashes = (tmp_path / "requirements_sha256.txt").read_text(encoding="utf-8").splitlines()
+    assert [line.split("  ")[1] for line in hashes] == ["requirements"]
+    assert "seaport: fuel draw has no target" in capsys.readouterr().out
+
+
+def test_rules_renders_the_modeling_rules_page_without_a_recipe(tmp_path: Path) -> None:
+    from swm.rules.registry import load_registry
+
+    page = tmp_path / "rules.html"
+    assert main(["rules", "-o", str(page)]) == 0
+    text = page.read_text(encoding="utf-8")
+    assert text.startswith("<!doctype html>")
+    assert "<title>Modeling Rules</title>" in text
+    assert load_registry().sha256 in text
 
 
 def test_preview_couplings_writes_a_png(pilot_path: Path, tmp_path: Path) -> None:
@@ -84,7 +108,7 @@ def test_export_gis_writes_a_readable_geopackage_and_geotiffs(
 
     assert main(["export-gis", str(pilot_path), "-o", str(tmp_path)]) == 0
     package = str(tmp_path / "world.gpkg")
-    expected = {"nodes": 24, "links": 23, "couplings": 72}
+    expected = {"nodes": 24, "links": 23, "couplings": 71}
     for layer in ("power", "telecom", "water", "transport", "fuel", "healthcare"):
         expected[f"nodes_{layer}"] = 4
     for layer, count in expected.items():

@@ -122,6 +122,7 @@ docs/
 - **No real source data in the repository, ever.** Real data is reached through `machine.toml` only.
 - **Synthetic identifiers** follow real code-list formats, with values from a reserved range. No real place, airport, port or wiki codes.
 - **Replayed error** uses statistics measured from real sources, never real records.
+- **Rules change only through the registry.** Every rule and number that shapes the world lives in `src/swm/rules/modeling_rules.yaml` and is read by id. A change is a reviewed pull request that edits the registry, moves the old value into its history, cites the new source and adds a decision record (decision 0009; `docs/design/README.md`).
 
 ## 9a. Licence
 

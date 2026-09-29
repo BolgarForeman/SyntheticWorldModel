@@ -13,6 +13,7 @@ from swm.recipe.schema import (
     Layer,
     Layers,
     LayerState,
+    ModelingRules,
     Recipe,
     SizePreset,
     Source,
@@ -20,6 +21,7 @@ from swm.recipe.schema import (
     Terrain,
     Unobserved,
 )
+from swm.rules.registry import load_registry
 
 LAYER_ORDER = tuple(Layer)
 SOURCE_ORDER = tuple(Source)
@@ -59,6 +61,7 @@ def resolve(recipe: Recipe) -> Resolution:
     errors = _resolve_errors(recipe.errors, layers)
     resolved = recipe.model_copy(
         update={
+            "modeling_rules": _stamp_rules(recipe.modeling_rules),
             "terrain": terrain,
             "layers": layers,
             "couplings": couplings,
@@ -73,6 +76,24 @@ def resolve(recipe: Recipe) -> Resolution:
     notes.extend(_error_notes(errors, layers))
     # Revalidate so the resolved recipe is held to every rule a written one is.
     return Resolution(Recipe.model_validate(resolved.model_dump()), tuple(notes))
+
+
+def _stamp_rules(rules: ModelingRules) -> ModelingRules:
+    """Stamp the registry's version and hash, and check the overrides (Work Order 5, A3)."""
+    registry = load_registry()
+    if rules.registry_sha256 not in (None, registry.sha256):
+        raise ValueError(
+            f"modeling_rules: the recipe was resolved against registry {rules.registry_sha256}, "
+            f"but this code carries {registry.sha256}"
+        )
+    registry.with_overrides(rules.overrides)
+    return rules.model_copy(
+        update={
+            "registry_version": registry.version,
+            "registry_sha256": registry.sha256,
+            "overrides": dict(sorted(rules.overrides.items())),
+        }
+    )
 
 
 def active_sources(layers: Layers) -> tuple[Source, ...]:

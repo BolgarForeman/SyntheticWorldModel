@@ -1,5 +1,9 @@
 recipe_version: 1
 root_seed: 91577
+modeling_rules:
+  registry_version: '0.1'
+  registry_sha256: 67ba0cf0cb94734c85863552b04277ef410529316a3d82efe17c187a22a70a3c
+  overrides: {}
 terrain:
   map_type: spine_island
   terrain_seed: 0
@@ -100,8 +104,7 @@ couplings:
     distribution_pct: 50
     water_pct: 50
     pipelines_pct: 50
-  tertiary_second_feed_pct: 50
-  transmission_connection_threshold_mw: 5.0
+  distribution_voltage_kv: 11.4
 shared_causes:
   hazards:
     storm_corridor:

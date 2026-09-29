@@ -5,6 +5,7 @@ export``. These files sit outside the identity check, because their containers e
 and database internals (structure v0.4 §4.1a).
 """
 
+import json
 import os
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -42,7 +43,11 @@ RASTER_FILES = {
 
 
 def export_gis(
-    terrain: TerrainResult, layers: LayersResult, couplings: CouplingsResult, out_dir: Path
+    terrain: TerrainResult,
+    layers: LayersResult,
+    couplings: CouplingsResult,
+    out_dir: Path,
+    rules_stamp: Mapping[str, object],
 ) -> list[Path]:
     """Write world.gpkg (nodes, links, couplings, cities, coastline) and three GeoTIFFs.
 
@@ -56,6 +61,8 @@ def export_gis(
         The couplings stage's output.
     out_dir : Path
         The folder to write into; created if absent.
+    rules_stamp : Mapping[str, object]
+        The modeling rules registry's version, hash and overrides, stamped on the package.
 
     Returns
     -------
@@ -68,15 +75,14 @@ def export_gis(
     package = out_dir / GEOPACKAGE_FILE
     if package.exists():
         package.unlink()
-    _write_nodes(package, layers)
-    _write_links(package, layers)
-    _write_couplings(package, couplings)
-    _write_polygons(
-        package, "cities", terrain, (np.asarray(terrain.urban_id) + 1).astype(np.int32), "city_id"
-    )
-    _write_polygons(
-        package, "coastline", terrain, np.asarray(terrain.land).astype(np.int32), "land"
-    )
+    metadata = _metadata(rules_stamp)
+    _write_nodes(package, layers, metadata)
+    _write_links(package, layers, metadata)
+    _write_couplings(package, couplings, metadata)
+    cities = (np.asarray(terrain.urban_id) + 1).astype(np.int32)
+    _write_polygons(package, "cities", terrain, cities, "city_id", metadata)
+    land = np.asarray(terrain.land).astype(np.int32)
+    _write_polygons(package, "coastline", terrain, land, "land", metadata)
     written = [package]
     rasters: dict[str, NDArray[np.generic]] = {
         "elevation": (np.asarray(terrain.elevation_dm) / 10).astype(np.float32),
@@ -85,20 +91,25 @@ def export_gis(
     }
     for name, array in rasters.items():
         path = out_dir / RASTER_FILES[name]
-        _write_raster(path, array, terrain, name)
+        _write_raster(path, array, terrain, name, metadata)
         written.append(path)
     return written
 
 
-def _metadata() -> dict[str, str]:
-    return {"DESCRIPTION": SYNTHETIC_NOTICE, "NOTICE": SYNTHETIC_NOTICE}
+def _metadata(rules_stamp: Mapping[str, object]) -> dict[str, str]:
+    """File metadata: the synthetic notice and the modeling rules that built the world."""
+    return {
+        "DESCRIPTION": SYNTHETIC_NOTICE,
+        "NOTICE": SYNTHETIC_NOTICE,
+        "MODELING_RULES": json.dumps(dict(rules_stamp), sort_keys=True),
+    }
 
 
-def _write_nodes(package: Path, layers: LayersResult) -> None:
+def _write_nodes(package: Path, layers: LayersResult, metadata: Mapping[str, str]) -> None:
     """Write the combined nodes table, then one typed table per layer (Work Order 4, D)."""
     _write_layer(
         package, "nodes", _points(layers.nodes), _common_columns(layers.nodes), "Point",
-        "Every node, with the columns all layers share. " + SYNTHETIC_NOTICE,
+        "Every node, with the columns all layers share. " + SYNTHETIC_NOTICE, metadata,
     )  # fmt: skip
     for layer in Layer:
         nodes = [node for node in layers.nodes if node.layer == layer]
@@ -112,7 +123,9 @@ def _write_nodes(package: Path, layers: LayersResult) -> None:
             "unobserved truth, for inspection only, never emitted. " + SYNTHETIC_NOTICE
         )
         columns = {**_common_columns(nodes), **observed, **truth}
-        _write_layer(package, f"nodes_{layer}", _points(nodes), columns, "Point", description)
+        _write_layer(
+            package, f"nodes_{layer}", _points(nodes), columns, "Point", description, metadata
+        )
 
 
 def _points(nodes: Sequence[Node]) -> NDArray[np.object_]:
@@ -160,7 +173,7 @@ def _column(values: Sequence[AttributeValue | None]) -> Column:
     return data, (mask if mask.any() else None)
 
 
-def _write_links(package: Path, layers: LayersResult) -> None:
+def _write_links(package: Path, layers: LayersResult, metadata: Mapping[str, str]) -> None:
     import shapely
 
     geometry = np.array([shapely.to_wkb(shapely.LineString(link.points)) for link in layers.links])
@@ -179,10 +192,12 @@ def _write_links(package: Path, layers: LayersResult) -> None:
         ]
     )
     description = "Intra-layer links as straight or dog-leg polylines. " + SYNTHETIC_NOTICE
-    _write_layer(package, "links", geometry, columns, "LineString", description)
+    _write_layer(package, "links", geometry, columns, "LineString", description, metadata)
 
 
-def _write_couplings(package: Path, couplings: CouplingsResult) -> None:
+def _write_couplings(
+    package: Path, couplings: CouplingsResult, metadata: Mapping[str, str]
+) -> None:
     """Write the coupling edges as straight lines, marked as unobserved truth (Work Order 4, F2)."""
     import shapely
 
@@ -224,11 +239,16 @@ def _write_couplings(package: Path, couplings: CouplingsResult) -> None:
         "straight line (a dependency, not a route). These are unobserved truth, for "
         "inspection only, never emitted. " + SYNTHETIC_NOTICE
     )
-    _write_layer(package, "couplings", geometry, columns, "LineString", description)
+    _write_layer(package, "couplings", geometry, columns, "LineString", description, metadata)
 
 
 def _write_polygons(
-    package: Path, name: str, terrain: TerrainResult, values: NDArray[np.int32], field: str
+    package: Path,
+    name: str,
+    terrain: TerrainResult,
+    values: NDArray[np.int32],
+    field: str,
+    metadata: Mapping[str, str],
 ) -> None:
     import shapely
     from rasterio.features import shapes
@@ -241,7 +261,7 @@ def _write_polygons(
     geometry = np.array([shapely.to_wkb(polygon) for polygon, _ in pieces])
     identifiers = [value - 1 if field == "city_id" else value for _, value in pieces]
     columns = {field: _column(identifiers)}
-    _write_layer(package, name, geometry, columns, "Polygon", SYNTHETIC_NOTICE)
+    _write_layer(package, name, geometry, columns, "Polygon", SYNTHETIC_NOTICE, metadata)
 
 
 def _write_layer(
@@ -251,6 +271,7 @@ def _write_layer(
     columns: Mapping[str, Column],
     geometry_type: str,
     description: str,
+    metadata: Mapping[str, str],
 ) -> None:
     from pyogrio.raw import write
 
@@ -267,8 +288,8 @@ def _write_layer(
         crs=WORKING_CRS,
         geometry_type=geometry_type,
         append=package.exists(),
-        dataset_metadata=_metadata(),
-        layer_metadata=_metadata(),
+        dataset_metadata=dict(metadata),
+        layer_metadata=dict(metadata),
         layer_options={"DESCRIPTION": description},
     )
 
@@ -282,7 +303,11 @@ def _transform(terrain: TerrainResult) -> object:
 
 
 def _write_raster(
-    path: Path, array: NDArray[np.generic], terrain: TerrainResult, name: str
+    path: Path,
+    array: NDArray[np.generic],
+    terrain: TerrainResult,
+    name: str,
+    metadata: Mapping[str, str],
 ) -> None:
     import rasterio
 
@@ -298,4 +323,4 @@ def _write_raster(
         transform=_transform(terrain),
     ) as raster:
         raster.write(array, 1)
-        raster.update_tags(**_metadata(), LAYER=name)
+        raster.update_tags(**metadata, LAYER=name)

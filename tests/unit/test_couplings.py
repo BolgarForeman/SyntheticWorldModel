@@ -11,6 +11,7 @@ from couplings_helpers import (
     first_feeds,
     nodes_by_id,
     pair_edges,
+    requirements_of,
     rich_world,
     touched_by_two_way,
 )
@@ -20,6 +21,7 @@ from swm.recipe.dependencies import Dependency, Role, resolve_row
 from swm.recipe.io import load_recipe
 from swm.recipe.resolve import resolve
 from swm.recipe.schema import DEFAULT_COUPLINGS, Layer, NodeClass
+from swm.rules.registry import load_registry
 from swm.stages import couplings as stage
 from swm.stages.couplings import (
     CouplingsResult,
@@ -53,6 +55,8 @@ def pilot(pilot_world: World) -> CouplingsResult:
         recipe.dynamics.transfer_forms,
         terrain,
         layers,
+        requirements_of(pilot_world),
+        load_registry(),
         couplings_streams(recipe.root_seed),
     )
 
@@ -113,9 +117,10 @@ def test_every_edge_is_eligible_for_its_row(rich: World, density: int) -> None:
         supplier, consumer = nodes[edge.supplier_id], nodes[edge.consumer_id]
         row = resolve_row(edge.supplier_layer, consumer.node_class, dict(consumer.subtype))
         assert row.dependency != Dependency.NONE, edge.edge_id
+        options = _large(rich).suppliers(row, consumer)
         allowed = [
             option
-            for option in row.suppliers
+            for option in options
             if option.node_class == supplier.node_class
             and (option.product is None or dict(supplier.subtype)["product"] == option.product)
         ]
@@ -244,10 +249,14 @@ def test_a_dependency_with_one_eligible_supplier_stays_single_with_a_note() -> N
 
 def test_tertiary_second_feed_is_all_or_nothing_at_its_bounds(rich: World) -> None:
     for pct, expected in ((0, FeedConfiguration.SINGLE), (100, FeedConfiguration.TWO_FULL)):
-        result = couple(rich, tertiary_second_feed_pct=pct, two_way_pct=100)
+        share = {"dependencies.rule_5.tertiary_second_feed_share": pct / 100}
+        result = couple(rich, share, two_way_pct=100)
         tertiary = [d for d in result.dependencies if d.row_key == "power>tertiary"]
         assert tertiary
-        assert all(d.feed_configuration == expected for d in tertiary)
+        for d in tertiary:
+            # A tertiary hospital large enough for rule 4 may have one eligible substation.
+            single_supplier = any("only one eligible supplier" in note for note in d.notes)
+            assert d.feed_configuration == expected or single_supplier, d.dependency_id
 
 
 # --- Supplier choice (E7) -------------------------------------------------------------------
@@ -264,10 +273,7 @@ def test_at_concentration_100_the_hub_carries_every_dependency_it_is_eligible_fo
         pair = (d.supplier_layer, d.consumer_layer)
         if d.supplier_layer == Layer.TRANSPORT or not d.edge_ids or d.dependency_id in touched:
             continue
-        eligible = {
-            n.node_id for n in stage._eligible(_row_of(rich, d), _node(rich, d.consumer_id),
-                                               stage._World(rich[1], rich[2]))
-        }  # fmt: skip
+        eligible = {n.node_id for n in _eligible_of(rich, d)}
         if hubs[pair] in eligible:
             assert firsts[d.dependency_id].supplier_id == hubs[pair], d.dependency_id
             assert firsts[d.dependency_id].is_hub
@@ -308,7 +314,6 @@ def test_the_not_nearest_share_is_met_or_noted(
 
 def test_a_second_feed_goes_to_the_nearest_supplier_other_than_the_first(rich: World) -> None:
     result = couple(rich, two_way_pct=100)
-    world = stage._World(rich[1], rich[2])
     edges = {edge.edge_id: edge for edge in result.edges}
     touched = touched_by_two_way(result)
     for d in result.dependencies:
@@ -318,7 +323,7 @@ def test_a_second_feed_goes_to_the_nearest_supplier_other_than_the_first(rich: W
             or d.dependency_id in touched
         ):
             continue
-        eligible = stage._eligible(_row_of(rich, d), _node(rich, d.consumer_id), world)
+        eligible = _eligible_of(rich, d)
         first, second = (edges[e].supplier_id for e in d.edge_ids)
         assert second == next(n.node_id for n in eligible if n.node_id != first)
 
@@ -354,13 +359,12 @@ def test_two_way_0_leaves_only_mutual_pairs_kept_for_a_core_dependency(rich: Wor
 def test_two_way_0_never_leaves_a_core_dependency_without_a_supplier(
     rich: World, density: int
 ) -> None:
-    world = stage._World(rich[1], rich[2])
     for concentration in (0, 40, 100):
         result = couple(rich, two_way_pct=0, density=density, concentration=concentration)
         for d in result.dependencies:
             if d.dependency != Dependency.CORE or d.feed_configuration == FeedConfiguration.NONE:
                 continue
-            eligible = stage._eligible(_row_of(rich, d), _node(rich, d.consumer_id), world)
+            eligible = _eligible_of(rich, d)
             if eligible and d.supplier_layer != Layer.TRANSPORT:
                 assert d.edge_ids, d.dependency_id
 
@@ -492,17 +496,48 @@ def test_control_edges_carry_the_public_telecom_share(rich: World) -> None:
     assert shared
 
 
-def test_rule_4_is_deferred_with_a_note(rich: World) -> None:
-    result = couple(rich)
+@pytest.mark.parametrize(("voltage_kv", "threshold_mw"), [(11.4, 5.0), (22.8, 10.0)])
+def test_rule_4_sends_large_loads_to_transmission(
+    rich: World, voltage_kv: float, threshold_mw: float
+) -> None:
+    result = couple(rich, density=100, distribution_voltage_kv=voltage_kv)
+    peaks = {n.node_id: n.peak_mw for n in requirements_of(rich).nodes}
     nodes = nodes_by_id(rich[2])
-    large = [d for d in result.dependencies if d.row_key in ("power>treatment", "power>seaport")]
-    assert large
     edges = {edge.edge_id: edge for edge in result.edges}
-    for d in large:
-        assert any("rule 4 deferred to Work Order 5" in note for note in d.notes)
-        for edge_id in d.edge_ids:
-            supplier = nodes[edges[edge_id].supplier_id]
-            assert supplier.node_class == NodeClass.DISTRIBUTION_SUBSTATION
+    large = small = 0
+    for d in result.dependencies:
+        if d.supplier_layer != Layer.POWER or not d.edge_ids:
+            continue
+        peak = peaks[d.consumer_id]
+        assert peak is not None
+        classes = {nodes[edges[e].supplier_id].node_class for e in d.edge_ids}
+        noted = any(note.startswith("rule 4:") for note in d.notes)
+        row = _row_of(rich, d)
+        row_says_transmission = {o.node_class for o in row.suppliers} == {
+            NodeClass.TRANSMISSION_SUBSTATION
+        }
+        if peak >= threshold_mw:
+            large += 1
+            assert classes == {NodeClass.TRANSMISSION_SUBSTATION}, d.dependency_id
+            assert noted or row_says_transmission
+        else:
+            small += 1
+            assert classes <= {option.node_class for option in row.suppliers}, d.dependency_id
+            assert not noted
+    assert large
+    assert small
+
+
+def test_rule_4_threshold_is_inclusive() -> None:
+    from swm.recipe.dependencies import SupplierOption
+
+    row = resolve_row(Layer.POWER, NodeClass.CLINIC, {"standby_fuel": "diesel"})
+    world = rich_world()
+    clinic = next(n for n in world[2].nodes if n.node_class == NodeClass.CLINIC)
+    for peak, expected in ((5.0, NodeClass.TRANSMISSION_SUBSTATION),
+                           (4.999999, NodeClass.DISTRIBUTION_SUBSTATION)):  # fmt: skip
+        loads = stage._LargeLoads({clinic.node_id: peak}, 5.0, 50)
+        assert loads.suppliers(row, clinic) == (SupplierOption(expected),)
 
 
 # --- States (E2) ----------------------------------------------------------------------------
@@ -646,7 +681,7 @@ def _imports(path: Path) -> set[str]:
 
 
 def test_emission_and_error_code_cannot_reach_the_couplings_output() -> None:
-    forbidden = {"swm.stages.couplings", "swm.recipe.dependencies"}
+    forbidden = {"swm.stages.couplings", "swm.stages.requirements", "swm.recipe.dependencies"}
     for folder in ("emit", "errors"):
         for path in (SRC / folder).rglob("*.py"):
             assert not _imports(path) & forbidden, path
@@ -672,6 +707,19 @@ def test_largest_remainder_and_apportion_are_exact() -> None:
     assert stage._apportion(50, [3, 1, 1]) == [2, 1, 0]
     assert stage._percent_of(40, 4) == 2
     assert stage._percent_of(50, 1) == 1
+
+
+def _large(world: World) -> Any:
+    rules = load_registry()
+    return stage._LargeLoads.from_rules(requirements_of(world), rules, 11.4)
+
+
+def _eligible_of(world: World, d: Any) -> Any:
+    """The dependency's eligible suppliers, rule 4 applied, nearest first."""
+    row = _row_of(world, d)
+    consumer = _node(world, d.consumer_id)
+    options = _large(world).suppliers(row, consumer)
+    return stage._eligible(row.supplier_layer, options, consumer, stage._World(world[1], world[2]))
 
 
 def _row_of(world: World, d: Any) -> Any:
