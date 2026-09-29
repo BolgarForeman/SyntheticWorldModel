@@ -13,8 +13,12 @@ import numpy as np
 from numpy.typing import NDArray
 
 from swm.coordinates import WORKING_CRS, domain_origin_m
-from swm.stages.layers import LayersResult
+from swm.recipe.schema import Layer
+from swm.stages.layers import AttributeValue, LayersResult, Node
 from swm.stages.terrain import TerrainResult
+
+Column = tuple[NDArray[np.generic], NDArray[np.bool_] | None]
+"""A typed column and its null mask (None when no row is null)."""
 
 GEODATA_VARIABLES = ("PROJ_LIB", "PROJ_DATA", "GDAL_DATA", "GDAL_DRIVER_PATH")
 """Environment variables that point GDAL and PROJ at another installation's data."""
@@ -85,38 +89,88 @@ def _metadata() -> dict[str, str]:
 
 
 def _write_nodes(package: Path, layers: LayersResult) -> None:
+    """Write the combined nodes table, then one typed table per layer (Work Order 4, D)."""
+    _write_layer(
+        package, "nodes", _points(layers.nodes), _common_columns(layers.nodes), "Point",
+        "Every node, with the columns all layers share. " + SYNTHETIC_NOTICE,
+    )  # fmt: skip
+    for layer in Layer:
+        nodes = [node for node in layers.nodes if node.layer == layer]
+        if not nodes:
+            continue
+        observed = _typed_columns([dict(node.attributes) for node in nodes])
+        truth = _typed_columns([dict(node.subtype) for node in nodes])
+        description = (
+            f"Nodes of the {layer} layer. Columns {', '.join(observed) or 'none'} are observed "
+            f"attributes; columns {', '.join(truth) or 'none'} are subtype attributes: "
+            "unobserved truth, for inspection only, never emitted. " + SYNTHETIC_NOTICE
+        )
+        columns = {**_common_columns(nodes), **observed, **truth}
+        _write_layer(package, f"nodes_{layer}", _points(nodes), columns, "Point", description)
+
+
+def _points(nodes: Sequence[Node]) -> NDArray[np.object_]:
     import shapely
 
-    geometry = np.array([shapely.to_wkb(shapely.Point(n.x_m, n.y_m)) for n in layers.nodes])
-    attributes = [dict(n.attributes) for n in layers.nodes]
-    fields: dict[str, Sequence[object]] = {
-        "node_id": [n.node_id for n in layers.nodes],
-        "layer": [n.layer.value for n in layers.nodes],
-        "class": [n.node_class.value for n in layers.nodes],
-        "city_id": [n.city_id for n in layers.nodes],
-        "longitude": [n.longitude for n in layers.nodes],
-        "latitude": [n.latitude for n in layers.nodes],
-        "attributes": [
-            "; ".join(f"{key}={value}" for key, value in row.items()) for row in attributes
-        ],
-    }
-    _write_layer(package, "nodes", geometry, fields, "Point")
+    return np.array([shapely.to_wkb(shapely.Point(n.x_m, n.y_m)) for n in nodes])
+
+
+def _common_columns(nodes: Sequence[Node]) -> dict[str, Column]:
+    return _typed_columns(
+        [
+            {
+                "node_id": n.node_id,
+                "layer": n.layer.value,
+                "class": n.node_class.value,
+                "city_id": n.city_id,
+                "longitude": n.longitude,
+                "latitude": n.latitude,
+            }
+            for n in nodes
+        ]
+    )
+
+
+def _typed_columns(rows: Sequence[Mapping[str, AttributeValue]]) -> dict[str, Column]:
+    """Turn rows of values into typed columns, with a null mask where a row lacks a value."""
+    names = list(dict.fromkeys(name for row in rows for name in row))
+    return {name: _column([row.get(name) for row in rows]) for name in names}
+
+
+def _column(values: Sequence[AttributeValue | None]) -> Column:
+    present = [value for value in values if value is not None]
+    mask = np.array([value is None for value in values])
+    if all(isinstance(value, bool) for value in present):
+        data: NDArray[np.generic] = np.array([bool(v) for v in values], dtype=bool)
+    elif all(isinstance(value, int) for value in present):
+        data = np.array([0 if v is None else int(v) for v in values], dtype=np.int64)
+    elif all(isinstance(value, int | float) for value in present):
+        data = np.array([0.0 if v is None else float(v) for v in values], dtype=np.float64)
+    else:
+        data = np.array(["" if v is None else str(v) for v in values], dtype=object)
+    return data, (mask if mask.any() else None)
 
 
 def _write_links(package: Path, layers: LayersResult) -> None:
     import shapely
 
     geometry = np.array([shapely.to_wkb(shapely.LineString(link.points)) for link in layers.links])
-    fields: dict[str, Sequence[object]] = {
-        "link_id": [link.link_id for link in layers.links],
-        "layer": [link.layer.value for link in layers.links],
-        "from_id": [link.from_id for link in layers.links],
-        "to_id": [link.to_id for link in layers.links],
-        "length_km": [link.length_km for link in layers.links],
-        "river_crossings": [link.river_crossings for link in layers.links],
-        "crosses_sea": [int(link.crosses_sea) for link in layers.links],
-    }
-    _write_layer(package, "links", geometry, fields, "LineString")
+    columns = _typed_columns(
+        [
+            {
+                "link_id": link.link_id,
+                "layer": link.layer.value,
+                "from_id": link.from_id,
+                "to_id": link.to_id,
+                "length_km": link.length_km,
+                "river_crossings": link.river_crossings,
+                "crosses_sea": link.crosses_sea,
+            }
+            for link in layers.links
+        ]
+    )
+    description = "Intra-layer links as straight or dog-leg polylines. " + SYNTHETIC_NOTICE
+    _write_layer(package, "links", geometry, columns, "LineString", description)
 
 
 def _write_polygons(
@@ -132,24 +186,28 @@ def _write_polygons(
     ]
     geometry = np.array([shapely.to_wkb(polygon) for polygon, _ in pieces])
     identifiers = [value - 1 if field == "city_id" else value for _, value in pieces]
-    _write_layer(package, name, geometry, {field: identifiers}, "Polygon")
+    columns = {field: _column(identifiers)}
+    _write_layer(package, name, geometry, columns, "Polygon", SYNTHETIC_NOTICE)
 
 
 def _write_layer(
     package: Path,
     name: str,
     geometry: NDArray[np.object_],
-    fields: Mapping[str, Sequence[object]],
+    columns: Mapping[str, Column],
     geometry_type: str,
+    description: str,
 ) -> None:
     from pyogrio.raw import write
 
-    columns = list(fields)
+    names = list(columns)
+    masks = [columns[column][1] for column in names]
     write(
         str(package),
         geometry,
-        [np.array(fields[column]) for column in columns],
-        columns,
+        [columns[column][0] for column in names],
+        names,
+        field_mask=masks if any(mask is not None for mask in masks) else None,
         layer=name,
         driver="GPKG",
         crs=WORKING_CRS,
@@ -157,6 +215,7 @@ def _write_layer(
         append=package.exists(),
         dataset_metadata=_metadata(),
         layer_metadata=_metadata(),
+        layer_options={"DESCRIPTION": description},
     )
 
 

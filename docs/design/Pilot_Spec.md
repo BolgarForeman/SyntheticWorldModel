@@ -1,6 +1,6 @@
 # Pilot Spec — The Full Chain on a Hand-Checkable Constructed World
 
-*v0.4 · 2026-09-28 · feeds Ch7 §7.2 and Figures 7.1, 7.2 and 7.4 · aligned with World_Generator_Structure v0.3 and the pilot recipe in the SyntheticWorldModel repository*
+*v0.5 · 2026-09-29 · feeds Ch7 §7.2 and Figures 7.1, 7.2 and 7.4 · aligned with World_Generator_Structure v0.5 and the pilot recipe in the SyntheticWorldModel repository*
 
 ## Purpose
 
@@ -12,9 +12,10 @@ It is a Phase 0 run in the sense of the generator design (§1.7.6). The proposal
 
 ## The world
 
-- **Size.** About 24 nodes, four per layer across the full layer set (power, telecom, water, transport, fuel, healthcare), with 35–45 edges including the cross-layer couplings. It fits on one page and a cascade can be traced by hand.
+- **Size.** About 24 nodes, four per layer across the full layer set (power, telecom, water, transport, fuel, healthcare), with 40–50 edges including the cross-layer couplings (widened from 35–45 on 2026-09-29). It fits on one page and a cascade can be traced by hand.
 - **Substrate.** A small island with a mountain spine and a coastal plain. Nodes are sited by layer rules from the generator design.
 - **Topology.** Each layer keeps its own signature: power meshed, water dendritic, healthcare a referral tree. Healthcare is the pure sink.
+- **Couplings switched on.** Seven of the 21, chosen so a cascade crosses every layer and can be traced by hand: fuel → power, power → telecom, telecom → power, power → water, water → healthcare, power → healthcare, transport → fuel. The rest are generated and hidden. Density 0 (core dependencies only), dependencies from the table in World_Generator_Structure §4.3a. If the realised edge count falls outside 40–50, the build reports it rather than tuning.
 - **Coupling.** Cross-layer edges carry commodity, coupling strength κ and a failure mode (throttle or trip). Reserves are drawn per node from context like every other unobserved quantity, and each reserve sets its buffer time τ (reserve ÷ draw) during the run. The earlier single planted reserve on the fuel→power link is superseded.
 - **Sources.** One small source file per layer in its real container. Power (OpenStreetMap and the WRI plant database) and healthcare (OpenStreetMap and the government facility register) each have two sources that deliberately disagree; the other four layers have one. Fuel and healthcare sources report nodes only.
 - **Crews.** The world has two repair crews.

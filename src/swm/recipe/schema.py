@@ -680,8 +680,33 @@ class FeedMix(_Section):
         return self
 
 
+class PublicTelecomShare(_Section):
+    """Share of a control dependency carried on the public telecom layer (§4.3a rule 1).
+
+    The rest rides the consumer's own private network. CHOICE: placeholder (open decision:
+    realism ranges). Source: DOE (2023); Taipower's own fibre (台電月刊 Vol. 700).
+    """
+
+    generation_pct: int = Field(
+        20, ge=0, le=100, description="Public share for generation control."
+    )
+    transmission_pct: int = Field(
+        20, ge=0, le=100, description="Public share for transmission substation control."
+    )
+    distribution_pct: int = Field(
+        50, ge=0, le=100, description="Public share for distribution substation control."
+    )
+    water_pct: int = Field(50, ge=0, le=100, description="Public share for water control.")
+    pipelines_pct: int = Field(
+        50,
+        ge=0,
+        le=100,
+        description="Public share for pipeline control (tank farms and import terminals).",
+    )
+
+
 class Couplings(_Section):
-    """Cross-layer couplings. Spec: structure v0.2 §4.3."""
+    """Cross-layer couplings. Spec: structure v0.5 §4.3 and §4.3a."""
 
     switched_on: tuple[CouplingPair, ...] = Field(
         default_factory=lambda: tuple(
@@ -699,10 +724,16 @@ class Couplings(_Section):
         50,
         ge=0,
         le=100,
-        description="Cross-layer dependencies per consumer. 0 = the minimum one supplier per "
-        "coupled layer; 100 = the maximum the matrix allows.",
+        description="Coupling density. 0: each consumer takes only its core dependencies "
+        "(§4.3a); 100: every dependency the table allows.",
     )
-    two_way: bool = Field(True, description="Whether two-way dependencies are generated.")
+    two_way_pct: int = Field(
+        50,
+        ge=0,
+        le=100,
+        description="Share of allowed mutual node pairs that are built (two nodes that each "
+        "depend on the other). 0: none; 100: every mutual pair the table allows.",
+    )
     supplier_not_nearest_pct: int = Field(
         25,
         ge=0,
@@ -713,10 +744,31 @@ class Couplings(_Section):
         40,
         ge=0,
         le=100,
-        description="Dependency concentration. 0 = supply spread evenly across suppliers; "
-        "100 = one supplier per layer carries every consumer.",
+        description="Dependency concentration: the pull toward one hub supplier per coupling. "
+        "0: each consumer takes its nearest eligible supplier; 100: the hub carries every "
+        "consumer it is eligible for.",
     )
     feed_mix: FeedMix = Field(default_factory=FeedMix, description="Feed configuration mix.")
+    public_telecom_share: PublicTelecomShare = Field(
+        default_factory=PublicTelecomShare,
+        description="Public telecom share of control dependencies, per consumer (rule 1).",
+    )
+    tertiary_second_feed_pct: int = Field(
+        50,
+        ge=0,
+        le=100,
+        description="Chance that a tertiary hospital takes a second distribution substation "
+        "(§4.3a rule 5). CHOICE: placeholder (open decision: realism ranges).",
+    )
+    transmission_connection_threshold_mw: float = Field(
+        5.0,
+        ge=0,
+        description="Load above which a consumer is supplied from a transmission substation "
+        "(§4.3a rule 4), in MW. CHOICE: placeholder (open decision: realism ranges). Taipower "
+        "sets supply voltage by contract capacity, with extra-high voltage (69 kV and up) for "
+        "the largest customers (S-TW-TP, Art. 46); its kW thresholds were not retrieved, and "
+        "5 MW is the commonly cited boundary, unverified.",
+    )
 
     @model_validator(mode="after")
     def _no_repeated_pairs(self) -> Self:

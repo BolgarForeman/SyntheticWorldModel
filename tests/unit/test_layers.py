@@ -322,7 +322,10 @@ def test_attributes_are_in_range_and_in_their_code_lists(pilot: Any) -> None:
     for node in result.nodes:
         attributes = dict(node.attributes)
         assert attributes["status"] == "operational"
+        sized_to_load = (NodeClass.GENERATION, NodeClass.TRANSMISSION_SUBSTATION)
         for name, (low, high) in ATTRIBUTE_RANGES.get(node.node_class, {}).items():
+            if node.node_class in sized_to_load:
+                continue  # sized to the load (decision 0007); tested below
             assert low <= float(attributes[name]) <= high, (node.node_id, name)
         if node.node_class == NodeClass.TRANSMISSION_SUBSTATION:
             assert attributes["voltage_kv"] in (345.0, 161.0, 69.0)
@@ -362,3 +365,112 @@ def test_nodes_carry_projected_and_geographic_coordinates(pilot: Any) -> None:
         assert (node.x_m, node.y_m) == cell_centre_m(node.row, node.column, terrain.grid)
         assert (node.longitude, node.latitude) == to_lonlat(node.x_m, node.y_m)
     assert GRID_CELLS == 256
+
+
+# --- Subtype attributes and power sizing (Work Order 4, Parts B and C) -----------------------
+
+
+def test_subtype_attributes_are_drawn_within_their_values(pilot: Any) -> None:
+    from swm.recipe.dependencies import SUBTYPE_VALUES
+
+    _, _, result = pilot
+    for node in result.nodes:
+        subtype = dict(node.subtype)
+        domains = SUBTYPE_VALUES.get(node.node_class, {})
+        expected = set(domains)
+        if subtype.get("fuel_kind") == "hydro":
+            expected.discard("makeup_water")
+        assert set(subtype) == expected, node.node_id
+        for name, value in subtype.items():
+            assert value in domains[name], (node.node_id, name)
+
+
+def test_subtype_attributes_are_not_observed_attributes(pilot: Any) -> None:
+    from swm.recipe.dependencies import SUBTYPE_VALUES
+
+    _, _, result = pilot
+    names = {name for domains in SUBTYPE_VALUES.values() for name in domains}
+    for node in result.nodes:
+        assert not names & {name for name, _ in node.attributes}, node.node_id
+
+
+def test_pilot_generation_burns_lng_from_an_lng_terminal(pilot: Any) -> None:
+    _, _, result = pilot
+    plant = next(n for n in result.nodes if n.node_class == NodeClass.GENERATION)
+    terminal = next(n for n in result.nodes if n.node_class == NodeClass.IMPORT_TERMINAL)
+    assert dict(plant.subtype)["fuel_kind"] == "lng"
+    assert dict(plant.attributes)["fuel_type"] == "gas"
+    assert dict(terminal.subtype)["product"] == "lng"
+
+
+def test_the_hydro_dam_is_hydro_in_truth_and_in_its_sources() -> None:
+    _, _, result = build_world(layers={"dual_membership": True})
+    dam = next(n for n in result.nodes if n.node_class == NodeClass.GENERATION)
+    assert dict(dam.subtype)["fuel_kind"] == "hydro"
+    assert dict(dam.attributes)["fuel_type"] == "hydro"
+
+
+def test_the_largest_airport_is_towered_and_pipeline_fed() -> None:
+    _, terrain, result = build_world(layers={"transport": {"node_count": 20}})
+    airports = [n for n in result.nodes if n.node_class == NodeClass.AIRPORT]
+    assert len(airports) >= 2
+    sizes = {c.city_id: c.cell_count for c in terrain.cities}
+    largest = max(airports, key=lambda n: (sizes[n.city_id], -airports.index(n)))
+    assert dict(largest.subtype) == {"towered": True, "fuel_receipt": "pipeline"}
+
+
+def test_data_centres_cool_by_evaporation() -> None:
+    _, _, result = build_world(layers={"telecom": {"node_count": 20}})
+    centres = [n for n in result.nodes if n.node_class == NodeClass.DATA_CENTRE]
+    assert centres
+    assert all(dict(n.subtype)["cooling"] == "evaporative" for n in centres)
+
+
+def test_generation_is_served_by_an_import_terminal_or_bulk_storage() -> None:
+    for seed in range(4):
+        _, _, result = build_world(
+            root_seed=seed,
+            layers={"power": {"node_count": 20}, "fuel": {"node_count": 7}},
+        )
+        products = {
+            dict(n.subtype)["product"]
+            for n in result.nodes
+            if n.node_class == NodeClass.IMPORT_TERMINAL
+        }
+        bulk = any(n.node_class in (NodeClass.TANK_FARM, NodeClass.REFINERY) for n in result.nodes)
+        for plant in (n for n in result.nodes if n.node_class == NodeClass.GENERATION):
+            kind = dict(plant.subtype)["fuel_kind"]
+            if kind in ("lng", "coal"):
+                assert kind in products, (seed, plant.node_id)
+            if kind == "oil":
+                assert bulk
+
+
+def feeds(result: LayersResult) -> dict[str, list[str]]:
+    power = {n.node_id: n for n in result.nodes if n.layer == Layer.POWER}
+    fed: dict[str, list[str]] = {i: [] for i in power}
+    for link in result.links:
+        if link.layer == Layer.POWER:
+            fed[link.from_id].append(link.to_id)
+            fed[link.to_id].append(link.from_id)
+    return fed
+
+
+@pytest.mark.parametrize("sections", [{}, {"layers": {"power": {"node_count": 17}}}])
+def test_power_capacities_hang_together(sections: dict[str, Any]) -> None:
+    _, _, result = build_world(**sections)
+    power = {n.node_id: n for n in result.nodes if n.layer == Layer.POWER}
+    mva = {
+        i: float(dict(n.attributes)["capacity_mva"])
+        for i, n in power.items()
+        if n.node_class == NodeClass.DISTRIBUTION_SUBSTATION
+    }
+    plants = [n for n in power.values() if n.node_class == NodeClass.GENERATION]
+    total_mw = sum(float(dict(n.attributes)["capacity_mw"]) for n in plants)
+    expected = sum(mva.values()) * layers_stage.RESERVE_MARGIN * layers_stage.POWER_FACTOR
+    assert total_mw == pytest.approx(expected, abs=0.05 * len(plants) + 1e-9)
+    for node_id, neighbours in feeds(result).items():
+        node = power[node_id]
+        if node.node_class == NodeClass.TRANSMISSION_SUBSTATION:
+            fed = sum(mva[i] for i in neighbours if i in mva)
+            assert float(dict(node.attributes)["capacity_mva"]) >= layers_stage.RESERVE_MARGIN * fed

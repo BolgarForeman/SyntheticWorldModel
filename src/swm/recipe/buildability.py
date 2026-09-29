@@ -227,7 +227,7 @@ def _coupling_features(recipe: Recipe) -> set[str]:
         and couplings.switched_off_handling == SwitchedOffHandling.GENERATE_AND_HIDE
     ):
         features.add("couplings_hidden")
-    if couplings.two_way:
+    if couplings.two_way_pct > 0:
         features.add("couplings_two_way")
     hazards = recipe.shared_causes.hazards
     features |= {f"hazard:{hazard}" for hazard in Hazard if hazards.get(hazard).switched_on}

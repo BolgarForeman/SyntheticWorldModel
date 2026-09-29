@@ -233,3 +233,54 @@ def test_custom_size_needs_area_and_every_count() -> None:
             terrain={"size_preset": "custom"},
             layers={layer.value: {"node_count": 5} for layer in Layer if layer != Layer.POWER},
         )
+
+
+# --- Couplings settings (Work Order 4, A3) --------------------------------------------------
+
+
+def test_couplings_settings_have_their_defaults() -> None:
+    couplings = Recipe().couplings
+    assert couplings.two_way_pct == 50
+    assert couplings.tertiary_second_feed_pct == 50
+    assert couplings.transmission_connection_threshold_mw == 5.0
+    share = couplings.public_telecom_share
+    assert (share.generation_pct, share.transmission_pct) == (20, 20)
+    assert (share.distribution_pct, share.water_pct, share.pipelines_pct) == (50, 50, 50)
+
+
+@pytest.mark.parametrize(
+    ("couplings", "field"),
+    [
+        ({"two_way_pct": 101}, "two_way_pct"),
+        ({"tertiary_second_feed_pct": -1}, "tertiary_second_feed_pct"),
+        ({"transmission_connection_threshold_mw": -0.5}, "transmission_connection_threshold_mw"),
+        ({"public_telecom_share": {"water_pct": 120}}, "water_pct"),
+    ],
+)
+def test_couplings_settings_are_bounded(couplings: dict[str, Any], field: str) -> None:
+    with pytest.raises(ValidationError, match=field):
+        recipe(couplings=couplings)
+
+
+def test_the_old_two_way_switch_is_gone() -> None:
+    with pytest.raises(ValidationError, match="two_way"):
+        recipe(couplings={"two_way": True})
+
+
+def test_the_pilot_switches_on_its_seven_couplings(pilot_path: Any) -> None:
+    from swm.recipe.io import load_recipe
+
+    couplings = load_recipe(pilot_path).couplings
+    pairs = {(p.supplier.value, p.consumer.value) for p in couplings.switched_on}
+    assert pairs == {
+        ("fuel", "power"),
+        ("power", "telecom"),
+        ("telecom", "power"),
+        ("power", "water"),
+        ("water", "healthcare"),
+        ("power", "healthcare"),
+        ("transport", "fuel"),
+    }
+    assert couplings.switched_off_handling == "generate_and_hide"
+    assert couplings.density == 0
+    assert couplings.two_way_pct == 0

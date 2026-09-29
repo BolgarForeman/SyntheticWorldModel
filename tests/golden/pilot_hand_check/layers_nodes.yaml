@@ -8,10 +8,13 @@ nodes:
   latitude: -48.8595966
   city_id: 0
   attributes:
-    capacity_mw: 1207.5
+    capacity_mw: 150.9
     fuel_type: gas
     status: operational
   runway_m: null
+  subtype:
+    fuel_kind: lng
+    makeup_water: municipal
 - id: SWM-POW-0002
   layer: power
   class: transmission_substation
@@ -21,10 +24,11 @@ nodes:
   latitude: -48.8700697
   city_id: 2
   attributes:
-    capacity_mva: 506
+    capacity_mva: 440
     status: operational
     voltage_kv: 161.0
   runway_m: null
+  subtype: {}
 - id: SWM-POW-0003
   layer: power
   class: distribution_substation
@@ -34,10 +38,11 @@ nodes:
   latitude: -48.8811654
   city_id: 0
   attributes:
-    capacity_mva: 75
+    capacity_mva: 86
     status: operational
     voltage_kv: 22.8
   runway_m: null
+  subtype: {}
 - id: SWM-POW-0004
   layer: power
   class: distribution_substation
@@ -47,10 +52,11 @@ nodes:
   latitude: -48.8721695
   city_id: 1
   attributes:
-    capacity_mva: 46
+    capacity_mva: 43
     status: operational
     voltage_kv: 22.8
   runway_m: null
+  subtype: {}
 - id: SWM-TEL-0001
   layer: telecom
   class: exchange
@@ -64,6 +70,8 @@ nodes:
     status: operational
     type: exchange
   runway_m: null
+  subtype:
+    standby_fuel: diesel
 - id: SWM-TEL-0002
   layer: telecom
   class: mast
@@ -77,6 +85,8 @@ nodes:
     status: operational
     type: mast
   runway_m: null
+  subtype:
+    standby_fuel: diesel
 - id: SWM-TEL-0003
   layer: telecom
   class: mast
@@ -90,6 +100,8 @@ nodes:
     status: operational
     type: mast
   runway_m: null
+  subtype:
+    standby_fuel: diesel
 - id: SWM-TEL-0004
   layer: telecom
   class: mast
@@ -103,6 +115,8 @@ nodes:
     status: operational
     type: mast
   runway_m: null
+  subtype:
+    standby_fuel: none
 - id: SWM-WAT-0001
   layer: water
   class: reservoir
@@ -116,6 +130,7 @@ nodes:
     storage_m3: 21845200
     type: reservoir
   runway_m: null
+  subtype: {}
 - id: SWM-WAT-0002
   layer: water
   class: treatment
@@ -129,6 +144,8 @@ nodes:
     status: operational
     type: treatment
   runway_m: null
+  subtype:
+    standby_fuel: diesel
 - id: SWM-WAT-0003
   layer: water
   class: pumping
@@ -142,6 +159,8 @@ nodes:
     status: operational
     type: pumping
   runway_m: null
+  subtype:
+    standby_fuel: none
 - id: SWM-WAT-0004
   layer: water
   class: storage
@@ -155,6 +174,7 @@ nodes:
     storage_m3: 82600
     type: storage
   runway_m: null
+  subtype: {}
 - id: SWM-TRN-0001
   layer: transport
   class: seaport
@@ -168,6 +188,7 @@ nodes:
     status: operational
     type: seaport
   runway_m: null
+  subtype: {}
 - id: SWM-TRN-0002
   layer: transport
   class: airport
@@ -185,6 +206,9 @@ nodes:
     - 4591032.72
   - - 477349.22
     - 4589169.94
+  subtype:
+    fuel_receipt: pipeline
+    towered: true
 - id: SWM-TRN-0003
   layer: transport
   class: freight_yard
@@ -198,6 +222,7 @@ nodes:
     status: operational
     type: freight_yard
   runway_m: null
+  subtype: {}
 - id: SWM-TRN-0004
   layer: transport
   class: bridge
@@ -212,6 +237,7 @@ nodes:
     status: operational
     type: bridge
   runway_m: null
+  subtype: {}
 - id: SWM-FUE-0001
   layer: fuel
   class: import_terminal
@@ -225,6 +251,8 @@ nodes:
     storage_m3: 757500
     type: import_terminal
   runway_m: null
+  subtype:
+    product: lng
 - id: SWM-FUE-0002
   layer: fuel
   class: tank_farm
@@ -238,6 +266,10 @@ nodes:
     storage_m3: 432900
     type: tank_farm
   runway_m: null
+  subtype:
+    has_jetty: false
+    has_truck_rack: false
+    pipeline_connected: false
 - id: SWM-FUE-0003
   layer: fuel
   class: depot
@@ -251,6 +283,7 @@ nodes:
     storage_m3: 16500
     type: depot
   runway_m: null
+  subtype: {}
 - id: SWM-FUE-0004
   layer: fuel
   class: depot
@@ -264,6 +297,7 @@ nodes:
     storage_m3: 8400
     type: depot
   runway_m: null
+  subtype: {}
 - id: SWM-HLT-0001
   layer: healthcare
   class: tertiary
@@ -277,6 +311,9 @@ nodes:
     facility_class: tertiary
     status: operational
   runway_m: null
+  subtype:
+    records_hosted: false
+    standby_fuel: diesel
 - id: SWM-HLT-0002
   layer: healthcare
   class: regional
@@ -290,6 +327,9 @@ nodes:
     facility_class: regional
     status: operational
   runway_m: null
+  subtype:
+    records_hosted: false
+    standby_fuel: diesel
 - id: SWM-HLT-0003
   layer: healthcare
   class: clinic
@@ -303,6 +343,9 @@ nodes:
     facility_class: clinic
     status: operational
   runway_m: null
+  subtype:
+    records_hosted: true
+    standby_fuel: diesel
 - id: SWM-HLT-0004
   layer: healthcare
   class: blood_bank
@@ -315,3 +358,6 @@ nodes:
     facility_class: blood_bank
     status: operational
   runway_m: null
+  subtype:
+    records_hosted: false
+    standby_fuel: diesel

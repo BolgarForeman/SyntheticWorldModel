@@ -55,11 +55,13 @@ def test_export_gis_writes_a_readable_geopackage_and_geotiffs(
     assert main(["export-gis", str(pilot_path), "-o", str(tmp_path)]) == 0
     package = str(tmp_path / "world.gpkg")
     expected = {"nodes": 24, "links": 23}
+    for layer in ("power", "telecom", "water", "transport", "fuel", "healthcare"):
+        expected[f"nodes_{layer}"] = 4
     for layer, count in expected.items():
         info = pyogrio.read_info(package, layer=layer)
         assert info["features"] == count
         assert info["crs"] == "EPSG:32710"
-        assert info["layer_metadata"]["DESCRIPTION"] == SYNTHETIC_NOTICE
+        assert SYNTHETIC_NOTICE in info["layer_metadata"]["DESCRIPTION"]
     assert pyogrio.read_info(package, layer="cities")["features"] == 3
     assert pyogrio.read_info(package, layer="coastline")["features"] == 3
     nodes_bounds = pyogrio.read_info(package, layer="nodes")["total_bounds"]
@@ -76,6 +78,48 @@ def test_export_gis_writes_a_readable_geopackage_and_geotiffs(
         with rasterio.open(tmp_path / name) as raster:
             assert raster.crs.to_epsg() == 32710
             assert raster.bounds == bounds
+
+
+def test_export_gis_writes_typed_tables(pilot_path: Path, tmp_path: Path) -> None:
+    pytest.importorskip("pyogrio")
+    import pyogrio
+
+    assert main(["export-gis", str(pilot_path), "-o", str(tmp_path)]) == 0
+    package = str(tmp_path / "world.gpkg")
+
+    def columns(layer: str) -> dict[str, str]:
+        info = pyogrio.read_info(package, layer=layer)
+        return dict(zip(info["fields"], info["dtypes"], strict=True))
+
+    common = {
+        "node_id": "object",
+        "layer": "object",
+        "class": "object",
+        "city_id": "int64",
+        "longitude": "float64",
+        "latitude": "float64",
+    }
+    assert columns("nodes") == common
+    power = columns("nodes_power")
+    assert power["capacity_mw"] == "float64"
+    assert power["capacity_mva"] == "int64"
+    assert power["voltage_kv"] == "float64"
+    assert power["fuel_kind"] == "object"
+    assert columns("nodes_transport")["towered"] == "bool"
+    assert columns("nodes_fuel")["pipeline_connected"] == "bool"
+    assert columns("nodes_healthcare")["bed_count"] == "int64"
+    assert columns("links")["crosses_sea"] == "bool"
+    assert columns("links")["river_crossings"] == "int64"
+    assert "attributes" not in columns("nodes_power")
+    description = pyogrio.read_info(package, layer="nodes_power")["layer_metadata"]["DESCRIPTION"]
+    assert "fuel_kind" in description
+    assert "unobserved truth" in description
+    _, _, _, fields = pyogrio.raw.read(package, layer="nodes_power")
+    names = pyogrio.read_info(package, layer="nodes_power")["fields"].tolist()
+    capacity_mw = fields[names.index("capacity_mw")]
+    classes = fields[names.index("class")]
+    for node_class, value in zip(classes, capacity_mw, strict=True):
+        assert (node_class == "generation") == (value == value)  # NaN is null elsewhere
 
 
 def test_preview_world_writes_a_png(pilot_path: Path, tmp_path: Path) -> None:
