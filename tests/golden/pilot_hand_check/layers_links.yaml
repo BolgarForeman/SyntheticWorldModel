@@ -1,0 +1,279 @@
+links:
+- id: SWM-POW-L0001
+  layer: power
+  from: SWM-POW-0001
+  to: SWM-POW-0002
+  length_km: 7.153
+  river_crossings: 2
+  crosses_sea: false
+  points_m:
+  - - 477216.16
+    - 4588105.5
+  - - 470164.21
+    - 4586908.0
+- id: SWM-POW-L0002
+  layer: power
+  from: SWM-POW-0002
+  to: SWM-POW-0003
+  length_km: 7.81
+  river_crossings: 1
+  crosses_sea: false
+  points_m:
+  - - 470164.21
+    - 4586908.0
+  - - 477881.44
+    - 4585710.5
+- id: SWM-POW-L0003
+  layer: power
+  from: SWM-POW-0002
+  to: SWM-POW-0004
+  length_km: 5.595
+  river_crossings: 3
+  crosses_sea: false
+  points_m:
+  - - 470164.21
+    - 4586908.0
+  - - 464575.87
+    - 4586641.88
+- id: SWM-POW-L0004
+  layer: power
+  from: SWM-POW-0001
+  to: SWM-POW-0003
+  length_km: 2.486
+  river_crossings: 0
+  crosses_sea: false
+  points_m:
+  - - 477216.16
+    - 4588105.5
+  - - 477881.44
+    - 4585710.5
+- id: SWM-POW-L0005
+  layer: power
+  from: SWM-POW-0001
+  to: SWM-POW-0004
+  length_km: 12.725
+  river_crossings: 7
+  crosses_sea: false
+  points_m:
+  - - 477216.16
+    - 4588105.5
+  - - 464575.87
+    - 4586641.88
+- id: SWM-TEL-L0001
+  layer: telecom
+  from: SWM-TEL-0001
+  to: SWM-TEL-0002
+  length_km: 20.91
+  river_crossings: 11
+  crosses_sea: true
+  points_m:
+  - - 476417.83
+    - 4590367.44
+  - - 458189.2
+    - 4600612.73
+- id: SWM-TEL-L0002
+  layer: telecom
+  from: SWM-TEL-0001
+  to: SWM-TEL-0003
+  length_km: 15.65
+  river_crossings: 11
+  crosses_sea: true
+  points_m:
+  - - 476417.83
+    - 4590367.44
+  - - 462446.98
+    - 4597419.4
+- id: SWM-TEL-L0003
+  layer: telecom
+  from: SWM-TEL-0001
+  to: SWM-TEL-0004
+  length_km: 12.552
+  river_crossings: 8
+  crosses_sea: false
+  points_m:
+  - - 476417.83
+    - 4590367.44
+  - - 463910.6
+    - 4589303.0
+- id: SWM-TEL-L0004
+  layer: telecom
+  from: SWM-TEL-0002
+  to: SWM-TEL-0003
+  length_km: 5.322
+  river_crossings: 2
+  crosses_sea: false
+  points_m:
+  - - 458189.2
+    - 4600612.73
+  - - 462446.98
+    - 4597419.4
+- id: SWM-WAT-L0001
+  layer: water
+  from: SWM-WAT-0001
+  to: SWM-WAT-0002
+  length_km: 1.129
+  river_crossings: 1
+  crosses_sea: false
+  points_m:
+  - - 467902.27
+    - 4591831.06
+  - - 468700.6
+    - 4592629.39
+- id: SWM-WAT-L0002
+  layer: water
+  from: SWM-WAT-0002
+  to: SWM-WAT-0003
+  length_km: 4.909
+  river_crossings: 4
+  crosses_sea: false
+  points_m:
+  - - 468700.6
+    - 4592629.39
+  - - 472825.33
+    - 4589968.28
+- id: SWM-WAT-L0003
+  layer: water
+  from: SWM-WAT-0003
+  to: SWM-WAT-0004
+  length_km: 3.204
+  river_crossings: 2
+  crosses_sea: false
+  points_m:
+  - - 472825.33
+    - 4589968.28
+  - - 472559.21
+    - 4586774.94
+- id: SWM-TRN-L0001
+  layer: transport
+  from: SWM-TRN-0004
+  to: SWM-TRN-0002
+  length_km: 12.668
+  river_crossings: 8
+  crosses_sea: false
+  points_m:
+  - - 464309.76
+    - 4586375.77
+  - - 476417.83
+    - 4590101.33
+- id: SWM-TRN-L0002
+  layer: transport
+  from: SWM-TRN-0004
+  to: SWM-TRN-0003
+  length_km: 6.653
+  river_crossings: 6
+  crosses_sea: false
+  points_m:
+  - - 464309.76
+    - 4586375.77
+  - - 470696.44
+    - 4588238.55
+- id: SWM-TRN-L0003
+  layer: transport
+  from: SWM-TRN-0001
+  to: SWM-TRN-0002
+  length_km: 3.884
+  river_crossings: 1
+  crosses_sea: false
+  points_m:
+  - - 473091.44
+    - 4592097.17
+  - - 474688.11
+    - 4591032.72
+  - - 476417.83
+    - 4590101.33
+- id: SWM-TRN-L0004
+  layer: transport
+  from: SWM-TRN-0001
+  to: SWM-TRN-0003
+  length_km: 4.541
+  river_crossings: 1
+  crosses_sea: false
+  points_m:
+  - - 473091.44
+    - 4592097.17
+  - - 470696.44
+    - 4588238.55
+- id: SWM-TRN-L0005
+  layer: transport
+  from: SWM-TRN-0002
+  to: SWM-TRN-0003
+  length_km: 6.017
+  river_crossings: 3
+  crosses_sea: false
+  points_m:
+  - - 476417.83
+    - 4590101.33
+  - - 470696.44
+    - 4588238.55
+- id: SWM-FUE-L0001
+  layer: fuel
+  from: SWM-FUE-0001
+  to: SWM-FUE-0002
+  length_km: 1.389
+  river_crossings: 0
+  crosses_sea: false
+  points_m:
+  - - 477349.22
+    - 4587972.44
+  - - 476950.05
+    - 4586641.88
+- id: SWM-FUE-L0002
+  layer: fuel
+  from: SWM-FUE-0002
+  to: SWM-FUE-0003
+  length_km: 2.145
+  river_crossings: 2
+  crosses_sea: false
+  points_m:
+  - - 476950.05
+    - 4586641.88
+  - - 475885.61
+    - 4588504.66
+- id: SWM-FUE-L0003
+  layer: fuel
+  from: SWM-FUE-0002
+  to: SWM-FUE-0004
+  length_km: 13.89
+  river_crossings: 4
+  crosses_sea: false
+  points_m:
+  - - 476950.05
+    - 4586641.88
+  - - 463112.26
+    - 4585444.38
+- id: SWM-HLT-L0001
+  layer: healthcare
+  from: SWM-HLT-0001
+  to: SWM-HLT-0002
+  length_km: 12.231
+  river_crossings: 4
+  crosses_sea: false
+  points_m:
+  - - 474821.16
+    - 4588637.72
+  - - 462979.21
+    - 4585577.44
+- id: SWM-HLT-L0002
+  layer: healthcare
+  from: SWM-HLT-0002
+  to: SWM-HLT-0003
+  length_km: 9.878
+  river_crossings: 6
+  crosses_sea: false
+  points_m:
+  - - 462979.21
+    - 4585577.44
+  - - 467503.1
+    - 4594359.11
+- id: SWM-HLT-L0003
+  layer: healthcare
+  from: SWM-HLT-0001
+  to: SWM-HLT-0004
+  length_km: 1.619
+  river_crossings: 1
+  crosses_sea: false
+  points_m:
+  - - 474821.16
+    - 4588637.72
+  - - 475087.27
+    - 4590234.39

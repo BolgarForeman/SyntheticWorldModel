@@ -1,4 +1,4 @@
-# The pilot world: Pilot_Spec.md v0.4 (decisions 0003 and 0004).
+# The pilot world: Pilot_Spec.md v0.4 (decisions 0003, 0004 and 0006).
 # Fields the pilot spec does not set are left to the schema defaults.
 recipe_version: 1
 
@@ -19,7 +19,7 @@ layers:
     sources: [osm_water]
   transport:
     state: emitted
-    sources: [ourairports]
+    sources: [osm_transport, ourairports]  # decision 0006: OpenStreetMap backbone, OurAirports crossing it
   fuel:
     state: emitted
     sources: [osm_fuel]

@@ -101,8 +101,20 @@ FEATURE_NOTES: dict[str, str] = {
 }
 """Why a feature is refused, where the phase alone does not say (decision 0004, B2 and B3)."""
 
-BUILT_FEATURES: frozenset[str] = frozenset({"map_type:spine_island", "terrain_character"})
-"""Features the generator builds today: the spine-island terrain stage (Work Order 2)."""
+BUILT_FEATURES: frozenset[str] = frozenset(
+    {
+        "map_type:spine_island",
+        "terrain_character",
+        "size:up_to_small",
+        "layer_siting_and_links",
+        "layer_state:hidden",
+        "layer_state:off",
+        "nodes_only",
+        "dual_membership",
+    }
+)
+"""Features the generator builds today: the spine-island terrain (Work Order 2) and the layers
+stage (Work Order 3)."""
 
 
 @dataclass(frozen=True)

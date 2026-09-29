@@ -1,0 +1,80 @@
+layers:
+  power:
+    state: emitted
+    nodes: 4
+    class_counts:
+      generation: 1
+      transmission_substation: 1
+      distribution_substation: 2
+    links: 5
+    mean_links_per_node: 2.5
+    mean_spacing_km: 4.04
+    classes_without_source: []
+    notes: []
+  telecom:
+    state: emitted
+    nodes: 4
+    class_counts:
+      exchange: 1
+      mast: 3
+      data_centre: 0
+      cable_landing: 0
+    links: 4
+    mean_links_per_node: 2.0
+    mean_spacing_km: 7.861
+    classes_without_source: []
+    notes: []
+  water:
+    state: emitted
+    nodes: 4
+    class_counts:
+      reservoir: 1
+      treatment: 1
+      pumping: 1
+      storage: 1
+    links: 3
+    mean_links_per_node: 1.5
+    mean_spacing_km: 2.167
+    classes_without_source: []
+    notes: []
+  transport:
+    state: emitted
+    nodes: 4
+    class_counts:
+      seaport: 1
+      airport: 1
+      freight_yard: 1
+      bridge: 1
+      road_junction: 0
+      rail_node: 0
+    links: 5
+    mean_links_per_node: 2.5
+    mean_spacing_km: 4.738
+    classes_without_source: []
+    notes: []
+  fuel:
+    state: emitted
+    nodes: 4
+    class_counts:
+      refinery: 0
+      tank_farm: 1
+      import_terminal: 1
+      depot: 2
+    links: 3
+    mean_links_per_node: 1.5
+    mean_spacing_km: 4.368
+    classes_without_source: []
+    notes: []
+  healthcare:
+    state: emitted
+    nodes: 4
+    class_counts:
+      tertiary: 1
+      regional: 1
+      clinic: 1
+      blood_bank: 1
+    links: 3
+    mean_links_per_node: 1.5
+    mean_spacing_km: 5.437
+    classes_without_source: []
+    notes: []

@@ -85,6 +85,12 @@ def test_sea_cells_are_zero_and_the_maximum_is_bounded(pilot: TerrainResult) -> 
     assert pilot.statistics.max_elevation_m > 0.5 * elevation_bound_m(60)
 
 
+@pytest.mark.parametrize("mountainous", [0, 25, 60, 100])
+def test_the_peak_equals_its_bound_to_one_decimetre(mountainous: int) -> None:
+    peak = build(character={"mountainous": mountainous}).statistics.max_elevation_m
+    assert abs(peak - elevation_bound_m(mountainous)) <= 0.1
+
+
 def test_mountainous_zero_gives_low_relief_that_still_drains() -> None:
     low = build(character={"mountainous": 0})
     assert 0 < low.statistics.max_elevation_m <= 100

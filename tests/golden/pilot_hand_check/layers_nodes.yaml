@@ -1,0 +1,317 @@
+nodes:
+- id: SWM-POW-0001
+  layer: power
+  class: generation
+  x_m: 477216.16
+  y_m: 4588105.5
+  longitude: -123.3106272
+  latitude: -48.8595966
+  city_id: 0
+  attributes:
+    capacity_mw: 1207.5
+    fuel_type: gas
+    status: operational
+  runway_m: null
+- id: SWM-POW-0002
+  layer: power
+  class: transmission_substation
+  x_m: 470164.21
+  y_m: 4586908.0
+  longitude: -123.4068562
+  latitude: -48.8700697
+  city_id: 2
+  attributes:
+    capacity_mva: 506
+    status: operational
+    voltage_kv: 161.0
+  runway_m: null
+- id: SWM-POW-0003
+  layer: power
+  class: distribution_substation
+  x_m: 477881.44
+  y_m: 4585710.5
+  longitude: -123.3016867
+  latitude: -48.8811654
+  city_id: 0
+  attributes:
+    capacity_mva: 75
+    status: operational
+    voltage_kv: 22.8
+  runway_m: null
+- id: SWM-POW-0004
+  layer: power
+  class: distribution_substation
+  x_m: 464575.87
+  y_m: 4586641.88
+  longitude: -123.4830821
+  latitude: -48.8721695
+  city_id: 1
+  attributes:
+    capacity_mva: 46
+    status: operational
+    voltage_kv: 22.8
+  runway_m: null
+- id: SWM-TEL-0001
+  layer: telecom
+  class: exchange
+  x_m: 476417.83
+  y_m: 4590367.44
+  longitude: -123.321381
+  latitude: -48.8392189
+  city_id: 0
+  attributes:
+    operator: SWM Telecom A
+    status: operational
+    type: exchange
+  runway_m: null
+- id: SWM-TEL-0002
+  layer: telecom
+  class: mast
+  x_m: 458189.2
+  y_m: 4600612.73
+  longitude: -123.5687505
+  latitude: -48.7460974
+  city_id: 1
+  attributes:
+    operator: SWM Telecom A
+    status: operational
+    type: mast
+  runway_m: null
+- id: SWM-TEL-0003
+  layer: telecom
+  class: mast
+  x_m: 462446.98
+  y_m: 4597419.4
+  longitude: -123.511126
+  latitude: -48.7750947
+  city_id: 1
+  attributes:
+    operator: SWM Telecom A
+    status: operational
+    type: mast
+  runway_m: null
+- id: SWM-TEL-0004
+  layer: telecom
+  class: mast
+  x_m: 463910.6
+  y_m: 4589303.0
+  longitude: -123.4919196
+  latitude: -48.8481931
+  city_id: 1
+  attributes:
+    operator: SWM Telecom A
+    status: operational
+    type: mast
+  runway_m: null
+- id: SWM-WAT-0001
+  layer: water
+  class: reservoir
+  x_m: 467902.27
+  y_m: 4591831.06
+  longitude: -123.4373146
+  latitude: -48.8256709
+  city_id: 1
+  attributes:
+    status: operational
+    storage_m3: 21845200
+    type: reservoir
+  runway_m: null
+- id: SWM-WAT-0002
+  layer: water
+  class: treatment
+  x_m: 468700.6
+  y_m: 4592629.39
+  longitude: -123.4263771
+  latitude: -48.8185301
+  city_id: 1
+  attributes:
+    capacity_m3_per_day: 226300
+    status: operational
+    type: treatment
+  runway_m: null
+- id: SWM-WAT-0003
+  layer: water
+  class: pumping
+  x_m: 472825.33
+  y_m: 4589968.28
+  longitude: -123.3703656
+  latitude: -48.8426628
+  city_id: 0
+  attributes:
+    capacity_m3_per_day: 199800
+    status: operational
+    type: pumping
+  runway_m: null
+- id: SWM-WAT-0004
+  layer: water
+  class: storage
+  x_m: 472559.21
+  y_m: 4586774.94
+  longitude: -123.3742064
+  latitude: -48.8713773
+  city_id: 0
+  attributes:
+    status: operational
+    storage_m3: 82600
+    type: storage
+  runway_m: null
+- id: SWM-TRN-0001
+  layer: transport
+  class: seaport
+  x_m: 473091.44
+  y_m: 4592097.17
+  longitude: -123.3665991
+  latitude: -48.8235236
+  city_id: 0
+  attributes:
+    size_class: L
+    status: operational
+    type: seaport
+  runway_m: null
+- id: SWM-TRN-0002
+  layer: transport
+  class: airport
+  x_m: 476417.83
+  y_m: 4590101.33
+  longitude: -123.3213963
+  latitude: -48.8416128
+  city_id: 0
+  attributes:
+    size_class: large_airport
+    status: operational
+    type: airport
+  runway_m:
+  - - 475486.44
+    - 4591032.72
+  - - 477349.22
+    - 4589169.94
+- id: SWM-TRN-0003
+  layer: transport
+  class: freight_yard
+  x_m: 470696.44
+  y_m: 4588238.55
+  longitude: -123.3995035
+  latitude: -48.8581259
+  city_id: 0
+  attributes:
+    area_m2: 189700
+    status: operational
+    type: freight_yard
+  runway_m: null
+- id: SWM-TRN-0004
+  layer: transport
+  class: bridge
+  x_m: 464309.76
+  y_m: 4586375.77
+  longitude: -123.4867342
+  latitude: -48.874548
+  city_id: 1
+  attributes:
+    deck_class: road
+    length_m: 105
+    status: operational
+    type: bridge
+  runway_m: null
+- id: SWM-FUE-0001
+  layer: fuel
+  class: import_terminal
+  x_m: 477349.22
+  y_m: 4587972.44
+  longitude: -123.3088206
+  latitude: -48.8607984
+  city_id: 0
+  attributes:
+    status: operational
+    storage_m3: 757500
+    type: import_terminal
+  runway_m: null
+- id: SWM-FUE-0002
+  layer: fuel
+  class: tank_farm
+  x_m: 476950.05
+  y_m: 4586641.88
+  longitude: -123.3143377
+  latitude: -48.872753
+  city_id: 0
+  attributes:
+    status: operational
+    storage_m3: 432900
+    type: tank_farm
+  runway_m: null
+- id: SWM-FUE-0003
+  layer: fuel
+  class: depot
+  x_m: 475885.61
+  y_m: 4588504.66
+  longitude: -123.3287438
+  latitude: -48.8559555
+  city_id: 0
+  attributes:
+    status: operational
+    storage_m3: 16500
+    type: depot
+  runway_m: null
+- id: SWM-FUE-0004
+  layer: fuel
+  class: depot
+  x_m: 463112.26
+  y_m: 4585444.38
+  longitude: -123.5031488
+  latitude: -48.8828562
+  city_id: 1
+  attributes:
+    status: operational
+    storage_m3: 8400
+    type: depot
+  runway_m: null
+- id: SWM-HLT-0001
+  layer: healthcare
+  class: tertiary
+  x_m: 474821.16
+  y_m: 4588637.72
+  longitude: -123.3432465
+  latitude: -48.8547163
+  city_id: 0
+  attributes:
+    bed_count: 1964
+    facility_class: tertiary
+    status: operational
+  runway_m: null
+- id: SWM-HLT-0002
+  layer: healthcare
+  class: regional
+  x_m: 462979.21
+  y_m: 4585577.44
+  longitude: -123.5049516
+  latitude: -48.8816514
+  city_id: 1
+  attributes:
+    bed_count: 407
+    facility_class: regional
+    status: operational
+  runway_m: null
+- id: SWM-HLT-0003
+  layer: healthcare
+  class: clinic
+  x_m: 467503.1
+  y_m: 4594359.11
+  longitude: -123.4425526
+  latitude: -48.8029087
+  city_id: 1
+  attributes:
+    bed_count: 8
+    facility_class: clinic
+    status: operational
+  runway_m: null
+- id: SWM-HLT-0004
+  layer: healthcare
+  class: blood_bank
+  x_m: 475087.27
+  y_m: 4590234.39
+  longitude: -123.3395218
+  latitude: -48.8403639
+  city_id: 0
+  attributes:
+    facility_class: blood_bank
+    status: operational
+  runway_m: null

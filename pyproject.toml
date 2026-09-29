@@ -7,6 +7,7 @@ requires-python = "==3.12.*"
 dependencies = [
     "numpy>=2.0",
     "pydantic>=2.0,<3",
+    "pyproj>=3.8.0",
     "pyyaml>=6.0",
 ]
 
@@ -17,6 +18,11 @@ swm = "swm.cli:main"
 preview = [
     "matplotlib>=3.11.2",
 ]
+export = [
+    "pyogrio>=0.13.0",
+    "rasterio>=1.5.1",
+    "shapely>=2.1.2",
+]
 
 [dependency-groups]
 dev = [
@@ -26,6 +32,7 @@ dev = [
     "pytest-cov>=5.0",
     "ruff>=0.6",
     "types-pyyaml>=6.0.12.20260906",
+    "types-shapely>=2.1.0.20260728",
 ]
 
 [build-system]
@@ -73,6 +80,11 @@ python_version = "3.12"
 strict = true
 files = ["src"]
 plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+# rasterio and pyogrio ship no type information; they are used only by the optional export.
+module = ["rasterio", "rasterio.*", "pyogrio", "pyogrio.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
