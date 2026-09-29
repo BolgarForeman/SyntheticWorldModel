@@ -380,6 +380,43 @@ def dependency_table(result: CouplingsResult) -> list[dict[str, object]]:
     ]
 
 
+def switched_on_edge_summary(
+    result: CouplingsResult, layers: LayersResult
+) -> list[dict[str, object]]:
+    """Return every switched-on coupling edge as one line of the hand-trace table.
+
+    Parameters
+    ----------
+    result : CouplingsResult
+        The couplings stage's output.
+    layers : LayersResult
+        The layers stage's output, for node classes.
+
+    Returns
+    -------
+    list of dict
+        One row per switched-on edge, sorted by edge id: edge id, supplier and consumer (id and
+        class), dependency type, feed configuration and role.
+
+    Spec: Work Order 4 review, answer 3 (decision 0008).
+    """
+    classes = {node.node_id: node.node_class.value for node in layers.nodes}
+    return [
+        {
+            "edge_id": edge.edge_id,
+            "supplier_id": edge.supplier_id,
+            "supplier_class": classes[edge.supplier_id],
+            "consumer_id": edge.consumer_id,
+            "consumer_class": classes[edge.consumer_id],
+            "dependency_type": edge.dependency_type,
+            "feed_configuration": edge.feed_configuration.value,
+            "role": edge.role.value,
+        }
+        for edge in sorted(result.edges, key=lambda e: e.edge_id)
+        if edge.switched_on
+    ]
+
+
 def statistics_record(result: CouplingsResult) -> dict[str, object]:
     """Return the per-pair and overall statistics in a fixed order.
 
@@ -773,13 +810,13 @@ def _two_way(
 
     An allowed pair is two nodes where one already serves the other and could be served back
     by it, each dependency taking part in at most one. Where a mutual pair must be broken, the
-    later edge in canonical order (the reverse pair's) takes the next eligible supplier, or is
-    dropped with a note.
+    later edge in canonical order (the reverse pair's) takes the next eligible supplier. Failing
+    that, an optional dependency's feed is dropped with a note, but a core dependency is never
+    left without a supplier: the mutual pair is kept, with a note (decision 0008, review 1).
     """
-    # CHOICE: allowed pairs start from edges already chosen, so at 100 every one can be built;
-    # pairs among hidden layer pairs count too, so hiding a pair changes only its flag.
-    # CHOICE: a broken pair with no other eligible supplier loses that feed (noted), so that
-    # two-way 0 leaves no mutual pair at all.
+    # CHOICE: allowed pairs start from edges already chosen, so at 100 every one can be built.
+    # Pairs among hidden couplings count too, so hiding a pair changes only its flag (decision
+    # 0008, review 2).
     realised: dict[Pair, _Mutual] = {}
     for couple in rng.mutual_couples():
         reverse = (couple[1], couple[0])
@@ -796,13 +833,14 @@ def _two_way(
                 )
                 other.suppliers[0] = need.consumer
         keep = {frozenset((n.consumer.node_id, s.node_id)) for n, s, _ in selected}
-        _break_mutual(needs[couple], needs[reverse], keep)
+        kept = _break_mutual(needs[couple], needs[reverse], keep)
         built = len(_mutual_keys(needs[couple], needs[reverse]))
         realised[couple] = realised[reverse] = _Mutual(len(candidates), built)
         for pair in (couple, reverse):
             notes[pair].append(
                 f"two-way with {rng.pair_label(*(reverse if pair == couple else couple))}: "
                 f"{len(candidates)} allowed mutual pairs, {count} wanted, {built} built"
+                + (f" ({kept} kept so a core dependency keeps a supplier)" if kept else "")
             )
     return realised
 
@@ -838,8 +876,10 @@ def _mutual_keys(forward: list[_Need], backward: list[_Need]) -> set[frozenset[s
     return {frozenset(pair) for pair in _served_pairs(backward) if (pair[1], pair[0]) in served}
 
 
-def _break_mutual(forward: list[_Need], backward: list[_Need], keep: set[frozenset[str]]) -> None:
+def _break_mutual(forward: list[_Need], backward: list[_Need], keep: set[frozenset[str]]) -> int:
+    """Break every mutual pair not kept; return how many had to stay for a core dependency."""
     served = _served_pairs(forward)
+    kept = 0
     for need in backward:
         index = 0
         while index < len(need.suppliers):
@@ -867,6 +907,14 @@ def _break_mutual(forward: list[_Need], backward: list[_Need], keep: set[frozens
                 need.suppliers[index] = replacement
                 index += 1
                 continue
+            if need.row.dependency == Dependency.CORE and len(need.suppliers) == 1:
+                need.notes.append(
+                    f"mutual pair kept: no other eligible supplier than {supplier.node_id}, and a "
+                    "core dependency is never left without one (decision 0008, review 1)"
+                )
+                kept += 1
+                index += 1
+                continue
             need.notes.append(
                 f"two-way off: {supplier.node_id} would make a mutual pair and no other eligible "
                 "supplier avoids one; that feed is dropped"
@@ -878,6 +926,7 @@ def _break_mutual(forward: list[_Need], backward: list[_Need], keep: set[frozens
             FeedConfiguration.TWO_HALF,
         ):
             need.feed = FeedConfiguration.SINGLE
+    return kept
 
 
 # --- Edges and dependencies (E6, E8, E10, E11) ----------------------------------------------

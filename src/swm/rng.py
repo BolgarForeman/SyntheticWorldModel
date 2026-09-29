@@ -37,10 +37,6 @@ def _registry() -> dict[str, str]:
         paths[f"layers/{layer}/overlap"] = f"Which {layer} assets appear in more than one source."
         paths[f"layers/{layer}/subtype"] = f"Subtype attributes of {layer} nodes (unobserved)."
     paths |= {
-        "couplings/edges": "Which consumers draw on which suppliers across layers.",
-        "couplings/supplier_not_nearest": "Consumers whose true supplier is not the nearest one.",
-        "couplings/feed_configuration": "Single, two full or two half feeds per consumer.",
-        "couplings/two_way": "Which dependencies run both ways.",
         "shared_causes/scenarios": "Element failures drawn conditionally on the hazard fields.",
         "unobserved/reserves": "Reserves, drawn per element from context.",
         "unobserved/requirements": "Node requirements per commodity, drawn from context.",

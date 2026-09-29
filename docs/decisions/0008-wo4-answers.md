@@ -32,3 +32,14 @@ PR 4a encoded structure v0.5 §4.3a as the dependency table and raised six quest
 
 - `swm.recipe.dependencies` narrows the five supplier lists, and its tests check them.
 - The couplings stage (`swm.stages.couplings`) applies answers 3, 4 and 6 as stated. Answer 5 needs no code: the row's `inland` condition is tested against the consumer's cell.
+
+## Review of PR 4b
+
+- **Date:** 2026-09-29
+- **Decided by:** the design side, confirmed by the author (Foreman)
+- **Source:** `docs/work_orders/WO-04b-review.md`
+
+1. **Two-way never leaves a core dependency unsupplied.** Breaking a mutual pair must not leave a core dependency without a supplier. If no other eligible supplier avoids the pair, the pair is kept, with the note "mutual pair kept: no other eligible supplier". The pair statistics report realised mutual pairs against the setting. An optional dependency may still lose that feed, with a note. On the pilot, distribution substation POW-0003 keeps its telecom control feed from exchange TEL-0001. That substation–exchange loop is the power–telecom coupling Appendix B calls the sharpest single coupling, and it belongs in the hand trace. The pilot goes from 49 to 50 edges.
+2. **Mutual pairs among hidden couplings count.** Hidden couplings are part of the true world, so hiding a coupling changes only its `switched_on` flag.
+3. **The schematic serves the hand trace.** Node labels sit on a pale background so arrows never hide them. Every switched-on coupling edge is printed as a table beside the schematic, giving the edge id, the supplier and consumer (id and class), the dependency type, the feed configuration and the role. `swm couplings` also writes this table as `couplings_edges.csv`, sorted by edge id. It is for inspection and stays outside the identity check.
+4. **The four Work Order 1 couplings streams are retired.** `couplings/edges`, `couplings/supplier_not_nearest`, `couplings/feed_configuration` and `couplings/two_way` were placeholders registered before the stage was designed. The stage draws from per-pair streams instead (Work Order 4, E2), so these four were never drawn. Streams are keyed by name, so removing them moves no other stream. The stream record loses these four entries and gains nothing.

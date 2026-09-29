@@ -38,7 +38,9 @@ All notable changes to this project are recorded here. Each phase closes with a 
   - `swm couplings`;
   - `swm preview-couplings`, a schematic for the hand trace;
   - a `couplings` table in world.gpkg;
-  - coupling edges in `swm preview-world`, with `--no-couplings`.
+  - coupling edges in `swm preview-world`, with `--no-couplings`;
+  - `couplings_edges.csv` from `swm couplings`, and a printed edge table in the schematic (decision 0008).
+- Two-way never leaves a core dependency without a supplier: the mutual pair is kept, with a note (decision 0008).
 
 ### Changed
 
@@ -70,3 +72,4 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 - The `healthcare_first` service-weight preset, replaced by `lifeline` (Work Order 2, B4).
 - The `two_way` switch, replaced by `two_way_pct` (Work Order 4, A3).
+- The four unused Work Order 1 streams `couplings/edges`, `couplings/supplier_not_nearest`, `couplings/feed_configuration` and `couplings/two_way` (decision 0008).

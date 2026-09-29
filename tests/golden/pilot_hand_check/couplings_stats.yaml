@@ -18,10 +18,10 @@ pairs:
     hub: SWM-POW-0003
     hub_share: 0.75
     mutual_pairs_allowed: 2
-    mutual_pairs: 0
+    mutual_pairs: 1
     notes:
     - concentration puts 2 first feeds off the nearest supplier, above the 1 supplier_not_nearest asks for; concentration wins
-    - 'two-way with telecom-power: 2 allowed mutual pairs, 0 wanted, 0 built'
+    - 'two-way with telecom-power: 2 allowed mutual pairs, 0 wanted, 1 built (1 kept so a core dependency keeps a supplier)'
   power-water:
     switched_on: true
     dependencies: 2
@@ -112,7 +112,7 @@ pairs:
     switched_on: true
     dependencies: 4
     absent: 0
-    edges: 4
+    edges: 5
     feed_counts:
       single: 3
       two_full: 0
@@ -123,13 +123,13 @@ pairs:
       single: 0.75
       two_full: 0.0
       two_half: 0.25
-    non_nearest_share: 0.333
+    non_nearest_share: 0.25
     hub: SWM-TEL-0003
     hub_share: 0.0
     mutual_pairs_allowed: 2
-    mutual_pairs: 0
+    mutual_pairs: 1
     notes:
-    - 'two-way with power-telecom: 2 allowed mutual pairs, 0 wanted, 0 built'
+    - 'two-way with power-telecom: 2 allowed mutual pairs, 0 wanted, 1 built (1 kept so a core dependency keeps a supplier)'
   telecom-water:
     switched_on: false
     dependencies: 2
@@ -456,7 +456,7 @@ pairs:
     mutual_pairs: 0
     notes: []
 totals:
-  coupling_edges: 71
-  switched_on_coupling_edges: 26
+  coupling_edges: 72
+  switched_on_coupling_edges: 27
   intra_layer_links: 23
-  total_edges: 49
+  total_edges: 50

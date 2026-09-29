@@ -51,7 +51,7 @@ def test_different_paths_give_different_streams() -> None:
 
 
 def test_generator_is_pcg64() -> None:
-    assert isinstance(stream(1, "couplings/edges").bit_generator, np.random.PCG64)
+    assert isinstance(stream(1, "couplings/hub/power-telecom").bit_generator, np.random.PCG64)
 
 
 def test_unregistered_path_is_refused() -> None:
@@ -62,7 +62,7 @@ def test_unregistered_path_is_refused() -> None:
 @pytest.mark.parametrize("seed", [-1, 2**64])
 def test_seed_out_of_range_is_refused(seed: int) -> None:
     with pytest.raises(ValueError, match="2\\*\\*64"):
-        stream(seed, "couplings/edges")
+        stream(seed, "couplings/hub/power-telecom")
 
 
 def test_empty_segment_is_refused() -> None:

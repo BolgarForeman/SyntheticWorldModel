@@ -69,8 +69,8 @@ def test_pilot_total_edge_count_is_links_plus_switched_on_coupling_edges(
     pilot: CouplingsResult,
 ) -> None:
     assert pilot.intra_layer_links == 23
-    assert pilot.switched_on_edges == 26
-    assert pilot.total_edges == 49  # within the pilot range 40-50 (decision 0007)
+    assert pilot.switched_on_edges == 27
+    assert pilot.total_edges == 50  # within the pilot range 40-50 (decision 0007)
 
 
 def test_pilot_builds_its_seven_couplings_and_hides_the_other_fourteen(
@@ -331,10 +331,52 @@ def _mutual_pairs(result: CouplingsResult) -> int:
     return sum(1 for s, c in served if (c, s) in served) // 2
 
 
-def test_two_way_0_gives_no_mutual_pair(rich: World) -> None:
+def _kept_mutual(result: CouplingsResult) -> set[str]:
+    """Dependencies that keep a mutual pair so they are not left without a supplier."""
+    return {
+        d.dependency_id
+        for d in result.dependencies
+        if any(note.startswith("mutual pair kept") for note in d.notes)
+    }
+
+
+def test_two_way_0_leaves_only_mutual_pairs_kept_for_a_core_dependency(rich: World) -> None:
     result = couple(rich, two_way_pct=0, density=100)
-    assert _mutual_pairs(result) == 0
-    assert all(edge.mutual_partner is None for edge in result.edges)
+    kept = _kept_mutual(result)
+    for edge in result.edges:
+        if edge.mutual_partner is not None:
+            partner = next(e for e in result.edges if e.edge_id == edge.mutual_partner)
+            assert kept & {edge.dependency_id, partner.dependency_id}, edge.edge_id
+    assert _mutual_pairs(result) == len(kept)
+
+
+@pytest.mark.parametrize("density", [0, 100])
+def test_two_way_0_never_leaves_a_core_dependency_without_a_supplier(
+    rich: World, density: int
+) -> None:
+    world = stage._World(rich[1], rich[2])
+    for concentration in (0, 40, 100):
+        result = couple(rich, two_way_pct=0, density=density, concentration=concentration)
+        for d in result.dependencies:
+            if d.dependency != Dependency.CORE or d.feed_configuration == FeedConfiguration.NONE:
+                continue
+            eligible = stage._eligible(_row_of(rich, d), _node(rich, d.consumer_id), world)
+            if eligible and d.supplier_layer != Layer.TRANSPORT:
+                assert d.edge_ids, d.dependency_id
+
+
+def test_the_pilot_keeps_the_substation_exchange_loop(pilot: CouplingsResult) -> None:
+    (control,) = [
+        d
+        for d in pilot.dependencies
+        if d.consumer_id == "SWM-POW-0003" and d.supplier_layer == Layer.TELECOM
+    ]
+    assert control.edge_ids
+    assert any(note.startswith("mutual pair kept") for note in control.notes)
+    power_telecom = next(s for s in pilot.pairs if (s.supplier, s.consumer) ==
+                         (Layer.POWER, Layer.TELECOM))  # fmt: skip
+    assert power_telecom.mutual_pairs == 1
+    assert "1 kept so a core dependency keeps a supplier" in " ".join(power_telecom.notes)
 
 
 def test_two_way_100_builds_every_allowed_mutual_pair(rich: World) -> None:
@@ -354,7 +396,7 @@ def test_two_way_100_builds_every_allowed_mutual_pair(rich: World) -> None:
 def test_mutual_pairs_rise_with_two_way(rich: World) -> None:
     counts = [_mutual_pairs(couple(rich, two_way_pct=p, density=100)) for p in (0, 25, 50, 100)]
     assert counts == sorted(counts)
-    assert counts[0] == 0 < counts[-1]
+    assert counts[0] < counts[-1]
 
 
 # --- Transport (E5) and outlying islands (decision 0008, answer 6) --------------------------
@@ -560,6 +602,12 @@ def test_the_stage_draws_only_couplings_streams(monkeypatch: pytest.MonkeyPatch)
     assert drawn
     assert all(path.startswith("couplings/") for path in drawn)
     assert set(drawn) <= set(rng.STREAM_REGISTRY)
+
+
+def test_the_work_order_1_couplings_streams_are_retired() -> None:
+    for path in ("couplings/edges", "couplings/supplier_not_nearest",
+                 "couplings/feed_configuration", "couplings/two_way"):  # fmt: skip
+        assert path not in rng.STREAM_REGISTRY
 
 
 def test_stream_paths_are_per_pair_and_no_existing_stream_moved() -> None:

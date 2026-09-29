@@ -13,6 +13,7 @@ from swm import rng
 from swm.coordinates import domain_origin_m
 from swm.recipe.dependencies import Role
 from swm.recipe.schema import Layer, NodeClass
+from swm.stages import couplings as couplings_stage
 from swm.stages.couplings import CouplingEdge, CouplingsResult, FeedConfiguration
 from swm.stages.layers import LayersResult
 from swm.stages.terrain import D8_OFFSETS, CoverClass, TerrainResult
@@ -32,6 +33,8 @@ COVER_COLOURS = {
 }
 RIVER_COLOUR = (0.12, 0.35, 0.75)
 PREVIEW_DPI = 150
+LABEL_BACKGROUND = {"facecolor": "white", "alpha": 0.85, "edgecolor": "none", "pad": 1.5}
+"""Schematic node labels sit on the page colour, nearly opaque, above the arrows."""
 LAYER_COLOURS = {
     Layer.POWER: "#d62728",
     Layer.TELECOM: "#9467bd",
@@ -204,8 +207,9 @@ def couplings_preview_png(layers: LayersResult, couplings: CouplingsResult, titl
     Six rows, one per layer, with nodes labelled by id and class. Arrows run from supplier to
     consumer, coloured by supplier layer: solid for single and two-full feeds (two-full drawn
     heavier), dashed for two-half feeds, dotted for buffer resupply, dash-dot for transport
-    access. Mutual pairs are marked with a ring at the arrow's middle. The caption gives
-    per-pair counts.
+    access. Mutual pairs are marked with a ring at the arrow's middle. Node labels sit on a pale
+    background so arrows never hide them. Every switched-on edge is printed as a table beside the
+    schematic, and the caption gives per-pair counts.
 
     Parameters
     ----------
@@ -221,13 +225,13 @@ def couplings_preview_png(layers: LayersResult, couplings: CouplingsResult, titl
     bytes
         A PNG image.
 
-    Spec: Work Order 4, F3.
+    Spec: Work Order 4, F3; Work Order 4 review, answer 3 (decision 0008).
     """
     from matplotlib.figure import Figure
     from matplotlib.patches import FancyArrowPatch
 
-    figure = Figure(figsize=(13, 11))
-    axes = figure.add_subplot()
+    figure = Figure(figsize=(22, 12))
+    axes = figure.add_axes((0.02, 0.2, 0.46, 0.74))
     rows = _schematic_rows(layers)
     positions = _schematic_positions(layers, rows)
     edges = [edge for edge in couplings.edges if edge.switched_on]
@@ -253,7 +257,8 @@ def couplings_preview_png(layers: LayersResult, couplings: CouplingsResult, titl
                   markerfacecolor=LAYER_COLOURS[node.layer], markeredgecolor="black",
                   linestyle="")  # fmt: skip
         label = node.node_id.removeprefix("SWM-") + "\n" + node.node_class.value.replace("_", " ")
-        axes.text(x, y - 0.24, label, ha="center", va="top", fontsize=7)
+        axes.text(x, y - 0.24, label, ha="center", va="top", fontsize=7, zorder=5,
+                  bbox=LABEL_BACKGROUND)  # fmt: skip
     for layer, row in rows.items():
         axes.text(-0.2, row, layer.value, ha="right", va="center", fontsize=10,
                   color=LAYER_COLOURS[layer], fontweight="bold")  # fmt: skip
@@ -267,8 +272,30 @@ def couplings_preview_png(layers: LayersResult, couplings: CouplingsResult, titl
     figure.text(
         0.02, 0.02, _couplings_caption(couplings), fontsize=8, family="monospace", va="bottom"
     )
-    figure.subplots_adjust(left=0.02, bottom=0.17, right=0.84, top=0.95)
+    figure.text(0.585, 0.95, _edge_table_text(couplings_stage.switched_on_edge_summary(
+        couplings, layers)), fontsize=7, family="monospace", va="top")  # fmt: skip
     return _png(figure)
+
+
+def _edge_table_text(rows: list[dict[str, object]]) -> str:
+    """Lay the switched-on edges out as a fixed-width table for the hand trace."""
+    header = ("edge", "supplier", "consumer", "type", "feed", "role")
+    lines = [
+        (
+            str(row["edge_id"]).removeprefix("SWM-"),
+            f"{str(row['supplier_id']).removeprefix('SWM-')} {row['supplier_class']}",
+            f"{str(row['consumer_id']).removeprefix('SWM-')} {row['consumer_class']}",
+            str(row["dependency_type"]),
+            str(row["feed_configuration"]),
+            str(row["role"]),
+        )
+        for row in rows
+    ]
+    widths = [max(len(cells[i]) for cells in [header, *lines]) for i in range(len(header))]
+    return "\n".join(
+        "  ".join(cell.ljust(width) for cell, width in zip(cells, widths, strict=True)).rstrip()
+        for cells in [header, *lines]
+    )
 
 
 def _schematic_rows(layers: LayersResult) -> dict[Layer, int]:

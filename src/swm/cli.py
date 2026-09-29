@@ -16,6 +16,7 @@ from swm.recipe.io import (
     load_recipe,
     write_binary,
     write_canonical_yaml,
+    write_csv,
     write_hash_list,
     write_resolved_recipe,
     write_stream_record,
@@ -44,6 +45,7 @@ LAYERS_LINKS_FILE = "layers_links.yaml"
 LAYERS_HASHES_FILE = "layers_sha256.txt"
 COUPLINGS_STATS_FILE = "couplings_stats.yaml"
 COUPLINGS_HASHES_FILE = "couplings_sha256.txt"
+COUPLINGS_EDGES_CSV = "couplings_edges.csv"
 
 
 class CommandError(Exception):
@@ -170,6 +172,10 @@ def _couplings_command(resolution: Resolution, arguments: argparse.Namespace) ->
     }
     hashes = [(name, hashlib.sha256(table).hexdigest()) for name, table in tables.items()]
     write_hash_list(hashes, out_dir / COUPLINGS_HASHES_FILE)
+    # For inspection only, outside the identity check (decision 0008, review 3).
+    write_csv(
+        couplings_stage.switched_on_edge_summary(result, layers), out_dir / COUPLINGS_EDGES_CSV
+    )
     sys.stdout.write(
         f"total edges {result.total_edges}: {result.intra_layer_links} intra-layer links and "
         f"{result.switched_on_edges} switched-on coupling edges "
