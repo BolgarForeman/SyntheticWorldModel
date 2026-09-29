@@ -1,6 +1,7 @@
 """Command-line entry point for the ``swm`` command."""
 
 import argparse
+import hashlib
 import sys
 from collections.abc import Callable, Sequence
 from pathlib import Path
@@ -11,6 +12,7 @@ import yaml
 from swm import __version__
 from swm.recipe.buildability import unbuilt_features
 from swm.recipe.io import (
+    canonical_yaml,
     load_recipe,
     write_binary,
     write_canonical_yaml,
@@ -20,6 +22,8 @@ from swm.recipe.io import (
 )
 from swm.recipe.resolve import Resolution, resolve
 from swm.rng import stream_record
+from swm.stages import layers as layers_stage
+from swm.stages.layers import LayersResult, build_layers, layers_streams
 from swm.stages.terrain import (
     TerrainResult,
     array_hashes,
@@ -32,6 +36,10 @@ EXIT_OK = 0
 EXIT_FAILED = 1
 TERRAIN_STATS_FILE = "terrain_stats.yaml"
 TERRAIN_HASHES_FILE = "terrain_sha256.txt"
+LAYERS_STATS_FILE = "layers_stats.yaml"
+LAYERS_NODES_FILE = "layers_nodes.yaml"
+LAYERS_LINKS_FILE = "layers_links.yaml"
+LAYERS_HASHES_FILE = "layers_sha256.txt"
 
 
 class CommandError(Exception):
@@ -127,6 +135,59 @@ def _preview_terrain_command(resolution: Resolution, arguments: argparse.Namespa
     write_binary(terrain_preview_png(result, title), Path(arguments.output))
 
 
+def _layers_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    terrain = _terrain(resolution)
+    result = _layers(resolution, terrain)
+    out_dir = Path(arguments.out_dir)
+    nodes = canonical_yaml({"nodes": layers_stage.node_table(result)})
+    links = canonical_yaml({"links": layers_stage.link_table(result)})
+    write_canonical_yaml(layers_stage.statistics_record(result), out_dir / LAYERS_STATS_FILE)
+    write_binary(nodes, out_dir / LAYERS_NODES_FILE)
+    write_binary(links, out_dir / LAYERS_LINKS_FILE)
+    hashes = [
+        (LAYERS_NODES_FILE, hashlib.sha256(nodes).hexdigest()),
+        (LAYERS_LINKS_FILE, hashlib.sha256(links).hexdigest()),
+    ]
+    write_hash_list(hashes, out_dir / LAYERS_HASHES_FILE)
+    for stats in result.statistics:
+        for note in stats.notes:
+            sys.stdout.write(f"{stats.layer}: {note}\n")
+
+
+def _export_gis_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    try:
+        from swm.manifest.inspection import export_gis
+    except ImportError as error:
+        raise CommandError(
+            "the export needs pyogrio, shapely and rasterio; install them with: "
+            "uv sync --extra export"
+        ) from error
+    terrain = _terrain(resolution)
+    for path in export_gis(terrain, _layers(resolution, terrain), Path(arguments.out_dir)):
+        sys.stdout.write(f"{path}\n")
+
+
+def _preview_world_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    try:
+        from swm.preview import world_preview_png
+    except ImportError as error:
+        raise CommandError(
+            "the preview needs matplotlib; install it with: uv sync --extra preview"
+        ) from error
+    terrain = _terrain(resolution)
+    result = _layers(resolution, terrain)
+    title = f"{Path(arguments.recipe).name}: {resolution.recipe.terrain.map_type} with its layers"
+    write_binary(world_preview_png(terrain, result, title), Path(arguments.output))
+
+
+def _layers(resolution: Resolution, terrain: TerrainResult) -> LayersResult:
+    recipe = resolution.recipe
+    try:
+        return build_layers(recipe.layers, terrain, layers_streams(recipe.root_seed))
+    except ValueError as error:
+        raise CommandError(str(error)) from error
+
+
 def _terrain(resolution: Resolution) -> TerrainResult:
     recipe = resolution.recipe
     try:
@@ -141,6 +202,9 @@ COMMANDS: dict[str, Callable[[Resolution, argparse.Namespace], None]] = {
     "check-recipe": _check_recipe_command,
     "terrain": _terrain_command,
     "preview-terrain": _preview_terrain_command,
+    "layers": _layers_command,
+    "export-gis": _export_gis_command,
+    "preview-world": _preview_world_command,
 }
 
 
@@ -167,6 +231,21 @@ def _parser() -> argparse.ArgumentParser:
     )
     preview_command.add_argument("recipe", help="recipe YAML file")
     preview_command.add_argument("-o", "--output", required=True, help="PNG file to write")
+    layers_command = commands.add_parser(
+        "layers", help="site the layers; write their statistics, node and link tables and hashes"
+    )
+    layers_command.add_argument("recipe", help="recipe YAML file")
+    layers_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    export_command = commands.add_parser(
+        "export-gis", help="write world.gpkg and GeoTIFFs in EPSG:32710 for inspection"
+    )
+    export_command.add_argument("recipe", help="recipe YAML file")
+    export_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    world_command = commands.add_parser(
+        "preview-world", help="render the terrain with every node and link as PNG"
+    )
+    world_command.add_argument("recipe", help="recipe YAML file")
+    world_command.add_argument("-o", "--output", required=True, help="PNG file to write")
     return parser
 
 

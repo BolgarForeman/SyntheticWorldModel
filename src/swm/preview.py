@@ -9,10 +9,15 @@ from typing import TYPE_CHECKING
 import numpy as np
 from numpy.typing import NDArray
 
+from swm.coordinates import domain_origin_m
+from swm.recipe.schema import Layer, NodeClass
+from swm.stages.layers import LayersResult
 from swm.stages.terrain import D8_OFFSETS, CoverClass, TerrainResult
 
 if TYPE_CHECKING:
+    from matplotlib.artist import Artist
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 
 COVER_COLOURS = {
     CoverClass.SEA: (0.72, 0.83, 0.89),
@@ -24,6 +29,40 @@ COVER_COLOURS = {
 }
 RIVER_COLOUR = (0.12, 0.35, 0.75)
 PREVIEW_DPI = 150
+LAYER_COLOURS = {
+    Layer.POWER: "#d62728",
+    Layer.TELECOM: "#9467bd",
+    Layer.WATER: "#1f77b4",
+    Layer.TRANSPORT: "#ff7f0e",
+    Layer.FUEL: "#8c564b",
+    Layer.HEALTHCARE: "#e377c2",
+}
+CLASS_MARKERS = {
+    NodeClass.GENERATION: "^",
+    NodeClass.TRANSMISSION_SUBSTATION: "s",
+    NodeClass.DISTRIBUTION_SUBSTATION: "o",
+    NodeClass.EXCHANGE: "s",
+    NodeClass.MAST: "^",
+    NodeClass.DATA_CENTRE: "D",
+    NodeClass.CABLE_LANDING: "v",
+    NodeClass.RESERVOIR: "v",
+    NodeClass.TREATMENT: "s",
+    NodeClass.PUMPING: "o",
+    NodeClass.STORAGE: "D",
+    NodeClass.SEAPORT: "P",
+    NodeClass.AIRPORT: "X",
+    NodeClass.FREIGHT_YARD: "s",
+    NodeClass.BRIDGE: "h",
+    NodeClass.ROAD_JUNCTION: "o",
+    NodeClass.IMPORT_TERMINAL: "P",
+    NodeClass.TANK_FARM: "s",
+    NodeClass.DEPOT: "o",
+    NodeClass.REFINERY: "^",
+    NodeClass.TERTIARY: "*",
+    NodeClass.REGIONAL: "p",
+    NodeClass.CLINIC: "o",
+    NodeClass.BLOOD_BANK: "D",
+}
 
 
 def terrain_preview_png(result: TerrainResult, title: str) -> bytes:
@@ -46,15 +85,99 @@ def terrain_preview_png(result: TerrainResult, title: str) -> bytes:
 
     Spec: Work Order 2, A10.
     """
-    from matplotlib.artist import Artist
+    from matplotlib.figure import Figure
+
+    figure = Figure(figsize=(10, 9.5))
+    axes = figure.add_subplot()
+    legend = _draw_terrain(axes, result, title)
+    axes.legend(handles=legend, loc="upper left", bbox_to_anchor=(1.02, 1.0), fontsize=8)
+    figure.text(0.02, 0.02, _caption(result), fontsize=8, family="monospace", va="bottom")
+    figure.subplots_adjust(bottom=0.2, right=0.8)
+    return _png(figure)
+
+
+def world_preview_png(terrain: TerrainResult, layers: LayersResult, title: str) -> bytes:
+    """Render the terrain preview with every node and link of every layer drawn over it.
+
+    Nodes are coloured by layer and shaped by class; the caption gives per-layer statistics.
+
+    Parameters
+    ----------
+    terrain : TerrainResult
+        The terrain stage's output.
+    layers : LayersResult
+        The layers stage's output.
+    title : str
+        Title printed above the map.
+
+    Returns
+    -------
+    bytes
+        A PNG image.
+
+    Spec: Work Order 3, C2.
+    """
     from matplotlib.collections import LineCollection
     from matplotlib.figure import Figure
+    from matplotlib.lines import Line2D
+
+    figure = Figure(figsize=(12, 10.5))
+    axes = figure.add_subplot()
+    terrain_legend = _draw_terrain(axes, terrain, title)
+    west_m, south_m = domain_origin_m(terrain.grid)
+    for layer in Layer:
+        paths = [
+            [((x - west_m) / 1000, (y - south_m) / 1000) for x, y in link.points]
+            for link in layers.links
+            if link.layer == layer
+        ]
+        axes.add_collection(
+            LineCollection(paths, colors=[LAYER_COLOURS[layer]], linewidths=1.6, alpha=0.85)
+        )
+    for node in layers.nodes:
+        if node.runway is not None:
+            (x0, y0), (x1, y1) = node.runway
+            axes.plot(
+                [(x0 - west_m) / 1000, (x1 - west_m) / 1000],
+                [(y0 - south_m) / 1000, (y1 - south_m) / 1000],
+                color="black", linewidth=3, solid_capstyle="butt",
+            )  # fmt: skip
+        axes.plot(
+            (node.x_m - west_m) / 1000, (node.y_m - south_m) / 1000,
+            marker=CLASS_MARKERS.get(node.node_class, "o"), markersize=8,
+            markerfacecolor=LAYER_COLOURS[node.layer], markeredgecolor="black", linestyle="",
+        )  # fmt: skip
+    layer_legend = [
+        Line2D([], [], color=LAYER_COLOURS[layer], linewidth=2, label=layer.value)
+        for layer in Layer
+    ]
+    present = sorted({node.node_class for node in layers.nodes}, key=lambda c: c.value)
+    class_legend = [
+        Line2D([], [], marker=CLASS_MARKERS.get(c, "o"), color="grey", markeredgecolor="black",
+               linestyle="", label=c.value.replace("_", " "))
+        for c in present
+    ]  # fmt: skip
+    first = axes.legend(
+        handles=terrain_legend + layer_legend, loc="upper left", bbox_to_anchor=(1.02, 1.0),
+        fontsize=8, title="cover and layers",
+    )  # fmt: skip
+    axes.add_artist(first)
+    axes.legend(
+        handles=class_legend, loc="upper left", bbox_to_anchor=(1.02, 0.45), fontsize=8,
+        title="node class",
+    )  # fmt: skip
+    figure.text(0.02, 0.02, _layers_caption(layers), fontsize=8, family="monospace", va="bottom")
+    figure.subplots_adjust(bottom=0.2, right=0.78)
+    return _png(figure)
+
+
+def _draw_terrain(axes: "Axes", result: TerrainResult, title: str) -> list["Artist"]:
+    """Draw the shaded ground, rivers, city outlines and scale bar; return legend entries."""
+    from matplotlib.collections import LineCollection
     from matplotlib.lines import Line2D
     from matplotlib.patches import Patch
 
     side_km = result.grid.cells * result.grid.cell_size_m / 1000
-    figure = Figure(figsize=(10, 9.5))
-    axes = figure.add_subplot()
     axes.imshow(_shaded_cover(result), extent=(0, side_km, 0, side_km), interpolation="nearest")
     # Rivers are drawn as lines above the cover, each reach joined to its downstream cell.
     axes.add_collection(
@@ -74,12 +197,23 @@ def terrain_preview_png(result: TerrainResult, title: str) -> bytes:
     _scale_bar(axes, west, east, south, north)
     legend: list[Artist] = [Patch(color=COVER_COLOURS[c], label=c.name.lower()) for c in CoverClass]
     legend.append(Line2D([], [], color=RIVER_COLOUR, label="river"))
-    axes.legend(handles=legend, loc="upper left", bbox_to_anchor=(1.02, 1.0), fontsize=8)
-    figure.text(0.02, 0.02, _caption(result), fontsize=8, family="monospace", va="bottom")
-    figure.subplots_adjust(bottom=0.2, right=0.8)
+    return legend
+
+
+def _png(figure: "Figure") -> bytes:
     buffer = io.BytesIO()
     figure.savefig(buffer, format="png", dpi=PREVIEW_DPI)
     return buffer.getvalue()
+
+
+def _layers_caption(layers: LayersResult) -> str:
+    lines = [
+        f"{s.layer.value:<11} {sum(s.class_counts.values()):>3} nodes  {s.link_count:>3} links  "
+        f"{s.mean_links_per_node:.2f} links/node  spacing {s.mean_spacing_km:.2f} km  "
+        f"notes {len(s.notes)}"
+        for s in layers.statistics
+    ]
+    return "\n".join(lines)
 
 
 def _shaded_cover(result: TerrainResult) -> NDArray[np.float64]:

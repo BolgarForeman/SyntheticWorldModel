@@ -50,6 +50,7 @@ layers:
     nodes_only: false
     sources:
     - ourairports
+    - osm_transport
     overlap_pct: 30
   fuel:
     state: emitted
@@ -210,6 +211,17 @@ errors:
       links_pct: 5
       labels_pct: 5
     ourairports:
+      mechanism: parametric
+      coverage_pct: 90
+      snapshot_age_y: 2
+      phantom_pct: 2
+      missing_pct: 5
+      merged_pct: 2
+      location_pct: 10
+      attributes_pct: 15
+      links_pct: 5
+      labels_pct: 5
+    osm_transport:
       mechanism: parametric
       coverage_pct: 90
       snapshot_age_y: 2

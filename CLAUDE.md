@@ -41,13 +41,15 @@ The answer-key solver never imports error induction, and the generator never imp
 src/swm/
   recipe/      schema (pydantic), loading, versioning, resolution of defaults
   rng.py       spawn tree
+  coordinates.py  Point Nemo anchor, EPSG:32710, latitude and longitude
   stages/      one module per stage, named as in the specification
   emit/        one writer per real source format
   errors/      error induction, one module per mechanism
-  manifest/    truth manifest
+  manifest/    truth manifest, and the GIS inspection export
   solve/       answer-key solver (separate; reads the true world only)
   checks/      the world checks and request checks
-  cli.py       swm resolve | check-recipe | terrain | preview-terrain | build | solve | check
+  cli.py       swm resolve | check-recipe | terrain | preview-terrain | layers | export-gis |
+               preview-world | build | solve | check
   preview.py   face-validity previews (optional `preview` extra; not part of the identity check)
 tests/
   unit/  property/  fixtures/  golden/

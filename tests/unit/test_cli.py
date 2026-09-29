@@ -24,6 +24,82 @@ def test_terrain_refuses_a_map_type_not_built(
     assert not (tmp_path / "out").exists()
 
 
+def test_layers_writes_statistics_tables_and_hashes(
+    pilot_path: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["layers", str(pilot_path), "-o", str(tmp_path)]) == 0
+    for name in ("layers_stats.yaml", "layers_nodes.yaml", "layers_links.yaml"):
+        assert (tmp_path / name).read_bytes()
+    hashes = (tmp_path / "layers_sha256.txt").read_text(encoding="utf-8").splitlines()
+    assert [line.split("  ")[1] for line in hashes] == ["layers_nodes.yaml", "layers_links.yaml"]
+
+
+def test_layers_prints_its_siting_notes(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    recipe = tmp_path / "dry.yaml"
+    recipe.write_text(
+        "recipe_version: 1\nterrain:\n  character:\n    river_density: 0\n", encoding="utf-8"
+    )
+    assert main(["layers", str(recipe), "-o", str(tmp_path / "out")]) == 0
+    assert "transport: bridge: the island has no river" in capsys.readouterr().out
+
+
+def test_export_gis_writes_a_readable_geopackage_and_geotiffs(
+    pilot_path: Path, tmp_path: Path
+) -> None:
+    pytest.importorskip("rasterio")
+    import pyogrio
+    import rasterio
+
+    from swm.manifest.inspection import SYNTHETIC_NOTICE
+
+    assert main(["export-gis", str(pilot_path), "-o", str(tmp_path)]) == 0
+    package = str(tmp_path / "world.gpkg")
+    expected = {"nodes": 24, "links": 23}
+    for layer, count in expected.items():
+        info = pyogrio.read_info(package, layer=layer)
+        assert info["features"] == count
+        assert info["crs"] == "EPSG:32710"
+        assert info["layer_metadata"]["DESCRIPTION"] == SYNTHETIC_NOTICE
+    assert pyogrio.read_info(package, layer="cities")["features"] == 3
+    assert pyogrio.read_info(package, layer="coastline")["features"] == 3
+    nodes_bounds = pyogrio.read_info(package, layer="nodes")["total_bounds"]
+    with rasterio.open(tmp_path / "elevation_m.tif") as raster:
+        assert raster.crs.to_epsg() == 32710
+        assert raster.tags()["DESCRIPTION"] == SYNTHETIC_NOTICE
+        bounds = raster.bounds
+        assert bounds.left <= nodes_bounds[0]
+        assert nodes_bounds[2] <= bounds.right
+        assert bounds.bottom <= nodes_bounds[1]
+        assert nodes_bounds[3] <= bounds.top
+        assert raster.read(1).max() == pytest.approx(2440.0)
+    for name in ("land_cover.tif", "rivers.tif"):
+        with rasterio.open(tmp_path / name) as raster:
+            assert raster.crs.to_epsg() == 32710
+            assert raster.bounds == bounds
+
+
+def test_preview_world_writes_a_png(pilot_path: Path, tmp_path: Path) -> None:
+    pytest.importorskip("matplotlib")
+    image = tmp_path / "world.png"
+    assert main(["preview-world", str(pilot_path), "-o", str(image)]) == 0
+    assert image.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+
+
+def test_export_and_preview_say_how_to_install_what_they_need(
+    pilot_path: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setitem(sys.modules, "swm.manifest.inspection", None)
+    monkeypatch.setitem(sys.modules, "swm.preview", None)
+    assert main(["export-gis", str(pilot_path), "-o", str(tmp_path)]) == 1
+    assert main(["preview-world", str(pilot_path), "-o", str(tmp_path / "w.png")]) == 1
+    err = capsys.readouterr().err
+    assert "uv sync --extra export" in err
+    assert "uv sync --extra preview" in err
+
+
 def test_preview_terrain_writes_a_png(pilot_path: Path, tmp_path: Path) -> None:
     pytest.importorskip("matplotlib")
     image = tmp_path / "pilot.png"

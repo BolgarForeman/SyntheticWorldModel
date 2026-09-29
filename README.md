@@ -16,6 +16,18 @@ This installs Python 3.12 if needed, and the locked runtime and development depe
 uv sync --extra preview
 ```
 
+The GIS inspection export (`swm export-gis`) needs pyogrio, shapely and rasterio, in the optional `export` group. `uv sync --all-extras` installs both groups.
+
+## Build and inspect a world
+
+```
+uv run swm layers tests/fixtures/pilot_hand_check.yaml -o out
+uv run swm preview-world tests/fixtures/pilot_hand_check.yaml -o out/world.png
+uv run swm export-gis tests/fixtures/pilot_hand_check.yaml -o out
+```
+
+`out/world.gpkg` opens in ArcGIS Pro or QGIS in EPSG:32710, anchored at Point Nemo, and loads into PostGIS with `ogr2ogr` at SRID 32710.
+
 ## Run the checks
 
 ```
@@ -25,7 +37,7 @@ uv run mypy src
 uv run pytest
 ```
 
-CI runs the same checks, with the `preview` extra installed, on Linux and Windows for every pull request and every push to `main`.
+CI runs the same checks, with the `preview` and `export` extras installed, on Linux and Windows for every pull request and every push to `main`.
 
 ## Where things are
 

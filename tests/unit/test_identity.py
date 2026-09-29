@@ -12,6 +12,10 @@ GOLDEN_FILES = (
     "stream_record.yaml",
     "terrain_stats.yaml",
     "terrain_sha256.txt",
+    "layers_stats.yaml",
+    "layers_nodes.yaml",
+    "layers_links.yaml",
+    "layers_sha256.txt",
 )
 
 
@@ -26,6 +30,7 @@ def produced(tmp_path_factory: pytest.TempPathFactory) -> Path:
     out_dir = tmp_path_factory.mktemp("identity")
     assert main(["resolve", str(pilot), "-o", str(out_dir)]) == 0
     assert main(["terrain", str(pilot), "-o", str(out_dir)]) == 0
+    assert main(["layers", str(pilot), "-o", str(out_dir)]) == 0
     return out_dir
 
 

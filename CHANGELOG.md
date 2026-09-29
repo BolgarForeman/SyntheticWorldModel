@@ -14,6 +14,15 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 - Terrain stage for the spine island (Work Order 2): elevation, coastline, drainage, land cover and urban extents, with `swm terrain` and `swm preview-terrain`, and the pilot's golden terrain hashes.
 - Lifeline, Equal and Custom service weights over the end-use classes (Work Order 2, B4).
+- Layers stage (Work Order 3). All six layers are sited with siting notes, given classes and attributes, and linked with each layer's signature:
+  - roads route around the sea;
+  - the runway is recorded as a line.
+- Coordinates at Point Nemo in EPSG:32710, with latitude and longitude to 7 decimals (Work Order 3, Part A).
+- New commands (Work Order 3):
+  - `swm layers`;
+  - `swm export-gis` (world.gpkg and GeoTIFFs; optional `export` extra);
+  - `swm preview-world`.
+- Source scopes with the OpenStreetMap backbone; freight yard and bridge transport classes; the freight yard as an end use with Lifeline weight 4 (Work Order 3, B2 and E2).
 
 ### Changed
 
@@ -31,6 +40,9 @@ All notable changes to this project are recorded here. Each phase closes with a 
   - a 100 m base relief;
   - a minimum town at urban density 0;
   - the preview legend outside the map, with rivers drawn above the cover.
+
+- The terrain peak is rescaled to its bound after carving (Work Order 3, E1).
+- `osm_roads_rail` is renamed `osm_transport` (Work Order 3, E2).
 
 ### Removed
 

@@ -4,7 +4,7 @@ These documents are the specification the code is built against. They are mainta
 
 | File | What it is | Version |
 |---|---|---|
-| `World_Generator_Structure.md` | The specification: stages, the three kinds of quantity, answer keys, checks, open decisions | v0.3 |
+| `World_Generator_Structure.md` | The specification: stages, the three kinds of quantity, answer keys, checks, open decisions | v0.4 |
 | `Build_Game_Plan.md` | The phased build plan | v0.1 |
 | `Pilot_Spec.md` | The first job the generator has to do | v0.4 |
 | `Working_Protocol.md` | How work orders, reports and review flow | v0.1 |

@@ -126,7 +126,7 @@ class Source(StrEnum):
     DAM_REGISTER = "dam_register"
     OURAIRPORTS = "ourairports"
     WORLD_PORT_INDEX = "world_port_index"
-    OSM_ROADS_RAIL = "osm_roads_rail"
+    OSM_TRANSPORT = "osm_transport"
     OSM_FUEL = "osm_fuel"
     OSM_PIPELINES = "osm_pipelines"
     LNG_REGISTER = "lng_register"
@@ -151,6 +151,8 @@ class NodeClass(StrEnum):
     STORAGE = "storage"
     AIRPORT = "airport"
     SEAPORT = "seaport"
+    FREIGHT_YARD = "freight_yard"
+    BRIDGE = "bridge"
     RAIL_NODE = "rail_node"
     ROAD_JUNCTION = "road_junction"
     REFINERY = "refinery"
@@ -246,6 +248,7 @@ class EndUseClass(StrEnum):
     DISTRIBUTION_SUBSTATION = "distribution_substation"
     STORAGE = "storage"
     DEPOT = "depot"
+    FREIGHT_YARD = "freight_yard"
     CLINIC = "clinic"
     MAST = "mast"
 
@@ -262,12 +265,14 @@ LIFELINE_WEIGHTS: Mapping[EndUseClass, float] = {
     EndUseClass.DISTRIBUTION_SUBSTATION: 5.0,
     EndUseClass.STORAGE: 5.0,
     EndUseClass.DEPOT: 4.0,
+    EndUseClass.FREIGHT_YARD: 4.0,
     EndUseClass.CLINIC: 3.0,
     EndUseClass.MAST: 1.0,
 }
 """Lifeline service weights per end-use class.
 
-Source: structure v0.3 §5; the author's judgment on FEMA Community Lifelines categories.
+Source: structure v0.4 §5; the author's judgment on FEMA Community Lifelines categories.
+The freight yard (4, like a fuel depot) is Work Order 3, B2.
 """
 
 EQUAL_WEIGHTS: Mapping[EndUseClass, float] = dict.fromkeys(EndUseClass, 1.0)
@@ -300,7 +305,7 @@ LAYER_SOURCES: Mapping[Layer, tuple[Source, ...]] = {
     Layer.POWER: (Source.OSM_POWER, Source.WRI_GPPD, Source.OPENINFRAMAP),
     Layer.TELECOM: (Source.OSM_TELECOM, Source.SUBMARINE_CABLES),
     Layer.WATER: (Source.OSM_WATER, Source.DAM_REGISTER),
-    Layer.TRANSPORT: (Source.OURAIRPORTS, Source.WORLD_PORT_INDEX, Source.OSM_ROADS_RAIL),
+    Layer.TRANSPORT: (Source.OURAIRPORTS, Source.WORLD_PORT_INDEX, Source.OSM_TRANSPORT),
     Layer.FUEL: (Source.OSM_FUEL, Source.OSM_PIPELINES, Source.LNG_REGISTER),
     Layer.HEALTHCARE: (Source.OSM_HEALTH, Source.HEALTHSITES, Source.FACILITY_REGISTER),
 }
@@ -320,10 +325,12 @@ LAYER_NODE_CLASSES: Mapping[Layer, tuple[NodeClass, ...]] = {
     ),
     Layer.WATER: (NodeClass.RESERVOIR, NodeClass.TREATMENT, NodeClass.PUMPING, NodeClass.STORAGE),
     Layer.TRANSPORT: (
-        NodeClass.AIRPORT,
         NodeClass.SEAPORT,
-        NodeClass.RAIL_NODE,
+        NodeClass.AIRPORT,
+        NodeClass.FREIGHT_YARD,
+        NodeClass.BRIDGE,
         NodeClass.ROAD_JUNCTION,
+        NodeClass.RAIL_NODE,
     ),
     Layer.FUEL: (
         NodeClass.REFINERY,
@@ -338,7 +345,77 @@ LAYER_NODE_CLASSES: Mapping[Layer, tuple[NodeClass, ...]] = {
         NodeClass.BLOOD_BANK,
     ),
 }
-"""Node classes per layer. Source: interface mockup v0.5 (ruling C6)."""
+"""Node classes per layer. Source: interface mockup v0.5 (ruling C6); freight yard and bridge
+from Work Order 3, B2. No rail nodes are generated in Phase 1 (decision 0006)."""
+
+
+@dataclass(frozen=True)
+class SourceScope:
+    """The node classes a source can carry, and why."""
+
+    classes: tuple[NodeClass, ...]
+    note: str
+
+
+SOURCE_SCOPES: Mapping[Source, SourceScope] = {
+    Source.OSM_POWER: SourceScope(
+        LAYER_NODE_CLASSES[Layer.POWER],
+        "OpenStreetMap maps plants and substations: every power class (the backbone source)",
+    ),
+    Source.WRI_GPPD: SourceScope(
+        (NodeClass.GENERATION,), "The WRI Global Power Plant Database lists power plants only"
+    ),
+    Source.OPENINFRAMAP: SourceScope(
+        LAYER_NODE_CLASSES[Layer.POWER],
+        "OpenInfraMap is rendered from OpenStreetMap: every power class, and its errors are "
+        "correlated with OpenStreetMap's, not independent",
+    ),
+    Source.OSM_TELECOM: SourceScope(
+        LAYER_NODE_CLASSES[Layer.TELECOM],
+        "OpenStreetMap maps exchanges, masts, data centres and landings: every telecom class",
+    ),
+    Source.SUBMARINE_CABLES: SourceScope(
+        (NodeClass.CABLE_LANDING,), "The submarine cable map carries cable landing stations only"
+    ),
+    Source.OSM_WATER: SourceScope(
+        LAYER_NODE_CLASSES[Layer.WATER], "OpenStreetMap maps every water works class"
+    ),
+    Source.DAM_REGISTER: SourceScope(
+        (NodeClass.RESERVOIR,), "A dam and reservoir register lists reservoirs only"
+    ),
+    Source.OURAIRPORTS: SourceScope((NodeClass.AIRPORT,), "OurAirports lists airports only"),
+    Source.WORLD_PORT_INDEX: SourceScope(
+        (NodeClass.SEAPORT,), "The World Port Index lists seaports only"
+    ),
+    Source.OSM_TRANSPORT: SourceScope(
+        LAYER_NODE_CLASSES[Layer.TRANSPORT],
+        "OpenStreetMap transport: roads, rail, bridges, ports, airports and freight yards",
+    ),
+    Source.OSM_FUEL: SourceScope(
+        LAYER_NODE_CLASSES[Layer.FUEL], "OpenStreetMap maps every fuel site class"
+    ),
+    Source.OSM_PIPELINES: SourceScope(
+        (NodeClass.REFINERY, NodeClass.TANK_FARM, NodeClass.IMPORT_TERMINAL),
+        "OpenStreetMap pipelines carry the facilities pipelines join, not retail depots",
+    ),
+    Source.LNG_REGISTER: SourceScope(
+        (NodeClass.IMPORT_TERMINAL,), "An LNG terminal register lists import terminals only"
+    ),
+    Source.OSM_HEALTH: SourceScope(
+        LAYER_NODE_CLASSES[Layer.HEALTHCARE], "OpenStreetMap maps every healthcare class"
+    ),
+    Source.HEALTHSITES: SourceScope(
+        (NodeClass.TERTIARY, NodeClass.REGIONAL, NodeClass.CLINIC),
+        "healthsites.io lists hospitals and clinics, not blood banks",
+    ),
+    Source.FACILITY_REGISTER: SourceScope(
+        LAYER_NODE_CLASSES[Layer.HEALTHCARE],
+        "A government facility register lists every licensed healthcare facility",
+    ),
+}
+"""Which node classes each source carries. OpenStreetMap is the backbone on every layer; the
+specialised sources cross it (Work Order 3, E2; structure v0.4). A world node whose class no
+switched-on source covers is real but unemitted."""
 
 DEFAULT_COUPLINGS: tuple[tuple[Layer, Layer], ...] = (
     (Layer.POWER, Layer.TELECOM),

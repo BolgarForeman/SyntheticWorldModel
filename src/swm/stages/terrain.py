@@ -284,6 +284,7 @@ def build_terrain(terrain: Terrain, streams: TerrainStreams) -> TerrainResult:
     land, elevation_m = _add_outlying_islands(
         land, elevation_m, character.outlying_islands, max_elevation_m, streams.coastline, mappings
     )
+    elevation_m = _rescale_to_peak(elevation_m, max_elevation_m)
     elevation_dm = _quantise_dm(elevation_m, land)
     land_cells = int(np.count_nonzero(land))
     cell_size_m = math.sqrt(terrain.area_km2 * 1_000_000 / land_cells)
@@ -536,6 +537,17 @@ def _add_outlying_islands(
         elevation_m[box] = np.where(disc, cone, elevation_m[box])
         placed += 1
     return land, elevation_m
+
+
+def _rescale_to_peak(elevation_m: NDArray[np.float64], peak_m: float) -> NDArray[np.float64]:
+    """Scale elevation so the highest point equals ``peak_m`` (decision 0006, E1).
+
+    Carving relief lowers the peaks; rescaling restores the height the mountainous index sets.
+    """
+    highest_m = float(elevation_m.max())
+    if highest_m <= 0.0:
+        return elevation_m
+    return elevation_m * (peak_m / highest_m)
 
 
 def _quantise_dm(elevation_m: NDArray[np.float64], land: NDArray[np.bool_]) -> NDArray[np.int32]:
