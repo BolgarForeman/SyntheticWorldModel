@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.3 · 2026-09-28 · companion to the World Generator Interface mockup v0.5 and recipe schema v1 · supersedes v0.2*
+*v0.4 · 2026-09-28 · companion to the World Generator Interface mockup v0.5 and recipe schema v1 · supersedes v0.3*
 
 ## 1. What this is
 
@@ -36,6 +36,7 @@ Five commitments follow.
 - **The same world on every machine.** The recipe and seeds give the same bytes on Windows and Linux. World-building arithmetic therefore avoids operations whose last digit differs between platforms (transcendental functions, library reductions), or quantizes their results.
 - **Plant quietly.** Nothing planted may be recoverable by a simple shortcut: highest degree, largest capacity, nearest supplier. The check runs per answer-key request (§7).
 - **Synthetic identifiers.** Real code-list formats with synthetic values from a reserved range. No real place codes, airport codes, port codes or wiki identifiers.
+- **Synthetic centroid.** Every constructed world is anchored at Point Nemo, the Pacific pole of inaccessibility (about 48.88°S, 123.39°W). It is the ocean point farthest from any land, so no synthetic asset can fall on or be mistaken for a real place, and it signals plainly that the world is fictional.
 - **Scale-free realism.** Realism is set by per-layer statistics (degree, spacing, links per node, concentration), not by absolute counts, so the same targets hold from the hand-check world to the continental one.
 
 ## 4. Stages, in build order
@@ -70,6 +71,15 @@ Each stage reads the recipe and the outputs of earlier stages, draws from its ow
 
 - **Produces:** elevation, coastline, drainage, land cover, and urban extents used for siting.
 - **Note:** urban extents drive where nodes are sited; they are not a population or demand field. Real sources carry no demand, so a demand field would give the constructed world something the real route lacks. Requirements live at the nodes (§4.4). A population field remains a Chapter 9 item.
+
+### 4.1a Coordinates
+
+- **Working projection:** WGS 84 / UTM zone 10S (EPSG:32710). Point Nemo lies almost on the zone's central meridian (123°W), so distortion is minimal for every size up to Taiwan scale. The generator's local metres are placed at a fixed offset from the centroid, so they are real projected coordinates.
+- **Emitted sources:** WGS 84 latitude and longitude (EPSG:4326), in each source's own format, exactly as real sources carry them. Emitted coordinates are rounded to 7 decimal places (about 1 cm, the precision OpenStreetMap stores), so the transform gives the same bytes on every platform.
+- **Truth manifest:** EPSG:32710 metres, with latitude and longitude alongside.
+- **Analysis:** the pipeline takes the analysis projection per world: EPSG:32710 for constructed worlds, EPSG:3826 (TWD97 / TM2) for Taiwan. Both are metric Transverse Mercator, so the analysis code is the same.
+- **Very large and huge presets** outgrow one UTM zone and use a custom Lambert azimuthal equal-area projection centred on Point Nemo (Phase 5).
+- **Inspection export:** a GeoPackage (cities, nodes, links) and GeoTIFFs (elevation, land cover, rivers), each with its projection embedded, marked as synthetic in their metadata. ArcGIS Pro and QGIS open them directly; PostGIS loads them with ogr2ogr at SRID 32710. They sit outside the identity check, because their containers embed timestamps and database internals.
 
 ### 4.2 Layers and sources
 
@@ -217,6 +227,7 @@ A recipe carries any number of requests. Each is solved on the true world.
 | Power distribution substation | 5 | 1 |
 | Water storage | 5 | 1 |
 | Fuel depot | 4 | 1 |
+| Freight yard (truck warehouse and yard) | 4 | 1 |
 | Clinic | 3 | 1 |
 | Telecom mast | 1 | 1 |
 
@@ -279,9 +290,8 @@ The mockup (v0.5) runs the stages as nine steps (Terrain; Layers and sources; Co
 | 6 | The instance bound for the exact tier against the larger model set | Sets the ceiling on brute-force answer keys |
 | 7 | The buffer typology ruling | Decides whether every buffer is a stock (fuel, stored water, battery charge) or whether some are tolerance with no stock behind it (a hospital working on paper while telecom is down). A tolerance buffer would need its own drawn quantity |
 | 8 | Seeds per cell | Sets run counts for every sweep |
-| 9 | The synthetic coordinate anchor for emitted sources | Real formats carry latitude and longitude, and every point on Earth is somewhere real; the synthetic world needs a declared anchor (for example open ocean) before the first emitter |
-| 10 | The Magliocca consult on generator design, run alongside the build | Generator design is his field |
-| 11 | A size factor in the service weights | Weighted node-hours count a large and a small substation the same; a size factor would fix that without mixing units |
+| 9 | The Magliocca consult on generator design, run alongside the build | Generator design is his field |
+| 10 | A size factor in the service weights | Weighted node-hours count a large and a small substation the same; a size factor would fix that without mixing units |
 
 The UA Research Security export ask carried over from an earlier problem set and is not in scope (ruled 2026-09-28). The language (Python) and code location (the SyntheticWorldModel repository) are decided; see its decision records 0001–0003.
 
@@ -297,6 +307,12 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.3
+
+- Freight yard added as a transport end-use class, Lifeline weight 4; bridges are transport nodes but not end uses (§5).
+- OpenStreetMap is the backbone source on every layer; specialised sources (WRI, OurAirports, World Port Index, facility register) cross it and carry only the classes they really contain. OpenInfraMap derives from OpenStreetMap and its errors are correlated with it.
+- Coordinates settled (§3, new §4.1a): Point Nemo as the synthetic centroid; EPSG:32710 as the working projection; WGS 84 latitude and longitude in emitted sources, rounded to 7 decimals; per-world analysis projection; GeoPackage and GeoTIFF inspection export. Ruled by the author, 2026-09-28. Open decision on the coordinate anchor closed.
 
 ## Changes from v0.2
 
