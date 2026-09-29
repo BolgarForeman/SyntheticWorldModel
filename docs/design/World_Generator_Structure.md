@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.5 · 2026-09-29 · companion to the World Generator Interface mockup v0.5 and recipe schema v1 · supersedes v0.4*
+*v0.6 · 2026-09-29 · companion to the World Generator Interface mockup v0.5 and recipe schema v1 · supersedes v0.5*
 
 ## 1. What this is
 
@@ -176,18 +176,21 @@ Every row is a CHOICE-level placeholder until the realism ranges are measured (�
 
 | Consumer | Dep. | Type | Suppliers | Grade |
 |---|---|---|---|---|
-| generation, transmission and distribution substations | C | Ctl (rule 1) | exchange; mast | L |
+| generation, distribution substation | C | Ctl (rule 1) | exchange; mast | L |
+| transmission substation | C | Ctl (rule 1) | exchange | L |
 | treatment, pumping | C | Ctl (rule 1) | exchange; mast | L |
 | reservoir | O | Ctl (rule 1) | mast; exchange | J |
 | storage | — | | | J |
 | airport, towered | C | Ctl | exchange | L |
 | airport, not towered | O | Svc | exchange; mast | J |
 | seaport, freight_yard | C | Svc | exchange; mast; data_centre | L / J |
-| refinery, depot | C | Svc | exchange; mast; data_centre | J |
+| refinery | C | Svc | exchange | J |
+| depot | C | Svc | exchange; mast; data_centre | J |
 | tank_farm, pipeline-connected | C | Ctl (rule 1) | exchange; mast | S (US) |
 | tank_farm, not connected | O | Svc | exchange; mast | J |
 | import_terminal | C | Ctl (rule 1) | exchange; mast | S (US) |
-| tertiary, regional, clinic, blood_bank | C | Svc (a shorter buffer if records are hosted) | exchange; mast; data_centre | L / J |
+| tertiary, regional, clinic | C | Svc (tolerance buffer, §4.4a) | exchange; mast; data_centre | L / J |
+| blood_bank | C | Svc (tolerance buffer, §4.4a) | exchange; data_centre | J |
 
 cable_landing supplies no consumer directly. It feeds the exchange and data centre within telecom.
 
@@ -227,7 +230,8 @@ The airport supplies no fuel class.
 | generation, oil | C | PF | P | tank_farm; refinery | J |
 | generation, coal | C | L | P | import_terminal (coal) | L |
 | generation, hydro; substations | — | | | | J |
-| exchange, data_centre, cable_landing | C | L | B | depot; tank_farm | L / J |
+| exchange, data_centre | C | L | B | depot; tank_farm | L / J |
+| cable_landing | C | L | B | depot | J |
 | mast | O | L | B | depot | L |
 | treatment | C | L | B | depot; tank_farm | S (US) |
 | pumping | O | L | B | depot | L |
@@ -236,7 +240,8 @@ The airport supplies no fuel class.
 | airport, pipeline receipt | C | PF | P | refinery; tank_farm; import_terminal (oil) | L |
 | airport, truck receipt | C | L | P | depot | L |
 | freight_yard | C | L | P | depot; tank_farm | L |
-| tertiary, regional | C | L | B | depot; tank_farm | S (US) |
+| tertiary | C | L | B | depot; tank_farm | S (US) |
+| regional | C | L | B | depot | S (US) |
 | clinic | O | L | B | depot | J |
 | blood_bank | C | L | B | depot | L |
 
@@ -244,38 +249,148 @@ An LNG or coal import terminal never supplies bunkers, jet fuel or diesel.
 
 ### 4.4 What sources don't show
 
-These are the real-but-unobserved quantities. They split into two groups by how they are made.
+These are the real-but-unobserved quantities. They split into two groups by how they are made, and their design targets are set in §4.4a. Stage order: **layers → requirements → couplings → reserves, strength, modes and repair.** Requirements are drawn before couplings because they decide which substation supplies a consumer (§4.3a, rule 4).
 
 **Derived.** Computed from the world already built, never drawn on their own:
 
 | Quantity | How it is derived |
 |---|---|
-| Coupling strength | Capacity of the supplying node and the line to the consumer, divided by the consumer's requirement. A consumer on a direct transmission line may have three times its need; one at the end of a long rural feeder may have barely enough |
+| Coupling strength κ | κ = min(1, available supply ÷ requirement). Available supply is the supplier's capacity shared pro rata among its consumers. It is κ ∈ [0, 1] as the dissertation defines it (Appendix A, Def. 2.5). The uncapped ratio is recorded in the truth manifest as headroom. Telecom requirements are binary (served or not), and a telecom edge's κ is its public-network share (§4.3a, rule 1) |
 
-**Buffer time is not a separate quantity.** It is the reserve expressed in hours: the reserve divided by the draw on it. The generator draws the reserve only. Buffer time is computed during the run, because the draw can change during an event (load shedding, conservation, a second feed carrying part of the load), and a fixed buffer time would miss that.
+**World check (undisturbed supply):** in the world before any disruption, every consumer is fully supplied: R_φ(v) ≥ 1 for every node and commodity. A world that fails this is reported and not used; it is never silently regenerated.
+
+**Buffers.** Two kinds, ruled 2026-09-29, closing open decision 7:
+- **Stock buffers** (reserves). Fuel, stored water, batteries, supplies. Buffer time = stock ÷ draw, computed in the run at expected load, because the draw changes during an event. On generator power a hospital runs its essential load (§4.4a).
+- **Tolerance buffers** (telecom only). With no stock behind them, a facility keeps full function on manual fallback for T hours, then steps to a degraded level d. The public share κ scales the depth: d_eff = 1 − κ(1 − d); T is not scaled. When telecom and another supply fall short together, the facility takes the lowest level, not the product.
 
 **Drawn per element from context.** Each element gets its own value, drawn from a distribution whose centre depends on that element's situation:
 
-| Quantity | Context it depends on (examples) |
+| Quantity | Context it depends on |
 |---|---|
-| Reserves | Node class, criticality of what it serves, remoteness, hazard exposure |
-| Node requirements per commodity | Node class and size |
-| Repair rates | Distance to the nearest depot, terrain, node class |
-| Failure mode (throttle or trip) | Equipment class, dependency type |
-| Crews and depots | Counts set in the interface; sited by urban extents and access |
-| Links on node-only layers | The layer's structural signature and siting rules |
+| Requirements per commodity | Node class and its size attribute (beds, capacity, throughput class) |
+| Reserves (stock) | Node class and subtype; designated critical sites take a fixed higher target |
+| Presence of backup (generator, battery) | Node class (§4.3a subtypes) |
+| Generator availability | Per generator: fails to start, or fails to run |
+| Tolerance T and level d | Node class and subtype (§4.4a) |
+| Failure mode (throttle, trip, or step to a floor) | Dependency type × node class |
+| Repair (lead time, crew work, emergency option) | Node class, damage state, travel time from the crew base over roads |
+| Crews and crew bases | Counts set in the recipe; bases sited by urban extents and road access |
 
-Each drawn quantity has:
+**Levers.** Each continuous drawn quantity has a design target (§4.4a) and two levers:
+- *heterogeneity (percent):* the spread of element values, as a standard deviation expressed as a percentage of the target;
+- *compliance gap (percent, −50 to 95):* shifts the **median** below the target (positive) or above it (negative). A gap of 0 means centred on the target, not that every element complies. The gap is capped at 95; a missing generator or battery is carried by the presence attribute, not by a gap of 100.
 
-- **a design target:** what the governing standard or code requires for that class of element (a hospital's required backup fuel hours, a pump station's required storage). The target is the anchor, and each needs a citation (§10, item 1);
-- **context factors:** how the target shifts with the element's situation;
-- **two levers:**
-  - *heterogeneity (percent):* the spread of element values around their context-adjusted target, as a percentage of the target. At 0 every element sits on its target; at 100 the spread equals the target itself;
-  - *compliance gap (percent, −50 to 100):* the mean departure from target as a percentage of the target. Positive is shortfall; negative means elements exceed their target.
+Draws use one method for every quantity: a right-skewed quantile table, interpolated linearly, built offline and stored as decimal constants with their provenance. The shape is lognormal, because it is the standard shape for maintainability and repair data. Tables are scaled to median 1 and clipped at the 0.5% and 99.5% quantiles so tails stay plausible. At runtime only +, −, ×, ÷ and sqrt are used (§3).
 
-Two drawn quantities are categorical or structural and read the levers differently. For failure mode, heterogeneity is the share of elements whose mode departs from their dependency type's canon default. For links on nodes-only layers, it is the share of links that depart from the shortest road route. The compliance gap does not apply to either.
+For categorical quantities the levers read differently:
+- **Failure mode:** heterogeneity is the share of elements whose mode departs from the class default.
+- **Links on nodes-only layers:** it is the share of links that depart from the shortest road route.
+- The compliance gap applies to neither.
 
-At zero heterogeneity and zero compliance gap, every element sits exactly on its design target, and an analysis that assumes the standard is right for free, and the world flatters it. Both levers are recorded per quantity in the truth manifest.
+At zero heterogeneity and zero gap every element sits on its target, and an analysis that assumes the standard is right for free. Both levers are recorded per quantity in the truth manifest.
+
+### 4.4a Design targets
+
+Ruled by the author, 2026-09-29. Every target is placeholder-grade until the realism ranges are measured (§10, item 4). Anchoring order: **Taiwan first**. The fallback order after Taiwan is to be decided; where no Taiwan rule exists, the source used is named. The full evidence, with sources and quotes, is in `evidence/Design_Targets_Evidence_v0_1.md`, and the ruling sheet is `evidence/Design_Targets_Ruling_Sheet_v0_2.md`.
+
+Grades: S = standard or regulation · L = literature or government report · J = judgment. Jurisdiction: TW, JP or US.
+
+**Requirements** (normal-operation draw):
+
+| Element | Target | Grade |
+|---|---|---|
+| Tertiary hospital electricity | 2.5 kW per bed | L/J (TW bound) |
+| Regional hospital electricity | 2.0 kW per bed | L/J |
+| Hospital water | tertiary 1.0, regional 0.5 m³ per bed per day | S (TW plumbing code) |
+| Clinic | 27 kW | L (US) |
+| Mast | 6 kW | L |
+| Water treatment | 0.37 kWh per m³ treated | L |
+| Refinery | 7.0 kWh per barrel of crude | L (US) |
+| Data centre | IT load × 1.57 | L |
+| Thermal generation fuel | LNG combined cycle 8.0 GJ/MWh, oil 11.8, coal 11.4 | L (US 2024 heat rates) |
+| Telecom | binary (served or not) | ruling |
+| Other classes | placeholders named in the evidence | J |
+
+**Rule 4 of §4.3a (large loads).** A consumer whose peak load is 5 MW or more is supplied from a transmission substation; below that, from a distribution substation. A recipe switch sets 10 MW (22.8 kV areas). Source: Taipower Business Regulations, Art. 46 · S (TW). Peak load is the requirement × a peak factor (placeholder 1.3).
+
+**Stock buffers (reserves):**
+
+| Element | Target | Grade |
+|---|---|---|
+| Tertiary and regional hospital, generator fuel | 72 h at essential load (60% of normal) | L (TW accreditation; JP rule) |
+| Clinic | no generator by default | S (US) |
+| Hospital water | 72 h at the emergency ration of 300 L per bed per day; in a water outage the hospital drops to the ration | L (TW guideline) |
+| Hospital supplies | 72 h | J/L (JP) |
+| Blood bank | generator fuel 72 h; blood stock 7 days | L (TW) |
+| Mast battery | 4 h; 72 h at designated disaster-response sites | S (TW, base-station regulations Art. 22) |
+| Exchange | battery plus 24 h fuel | L (US) |
+| Data centre | 72 h fuel | L |
+| Cable landing, water treatment | 48 h fuel | J |
+| Pump station | pre-positioned portable generator at a recipe share of stations, 24 h fuel | L (TW practice) / J |
+| Distribution water storage | 12 h of peak-day demand | L (JP) |
+| LNG at the import terminal | 11 days | S (TW) |
+| Oil | 60 days held by industry plus 30 held by government, pro rata by tank capacity | S (TW) |
+| Coal at coal plants | 30 days | S (TW) |
+| Against telecom loss | none (tolerance buffer instead) | — |
+
+Battery and generator hours add. Fire-reserve water does not count toward the potable buffer.
+
+**Fuel resupply** on buffer-resupply edges: lead time 12 h from the depot; each delivery carries 24 h of fuel. Placeholder, J.
+
+**Compliance gaps (defaults):**
+- hospital backup 15%;
+- water facilities 20%;
+- exchanges and data centres 0%;
+- masts 0% against the TW 4 h rule.
+
+**Generator availability:** a separate per-generator draw of fail-to-start and fail-to-run, from military generator reliability data (Marqusee & Jenket 2020) · L (US).
+
+**Tolerance buffers (telecom loss):**
+
+| Class | T (hours) | d after T | Grade |
+|---|---|---|---|
+| Towered airport | 0 | 0.2 | L (US) / J |
+| Tank farm, pipeline-connected | 1 | 0.5 | S (US) / J |
+| Generation | 12 | 0.95 | L (US) |
+| Import terminal | 12 | 0.8 | J |
+| Transmission and distribution substations | 12 | 1.0; loss slows switching and repair, not supply | L (US) |
+| Pumping | 12 | 0.8 | J |
+| Water treatment | 24 | 0.9 | J |
+| Reservoir | 72 | 0.95 | J |
+| Seaport, freight yard | 24 | 0.5 | L (IT-outage analogue) / J |
+| Depot | 12 | 0.6 | J |
+| Refinery | 72 | 0.8 | J |
+| Hospital, records on site | 24 | 0.85 | S (TW NHI fallback) / L |
+| Hospital, records hosted off site | 0.5, ramping linearly to d by 4 h | 0.65 | L (US) |
+| Clinic | 24 | 0.8 | S (TW) / J |
+| Blood bank | 24 | 0.7 | J |
+
+**Failure mode** (the consumer's response to a shortfall on one commodity, drawn per node and commodity):
+- **Defaults:** physical flow → trip; logistic, control and service → throttle.
+- **Class departures:**
+  - to throttle: substations, water treatment, multi-pump stations;
+  - to step-to-floor: hospitals on generator, at the essential fraction;
+  - to trip: towered airport on telecom.
+- Heterogeneity default 10%. J with L support (US: NERC load modelling; Lee, Mitchell & Wallace 2007).
+
+**Repair.** Two alternative modes per eligible damaged node:
+- **Permanent:** a lead time that holds no crew (assessment and parts), then crew work hours, restoring full capacity. The centre is the Hazus restoration mean by class and damage state (Hazus MR4 technical manual; 6.1 values unverified) · L (US). Crew work hours are 8 h at slight damage and 24 h at moderate (placeholders); lead time is the Hazus mean less the crew work, floored at 0.
+- **Emergency:** travel over roads from the crew base plus set-up, using one unit from a finite pool. It restores reduced capacity for the rest of the event.
+  - Distribution substation: mobile substation, 12–24 h including travel, about 25 MVA against the node's normal peak load (L, US DOE).
+  - Mast: mobile cell site, about 14 h, capacity 0.5 (L, US; capacity J).
+  - No other class has an emergency mode inside a 72 h window. Hazus substation restoration already includes temporary measures at extensive and complete damage.
+- **Travel:** road travel time from the crew base is its own term, not a multiplier on repair time.
+- **Unrepairable in the window:** reservoirs.
+- **Pilot:**
+  - 2 crews in one pool, a declared scarcity (sensitivity test at 1, 2 and 3);
+  - one crew base (`crew_base`);
+  - an emergency pool of 1 mobile substation and 1 mobile cell site;
+  - the storm causes slight and moderate damage only at facilities (hazards, Work Order 6).
+
+**Crews:**
+- Crews are counted in the recipe.
+- Crew bases (`crew_base`, distinct from the fuel depot class) are sited in towns by road access.
+- Taiwan reference: 24 Taipower district offices, about 1,500 km² each; crews of 5 to 7 people · L (TW).
 
 ### 4.5 Dynamics and difficulty
 
@@ -417,7 +532,7 @@ The mockup (v0.5) runs the stages as nine steps (Terrain; Layers and sources; Co
 | 4 | Reference statistics and ranges for the realism check, per layer, and the Taiwan-scale counts and area | Must be measured from the Ch6 corpus before the first full-size world |
 | 5 | Size of the overlap band | Cannot be retrofitted once the sweeps are sized |
 | 6 | The instance bound for the exact tier against the larger model set | Sets the ceiling on brute-force answer keys |
-| 7 | The buffer typology ruling | Decides whether every buffer is a stock (fuel, stored water, battery charge) or whether some are tolerance with no stock behind it (a hospital working on paper while telecom is down). A tolerance buffer would need its own drawn quantity |
+| 7 | ~~The buffer typology ruling~~ Closed 2026-09-29: stock buffers plus a telecom tolerance buffer (§4.4) | Decides whether every buffer is a stock (fuel, stored water, battery charge) or whether some are tolerance with no stock behind it (a hospital working on paper while telecom is down). A tolerance buffer would need its own drawn quantity |
 | 8 | Seeds per cell | Sets run counts for every sweep |
 | 9 | The Magliocca consult on generator design, run alongside the build | Generator design is his field |
 | 10 | A size factor in the service weights | Weighted node-hours count a large and a small substation the same; a size factor would fix that without mixing units |
@@ -436,6 +551,18 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.5
+
+All ruled by the author, 2026-09-29:
+
+- §4.4 rewritten and §4.4a added: design targets for requirements, reserves, tolerance buffers, failure modes, repair and crews, with grades and sources. Taiwan is the first anchor.
+- Buffers are of two kinds: stock (reserves) and tolerance (telecom only). This closes open decision 7.
+- Levers: the compliance gap shifts the median, is capped at 95, and 0 means centred, not compliant. Heterogeneity is a standard deviation. One skewed quantile-table method is used for every draw.
+- κ stays capped at 1, with headroom recorded. A telecom κ is the public share. New world check: every consumer is fully supplied before any disruption.
+- Rule 4 of §4.3a: 5 MW peak load (Taipower Art. 46), with a switch to 10 MW. Requirements are drawn before couplings.
+- Repair: permanent (lead time plus crew work) or emergency (mobile substation, mobile cell site). The pilot pool is one of each.
+- §4.3a: five supplier lists narrowed to the evidence (Work Order 4 answers, question 1).
 
 ## Changes from v0.4
 

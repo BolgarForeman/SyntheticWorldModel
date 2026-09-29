@@ -45,6 +45,8 @@ def _registry() -> dict[str, str]:
         "unobserved/links_on_nodes_only_layers": "Links on layers whose sources report nodes only.",
         "unobserved/crews_and_depots": "Siting of repair crews and depots.",
     }
+    for layer in Layer:
+        paths[f"requirements/{layer}"] = f"Requirements of {layer} nodes, per commodity."
     paths |= _coupling_paths()
     for hazard in Hazard:
         paths[f"shared_causes/{hazard}/field"] = f"Latent {hazard} field with distance decay."

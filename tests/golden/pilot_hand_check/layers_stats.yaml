@@ -1,3 +1,7 @@
+modeling_rules:
+  registry_version: '0.1'
+  registry_sha256: 67ba0cf0cb94734c85863552b04277ef410529316a3d82efe17c187a22a70a3c
+  overrides: {}
 layers:
   power:
     state: emitted

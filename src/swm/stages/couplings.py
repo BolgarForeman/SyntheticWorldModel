@@ -36,7 +36,9 @@ from swm.recipe.schema import (
     SwitchedOffHandling,
     TransferForms,
 )
+from swm.rules.registry import Registry
 from swm.stages.layers import LayersResult, Node, _segment_cells
+from swm.stages.requirements import RequirementsResult
 from swm.stages.terrain import TerrainResult, _dilate, _label_land
 
 Pair = tuple[Layer, Layer]
@@ -80,12 +82,6 @@ PUBLIC_SHARE_LAYERS: Mapping[Layer, str] = {
 
 NO_STANDBY = "none"
 """The standby_fuel value of a consumer with no standby generator."""
-
-RULE_4_DEFERRED = (
-    "rule 4 deferred to Work Order 5: without node requirements every consumer is below the "
-    "transmission-connection threshold, so it is supplied from a distribution substation "
-    "(decision 0008, answer 4)"
-)
 
 
 @dataclass(frozen=True)
@@ -233,6 +229,8 @@ def build_couplings(
     transfer_forms: TransferForms,
     terrain: TerrainResult,
     layers: LayersResult,
+    requirements: RequirementsResult,
+    rules: Registry,
     streams: CouplingsStreams,
 ) -> CouplingsResult:
     """Build every dependency and coupling edge of the world.
@@ -251,6 +249,10 @@ def build_couplings(
         The terrain stage's output.
     layers : LayersResult
         The layers stage's output.
+    requirements : RequirementsResult
+        The requirements stage's output; peak loads decide the supplying substation (rule 4).
+    rules : Registry
+        The modeling rules in force, with the recipe's overrides.
     streams : CouplingsStreams
         The couplings streams.
 
@@ -259,7 +261,7 @@ def build_couplings(
     CouplingsResult
         Edges, dependencies and per-pair statistics.
 
-    Spec: structure v0.5 §4.3 and §4.3a; Work Order 4, E1-E11.
+    Spec: structure v0.6 §4.3 and §4.3a; Work Order 4, E1-E11; Work Order 5, Part C.
     """
     world = _World(terrain, layers)
     # CHOICE: every pair of present layers is built, then pairs switched off under
@@ -270,7 +272,8 @@ def build_couplings(
         for pair in DEFAULT_COUPLINGS
         if layers.states[pair[0]] != LayerState.OFF and layers.states[pair[1]] != LayerState.OFF
     ]
-    needs = {pair: _needs_of(pair, world) for pair in pairs}
+    large = _LargeLoads.from_rules(requirements, rules, couplings.distribution_voltage_kv)
+    needs = {pair: _needs_of(pair, world, large) for pair in pairs}
     _apply_density(needs, couplings.density, streams.density)
     notes: dict[Pair, list[str]] = {pair: [] for pair in pairs}
     hubs: dict[Pair, Node | None] = {}
@@ -279,7 +282,7 @@ def build_couplings(
             _reach(needs[pair], world)
             hubs[pair] = None
             continue
-        _configure_feeds(pair, needs[pair], couplings, streams)
+        _configure_feeds(pair, needs[pair], couplings, streams, large.second_feed_pct)
         hubs[pair] = _choose_suppliers(pair, needs[pair], couplings, streams, notes[pair])
     mutual = _two_way(needs, couplings.two_way_pct, streams.two_way, notes)
     switched = {(p.supplier, p.consumer) for p in couplings.switched_on}
@@ -548,7 +551,38 @@ class _Need:
         return self.pair[0] == Layer.TRANSPORT
 
 
-def _needs_of(pair: Pair, world: _World) -> list[_Need]:
+@dataclass(frozen=True)
+class _LargeLoads:
+    """What rule 4 and rule 5 read: peak loads, the threshold and the second-feed chance."""
+
+    peak_mw: Mapping[str, float]
+    threshold_mw: float
+    second_feed_pct: int
+
+    @classmethod
+    def from_rules(
+        cls, requirements: RequirementsResult, rules: Registry, voltage_kv: float
+    ) -> "_LargeLoads":
+        table = rules.value("dependencies.rule_4.transmission_threshold_mw")
+        share = rules.number("dependencies.rule_5.tertiary_second_feed_share")
+        return cls(
+            peak_mw={n.node_id: n.peak_mw for n in requirements.nodes if n.peak_mw is not None},
+            threshold_mw=float(table[f"{voltage_kv:g}"]),
+            second_feed_pct=int(share * 100 + 0.5),
+        )
+
+    def suppliers(self, row: DependencyRow, consumer: Node) -> tuple[SupplierOption, ...]:
+        """Return the row's suppliers, or a transmission substation for a large power consumer."""
+        peak = self.peak_mw.get(consumer.node_id)
+        # CHOICE: rule 4 moves a large consumer onto transmission; a smaller one keeps its row's
+        # suppliers, so rows that already name a transmission substation (refinery, LNG
+        # terminal) are not moved down to distribution.
+        if row.supplier_layer != Layer.POWER or peak is None or peak < self.threshold_mw:
+            return row.suppliers
+        return (SupplierOption(NodeClass.TRANSMISSION_SUBSTATION),)
+
+
+def _needs_of(pair: Pair, world: _World, large: _LargeLoads) -> list[_Need]:
     """Every dependency a pair's consumers could take: core, optional, and absent buffers."""
     supplier, consumer = pair
     needs = []
@@ -557,7 +591,8 @@ def _needs_of(pair: Pair, world: _World) -> list[_Need]:
         row = resolve_row(supplier, node.node_class, subtype)
         if row.dependency == Dependency.NONE:
             continue
-        need = _Need(pair, node, row, _eligible(row, node, world))
+        options = large.suppliers(row, node)
+        need = _Need(pair, node, row, _eligible(row.supplier_layer, options, node, world))
         # CHOICE: an absent buffer is recorded whether its row is core or optional, and is
         # not counted among the optional dependencies density draws from.
         if row.role == Role.BUFFER_RESUPPLY and subtype.get("standby_fuel") == NO_STANDBY:
@@ -567,18 +602,23 @@ def _needs_of(pair: Pair, world: _World) -> list[_Need]:
                 "no standby generator (standby_fuel none): no buffer-resupply edge "
                 "(decision 0008, answer 3)"
             )
-        if row.large_load_supplier is not None:
-            need.notes.append(RULE_4_DEFERRED)
+        if options != row.suppliers:
+            need.notes.append(
+                f"rule 4: peak load {large.peak_mw[node.node_id]:.3f} MW is at or above "
+                f"{large.threshold_mw:g} MW, so a transmission substation supplies it"
+            )
         needs.append(need)
     return needs
 
 
-def _eligible(row: DependencyRow, consumer: Node, world: _World) -> list[Node]:
-    """Supplier nodes the row allows for this consumer, nearest first, ties by node id."""
+def _eligible(
+    supplier_layer: Layer, options: Sequence[SupplierOption], consumer: Node, world: _World
+) -> list[Node]:
+    """Supplier nodes the options allow for this consumer, nearest first, ties by node id."""
     nodes = [
         node
-        for node in world.nodes[row.supplier_layer]
-        if any(_allows(option, node, consumer, world) for option in row.suppliers)
+        for node in world.nodes[supplier_layer]
+        if any(_allows(option, node, consumer, world) for option in options)
     ]
     return sorted(nodes, key=lambda node: (_distance2(node, consumer), node.node_id))
 
@@ -627,7 +667,11 @@ def _apply_density(
 
 
 def _configure_feeds(
-    pair: Pair, needs: list[_Need], couplings: Couplings, streams: CouplingsStreams
+    pair: Pair,
+    needs: list[_Need],
+    couplings: Couplings,
+    streams: CouplingsStreams,
+    second_feed_pct: int,
 ) -> None:
     """Apply the feed mix with exact largest-remainder counts; rule 5 and buffers apart."""
     mixed = [
@@ -654,9 +698,7 @@ def _configure_feeds(
     for need in needs:
         if need.absent or need.row.rule != "rule 5":
             continue
-        second = int(streams.tertiary_second_feed.integers(0, 100)) < (
-            couplings.tertiary_second_feed_pct
-        )
+        second = int(streams.tertiary_second_feed.integers(0, 100)) < second_feed_pct
         _set_feed(need, FeedConfiguration.TWO_FULL if second else FeedConfiguration.SINGLE)
         if second:
             need.notes.append("tertiary second feed drawn (rule 5): two full feeds")

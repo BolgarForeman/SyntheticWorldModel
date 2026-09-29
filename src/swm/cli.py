@@ -23,10 +23,14 @@ from swm.recipe.io import (
 )
 from swm.recipe.resolve import Resolution, resolve
 from swm.rng import stream_record
+from swm.rules.page import rules_page_html
+from swm.rules.registry import Registry, load_registry
 from swm.stages import couplings as couplings_stage
 from swm.stages import layers as layers_stage
+from swm.stages import requirements as requirements_stage
 from swm.stages.couplings import CouplingsResult, build_couplings, couplings_streams
 from swm.stages.layers import LayersResult, build_layers, layers_streams
+from swm.stages.requirements import RequirementsResult, build_requirements, requirements_streams
 from swm.stages.terrain import (
     TerrainResult,
     array_hashes,
@@ -43,6 +47,8 @@ LAYERS_STATS_FILE = "layers_stats.yaml"
 LAYERS_NODES_FILE = "layers_nodes.yaml"
 LAYERS_LINKS_FILE = "layers_links.yaml"
 LAYERS_HASHES_FILE = "layers_sha256.txt"
+REQUIREMENTS_STATS_FILE = "requirements_stats.yaml"
+REQUIREMENTS_HASHES_FILE = "requirements_sha256.txt"
 COUPLINGS_STATS_FILE = "couplings_stats.yaml"
 COUPLINGS_HASHES_FILE = "couplings_sha256.txt"
 COUPLINGS_EDGES_CSV = "couplings_edges.csv"
@@ -70,6 +76,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     """
     arguments = _parser().parse_args(argv)
     if arguments.command is None:
+        return EXIT_OK
+    if arguments.command == "rules":
+        write_binary(rules_page_html(load_registry()), Path(arguments.output))
         return EXIT_OK
     try:
         resolution = resolve(load_recipe(Path(arguments.recipe)))
@@ -147,7 +156,9 @@ def _layers_command(resolution: Resolution, arguments: argparse.Namespace) -> No
     out_dir = Path(arguments.out_dir)
     nodes = canonical_yaml({"nodes": layers_stage.node_table(result)})
     links = canonical_yaml({"links": layers_stage.link_table(result)})
-    write_canonical_yaml(layers_stage.statistics_record(result), out_dir / LAYERS_STATS_FILE)
+    write_canonical_yaml(
+        _stamped(layers_stage.statistics_record(result), resolution), out_dir / LAYERS_STATS_FILE
+    )
     write_binary(nodes, out_dir / LAYERS_NODES_FILE)
     write_binary(links, out_dir / LAYERS_LINKS_FILE)
     hashes = [
@@ -160,12 +171,31 @@ def _layers_command(resolution: Resolution, arguments: argparse.Namespace) -> No
             sys.stdout.write(f"{stats.layer}: {note}\n")
 
 
+def _requirements_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    terrain = _terrain(resolution)
+    result = _requirements(resolution, _layers(resolution, terrain))
+    out_dir = Path(arguments.out_dir)
+    write_canonical_yaml(
+        _stamped(requirements_stage.statistics_record(result), resolution),
+        out_dir / REQUIREMENTS_STATS_FILE,
+    )
+    table = canonical_yaml({"requirements": requirements_stage.requirement_table(result)})
+    write_hash_list(
+        [("requirements", hashlib.sha256(table).hexdigest())], out_dir / REQUIREMENTS_HASHES_FILE
+    )
+    for note in result.notes:
+        sys.stdout.write(f"requirements: {note}\n")
+
+
 def _couplings_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
     terrain = _terrain(resolution)
     layers = _layers(resolution, terrain)
     result = _couplings(resolution, terrain, layers)
     out_dir = Path(arguments.out_dir)
-    write_canonical_yaml(couplings_stage.statistics_record(result), out_dir / COUPLINGS_STATS_FILE)
+    write_canonical_yaml(
+        _stamped(couplings_stage.statistics_record(result), resolution),
+        out_dir / COUPLINGS_STATS_FILE,
+    )
     tables = {
         "edges": canonical_yaml({"edges": couplings_stage.edge_table(result)}),
         "dependencies": canonical_yaml({"dependencies": couplings_stage.dependency_table(result)}),
@@ -208,7 +238,8 @@ def _export_gis_command(resolution: Resolution, arguments: argparse.Namespace) -
     terrain = _terrain(resolution)
     layers = _layers(resolution, terrain)
     couplings = _couplings(resolution, terrain, layers)
-    for path in export_gis(terrain, layers, couplings, Path(arguments.out_dir)):
+    stamp = _rules_stamp(resolution)
+    for path in export_gis(terrain, layers, couplings, Path(arguments.out_dir), stamp):
         sys.stdout.write(f"{path}\n")
 
 
@@ -243,8 +274,39 @@ def _couplings(
         recipe.dynamics.transfer_forms,
         terrain,
         layers,
+        _requirements(resolution, layers),
+        _rules(resolution),
         couplings_streams(recipe.root_seed),
     )
+
+
+def _requirements(resolution: Resolution, layers: LayersResult) -> RequirementsResult:
+    recipe = resolution.recipe
+    return build_requirements(
+        recipe.unobserved.requirements,
+        layers,
+        _rules(resolution),
+        requirements_streams(recipe.root_seed),
+    )
+
+
+def _rules(resolution: Resolution) -> Registry:
+    """Return the registry with the recipe's overrides applied (Work Order 5, A3)."""
+    return load_registry().with_overrides(resolution.recipe.modeling_rules.overrides)
+
+
+def _rules_stamp(resolution: Resolution) -> dict[str, object]:
+    rules = resolution.recipe.modeling_rules
+    return {
+        "registry_version": rules.registry_version,
+        "registry_sha256": rules.registry_sha256,
+        "overrides": dict(rules.overrides),
+    }
+
+
+def _stamped(record: dict[str, object], resolution: Resolution) -> dict[str, object]:
+    """Put the modeling rules that built the world at the head of a stage's statistics."""
+    return {"modeling_rules": _rules_stamp(resolution), **record}
 
 
 def _terrain(resolution: Resolution) -> TerrainResult:
@@ -262,6 +324,7 @@ COMMANDS: dict[str, Callable[[Resolution, argparse.Namespace], None]] = {
     "terrain": _terrain_command,
     "preview-terrain": _preview_terrain_command,
     "layers": _layers_command,
+    "requirements": _requirements_command,
     "couplings": _couplings_command,
     "preview-couplings": _preview_couplings_command,
     "export-gis": _export_gis_command,
@@ -297,6 +360,15 @@ def _parser() -> argparse.ArgumentParser:
     )
     layers_command.add_argument("recipe", help="recipe YAML file")
     layers_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    requirements_command = commands.add_parser(
+        "requirements", help="draw the requirements; write their statistics and table hash"
+    )
+    requirements_command.add_argument("recipe", help="recipe YAML file")
+    requirements_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    rules_command = commands.add_parser(
+        "rules", help="render the modeling rules registry as one HTML page"
+    )
+    rules_command.add_argument("-o", "--output", required=True, help="HTML file to write")
     couplings_command = commands.add_parser(
         "couplings", help="build the couplings; write their statistics and table hashes"
     )

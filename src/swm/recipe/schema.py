@@ -705,6 +705,10 @@ class PublicTelecomShare(_Section):
     )
 
 
+DISTRIBUTION_VOLTAGES_KV = (11.4, 22.8)
+"""Taipower's distribution voltages; each sets its own transmission threshold (§4.3a rule 4)."""
+
+
 class Couplings(_Section):
     """Cross-layer couplings. Spec: structure v0.5 §4.3 and §4.3a."""
 
@@ -753,22 +757,22 @@ class Couplings(_Section):
         default_factory=PublicTelecomShare,
         description="Public telecom share of control dependencies, per consumer (rule 1).",
     )
-    tertiary_second_feed_pct: int = Field(
-        50,
-        ge=0,
-        le=100,
-        description="Chance that a tertiary hospital takes a second distribution substation "
-        "(§4.3a rule 5). CHOICE: placeholder (open decision: realism ranges).",
+    distribution_voltage_kv: float = Field(
+        11.4,
+        description="The distribution voltage of the world's service areas, which sets the "
+        "peak load at which a consumer is supplied from a transmission substation (§4.3a rule "
+        "4): 5 MW in 11.4 kV areas, 10 MW in 22.8 kV areas (modeling rule "
+        "dependencies.rule_4.transmission_threshold_mw).",
     )
-    transmission_connection_threshold_mw: float = Field(
-        5.0,
-        ge=0,
-        description="Load above which a consumer is supplied from a transmission substation "
-        "(§4.3a rule 4), in MW. CHOICE: placeholder (open decision: realism ranges). Taipower "
-        "sets supply voltage by contract capacity, with extra-high voltage (69 kV and up) for "
-        "the largest customers (S-TW-TP, Art. 46); its kW thresholds were not retrieved, and "
-        "5 MW is the commonly cited boundary, unverified.",
-    )
+
+    @model_validator(mode="after")
+    def _known_voltage(self) -> Self:
+        if self.distribution_voltage_kv not in DISTRIBUTION_VOLTAGES_KV:
+            raise ValueError(
+                "couplings.distribution_voltage_kv must be one of "
+                + ", ".join(f"{v:g}" for v in DISTRIBUTION_VOLTAGES_KV)
+            )
+        return self
 
     @model_validator(mode="after")
     def _no_repeated_pairs(self) -> Self:
@@ -1175,6 +1179,24 @@ def _default_requests() -> tuple[AnswerKeyRequest, ...]:
 # --- The recipe -----------------------------------------------------------------------------
 
 
+class ModelingRules(_Section):
+    """Which modeling rules built the world, and any overrides (Work Order 5, A3)."""
+
+    registry_version: str | None = Field(
+        None,
+        description="The modeling rules registry's version. Filled in on resolution; a recipe "
+        "resolved against another registry is refused.",
+    )
+    registry_sha256: str | None = Field(
+        None, description="SHA-256 of the registry file. Filled in on resolution."
+    )
+    overrides: dict[str, float] = Field(
+        default_factory=dict,
+        description="New values for named rules, for sensitivity runs (for example "
+        "dependencies.rule_5.tertiary_second_feed_share). Only rules marked overridable.",
+    )
+
+
 class Recipe(_Section):
     """A recipe: every choice that builds one world, and the questions posed of it.
 
@@ -1189,6 +1211,9 @@ class Recipe(_Section):
         ge=0,
         le=ROOT_SEED_UPPER_BOUND,
         description="With the recipe, rebuilds this exact world. Every stream spawns from it.",
+    )
+    modeling_rules: ModelingRules = Field(
+        default_factory=ModelingRules, description="The modeling rules registry in force."
     )
     terrain: Terrain = Field(default_factory=Terrain, description="Terrain.")
     layers: Layers = Field(default_factory=Layers, description="Layers and sources.")

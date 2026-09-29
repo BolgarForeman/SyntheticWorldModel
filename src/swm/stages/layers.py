@@ -12,8 +12,9 @@ Spec: structure v0.4 §4.1a, §4.2 and §5; Work Order 3, Part B.
 import heapq
 import math
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field, fields, replace
 from itertools import combinations, pairwise
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -29,6 +30,7 @@ from swm.recipe.schema import (
     LayerState,
     NodeClass,
 )
+from swm.rules.registry import RULES
 from swm.stages.terrain import (
     D8_OFFSETS,
     GRID_CELLS,
@@ -78,130 +80,142 @@ class ClassShare:
     backbone: bool
 
 
-# CHOICE: placeholder (open decision: realism ranges). Backbone classes get one node each, in
-# order, while the count allows; the rest go by largest shortfall against the shares. At four
-# nodes per layer this gives the pilot composition ruled on 2026-09-28.
 COMPOSITION: Mapping[Layer, tuple[ClassShare, ...]] = {
-    Layer.POWER: (
-        ClassShare(NodeClass.GENERATION, 0.2, True),
-        ClassShare(NodeClass.TRANSMISSION_SUBSTATION, 0.2, True),
-        ClassShare(NodeClass.DISTRIBUTION_SUBSTATION, 0.6, True),
-    ),
-    Layer.TELECOM: (
-        ClassShare(NodeClass.EXCHANGE, 0.1, True),
-        ClassShare(NodeClass.MAST, 0.8, True),
-        ClassShare(NodeClass.DATA_CENTRE, 0.05, False),
-        ClassShare(NodeClass.CABLE_LANDING, 0.05, False),
-    ),
-    Layer.WATER: (
-        ClassShare(NodeClass.RESERVOIR, 0.25, True),
-        ClassShare(NodeClass.TREATMENT, 0.25, True),
-        ClassShare(NodeClass.PUMPING, 0.25, True),
-        ClassShare(NodeClass.STORAGE, 0.25, True),
-    ),
-    Layer.TRANSPORT: (
-        ClassShare(NodeClass.SEAPORT, 0.1, True),
-        ClassShare(NodeClass.AIRPORT, 0.1, True),
-        ClassShare(NodeClass.FREIGHT_YARD, 0.1, True),
-        ClassShare(NodeClass.BRIDGE, 0.1, True),
-        ClassShare(NodeClass.ROAD_JUNCTION, 0.6, False),
-    ),
-    Layer.FUEL: (
-        ClassShare(NodeClass.IMPORT_TERMINAL, 0.1, True),
-        ClassShare(NodeClass.TANK_FARM, 0.15, True),
-        ClassShare(NodeClass.DEPOT, 0.7, True),
-        ClassShare(NodeClass.REFINERY, 0.05, False),
-    ),
-    Layer.HEALTHCARE: (
-        ClassShare(NodeClass.TERTIARY, 0.1, True),
-        ClassShare(NodeClass.REGIONAL, 0.15, True),
-        ClassShare(NodeClass.CLINIC, 0.65, True),
-        ClassShare(NodeClass.BLOOD_BANK, 0.1, True),
-    ),
+    layer: tuple(
+        ClassShare(NodeClass(entry["node_class"]), entry["share"], entry["backbone"])
+        for entry in RULES.value(f"layers.composition.{layer}")
+    )
+    for layer in Layer
 }
+"""Each layer's class shares (registry ``layers.composition.*``). Backbone classes get one node
+each, in order, while the count allows; the rest go by largest shortfall against the shares."""
 
 
-# CHOICE: every siting distance and threshold below (Work Order 3, B3; decision 0006).
 @dataclass(frozen=True)
 class SitingMappings:
-    """Distances and thresholds the siting rules use."""
+    """Distances, thresholds and weight scales the siting rules use.
 
-    near_city_km: float = 3.0
+    Each field is the registry rule ``layers.siting.<field>`` (Work Order 5, A2).
+    """
+
+    near_city_km: float
     """Generation, import terminals and freight yards sit within this of their city (km)."""
-    beside_city_km: float = 1.0
+    beside_city_km: float
     """Distribution substations sit in or within this of a city (km)."""
-    storage_beside_city_km: float = 1.5
+    storage_beside_city_km: float
     """Water storage sits within this of a city's edge, outside it (km)."""
-    seaport_city_km: float = 2.0
+    seaport_city_km: float
     """Seaports sit on the coast within this of their city (km)."""
-    shelter_radius_cells: int = 4
+    shelter_radius_cells: int
     """Half-width of the window over which a coast cell's shelter is measured (cells)."""
-    corridor_km: float = 1.5
+    corridor_km: float
     """Transmission and pumping sit within this of the line they lie between (km)."""
-    corridor_middle_share: float = 0.5
+    corridor_middle_share: float
     """...and in the middle share of that line, away from both ends (ratio)."""
-    upland_share: float = 0.35
+    upland_share: float
     """Uplands: at or above this share of the island's highest point (ratio)."""
-    treatment_gap_cells: int = 3
+    treatment_gap_cells: int
     """Treatment sits at least this far downstream of its reservoir (cells)."""
-    tank_farm_km: float = 2.0
+    tank_farm_km: float
     """Tank farms sit within this of their import terminal (km)."""
-    refinery_km: float = 5.0
+    refinery_km: float
     """Refineries sit on the coast within this of an import terminal (km)."""
-    mast_spacing_km: float = 2.0
+    mast_spacing_km: float
     """Masts sit at least this far from other telecom nodes (km)."""
-    clinic_spacing_km: float = 2.0
+    clinic_spacing_km: float
     """Clinics sit at least this far from other healthcare nodes (km)."""
-    runway_km: float = 2.5
+    runway_km: float
     """An airport needs a straight flat run at least this long (km; decision 0006)."""
-    runway_grade: float = 0.02
+    runway_grade: float
     """...whose height varies by no more than this share of its length (ratio)."""
-    runway_city_km: float = 5.0
+    runway_city_km: float
     """...with its middle within this of a city (km)."""
-    flat_slope: float = 0.06
+    flat_slope: float
     """Flat ground for freight yards: slope at or below this (m/m)."""
-    freight_road_km: float = 0.5
+    freight_road_km: float
     """Freight yards weigh closeness to the main road on this scale (km)."""
-    waypoint_candidates: int = 4_000
+    waypoint_candidates: int
     """Land waypoints tried, shortest first, before a road falls back to the grid (count)."""
+    anchor_pull_cells: float
+    """Distance scale of the pull toward a node's anchor, a city centre or coast target (cells)."""
+    seaport_city_pull_km: float
+    """Distance scale of a seaport's pull toward its city (km)."""
+    airport_fallback_slope_scale: float
+    """Slope scale for an airport placed without a runway (m/m)."""
+    airport_grade_bonus: float
+    """Weight floor added to a runway's flatness score (ratio)."""
+    airport_city_pull_cells: float
+    """Distance scale of a runway's pull toward a city (cells)."""
+    freight_port_pull_cells: float
+    """Distance scale of a freight yard's pull toward its seaport (cells)."""
+    road_junction_corridor_cells: int
+    """Road junctions between cities sit within this of the line between them (cells)."""
+    road_junction_band: tuple[float, float]
+    """...and inside this band of the line, away from both cities (share of the line)."""
+    midpoint_pull_share: float
+    """Scale of the pull toward the middle of a line (share of the line)."""
+    corridor_pull_cells: float
+    """Distance scale of the pull toward the corridor line (cells)."""
+    treatment_city_pull_cells: float
+    """Distance scale of a treatment plant's pull toward the largest city (cells)."""
+    storage_height_scale_m: float
+    """Height above the city that doubles a storage site's weight (m)."""
+    storage_height_floor: float
+    """Weight floor for storage sites no higher than the city (ratio)."""
+    storage_relaxed_km: float
+    """Where no raised site fits, storage goes on the highest land within this (km)."""
+    tank_farm_pull_cells: float
+    """Distance scale of a tank farm's pull toward its import terminal (cells)."""
+    mast_urban_bonus: float
+    """Extra siting weight of urban cells for masts (ratio)."""
+    mast_height_bonus: float
+    """Extra siting weight per unit of relative height for masts (ratio)."""
+    clinic_town_bonus: float
+    """Extra siting weight of small-town cells for clinics (ratio)."""
 
 
-SITING = SitingMappings()
+def _siting_value(name: str) -> Any:
+    value = RULES.value(f"layers.siting.{name}")
+    return tuple(value) if isinstance(value, list) else value
 
 
-# CHOICE: placeholder (open decision: realism ranges). Taiwan placeholders for the voltages
-# (Taipower's levels). Ranges scale with the served city's size relative to the largest city.
+SITING = SitingMappings(**{f.name: _siting_value(f.name) for f in fields(SitingMappings)})
+
+
 ATTRIBUTE_RANGES: Mapping[NodeClass, Mapping[str, tuple[float, float]]] = {
-    NodeClass.GENERATION: {"capacity_mw": (50.0, 1_500.0)},
-    NodeClass.TRANSMISSION_SUBSTATION: {"capacity_mva": (200.0, 1_000.0)},
-    NodeClass.DISTRIBUTION_SUBSTATION: {"capacity_mva": (10.0, 100.0)},
-    NodeClass.RESERVOIR: {"storage_m3": (1.0e6, 5.0e7)},
-    NodeClass.TREATMENT: {"capacity_m3_per_day": (1.0e4, 5.0e5)},
-    NodeClass.PUMPING: {"capacity_m3_per_day": (5.0e3, 2.0e5)},
-    NodeClass.STORAGE: {"storage_m3": (5.0e3, 1.0e5)},
-    NodeClass.FREIGHT_YARD: {"area_m2": (1.0e4, 2.0e5)},
-    NodeClass.BRIDGE: {"length_m": (30.0, 300.0)},
-    NodeClass.IMPORT_TERMINAL: {"storage_m3": (1.0e5, 1.0e6)},
-    NodeClass.TANK_FARM: {"storage_m3": (5.0e4, 5.0e5)},
-    NodeClass.DEPOT: {"storage_m3": (1.0e3, 2.0e4)},
-    NodeClass.REFINERY: {"storage_m3": (1.0e5, 1.0e6)},
-    NodeClass.TERTIARY: {"bed_count": (500.0, 2_000.0)},
-    NodeClass.REGIONAL: {"bed_count": (200.0, 600.0)},
-    NodeClass.CLINIC: {"bed_count": (0.0, 20.0)},
+    node_class: {
+        name: (low, high)
+        for name, (low, high) in RULES.value(f"layers.attributes.{node_class}").items()
+    }
+    for node_class in NodeClass
+    if RULES.has(f"layers.attributes.{node_class}")
 }
-"""Numeric attribute ranges per class, with the unit in each name."""
+"""Numeric attribute ranges per class, with the unit in each name (``layers.attributes.*``)."""
 
-TRANSMISSION_VOLTAGES_KV = ((0.6, 345.0), (0.25, 161.0), (0.0, 69.0))
-"""Transmission voltage by served city share: (share at or above, kV). 69 kV serves small
-loads. placeholder (open decision: realism ranges); Taipower's levels."""
+CITY_SIZE_WEIGHT = RULES.number("layers.attributes.city_size_weight")
+"""Share of a drawn attribute's range set by the served city's size (ratio)."""
 
-DISTRIBUTION_VOLTAGES_KV = ((0.3, 22.8), (0.0, 11.4))
+ATTRIBUTE_DRAW_WEIGHT = RULES.number("layers.attributes.draw_weight")
+"""Share of a drawn attribute's range set at random (ratio)."""
+
+BRIDGE_ACCUMULATION_SCALE = RULES.number("layers.attributes.bridge_accumulation_scale")
+"""Square root of upstream cells at which a bridge reaches full length."""
+
+
+def _share_table[T](rule_id: str, kind: type[T]) -> tuple[tuple[float, T], ...]:
+    return tuple((float(share), kind(value)) for share, value in RULES.value(rule_id))  # type: ignore[call-arg]
+
+
+TRANSMISSION_VOLTAGES_KV = _share_table("layers.attributes.transmission_voltage_kv", float)
+"""Transmission voltage by served city share: (share at or above, kV). Taipower's levels."""
+
+DISTRIBUTION_VOLTAGES_KV = _share_table("layers.attributes.distribution_voltage_kv", float)
 """Distribution voltage by served city share: (share at or above, kV). Taipower's levels."""
 
-AIRPORT_SIZES = ((0.66, "large_airport"), (0.33, "medium_airport"), (0.0, "small_airport"))
+AIRPORT_SIZES = _share_table("layers.attributes.airport_size_class", str)
 """Airport size class by served city share, in OurAirports' own values."""
 
-SEAPORT_SIZES = ((0.75, "L"), (0.5, "M"), (0.25, "S"), (0.0, "V"))
+SEAPORT_SIZES = _share_table("layers.attributes.seaport_size_class", str)
 """Seaport harbour size by served city share, in the World Port Index's values."""
 
 OBSERVED_FUEL_TYPE: Mapping[str, str] = {
@@ -212,64 +226,56 @@ OBSERVED_FUEL_TYPE: Mapping[str, str] = {
 }
 """The observed fuel_type a source reports for each true fuel_kind (WRI's primary_fuel)."""
 
-RESERVE_MARGIN = 1.3
-"""Generation capacity over the load it serves (ratio). CHOICE: placeholder (open decision:
-realism ranges); structure v0.5 §4.2."""
+RESERVE_MARGIN = RULES.number("sizing.power.reserve_margin")
+"""Generation capacity over the load it serves (ratio; registry, structure v0.5 §4.2)."""
 
-POWER_FACTOR = 0.9
-"""Real over apparent power, converting MVA to MW (ratio). CHOICE: placeholder (open decision:
-realism ranges); structure v0.5 §4.2."""
+POWER_FACTOR = RULES.number("sizing.power.power_factor")
+"""Real over apparent power, converting MVA to MW (ratio; registry, structure v0.5 §4.2)."""
+
+GENERATION_SPLIT_FLOOR = RULES.number("sizing.power.generation_split_floor")
+"""Floor of each plant's share weight when generation is split across plants (ratio)."""
 
 
-# CHOICE: every subtype share below, placeholder (open decision: realism ranges); decision 0007.
 @dataclass(frozen=True)
 class SubtypeShares:
-    """How subtype attributes are drawn (structure v0.5 §4.3a subtype table)."""
+    """How subtype attributes are drawn (``layers.subtypes.*``; structure v0.5 §4.3a)."""
 
-    thermal_fuel: tuple[tuple[str, float], ...] = (("lng", 0.40), ("coal", 0.35), ("oil", 0.25))
+    thermal_fuel: tuple[tuple[str, float], ...]
     """Fuel kind of thermal plants after the first, which is lng (ratio each)."""
-    makeup_water: tuple[tuple[str, float], ...] = (("municipal", 0.7), ("own_intake", 0.3))
+    makeup_water: tuple[tuple[str, float], ...]
     """Make-up water source of fuel-fired plants (ratio each)."""
-    terminal_product: tuple[tuple[str, float], ...] = (("oil", 0.5), ("lng", 0.3), ("coal", 0.2))
+    terminal_product: tuple[tuple[str, float], ...]
     """Product of import terminals beyond those generation needs (ratio each)."""
-    towered: float = 0.5
+    towered: float
     """Chance an airport other than the largest is towered (ratio)."""
-    pipeline_fuel_receipt: float = 0.3
+    pipeline_fuel_receipt: float
     """Chance an airport other than the largest receives fuel by pipeline (ratio)."""
-    marine_crude: float = 0.75
-    """Chance a refinery receives crude by sea (ratio). Taiwan: three of four."""
-    pipeline_connected: float = 0.7
+    marine_crude: float
+    """Chance a refinery receives crude by sea (ratio)."""
+    pipeline_connected: float
     """Chance a tank farm is pipeline-connected (ratio)."""
-    jetty_on_coast: float = 0.5
+    jetty_on_coast: float
     """Chance a tank farm on the coast has a jetty; inland tank farms have none (ratio)."""
-    truck_rack: float = 0.5
+    truck_rack: float
     """Chance a tank farm has a truck loading rack (ratio)."""
-    evaporative_cooling: float = 1.0
+    evaporative_cooling: float
     """Chance a data centre cools by evaporation: the Appendix B default (ratio)."""
-    records_hosted: tuple[tuple[NodeClass, float], ...] = (
-        (NodeClass.TERTIARY, 0.2),
-        (NodeClass.REGIONAL, 0.4),
-        (NodeClass.CLINIC, 0.7),
-        (NodeClass.BLOOD_BANK, 0.5),
-    )
+    records_hosted: tuple[tuple[NodeClass, float], ...]
     """Chance a healthcare facility's records are hosted off site, rising down the tiers."""
-    diesel_standby: tuple[tuple[NodeClass, float], ...] = (
-        (NodeClass.EXCHANGE, 1.0),
-        (NodeClass.DATA_CENTRE, 1.0),
-        (NodeClass.CABLE_LANDING, 1.0),
-        (NodeClass.TREATMENT, 1.0),
-        (NodeClass.TERTIARY, 1.0),
-        (NodeClass.REGIONAL, 1.0),
-        (NodeClass.BLOOD_BANK, 1.0),
-        (NodeClass.MAST, 0.5),
-        (NodeClass.PUMPING, 0.5),
-        (NodeClass.CLINIC, 0.5),
-    )
-    """Chance a backup consumer has a diesel standby generator: certain where its fuel row is
-    core, even where it is optional (ratio)."""
+    diesel_standby: tuple[tuple[NodeClass, float], ...]
+    """Chance a backup consumer has a diesel standby generator (ratio)."""
 
 
-SUBTYPES = SubtypeShares()
+def _subtype_value(name: str) -> Any:
+    value = RULES.value(f"layers.subtypes.{name}")
+    if isinstance(value, dict):
+        return tuple((NodeClass(k), float(v)) for k, v in value.items())
+    if isinstance(value, list):
+        return tuple((str(k), float(v)) for k, v in value)
+    return value
+
+
+SUBTYPES = SubtypeShares(**{f.name: _subtype_value(f.name) for f in fields(SubtypeShares)})
 """The subtype shares in force."""
 
 TELECOM_OPERATORS = ("SWM Telecom A", "SWM Telecom B")
@@ -765,7 +771,7 @@ def _site_seaport(s: _Siter, layer: Layer, index: int, stream: np.random.Generat
     city = g.city_for(index)
     distance = g.city_distance(city)
     strict = g.coast & (distance <= g.cells_for_km(SITING.seaport_city_km))
-    weight = _shelter(g) * _near(distance, g.cells_for_km(1.0))
+    weight = _shelter(g) * _near(distance, g.cells_for_km(SITING.seaport_city_pull_km))
     cell = s.place(
         layer,
         NodeClass.SEAPORT,
@@ -793,8 +799,19 @@ def _site_airport(s: _Siter, layer: Layer, index: int, stream: np.random.Generat
     ]
     if qualifying:
         weights = [
-            (1.0 - directions[d].range_m.flat[start] / directions[d].limit_m + 0.1)
-            * float(1.0 / (1.0 + _any_city_distance(g)[directions[d].middle_of].flat[start] / 10.0))
+            (
+                1.0
+                - directions[d].range_m.flat[start] / directions[d].limit_m
+                + SITING.airport_grade_bonus
+            )
+            * float(
+                1.0
+                / (
+                    1.0
+                    + _any_city_distance(g)[directions[d].middle_of].flat[start]
+                    / SITING.airport_city_pull_cells
+                )
+            )
             for d, start in qualifying
         ]
         d, start = qualifying[_draw_index(stream, weights)]
@@ -811,7 +828,7 @@ def _site_airport(s: _Siter, layer: Layer, index: int, stream: np.random.Generat
                 "a straight flat run",
                 stream,
                 usable,
-                _near(g.slope, 0.05),
+                _near(g.slope, SITING.airport_fallback_slope_scale),
                 how_relaxed="no straight run fits on buildable land; placed on the flattest "
                 "ground, with no runway line",
             )
@@ -855,7 +872,9 @@ def _site_freight_yard(s: _Siter, layer: Layer, index: int, stream: np.random.Ge
     to_port = g.distance_to(*divmod(port, GRID_CELLS)) if port is not None else to_road
     near_city = distance <= g.cells_for_km(SITING.near_city_km)
     strict = near_city & (g.slope <= SITING.flat_slope)
-    weight = _near(to_road, g.cells_for_km(SITING.freight_road_km)) * _near(to_port, 10.0)
+    weight = _near(to_road, g.cells_for_km(SITING.freight_road_km)) * _near(
+        to_port, SITING.freight_port_pull_cells
+    )
     cell = s.place(
         layer,
         NodeClass.FREIGHT_YARD,
@@ -925,7 +944,7 @@ def _site_road_junction(s: _Siter, layer: Layer, index: int, stream: np.random.G
     if index < len(g.cities):
         city = g.cities[index]
         strict = g.city_distance(city) == 0
-        weight = _near(g.distance_to(city.centre_row, city.centre_column), 5.0)
+        weight = _near(g.distance_to(city.centre_row, city.centre_column), SITING.anchor_pull_cells)
         rule = "in a city"
     else:
         pairs = list(combinations(g.cities, 2)) or [(g.cities[0], g.cities[0])]
@@ -935,8 +954,9 @@ def _site_road_junction(s: _Siter, layer: Layer, index: int, stream: np.random.G
             a.centre_row * GRID_CELLS + a.centre_column,
             b.centre_row * GRID_CELLS + b.centre_column,
         )
-        strict = (distance <= 2) & (along > 0.2) & (along < 0.8)
-        weight = _near(np.abs(along - 0.5), 0.1)
+        low, high = SITING.road_junction_band
+        strict = (distance <= SITING.road_junction_corridor_cells) & (along > low) & (along < high)
+        weight = _near(np.abs(along - 0.5), SITING.midpoint_pull_share)
         rule = "on the road between cities"
     cell = s.place(layer, NodeClass.ROAD_JUNCTION, rule, stream, strict, weight)
     return _Sited(NodeClass.ROAD_JUNCTION, cell)
@@ -973,7 +993,9 @@ def _site_treatment(s: _Siter, layer: Layer, index: int, stream: np.random.Gener
     lower = g.elevation_m < g.elevation_m.flat[reservoir]
     apart = g.distance_to(*divmod(reservoir, GRID_CELLS)) >= SITING.treatment_gap_cells
     largest = g.cities[0]
-    weight = _near(g.distance_to(largest.centre_row, largest.centre_column), 10.0)
+    weight = _near(
+        g.distance_to(largest.centre_row, largest.centre_column), SITING.treatment_city_pull_cells
+    )
     cell = s.place(
         layer,
         NodeClass.TREATMENT,
@@ -1001,7 +1023,9 @@ def _site_between(
     half = SITING.corridor_middle_share / 2
     middle = (along >= 0.5 - half) & (along <= 0.5 + half)
     strict = (distance <= g.cells_for_km(SITING.corridor_km)) & middle
-    weight = _near(np.abs(along - 0.5), 0.1) * _near(distance, 3.0)
+    weight = _near(np.abs(along - 0.5), SITING.midpoint_pull_share) * _near(
+        distance, SITING.corridor_pull_cells
+    )
     return s.place(
         layer,
         node_class,
@@ -1039,8 +1063,8 @@ def _site_storage(s: _Siter, layer: Layer, index: int, stream: np.random.Generat
         "on raised ground beside a city",
         stream,
         beside,
-        raised / 10.0 + 0.1,
-        relaxed=distance <= g.cells_for_km(3.0),
+        raised / SITING.storage_height_scale_m + SITING.storage_height_floor,
+        relaxed=distance <= g.cells_for_km(SITING.storage_relaxed_km),
         how_relaxed="placed on the highest land near that city",
     )
     return _Sited(NodeClass.STORAGE, cell)
@@ -1057,7 +1081,7 @@ def _site_generation(s: _Siter, layer: Layer, index: int, stream: np.random.Gene
         "on the coast near a city",
         stream,
         strict,
-        _near(distance, 5.0),
+        _near(distance, SITING.anchor_pull_cells),
         relaxed=g.coast,
         how_relaxed="placed on the coast nearest the cities",
     )
@@ -1084,7 +1108,7 @@ def _site_distribution(s: _Siter, layer: Layer, index: int, stream: np.random.Ge
     g = s.ground
     city = g.city_for(index)
     strict = g.city_distance(city) <= g.cells_for_km(SITING.beside_city_km)
-    weight = _near(g.distance_to(city.centre_row, city.centre_column), 5.0)
+    weight = _near(g.distance_to(city.centre_row, city.centre_column), SITING.anchor_pull_cells)
     cell = s.place(
         layer, NodeClass.DISTRIBUTION_SUBSTATION, "in or beside a city", stream, strict, weight
     )
@@ -1098,7 +1122,7 @@ def _site_in_city(
         g = s.ground
         city = city_index(s, index)
         strict = g.city_distance(city) == 0
-        weight = _near(g.distance_to(city.centre_row, city.centre_column), 5.0)
+        weight = _near(g.distance_to(city.centre_row, city.centre_column), SITING.anchor_pull_cells)
         cell = s.place(
             layer,
             node_class,
@@ -1141,14 +1165,14 @@ def _site_spaced(
 
 def _mast_weight(g: _Ground) -> NDArray[np.float64]:
     urban = (np.asarray(g.terrain.urban_id) >= 0).astype(np.float64)
-    return 1.0 + 2.0 * urban + 2.0 * g.height
+    return 1.0 + SITING.mast_urban_bonus * urban + SITING.mast_height_bonus * g.height
 
 
 def _clinic_weight(g: _Ground) -> NDArray[np.float64]:
     urban_id = np.asarray(g.terrain.urban_id)
     big = {c.city_id for c in g.cities[:2]}
     in_town = (urban_id >= 0) & ~np.isin(urban_id, sorted(big))
-    return 1.0 + 2.0 * in_town.astype(np.float64)
+    return 1.0 + SITING.clinic_town_bonus * in_town.astype(np.float64)
 
 
 def _site_on_coast_near(
@@ -1168,7 +1192,7 @@ def _site_on_coast_near(
             rule,
             stream,
             strict,
-            _near(distance, 5.0),
+            _near(distance, SITING.anchor_pull_cells),
             relaxed=g.coast,
             how_relaxed="placed on the nearest coast instead",
         )
@@ -1202,7 +1226,12 @@ def _site_tank_farm(s: _Siter, layer: Layer, index: int, stream: np.random.Gener
     distance = g.distance_to(*divmod(anchor, GRID_CELLS))
     strict = distance <= g.cells_for_km(SITING.tank_farm_km)
     cell = s.place(
-        layer, NodeClass.TANK_FARM, "near the import terminal", stream, strict, _near(distance, 3.0)
+        layer,
+        NodeClass.TANK_FARM,
+        "near the import terminal",
+        stream,
+        strict,
+        _near(distance, SITING.tank_farm_pull_cells),
     )
     return _Sited(NodeClass.TANK_FARM, cell)
 
@@ -1629,8 +1658,10 @@ def _attributes(
     for name, (low, high) in ATTRIBUTE_RANGES.get(node_class, {}).items():
         size = share
         if node_class == NodeClass.BRIDGE:
-            size = min(1.0, math.sqrt(sited.river_accumulation) / 100.0)
-        scaled = low + (high - low) * (0.7 * size + 0.3 * float(stream.random()))
+            size = min(1.0, math.sqrt(sited.river_accumulation) / BRIDGE_ACCUMULATION_SCALE)
+        scaled = low + (high - low) * (
+            CITY_SIZE_WEIGHT * size + ATTRIBUTE_DRAW_WEIGHT * float(stream.random())
+        )
         values[name] = _round_attribute(name, scaled)
     if node_class == NodeClass.GENERATION:
         # The observed fuel type is what a source reports of the true fuel kind.
@@ -1825,7 +1856,7 @@ def _size_power(
         notes.append("generation: no distribution substations, so plants keep drawn capacities")
     elif plants:
         total_mw = load_mva * RESERVE_MARGIN * POWER_FACTOR
-        weights = [0.5 + float(stream.random()) for _ in plants]
+        weights = [GENERATION_SPLIT_FLOOR + float(stream.random()) for _ in plants]
         whole = math.fsum(weights)
         for plant, weight in zip(plants, weights, strict=True):
             sized[plant.node_id] = {"capacity_mw": round(total_mw * weight / whole, 1)}
