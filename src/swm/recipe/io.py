@@ -1,6 +1,8 @@
 """Reading recipes from YAML and writing them, and the stream record, as canonical bytes."""
 
+import csv
 import hashlib
+import io
 import re
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -245,6 +247,31 @@ def write_hash_list(hashes: Sequence[tuple[str, str]], path: Path) -> Path:
     """
     lines = "".join(f"{digest}  {name}\n" for name, digest in hashes)
     return _write(path, lines.encode("utf-8"))
+
+
+def write_csv(rows: Sequence[Mapping[str, object]], path: Path) -> Path:
+    """Write rows as UTF-8 CSV with a header, LF line endings and the rows in the order given.
+
+    Parameters
+    ----------
+    rows : Sequence[Mapping[str, object]]
+        The rows; the first row's keys, in order, are the header.
+    path : Path
+        The file to write; its folder is created if absent.
+
+    Returns
+    -------
+    Path
+        The file written.
+
+    Spec: Work Order 4 review, answer 3 (couplings_edges.csv).
+    """
+    buffer = io.StringIO()
+    header = list(rows[0]) if rows else []
+    writer = csv.DictWriter(buffer, fieldnames=header, lineterminator="\n")
+    writer.writeheader()
+    writer.writerows(rows)
+    return _write(path, buffer.getvalue().encode("utf-8"))
 
 
 def write_binary(content: bytes, path: Path) -> Path:

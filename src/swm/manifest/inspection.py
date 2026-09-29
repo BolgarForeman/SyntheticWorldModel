@@ -14,6 +14,7 @@ from numpy.typing import NDArray
 
 from swm.coordinates import WORKING_CRS, domain_origin_m
 from swm.recipe.schema import Layer
+from swm.stages.couplings import CouplingsResult
 from swm.stages.layers import AttributeValue, LayersResult, Node
 from swm.stages.terrain import TerrainResult
 
@@ -40,8 +41,10 @@ RASTER_FILES = {
 }
 
 
-def export_gis(terrain: TerrainResult, layers: LayersResult, out_dir: Path) -> list[Path]:
-    """Write world.gpkg (nodes, links, cities, coastline) and three GeoTIFFs in EPSG:32710.
+def export_gis(
+    terrain: TerrainResult, layers: LayersResult, couplings: CouplingsResult, out_dir: Path
+) -> list[Path]:
+    """Write world.gpkg (nodes, links, couplings, cities, coastline) and three GeoTIFFs.
 
     Parameters
     ----------
@@ -49,6 +52,8 @@ def export_gis(terrain: TerrainResult, layers: LayersResult, out_dir: Path) -> l
         The terrain stage's output.
     layers : LayersResult
         The layers stage's output.
+    couplings : CouplingsResult
+        The couplings stage's output.
     out_dir : Path
         The folder to write into; created if absent.
 
@@ -57,7 +62,7 @@ def export_gis(terrain: TerrainResult, layers: LayersResult, out_dir: Path) -> l
     list of Path
         The files written.
 
-    Spec: structure v0.4 §4.1a (inspection export); Work Order 3, C1.
+    Spec: structure v0.4 §4.1a (inspection export); Work Order 3, C1; Work Order 4, D and F2.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     package = out_dir / GEOPACKAGE_FILE
@@ -65,6 +70,7 @@ def export_gis(terrain: TerrainResult, layers: LayersResult, out_dir: Path) -> l
         package.unlink()
     _write_nodes(package, layers)
     _write_links(package, layers)
+    _write_couplings(package, couplings)
     _write_polygons(
         package, "cities", terrain, (np.asarray(terrain.urban_id) + 1).astype(np.int32), "city_id"
     )
@@ -131,7 +137,7 @@ def _common_columns(nodes: Sequence[Node]) -> dict[str, Column]:
     )
 
 
-def _typed_columns(rows: Sequence[Mapping[str, AttributeValue]]) -> dict[str, Column]:
+def _typed_columns(rows: Sequence[Mapping[str, AttributeValue | None]]) -> dict[str, Column]:
     """Turn rows of values into typed columns, with a null mask where a row lacks a value."""
     names = list(dict.fromkeys(name for row in rows for name in row))
     return {name: _column([row.get(name) for row in rows]) for name in names}
@@ -140,8 +146,11 @@ def _typed_columns(rows: Sequence[Mapping[str, AttributeValue]]) -> dict[str, Co
 def _column(values: Sequence[AttributeValue | None]) -> Column:
     present = [value for value in values if value is not None]
     mask = np.array([value is None for value in values])
-    if all(isinstance(value, bool) for value in present):
-        data: NDArray[np.generic] = np.array([bool(v) for v in values], dtype=bool)
+    if not present:
+        # A column with no value in any row is text, so it reads back as an empty field.
+        data: NDArray[np.generic] = np.array([""] * len(values), dtype=object)
+    elif all(isinstance(value, bool) for value in present):
+        data = np.array([bool(v) for v in values], dtype=bool)
     elif all(isinstance(value, int) for value in present):
         data = np.array([0 if v is None else int(v) for v in values], dtype=np.int64)
     elif all(isinstance(value, int | float) for value in present):
@@ -171,6 +180,51 @@ def _write_links(package: Path, layers: LayersResult) -> None:
     )
     description = "Intra-layer links as straight or dog-leg polylines. " + SYNTHETIC_NOTICE
     _write_layer(package, "links", geometry, columns, "LineString", description)
+
+
+def _write_couplings(package: Path, couplings: CouplingsResult) -> None:
+    """Write the coupling edges as straight lines, marked as unobserved truth (Work Order 4, F2)."""
+    import shapely
+
+    if not couplings.edges:
+        return
+    geometry = np.array(
+        [shapely.to_wkb(shapely.LineString(edge.points)) for edge in couplings.edges]
+    )
+    columns = _typed_columns(
+        [
+            {
+                "edge_id": edge.edge_id,
+                "supplier_id": edge.supplier_id,
+                "consumer_id": edge.consumer_id,
+                "supplier_layer": edge.supplier_layer.value,
+                "consumer_layer": edge.consumer_layer.value,
+                "commodity": edge.commodity,
+                "dependency_type": edge.dependency_type,
+                "role": edge.role.value,
+                "transfer_form": edge.transfer_form,
+                "feed_configuration": edge.feed_configuration.value,
+                "feed_group": edge.feed_group,
+                "dependency_id": edge.dependency_id,
+                "backs_dependency": edge.backs_dependency,
+                "public_share_pct": edge.public_share_pct,
+                "switched_on": edge.switched_on,
+                "is_nearest": edge.is_nearest,
+                "is_hub": edge.is_hub,
+                "mutual_partner": edge.mutual_partner,
+                "sea_leg": edge.sea_leg,
+                "length_km": edge.length_km,
+                "crosses_sea": edge.crosses_sea,
+            }
+            for edge in couplings.edges
+        ]
+    )
+    description = (
+        "Coupling edges: one supplier node serving one consumer's dependency, drawn as a "
+        "straight line (a dependency, not a route). These are unobserved truth, for "
+        "inspection only, never emitted. " + SYNTHETIC_NOTICE
+    )
+    _write_layer(package, "couplings", geometry, columns, "LineString", description)
 
 
 def _write_polygons(

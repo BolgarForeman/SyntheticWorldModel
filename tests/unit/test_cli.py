@@ -34,6 +34,36 @@ def test_layers_writes_statistics_tables_and_hashes(
     assert [line.split("  ")[1] for line in hashes] == ["layers_nodes.yaml", "layers_links.yaml"]
 
 
+def test_couplings_writes_statistics_and_hashes_and_prints_the_total(
+    pilot_path: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["couplings", str(pilot_path), "-o", str(tmp_path)]) == 0
+    stats = (tmp_path / "couplings_stats.yaml").read_text(encoding="utf-8")
+    assert stats.startswith("pairs:\n  power-telecom:\n")
+    assert "  total_edges: 50\n" in stats
+    table = (tmp_path / "couplings_edges.csv").read_bytes()
+    assert b"\r" not in table
+    lines = table.decode("utf-8").splitlines()
+    assert lines[0] == (
+        "edge_id,supplier_id,supplier_class,consumer_id,consumer_class,dependency_type,"
+        "feed_configuration,role"
+    )
+    assert len(lines) == 1 + 27  # every switched-on coupling edge
+    assert [line.split(",")[0] for line in lines[1:]] == sorted(
+        line.split(",")[0] for line in lines[1:]
+    )
+    hashes = (tmp_path / "couplings_sha256.txt").read_text(encoding="utf-8").splitlines()
+    assert [line.split("  ")[1] for line in hashes] == ["edges", "dependencies"]
+    assert "total edges 50: 23 intra-layer links and 27 switched-on" in capsys.readouterr().out
+
+
+def test_preview_couplings_writes_a_png(pilot_path: Path, tmp_path: Path) -> None:
+    pytest.importorskip("matplotlib")
+    image = tmp_path / "couplings.png"
+    assert main(["preview-couplings", str(pilot_path), "-o", str(image)]) == 0
+    assert image.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+
+
 def test_layers_prints_its_siting_notes(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     recipe = tmp_path / "dry.yaml"
     recipe.write_text(
@@ -54,7 +84,7 @@ def test_export_gis_writes_a_readable_geopackage_and_geotiffs(
 
     assert main(["export-gis", str(pilot_path), "-o", str(tmp_path)]) == 0
     package = str(tmp_path / "world.gpkg")
-    expected = {"nodes": 24, "links": 23}
+    expected = {"nodes": 24, "links": 23, "couplings": 72}
     for layer in ("power", "telecom", "water", "transport", "fuel", "healthcare"):
         expected[f"nodes_{layer}"] = 4
     for layer, count in expected.items():
@@ -110,6 +140,15 @@ def test_export_gis_writes_typed_tables(pilot_path: Path, tmp_path: Path) -> Non
     assert columns("nodes_healthcare")["bed_count"] == "int64"
     assert columns("links")["crosses_sea"] == "bool"
     assert columns("links")["river_crossings"] == "int64"
+    couplings = columns("couplings")
+    assert couplings["switched_on"] == "bool"
+    assert couplings["feed_group"] == "int64"
+    assert couplings["length_km"] == "float64"
+    assert couplings["public_share_pct"] == "int64"
+    assert couplings["dependency_type"] == "object"
+    info = pyogrio.read_info(package, layer="couplings")
+    assert "unobserved truth" in info["layer_metadata"]["DESCRIPTION"]
+    assert info["geometry_type"] == "LineString"
     assert "attributes" not in columns("nodes_power")
     description = pyogrio.read_info(package, layer="nodes_power")["layer_metadata"]["DESCRIPTION"]
     assert "fuel_kind" in description
@@ -122,11 +161,16 @@ def test_export_gis_writes_typed_tables(pilot_path: Path, tmp_path: Path) -> Non
         assert (node_class == "generation") == (value == value)  # NaN is null elsewhere
 
 
-def test_preview_world_writes_a_png(pilot_path: Path, tmp_path: Path) -> None:
+def test_preview_world_writes_a_png_with_or_without_couplings(
+    pilot_path: Path, tmp_path: Path
+) -> None:
     pytest.importorskip("matplotlib")
-    image = tmp_path / "world.png"
-    assert main(["preview-world", str(pilot_path), "-o", str(image)]) == 0
-    assert image.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+    with_couplings, without = tmp_path / "world.png", tmp_path / "bare.png"
+    assert main(["preview-world", str(pilot_path), "-o", str(with_couplings)]) == 0
+    assert main(["preview-world", str(pilot_path), "-o", str(without), "--no-couplings"]) == 0
+    for image in (with_couplings, without):
+        assert image.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+    assert with_couplings.read_bytes() != without.read_bytes()
 
 
 def test_export_and_preview_say_how_to_install_what_they_need(
@@ -139,6 +183,7 @@ def test_export_and_preview_say_how_to_install_what_they_need(
     monkeypatch.setitem(sys.modules, "swm.preview", None)
     assert main(["export-gis", str(pilot_path), "-o", str(tmp_path)]) == 1
     assert main(["preview-world", str(pilot_path), "-o", str(tmp_path / "w.png")]) == 1
+    assert main(["preview-couplings", str(pilot_path), "-o", str(tmp_path / "c.png")]) == 1
     err = capsys.readouterr().err
     assert "uv sync --extra export" in err
     assert "uv sync --extra preview" in err

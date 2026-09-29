@@ -34,7 +34,12 @@ class DependencyType(StrEnum):
 
 
 class Role(StrEnum):
-    """What an edge does: primary supply, or resupply of a backup generator's fuel (rule 2)."""
+    """What an edge does: primary supply, or resupply of a backup generator's fuel (rule 2).
+
+    A buffer-resupply row applies only where there is a generator to refuel. A consumer whose
+    ``standby_fuel`` is ``none`` gets no buffer-resupply edge; the couplings stage records the
+    absence with a note, not as an error (decision 0008, answer 3).
+    """
 
     PRIMARY_SUPPLY = "primary_supply"
     BUFFER_RESUPPLY = "buffer_resupply"
@@ -267,10 +272,14 @@ _TEL = Layer.TELECOM
 _EX_MAST = (_Opt(C.EXCHANGE), _Opt(C.MAST))
 _EX_MAST_DC = (_Opt(C.EXCHANGE), _Opt(C.MAST), _Opt(C.DATA_CENTRE))
 _TELECOM_ROWS: tuple[DependencyRow, ...] = (
-    *_row(_TEL, (C.GENERATION, C.TRANSMISSION_SUBSTATION, C.DISTRIBUTION_SUBSTATION), CORE,
-          _EX_MAST, kind=CTL, rule="rule 1", grade=L,
+    *_row(_TEL, (C.GENERATION, C.DISTRIBUTION_SUBSTATION), CORE, _EX_MAST, kind=CTL,
+          rule="rule 1", grade=L,
           source="lane_telecom telecom→power: S1, S2, S3, S13; ruling R1 (DOE 2023, "
           "台電月刊 Vol. 700); review F1, F11"),
+    *_row(_TEL, (C.TRANSMISSION_SUBSTATION,), CORE, (_Opt(C.EXCHANGE),), kind=CTL,
+          rule="rule 1", grade=L,
+          source="lane_telecom telecom→power: S1, S2, S3, S13; ruling R1; exchange only, as "
+          "the lane found (decision 0008, answer 1)"),
     *_row(_TEL, (C.TREATMENT, C.PUMPING), CORE, _EX_MAST, kind=CTL, rule="rule 1", grade=L,
           source="lane_telecom telecom→water: S4, S5; ruling R1"),
     *_row(_TEL, (C.RESERVOIR,), OPTIONAL, (_Opt(C.MAST), _Opt(C.EXCHANGE)), kind=CTL,
@@ -288,8 +297,9 @@ _TELECOM_ROWS: tuple[DependencyRow, ...] = (
           source="lane_telecom telecom→transport: S9 by analogy"),
     *_row(_TEL, PHASE_1_TRANSPORT_NODES, NONE, rule="rule 7", grade=None,
           source=RULE_7 + "; ruling R7"),
-    *_row(_TEL, (C.REFINERY,), CORE, _EX_MAST_DC, kind=SVC, grade=J,
-          source="lane_telecom telecom→fuel: S10 (scope only)"),
+    *_row(_TEL, (C.REFINERY,), CORE, (_Opt(C.EXCHANGE),), kind=SVC, grade=J,
+          source="lane_telecom telecom→fuel: S10 (scope only); exchange only, as the lane "
+          "found (decision 0008, answer 1)"),
     *_row(_TEL, (C.DEPOT,), CORE, _EX_MAST_DC, kind=SVC, grade=J,
           source="lane_telecom telecom→fuel: S10"),
     *_row(_TEL, (C.TANK_FARM,), CORE, _EX_MAST, kind=CTL, rule="rule 1",
@@ -304,8 +314,9 @@ _TELECOM_ROWS: tuple[DependencyRow, ...] = (
           source="lane_telecom telecom→healthcare: S14, S15, S16, S17; ruling R6; review F6"),
     *_row(_TEL, (C.CLINIC,), CORE, _EX_MAST_DC, kind=SVC, grade=J,
           source="lane_telecom telecom→healthcare: S17; ruling R6; review F6"),
-    *_row(_TEL, (C.BLOOD_BANK,), CORE, _EX_MAST_DC, kind=SVC, grade=J,
-          source="lane_telecom telecom→healthcare: S18 (IT outage); ruling R6; review F10"),
+    *_row(_TEL, (C.BLOOD_BANK,), CORE, (_Opt(C.EXCHANGE), _Opt(C.DATA_CENTRE)), kind=SVC,
+          grade=J, source="lane_telecom telecom→healthcare: S18 (IT outage); ruling R6; review "
+          "F10; exchange and data centre, as the lane found (decision 0008, answer 1)"),
 )  # fmt: skip
 
 _WAT = Layer.WATER
@@ -395,8 +406,9 @@ _FUEL_ROWS: tuple[DependencyRow, ...] = (
           source="lane_fuel fuel→telecom: S8, S6 (never in force); ruling R2, review F2, F9"),
     *_row(_FUE, (C.DATA_CENTRE,), CORE, _DEPOT_TANK, kind=LOG, role=B, rule="rule 2",
           grade=L, source="lane_fuel fuel→telecom: S10, S19; ruling R2, review F9"),
-    *_row(_FUE, (C.CABLE_LANDING,), CORE, _DEPOT_TANK, kind=LOG, role=B, rule="rule 2",
-          grade=J, source="lane_fuel fuel→telecom: S11; ruling R2"),
+    *_row(_FUE, (C.CABLE_LANDING,), CORE, (_Opt(C.DEPOT),), kind=LOG, role=B, rule="rule 2",
+          grade=J, source="lane_fuel fuel→telecom: S11; ruling R2; depot only, as the lane "
+          "found (decision 0008, answer 1)"),
     *_row(_FUE, (C.MAST,), OPTIONAL, (_Opt(C.DEPOT),), kind=LOG, role=B, rule="rule 2",
           grade=L, source="lane_fuel fuel→telecom: S7, S6, S9; ruling R2"),
     *_row(_FUE, (C.TREATMENT,), CORE, _DEPOT_TANK, kind=LOG, role=B, rule="rule 2", grade=S,
@@ -419,10 +431,12 @@ _FUEL_ROWS: tuple[DependencyRow, ...] = (
     *_row(_FUE, (C.FREIGHT_YARD,), CORE, _DEPOT_TANK, kind=LOG, grade=L,
           source="lane_fuel fuel→transport: S19, S15"),
     *_row(_FUE, PHASE_1_TRANSPORT_NODES, NONE, rule="rule 7", grade=None, source=RULE_7),
-    *_row(_FUE, (C.TERTIARY, C.REGIONAL), CORE, _DEPOT_TANK, kind=LOG, role=B,
-          rule="rule 2", grade=S, us=True,
-          source="lane_fuel fuel→healthcare: S1, S2 (NFPA 110 as reported); ruling R2, "
+    *_row(_FUE, (C.TERTIARY,), CORE, _DEPOT_TANK, kind=LOG, role=B, rule="rule 2", grade=S,
+          us=True, source="lane_fuel fuel→healthcare: S1, S2 (NFPA 110 as reported); ruling R2, "
           "review F9"),
+    *_row(_FUE, (C.REGIONAL,), CORE, (_Opt(C.DEPOT),), kind=LOG, role=B, rule="rule 2",
+          grade=S, us=True, source="lane_fuel fuel→healthcare: S1, S2 (NFPA 110 as reported); "
+          "ruling R2, review F9; depot only, as the lane found (decision 0008, answer 1)"),
     *_row(_FUE, (C.CLINIC,), OPTIONAL, (_Opt(C.DEPOT),), kind=LOG, role=B, rule="rule 2",
           grade=J, source="lane_fuel fuel→healthcare: S3 (no requirement); review F9"),
     *_row(_FUE, (C.BLOOD_BANK,), CORE, (_Opt(C.DEPOT),), kind=LOG, role=B, rule="rule 2",

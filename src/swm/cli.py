@@ -16,13 +16,16 @@ from swm.recipe.io import (
     load_recipe,
     write_binary,
     write_canonical_yaml,
+    write_csv,
     write_hash_list,
     write_resolved_recipe,
     write_stream_record,
 )
 from swm.recipe.resolve import Resolution, resolve
 from swm.rng import stream_record
+from swm.stages import couplings as couplings_stage
 from swm.stages import layers as layers_stage
+from swm.stages.couplings import CouplingsResult, build_couplings, couplings_streams
 from swm.stages.layers import LayersResult, build_layers, layers_streams
 from swm.stages.terrain import (
     TerrainResult,
@@ -40,6 +43,9 @@ LAYERS_STATS_FILE = "layers_stats.yaml"
 LAYERS_NODES_FILE = "layers_nodes.yaml"
 LAYERS_LINKS_FILE = "layers_links.yaml"
 LAYERS_HASHES_FILE = "layers_sha256.txt"
+COUPLINGS_STATS_FILE = "couplings_stats.yaml"
+COUPLINGS_HASHES_FILE = "couplings_sha256.txt"
+COUPLINGS_EDGES_CSV = "couplings_edges.csv"
 
 
 class CommandError(Exception):
@@ -154,6 +160,43 @@ def _layers_command(resolution: Resolution, arguments: argparse.Namespace) -> No
             sys.stdout.write(f"{stats.layer}: {note}\n")
 
 
+def _couplings_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    terrain = _terrain(resolution)
+    layers = _layers(resolution, terrain)
+    result = _couplings(resolution, terrain, layers)
+    out_dir = Path(arguments.out_dir)
+    write_canonical_yaml(couplings_stage.statistics_record(result), out_dir / COUPLINGS_STATS_FILE)
+    tables = {
+        "edges": canonical_yaml({"edges": couplings_stage.edge_table(result)}),
+        "dependencies": canonical_yaml({"dependencies": couplings_stage.dependency_table(result)}),
+    }
+    hashes = [(name, hashlib.sha256(table).hexdigest()) for name, table in tables.items()]
+    write_hash_list(hashes, out_dir / COUPLINGS_HASHES_FILE)
+    # For inspection only, outside the identity check (decision 0008, review 3).
+    write_csv(
+        couplings_stage.switched_on_edge_summary(result, layers), out_dir / COUPLINGS_EDGES_CSV
+    )
+    sys.stdout.write(
+        f"total edges {result.total_edges}: {result.intra_layer_links} intra-layer links and "
+        f"{result.switched_on_edges} switched-on coupling edges "
+        f"({len(result.edges)} coupling edges in all)\n"
+    )
+
+
+def _preview_couplings_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    try:
+        from swm.preview import couplings_preview_png
+    except ImportError as error:
+        raise CommandError(
+            "the preview needs matplotlib; install it with: uv sync --extra preview"
+        ) from error
+    terrain = _terrain(resolution)
+    layers = _layers(resolution, terrain)
+    result = _couplings(resolution, terrain, layers)
+    title = f"{Path(arguments.recipe).name}: couplings"
+    write_binary(couplings_preview_png(layers, result, title), Path(arguments.output))
+
+
 def _export_gis_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
     try:
         from swm.manifest.inspection import export_gis
@@ -163,7 +206,9 @@ def _export_gis_command(resolution: Resolution, arguments: argparse.Namespace) -
             "uv sync --extra export"
         ) from error
     terrain = _terrain(resolution)
-    for path in export_gis(terrain, _layers(resolution, terrain), Path(arguments.out_dir)):
+    layers = _layers(resolution, terrain)
+    couplings = _couplings(resolution, terrain, layers)
+    for path in export_gis(terrain, layers, couplings, Path(arguments.out_dir)):
         sys.stdout.write(f"{path}\n")
 
 
@@ -176,8 +221,9 @@ def _preview_world_command(resolution: Resolution, arguments: argparse.Namespace
         ) from error
     terrain = _terrain(resolution)
     result = _layers(resolution, terrain)
+    couplings = None if arguments.no_couplings else _couplings(resolution, terrain, result)
     title = f"{Path(arguments.recipe).name}: {resolution.recipe.terrain.map_type} with its layers"
-    write_binary(world_preview_png(terrain, result, title), Path(arguments.output))
+    write_binary(world_preview_png(terrain, result, title, couplings), Path(arguments.output))
 
 
 def _layers(resolution: Resolution, terrain: TerrainResult) -> LayersResult:
@@ -186,6 +232,19 @@ def _layers(resolution: Resolution, terrain: TerrainResult) -> LayersResult:
         return build_layers(recipe.layers, terrain, layers_streams(recipe.root_seed))
     except ValueError as error:
         raise CommandError(str(error)) from error
+
+
+def _couplings(
+    resolution: Resolution, terrain: TerrainResult, layers: LayersResult
+) -> CouplingsResult:
+    recipe = resolution.recipe
+    return build_couplings(
+        recipe.couplings,
+        recipe.dynamics.transfer_forms,
+        terrain,
+        layers,
+        couplings_streams(recipe.root_seed),
+    )
 
 
 def _terrain(resolution: Resolution) -> TerrainResult:
@@ -203,6 +262,8 @@ COMMANDS: dict[str, Callable[[Resolution, argparse.Namespace], None]] = {
     "terrain": _terrain_command,
     "preview-terrain": _preview_terrain_command,
     "layers": _layers_command,
+    "couplings": _couplings_command,
+    "preview-couplings": _preview_couplings_command,
     "export-gis": _export_gis_command,
     "preview-world": _preview_world_command,
 }
@@ -236,6 +297,16 @@ def _parser() -> argparse.ArgumentParser:
     )
     layers_command.add_argument("recipe", help="recipe YAML file")
     layers_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    couplings_command = commands.add_parser(
+        "couplings", help="build the couplings; write their statistics and table hashes"
+    )
+    couplings_command.add_argument("recipe", help="recipe YAML file")
+    couplings_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    schematic_command = commands.add_parser(
+        "preview-couplings", help="render the couplings as a schematic PNG for the hand trace"
+    )
+    schematic_command.add_argument("recipe", help="recipe YAML file")
+    schematic_command.add_argument("-o", "--output", required=True, help="PNG file to write")
     export_command = commands.add_parser(
         "export-gis", help="write world.gpkg and GeoTIFFs in EPSG:32710 for inspection"
     )
@@ -246,6 +317,9 @@ def _parser() -> argparse.ArgumentParser:
     )
     world_command.add_argument("recipe", help="recipe YAML file")
     world_command.add_argument("-o", "--output", required=True, help="PNG file to write")
+    world_command.add_argument(
+        "--no-couplings", action="store_true", help="leave the coupling edges off the map"
+    )
     return parser
 
 

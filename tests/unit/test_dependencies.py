@@ -145,6 +145,14 @@ def test_transport_rows_list_origins_under_rule_3() -> None:
         (Layer.WATER, C.BLOOD_BANK, {}, Dependency.OPTIONAL, [C.STORAGE, C.PUMPING]),
         (Layer.TRANSPORT, C.CLINIC, {}, Dependency.CORE, [C.FREIGHT_YARD]),
         (Layer.POWER, C.BRIDGE, {}, Dependency.NONE, []),
+        # Decision 0008, answer 1: supplier lists narrowed to what the research lanes found.
+        (Layer.FUEL, C.CABLE_LANDING, {}, Dependency.CORE, [C.DEPOT]),
+        (Layer.FUEL, C.REGIONAL, {}, Dependency.CORE, [C.DEPOT]),
+        (Layer.FUEL, C.TERTIARY, {}, Dependency.CORE, [C.DEPOT, C.TANK_FARM]),
+        (Layer.TELECOM, C.TRANSMISSION_SUBSTATION, {}, Dependency.CORE, [C.EXCHANGE]),
+        (Layer.TELECOM, C.BLOOD_BANK, {}, Dependency.CORE, [C.EXCHANGE, C.DATA_CENTRE]),
+        (Layer.TELECOM, C.REFINERY, {}, Dependency.CORE, [C.EXCHANGE]),
+        (Layer.TELECOM, C.DISTRIBUTION_SUBSTATION, {}, Dependency.CORE, [C.EXCHANGE, C.MAST]),
     ],
 )
 def test_rows_say_what_section_4_3a_says(

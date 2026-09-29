@@ -9,8 +9,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 from numpy.typing import NDArray
 
+from swm import rng
 from swm.coordinates import domain_origin_m
+from swm.recipe.dependencies import Role
 from swm.recipe.schema import Layer, NodeClass
+from swm.stages import couplings as couplings_stage
+from swm.stages.couplings import CouplingEdge, CouplingsResult, FeedConfiguration
 from swm.stages.layers import LayersResult
 from swm.stages.terrain import D8_OFFSETS, CoverClass, TerrainResult
 
@@ -29,6 +33,8 @@ COVER_COLOURS = {
 }
 RIVER_COLOUR = (0.12, 0.35, 0.75)
 PREVIEW_DPI = 150
+LABEL_BACKGROUND = {"facecolor": "white", "alpha": 0.85, "edgecolor": "none", "pad": 1.5}
+"""Schematic node labels sit on the page colour, nearly opaque, above the arrows."""
 LAYER_COLOURS = {
     Layer.POWER: "#d62728",
     Layer.TELECOM: "#9467bd",
@@ -96,10 +102,17 @@ def terrain_preview_png(result: TerrainResult, title: str) -> bytes:
     return _png(figure)
 
 
-def world_preview_png(terrain: TerrainResult, layers: LayersResult, title: str) -> bytes:
+def world_preview_png(
+    terrain: TerrainResult,
+    layers: LayersResult,
+    title: str,
+    couplings: CouplingsResult | None = None,
+) -> bytes:
     """Render the terrain preview with every node and link of every layer drawn over it.
 
     Nodes are coloured by layer and shaped by class; the caption gives per-layer statistics.
+    Coupling edges, when given, are thin straight lines coloured by supplier layer; those of
+    switched-off pairs are faint and dotted.
 
     Parameters
     ----------
@@ -109,13 +122,15 @@ def world_preview_png(terrain: TerrainResult, layers: LayersResult, title: str) 
         The layers stage's output.
     title : str
         Title printed above the map.
+    couplings : CouplingsResult or None
+        The couplings stage's output, or None to leave coupling edges off.
 
     Returns
     -------
     bytes
         A PNG image.
 
-    Spec: Work Order 3, C2.
+    Spec: Work Order 3, C2; Work Order 4, F4.
     """
     from matplotlib.collections import LineCollection
     from matplotlib.figure import Figure
@@ -134,6 +149,14 @@ def world_preview_png(terrain: TerrainResult, layers: LayersResult, title: str) 
         axes.add_collection(
             LineCollection(paths, colors=[LAYER_COLOURS[layer]], linewidths=1.6, alpha=0.85)
         )
+    for edge in couplings.edges if couplings is not None else ():
+        (x0, y0), (x1, y1) = edge.points
+        axes.plot(
+            [(x0 - west_m) / 1000, (x1 - west_m) / 1000],
+            [(y0 - south_m) / 1000, (y1 - south_m) / 1000],
+            color=LAYER_COLOURS[edge.supplier_layer], linewidth=0.6 if edge.switched_on else 0.4,
+            alpha=0.8 if edge.switched_on else 0.3, linestyle="-" if edge.switched_on else ":",
+        )  # fmt: skip
     for node in layers.nodes:
         if node.runway is not None:
             (x0, y0), (x1, y1) = node.runway
@@ -166,9 +189,178 @@ def world_preview_png(terrain: TerrainResult, layers: LayersResult, title: str) 
         handles=class_legend, loc="upper left", bbox_to_anchor=(1.02, 0.45), fontsize=8,
         title="node class",
     )  # fmt: skip
-    figure.text(0.02, 0.02, _layers_caption(layers), fontsize=8, family="monospace", va="bottom")
+    caption = _layers_caption(layers)
+    if couplings is not None:
+        hidden = len(couplings.edges) - couplings.switched_on_edges
+        caption += (
+            f"\ncouplings: {couplings.switched_on_edges} switched-on edges (thin), {hidden} "
+            f"hidden (faint, dotted); total edges {couplings.total_edges}"
+        )
+    figure.text(0.02, 0.02, caption, fontsize=8, family="monospace", va="bottom")
     figure.subplots_adjust(bottom=0.2, right=0.78)
     return _png(figure)
+
+
+def couplings_preview_png(layers: LayersResult, couplings: CouplingsResult, title: str) -> bytes:
+    """Render the switched-on couplings as a schematic for the hand trace, not a map.
+
+    Six rows, one per layer, with nodes labelled by id and class. Arrows run from supplier to
+    consumer, coloured by supplier layer: solid for single and two-full feeds (two-full drawn
+    heavier), dashed for two-half feeds, dotted for buffer resupply, dash-dot for transport
+    access. Mutual pairs are marked with a ring at the arrow's middle. Node labels sit on a pale
+    background so arrows never hide them. Every switched-on edge is printed as a table beside the
+    schematic, and the caption gives per-pair counts.
+
+    Parameters
+    ----------
+    layers : LayersResult
+        The layers stage's output.
+    couplings : CouplingsResult
+        The couplings stage's output.
+    title : str
+        Title printed above the schematic.
+
+    Returns
+    -------
+    bytes
+        A PNG image.
+
+    Spec: Work Order 4, F3; Work Order 4 review, answer 3 (decision 0008).
+    """
+    from matplotlib.figure import Figure
+    from matplotlib.patches import FancyArrowPatch
+
+    figure = Figure(figsize=(22, 12))
+    axes = figure.add_axes((0.02, 0.2, 0.46, 0.74))
+    rows = _schematic_rows(layers)
+    positions = _schematic_positions(layers, rows)
+    edges = [edge for edge in couplings.edges if edge.switched_on]
+    for edge in edges:
+        start, end = positions[edge.supplier_id], positions[edge.consumer_id]
+        style, width = _schematic_style(edge)
+        # Arrows bend to alternate sides by feed group, so parallel feeds stay apart.
+        bend = 0.12 if edge.feed_group % 2 else -0.12
+        axes.add_patch(
+            FancyArrowPatch(
+                start, end, arrowstyle="-|>", mutation_scale=12, shrinkA=14, shrinkB=14,
+                connectionstyle=f"arc3,rad={bend}", color=LAYER_COLOURS[edge.supplier_layer],
+                linestyle=style, linewidth=width, alpha=0.9,
+            )
+        )  # fmt: skip
+        if edge.mutual_partner is not None:
+            middle = ((start[0] + end[0]) / 2, (start[1] + end[1]) / 2)
+            axes.plot(*middle, marker="o", markersize=9, markerfacecolor="none",
+                      markeredgecolor="black", linestyle="")  # fmt: skip
+    for node in layers.nodes:
+        x, y = positions[node.node_id]
+        axes.plot(x, y, marker=CLASS_MARKERS.get(node.node_class, "o"), markersize=13,
+                  markerfacecolor=LAYER_COLOURS[node.layer], markeredgecolor="black",
+                  linestyle="")  # fmt: skip
+        label = node.node_id.removeprefix("SWM-") + "\n" + node.node_class.value.replace("_", " ")
+        axes.text(x, y - 0.24, label, ha="center", va="top", fontsize=7, zorder=5,
+                  bbox=LABEL_BACKGROUND)  # fmt: skip
+    for layer, row in rows.items():
+        axes.text(-0.2, row, layer.value, ha="right", va="center", fontsize=10,
+                  color=LAYER_COLOURS[layer], fontweight="bold")  # fmt: skip
+    widest = max((sum(n.layer == layer for n in layers.nodes) for layer in rows), default=1)
+    axes.set_xlim(-1.3, widest + 0.1)
+    axes.set_ylim(-0.8, len(rows) - 0.3)
+    axes.set_axis_off()
+    axes.set_title(title)
+    axes.legend(handles=_schematic_legend(edges), loc="upper left", bbox_to_anchor=(1.0, 1.0),
+                fontsize=8)  # fmt: skip
+    figure.text(
+        0.02, 0.02, _couplings_caption(couplings), fontsize=8, family="monospace", va="bottom"
+    )
+    figure.text(0.585, 0.95, _edge_table_text(couplings_stage.switched_on_edge_summary(
+        couplings, layers)), fontsize=7, family="monospace", va="top")  # fmt: skip
+    return _png(figure)
+
+
+def _edge_table_text(rows: list[dict[str, object]]) -> str:
+    """Lay the switched-on edges out as a fixed-width table for the hand trace."""
+    header = ("edge", "supplier", "consumer", "type", "feed", "role")
+    lines = [
+        (
+            str(row["edge_id"]).removeprefix("SWM-"),
+            f"{str(row['supplier_id']).removeprefix('SWM-')} {row['supplier_class']}",
+            f"{str(row['consumer_id']).removeprefix('SWM-')} {row['consumer_class']}",
+            str(row["dependency_type"]),
+            str(row["feed_configuration"]),
+            str(row["role"]),
+        )
+        for row in rows
+    ]
+    widths = [max(len(cells[i]) for cells in [header, *lines]) for i in range(len(header))]
+    return "\n".join(
+        "  ".join(cell.ljust(width) for cell, width in zip(cells, widths, strict=True)).rstrip()
+        for cells in [header, *lines]
+    )
+
+
+def _schematic_rows(layers: LayersResult) -> dict[Layer, int]:
+    present = [layer for layer in Layer if any(node.layer == layer for node in layers.nodes)]
+    return {layer: len(present) - 1 - index for index, layer in enumerate(present)}
+
+
+def _schematic_positions(
+    layers: LayersResult, rows: dict[Layer, int]
+) -> dict[str, tuple[float, float]]:
+    positions: dict[str, tuple[float, float]] = {}
+    for layer, row in rows.items():
+        nodes = [node for node in layers.nodes if node.layer == layer]
+        for index, node in enumerate(nodes):
+            positions[node.node_id] = (index + 0.5, float(row))
+    return positions
+
+
+def _schematic_style(edge: CouplingEdge) -> tuple[str, float]:
+    if edge.role == Role.BUFFER_RESUPPLY:
+        return ":", 1.4
+    if edge.feed_configuration == FeedConfiguration.TWO_HALF:
+        return "--", 1.4
+    if edge.feed_configuration == FeedConfiguration.ANY_REACHABLE:
+        return "-.", 1.2
+    if edge.feed_configuration == FeedConfiguration.TWO_FULL:
+        return "-", 2.2
+    return "-", 1.0
+
+
+def _schematic_legend(edges: list[CouplingEdge]) -> list["Artist"]:
+    from matplotlib.lines import Line2D
+
+    legend: list[Artist] = [
+        Line2D([], [], color="black", linewidth=1.0, label="single feed"),
+        Line2D([], [], color="black", linewidth=2.2, label="two full feeds"),
+        Line2D([], [], color="black", linewidth=1.4, linestyle="--", label="two half feeds"),
+        Line2D([], [], color="black", linewidth=1.4, linestyle=":", label="buffer resupply"),
+        Line2D([], [], color="black", linewidth=1.2, linestyle="-.", label="transport access"),
+        Line2D([], [], marker="o", markerfacecolor="none", markeredgecolor="black",
+               linestyle="", label="mutual pair"),
+    ]  # fmt: skip
+    legend += [
+        Line2D([], [], color=LAYER_COLOURS[layer], linewidth=2, label=f"from {layer.value}")
+        for layer in Layer
+        if any(edge.supplier_layer == layer for edge in edges)
+    ]
+    return legend
+
+
+def _couplings_caption(couplings: CouplingsResult) -> str:
+    lines = [
+        f"{rng.pair_label(s.supplier, s.consumer):<22} {s.dependencies:>3} dependencies  "
+        f"{s.edges:>3} edges  hub {s.hub_share:.2f}  not nearest {s.non_nearest_share:.2f}  "
+        f"mutual {s.mutual_pairs}"
+        for s in couplings.pairs
+        if s.switched_on
+    ]
+    hidden = len(couplings.edges) - couplings.switched_on_edges
+    lines.append(
+        f"switched-on coupling edges {couplings.switched_on_edges} + intra-layer links "
+        f"{couplings.intra_layer_links} = {couplings.total_edges} edges; {hidden} hidden "
+        "coupling edges not drawn"
+    )
+    return "\n".join(lines)
 
 
 def _draw_terrain(axes: "Axes", result: TerrainResult, title: str) -> list["Artist"]:

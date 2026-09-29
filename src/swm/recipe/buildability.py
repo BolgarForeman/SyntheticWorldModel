@@ -111,10 +111,13 @@ BUILT_FEATURES: frozenset[str] = frozenset(
         "layer_state:off",
         "nodes_only",
         "dual_membership",
+        "couplings",
+        "couplings_hidden",
+        "couplings_two_way",
     }
 )
-"""Features the generator builds today: the spine-island terrain (Work Order 2) and the layers
-stage (Work Order 3)."""
+"""Features the generator builds today: the spine-island terrain (Work Order 2), the layers
+stage (Work Order 3) and the couplings stage (Work Order 4)."""
 
 
 @dataclass(frozen=True)
