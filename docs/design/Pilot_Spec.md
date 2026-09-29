@@ -1,6 +1,6 @@
 # Pilot Spec — The Full Chain on a Hand-Checkable Constructed World
 
-*v0.3 · 2026-09-28 · feeds Ch7 §7.2 and Figures 7.1, 7.2 and 7.4*
+*v0.4 · 2026-09-28 · feeds Ch7 §7.2 and Figures 7.1, 7.2 and 7.4 · aligned with World_Generator_Structure v0.3 and the pilot recipe in the SyntheticWorldModel repository*
 
 ## Purpose
 
@@ -15,7 +15,9 @@ It is a Phase 0 run in the sense of the generator design (§1.7.6). The proposal
 - **Size.** About 24 nodes, four per layer across the full layer set (power, telecom, water, transport, fuel, healthcare), with 35–45 edges including the cross-layer couplings. It fits on one page and a cascade can be traced by hand.
 - **Substrate.** A small island with a mountain spine and a coastal plain. Nodes are sited by layer rules from the generator design.
 - **Topology.** Each layer keeps its own signature: power meshed, water dendritic, healthcare a referral tree. Healthcare is the pure sink.
-- **Coupling.** Cross-layer edges carry commodity, coupling strength κ, a temporal buffer τ, and a failure mode (throttle or trip). There is one reserve, on the fuel→power link.
+- **Coupling.** Cross-layer edges carry commodity, coupling strength κ and a failure mode (throttle or trip). Reserves are drawn per node from context like every other unobserved quantity, and each reserve sets its buffer time τ (reserve ÷ draw) during the run. The earlier single planted reserve on the fuel→power link is superseded.
+- **Sources.** One small source file per layer in its real container. Power (OpenStreetMap and the WRI plant database) and healthcare (OpenStreetMap and the government facility register) each have two sources that deliberately disagree; the other four layers have one. Fuel and healthcare sources report nodes only.
+- **Crews.** The world has two repair crews.
 - **Disruption.** One storm corridor is drawn as a shared latent field, and element failures are drawn conditionally on it. The run uses 5–8 scenarios so each can be traced.
 - **Dynamics.** Calibration-tier forms only (linear, threshold, discrete recovery), over a short window. This is a declared restriction.
 - **Determinism.** One master seed with named substreams. The world holds fixed while the error varies.
@@ -32,13 +34,13 @@ The analyst works from a belief graph produced from the truth by simple parametr
 
 ## The four models, one per member-class
 
-All four are posed on the same network, dynamics, criticality and ledger. The objective throughout is unserved demand-hours over the window.
+All four are posed on the same network, dynamics, criticality and ledger. The objective throughout is unserved demand-hours over a 72-hour window: the hours each end-use node is out of service (a fraction when supply is partial), times its class weight under the Lifeline preset, summed. Structure v0.3 §5 gives the end-use classes and weights.
 
 | Class | The toy model | Answer key |
 |---|---|---|
 | **Defensive (INROP-D)** | Spend a budget of 3–4 on protection actions (defined below) before the storm to minimize expected unserved demand-hours | Brute force over every affordable action set, cross-checked against the MIP |
 | **Offensive (INROP-O)** | Strike k nodes (k = 2, 3), degrading their condition, to maximize unserved demand-hours. The attack is posed on its own, not coupled to the defender | Brute force |
-| **Restorative (INROP-R)** | After one fixed storm scenario, sequence two repair crews across the failed nodes to minimize unserved demand-hours during recovery | Brute force over repair orders |
+| **Restorative (INROP-R)** | After one fixed storm scenario, sequence the world's two repair crews across the failed nodes to minimize unserved demand-hours during recovery | Brute force over repair orders |
 | **Informative (INROP-I)** | Choose one or two uncertain cross-layer edges to observe before hardening, to maximize the improvement in the defensive decision | Enumeration over the observation choices and their outcomes |
 
 The coupled attacker–defender formulation stays future research. Attack itself is in the family and is exercised here. Attacking a reserve directly, such as draining a tank without damaging the facility, is in scope for the full demonstration and is left out of the pilot only.
@@ -100,11 +102,10 @@ The measure is distance to the optimum, normalized as (objective of the recommen
 
 The following are left out: a second model within any class, the coupled attacker–defender formulation, error mechanisms beyond simple parametric noise, the tempo and equity objectives, the simulation tier, layer-level generate-six-hide-one, and full source fidelity beyond one small file per layer.
 
-## Before the generator runs
+## Changes from v0.3
 
-The generator design places two standing commitments ahead of any generator build:
-
-- the export ask to UA Research Security and Export Control, which expires the moment the constructed world is first generated;
-- the consult with Magliocca on generator design.
-
-Before the first world is generated, decide whether the pilot counts as that build.
+- The single planted reserve is replaced by reserves drawn per node from context (structure v0.3 §4.4).
+- Sources stated: two disagreeing sources on power and healthcare, one on each other layer.
+- Crews are a world quantity (two); the restorative model takes no budget.
+- The objective is defined as weighted service-hours at end-use nodes under the Lifeline weights, over a 72-hour window.
+- The closing section on steps before the generator runs is removed: the export ask is out of scope, and the Magliocca consult runs alongside the build.

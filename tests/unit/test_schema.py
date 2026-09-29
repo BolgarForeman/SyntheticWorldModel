@@ -6,12 +6,16 @@ from pydantic import BaseModel, ValidationError
 
 from swm.recipe.schema import (
     DEFAULT_COUPLINGS,
+    EQUAL_WEIGHTS,
+    LIFELINE_WEIGHTS,
+    EndUseClass,
     Layer,
     LayerState,
     NodeClass,
     Recipe,
     Source,
     TransferForm,
+    WeightPreset,
 )
 
 
@@ -170,7 +174,7 @@ def test_custom_weights_only_with_custom_preset() -> None:
 
 
 def test_complete_custom_weights_are_accepted() -> None:
-    weights = {node_class.value: 1.0 for node_class in NodeClass}
+    weights = {end_use.value: 1.0 for end_use in EndUseClass}
     accepted = recipe(
         answer_key_requests=[
             {"model": "strike_nodes", "service_weights": "custom", "custom_weights": weights}
@@ -180,13 +184,47 @@ def test_complete_custom_weights_are_accepted() -> None:
 
 
 def test_custom_weight_out_of_range_is_rejected() -> None:
-    weights = {node_class.value: 1.0 for node_class in NodeClass} | {"clinic": 101.0}
+    weights = {end_use.value: 1.0 for end_use in EndUseClass} | {"clinic": 101.0}
     with pytest.raises(ValidationError, match="custom_weights"):
         recipe(
             answer_key_requests=[
                 {"model": "strike_nodes", "service_weights": "custom", "custom_weights": weights}
             ]
         )
+
+
+def test_only_end_use_classes_take_weights() -> None:
+    weights = {end_use.value: 1.0 for end_use in EndUseClass} | {"generation": 1.0}
+    with pytest.raises(ValidationError, match="generation"):
+        recipe(
+            answer_key_requests=[
+                {"model": "strike_nodes", "service_weights": "custom", "custom_weights": weights}
+            ]
+        )
+
+
+def test_weight_presets_follow_the_spec() -> None:
+    assert set(EndUseClass) <= set(NodeClass)
+    assert set(LIFELINE_WEIGHTS) == set(EQUAL_WEIGHTS) == set(EndUseClass)
+    assert LIFELINE_WEIGHTS[EndUseClass.TERTIARY] == 10
+    assert LIFELINE_WEIGHTS[EndUseClass.REGIONAL] == LIFELINE_WEIGHTS[EndUseClass.SEAPORT] == 7
+    assert LIFELINE_WEIGHTS[EndUseClass.MAST] == 1
+    assert set(EQUAL_WEIGHTS.values()) == {1.0}
+    assert Recipe().answer_key_requests[0].service_weights == WeightPreset.LIFELINE
+
+
+def test_heterogeneity_is_a_percentage_everywhere() -> None:
+    reserves = recipe(unobserved={"reserves": {"heterogeneity_pct": 80}}).unobserved.reserves
+    assert reserves.heterogeneity_pct == 80
+    with pytest.raises(ValidationError, match="heterogeneity"):
+        recipe(unobserved={"reserves": {"heterogeneity": 80}})
+
+
+def test_snapshot_age_runs_to_30_years() -> None:
+    accepted = recipe(errors={"sources": {"osm_power": {"snapshot_age_y": 30}}})
+    assert accepted.errors.sources[Source.OSM_POWER].snapshot_age_y == 30
+    with pytest.raises(ValidationError, match="snapshot_age_y"):
+        recipe(errors={"sources": {"osm_power": {"snapshot_age_y": 31}}})
 
 
 def test_custom_size_needs_area_and_every_count() -> None:

@@ -46,14 +46,8 @@ FEATURE_ARRIVALS: dict[str, Arrival] = {
     "map_type:arid_plateau": Arrival.PHASE_5,
     "map_type:landlocked": Arrival.PHASE_5,
     "terrain_character": Arrival.PHASE_1,
-    "size:hand_check": Arrival.PHASE_1,
-    "size:small": Arrival.PHASE_5,
-    "size:taiwan_scale": Arrival.PHASE_5,
-    "size:very_large": Arrival.PHASE_5,
-    "size:huge": Arrival.PHASE_5,
-    # CHOICE: any size other than a named preset's is a Phase 5 size, like the presets beyond
-    # hand-check; Phase 1 is built at hand-check size only.
-    "size:custom": Arrival.PHASE_5,
+    "size:up_to_small": Arrival.PHASE_1,
+    "size:larger_than_small": Arrival.PHASE_5,
     "layer_siting_and_links": Arrival.PHASE_1,
     "layer_state:hidden": Arrival.PHASE_1,
     "layer_state:off": Arrival.PHASE_1,
@@ -75,7 +69,7 @@ FEATURE_ARRIVALS: dict[str, Arrival] = {
     "transfer_form:linear": Arrival.PHASE_1,
     "transfer_form:threshold": Arrival.PHASE_1,
     "transfer_form:step": Arrival.PHASE_1,
-    "transfer_form:concave": Arrival.NOT_YET_SCHEDULED,
+    "transfer_form:concave": Arrival.PHASE_5,
     "error_mechanism:parametric": Arrival.PHASE_3,
     "error_mechanism:process": Arrival.PHASE_6,
     "error_mechanism:replay": Arrival.PHASE_6,
@@ -93,15 +87,22 @@ FEATURE_ARRIVALS: dict[str, Arrival] = {
     "objective:unserved_demand_hours": Arrival.PHASE_2,
     "objective:time_to_restore_80_pct": Arrival.NOT_YET_SCHEDULED,
     "objective:worst_single_layer": Arrival.NOT_YET_SCHEDULED,
-    # CHOICE: equal weights arrive with the request stage, as healthcare-first weights do.
+    "service_weights:lifeline": Arrival.PHASE_2,
+    # CHOICE: equal weights arrive with the request stage, as lifeline weights do.
     "service_weights:equal": Arrival.PHASE_2,
-    "service_weights:healthcare_first": Arrival.PHASE_2,
     "service_weights:custom": Arrival.NOT_YET_SCHEDULED,
 }
 """Every feature a recipe can use, and when it arrives. The single table the check reads."""
 
-BUILT_FEATURES: frozenset[str] = frozenset()
-"""Features the generator builds today. None yet: no stage is built."""
+FEATURE_NOTES: dict[str, str] = {
+    "size:larger_than_small": "Phase 1 builds up to 20 nodes per layer and 2,000 km² of land",
+    "transfer_form:concave": "concave arrives with the simulation tier; an exact-tier or "
+    "both-tier world that uses it is refused until then",
+}
+"""Why a feature is refused, where the phase alone does not say (decision 0004, B2 and B3)."""
+
+BUILT_FEATURES: frozenset[str] = frozenset({"map_type:spine_island", "terrain_character"})
+"""Features the generator builds today: the spine-island terrain stage (Work Order 2)."""
 
 
 @dataclass(frozen=True)
@@ -110,6 +111,7 @@ class FeatureStatus:
 
     feature: str
     arrival: Arrival
+    note: str
 
 
 def features_used(recipe: Recipe) -> tuple[str, ...]:
@@ -158,7 +160,7 @@ def unbuilt_features(recipe: Recipe) -> tuple[FeatureStatus, ...]:
     Spec: Work Order 1, item 2 (buildability check).
     """
     return tuple(
-        FeatureStatus(feature, FEATURE_ARRIVALS[feature])
+        FeatureStatus(feature, FEATURE_ARRIVALS[feature], FEATURE_NOTES.get(feature, ""))
         for feature in features_used(recipe)
         if feature not in BUILT_FEATURES or FEATURE_ARRIVALS[feature] == Arrival.NEVER
     )
@@ -169,14 +171,16 @@ def _terrain_features(recipe: Recipe) -> set[str]:
 
 
 def _size_feature(recipe: Recipe) -> str:
-    preset = recipe.terrain.size_preset
-    if preset == SizePreset.CUSTOM:
-        return "size:custom"
-    values = SIZE_PRESETS[preset]
-    counts = {recipe.layers.get(layer).node_count for layer in Layer}
-    if recipe.terrain.area_km2 == values.area_km2 and counts == {values.nodes_per_layer}:
-        return f"size:{preset}"
-    return "size:custom"
+    small = SIZE_PRESETS[SizePreset.SMALL]
+    counts = [
+        recipe.layers.get(layer).node_count or 0
+        for layer in Layer
+        if recipe.layers.get(layer).state != LayerState.OFF
+    ]
+    area_km2 = recipe.terrain.area_km2 or 0.0
+    if area_km2 <= small.area_km2 and all(count <= small.nodes_per_layer for count in counts):
+        return "size:up_to_small"
+    return "size:larger_than_small"
 
 
 def _layer_features(recipe: Recipe) -> set[str]:

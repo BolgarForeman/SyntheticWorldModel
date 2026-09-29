@@ -2,7 +2,7 @@
 
 import hashlib
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -204,6 +204,67 @@ def write_stream_record(record: StreamRecord, out_dir: Path) -> Path:
     Spec: CLAUDE.md §7 (identity check); Work Order 1, item 4.
     """
     return _write(out_dir / STREAM_RECORD_FILE, canonical_yaml(record))
+
+
+def write_canonical_yaml(data: Mapping[str, Any], path: Path) -> Path:
+    """Write plain data as canonical YAML.
+
+    Parameters
+    ----------
+    data : Mapping[str, Any]
+        Plain data in the key order to write.
+    path : Path
+        The file to write; its folder is created if absent.
+
+    Returns
+    -------
+    Path
+        The file written.
+
+    Spec: CLAUDE.md §4; Work Order 2, A11.
+    """
+    return _write(path, canonical_yaml(data))
+
+
+def write_hash_list(hashes: Sequence[tuple[str, str]], path: Path) -> Path:
+    """Write ``(name, hex digest)`` pairs as ``digest  name`` lines, in the order given.
+
+    Parameters
+    ----------
+    hashes : Sequence[tuple[str, str]]
+        Names and SHA-256 hex digests.
+    path : Path
+        The file to write; its folder is created if absent.
+
+    Returns
+    -------
+    Path
+        The file written.
+
+    Spec: Work Order 2, A11.
+    """
+    lines = "".join(f"{digest}  {name}\n" for name, digest in hashes)
+    return _write(path, lines.encode("utf-8"))
+
+
+def write_binary(content: bytes, path: Path) -> Path:
+    """Write bytes as they are, such as a preview image.
+
+    Parameters
+    ----------
+    content : bytes
+        The file's content.
+    path : Path
+        The file to write; its folder is created if absent.
+
+    Returns
+    -------
+    Path
+        The file written.
+
+    Spec: CLAUDE.md §5 (only emit/, manifest/ and recipe/io write files).
+    """
+    return _write(path, content)
 
 
 def _write(path: Path, content: bytes) -> Path:

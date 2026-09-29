@@ -1,4 +1,4 @@
-# The pilot world: Pilot_Spec.md v0.3, as amended by the Work Order 1 rulings (decision 0003).
+# The pilot world: Pilot_Spec.md v0.4 (decisions 0003 and 0004).
 # Fields the pilot spec does not set are left to the schema defaults.
 recipe_version: 1
 
@@ -46,29 +46,29 @@ answer_key_requests:
   - model: protect_condition_and_add_reserve
     member_class: defensive
     budget_cost_units: 3
-    service_weights: healthcare_first
+    service_weights: lifeline
     objective: unserved_demand_hours
   - model: protect_condition_and_add_reserve
     member_class: defensive
     budget_cost_units: 4
-    service_weights: healthcare_first
+    service_weights: lifeline
     objective: unserved_demand_hours
   - model: strike_nodes
     member_class: offensive
     strikes_k: 2
-    service_weights: healthcare_first
+    service_weights: lifeline
     objective: unserved_demand_hours
   - model: strike_nodes
     member_class: offensive
     strikes_k: 3
-    service_weights: healthcare_first
+    service_weights: lifeline
     objective: unserved_demand_hours
   - model: sequence_repair_crews
     member_class: restorative
-    service_weights: healthcare_first
+    service_weights: lifeline
     objective: unserved_demand_hours
   - model: observe_uncertain_couplings
     member_class: informative
     observations_n: 1
-    service_weights: healthcare_first
+    service_weights: lifeline
     objective: unserved_demand_hours

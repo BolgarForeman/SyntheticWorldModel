@@ -2,7 +2,7 @@
 
 import argparse
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import pydantic
@@ -10,12 +10,32 @@ import yaml
 
 from swm import __version__
 from swm.recipe.buildability import unbuilt_features
-from swm.recipe.io import load_recipe, write_resolved_recipe, write_stream_record
+from swm.recipe.io import (
+    load_recipe,
+    write_binary,
+    write_canonical_yaml,
+    write_hash_list,
+    write_resolved_recipe,
+    write_stream_record,
+)
 from swm.recipe.resolve import Resolution, resolve
 from swm.rng import stream_record
+from swm.stages.terrain import (
+    TerrainResult,
+    array_hashes,
+    build_terrain,
+    statistics_record,
+    terrain_streams,
+)
 
 EXIT_OK = 0
-EXIT_BAD_RECIPE = 1
+EXIT_FAILED = 1
+TERRAIN_STATS_FILE = "terrain_stats.yaml"
+TERRAIN_HASHES_FILE = "terrain_sha256.txt"
+
+
+class CommandError(Exception):
+    """A command could not finish; the message says why."""
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -29,12 +49,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     Returns
     -------
     int
-        The process exit code: 0 on success, 1 if the recipe cannot be read.
+        The process exit code: 0 on success, 1 if the recipe cannot be read or the command
+        cannot finish.
 
-    Spec: CLAUDE.md §5 (``cli.py``); Work Order 1, item 4.
+    Spec: CLAUDE.md §5 (``cli.py``); Work Order 1, item 4; Work Order 2, A10 and A11.
     """
-    parser = _parser()
-    arguments = parser.parse_args(argv)
+    arguments = _parser().parse_args(argv)
     if arguments.command is None:
         return EXIT_OK
     try:
@@ -42,11 +62,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     except (OSError, ValueError, yaml.YAMLError) as error:
         # pydantic.ValidationError is a ValueError; its message names every failing field.
         sys.stderr.write(f"swm: cannot read {arguments.recipe}:\n{_describe(error)}\n")
-        return EXIT_BAD_RECIPE
-    if arguments.command == "resolve":
-        _write_resolution(resolution, Path(arguments.out_dir))
-    else:
-        sys.stdout.write(check_report(resolution))
+        return EXIT_FAILED
+    try:
+        COMMANDS[arguments.command](resolution, arguments)
+    except CommandError as error:
+        sys.stderr.write(f"swm {arguments.command}: {error}\n")
+        return EXIT_FAILED
     return EXIT_OK
 
 
@@ -69,8 +90,58 @@ def check_report(resolution: Resolution) -> str:
     lines += [f"  - {note}" for note in resolution.notes] or ["  none"]
     lines.append("Not yet buildable:")
     unbuilt = unbuilt_features(resolution.recipe)
-    lines += [f"  - {status.feature}: {status.arrival}" for status in unbuilt] or ["  none"]
+    lines += [
+        f"  - {status.feature}: {status.arrival}" + (f" ({status.note})" if status.note else "")
+        for status in unbuilt
+    ] or ["  none"]
     return "\n".join(lines) + "\n"
+
+
+def _resolve_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    recipe = resolution.recipe
+    out_dir = Path(arguments.out_dir)
+    write_resolved_recipe(recipe, out_dir)
+    write_stream_record(stream_record(recipe.root_seed, recipe.terrain.terrain_seed), out_dir)
+
+
+def _check_recipe_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    sys.stdout.write(check_report(resolution))
+
+
+def _terrain_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    result = _terrain(resolution)
+    out_dir = Path(arguments.out_dir)
+    write_canonical_yaml(statistics_record(result), out_dir / TERRAIN_STATS_FILE)
+    write_hash_list(array_hashes(result), out_dir / TERRAIN_HASHES_FILE)
+
+
+def _preview_terrain_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    try:
+        from swm.preview import terrain_preview_png
+    except ImportError as error:
+        raise CommandError(
+            "the preview needs matplotlib; install it with: uv sync --extra preview"
+        ) from error
+    result = _terrain(resolution)
+    title = f"{Path(arguments.recipe).name}: {resolution.recipe.terrain.map_type}"
+    write_binary(terrain_preview_png(result, title), Path(arguments.output))
+
+
+def _terrain(resolution: Resolution) -> TerrainResult:
+    recipe = resolution.recipe
+    try:
+        streams = terrain_streams(recipe.root_seed, recipe.terrain.terrain_seed)
+        return build_terrain(recipe.terrain, streams)
+    except ValueError as error:
+        raise CommandError(str(error)) from error
+
+
+COMMANDS: dict[str, Callable[[Resolution, argparse.Namespace], None]] = {
+    "resolve": _resolve_command,
+    "check-recipe": _check_recipe_command,
+    "terrain": _terrain_command,
+    "preview-terrain": _preview_terrain_command,
+}
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -86,13 +157,17 @@ def _parser() -> argparse.ArgumentParser:
         "check-recipe", help="print validation notes and the buildability report"
     )
     check_command.add_argument("recipe", help="recipe YAML file")
+    terrain_command = commands.add_parser(
+        "terrain", help="build the terrain; write its statistics and array hashes"
+    )
+    terrain_command.add_argument("recipe", help="recipe YAML file")
+    terrain_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    preview_command = commands.add_parser(
+        "preview-terrain", help="render a shaded map of the terrain as PNG"
+    )
+    preview_command.add_argument("recipe", help="recipe YAML file")
+    preview_command.add_argument("-o", "--output", required=True, help="PNG file to write")
     return parser
-
-
-def _write_resolution(resolution: Resolution, out_dir: Path) -> None:
-    recipe = resolution.recipe
-    write_resolved_recipe(recipe, out_dir)
-    write_stream_record(stream_record(recipe.root_seed, recipe.terrain.terrain_seed), out_dir)
 
 
 def _describe(error: Exception) -> str:

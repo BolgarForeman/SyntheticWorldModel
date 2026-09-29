@@ -33,6 +33,7 @@ The answer-key solver never imports error induction, and the generator never imp
 - **Only two inputs:** the recipe and the per-machine data-path file (`machine.toml`, gitignored, with `machine.example.toml` checked in). Defaults live in the recipe schema. The resolved recipe, with every default filled in, is written beside every world.
 - **Pinned environment:** Python version pinned, dependencies locked with `uv`.
 - **Same bytes on every platform.** Development runs on Windows; CI runs on Windows and Linux. Use pathlib for every path, write text with newline='\n' and explicit UTF-8, and never let output depend on the operating system, locale or path separator. The identity check must pass on both.
+- **Cross-platform arithmetic.** World-building arithmetic uses only +, −, ×, ÷ and sqrt: no sin, cos, exp or log; no `numpy.random` distributions beyond uniform integers and doubles; no `dot`, `matmul` or other library reductions whose order can vary. If a transcendental function is unavoidable, quantise its result and say so in the report. CI on both platforms is the proof.
 
 ## 5. Structure
 
@@ -46,14 +47,15 @@ src/swm/
   manifest/    truth manifest
   solve/       answer-key solver (separate; reads the true world only)
   checks/      the world checks and request checks
-  cli.py       swm build | swm solve | swm check
+  cli.py       swm resolve | check-recipe | terrain | preview-terrain | build | solve | check
+  preview.py   face-validity previews (optional `preview` extra; not part of the identity check)
 tests/
   unit/  property/  fixtures/  golden/
 docs/
   design/  decisions/  trace/  work_orders/
 ```
 
-- **Stages are pure functions:** `(recipe section, upstream outputs, rng) -> stage output` (a frozen dataclass). No stage reads another stage's stream. Only `emit/` and `manifest/` write files.
+- **Stages are pure functions:** `(recipe section, upstream outputs, rng) -> stage output` (a frozen dataclass). No stage reads another stage's stream. Only `emit/`, `manifest/` and `recipe/io` write files; stages never do.
 - **One job per function.** A function that needs a comment to explain its sections should be split.
 
 ## 6. Style

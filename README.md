@@ -10,7 +10,11 @@ Install [uv](https://docs.astral.sh/uv/), then from the repository root:
 uv sync
 ```
 
-This installs Python 3.12 if needed, and the locked runtime and development dependencies.
+This installs Python 3.12 if needed, and the locked runtime and development dependencies. The terrain preview (`swm preview-terrain`) also needs matplotlib, in the optional `preview` group:
+
+```
+uv sync --extra preview
+```
 
 ## Run the checks
 
@@ -21,7 +25,7 @@ uv run mypy src
 uv run pytest
 ```
 
-CI runs the same checks on Linux and Windows for every push and pull request.
+CI runs the same checks, with the `preview` extra installed, on Linux and Windows for every pull request and every push to `main`.
 
 ## Where things are
 

@@ -118,6 +118,18 @@ def test_categorical_compliance_gap_is_zeroed_with_a_note() -> None:
     )
 
 
+def test_zero_coverage_is_a_note() -> None:
+    text = "recipe_version: 1\nerrors:\n  sources:\n    osm_water: {coverage_pct: 0}\n"
+    note = "errors.sources.osm_water.coverage_pct is 0: the source carries nothing"
+    assert note in notes_for(text)
+
+
+def test_urban_density_zero_is_a_note() -> None:
+    text = "recipe_version: 1\nterrain:\n  character:\n    urban_density: 0\n"
+    note = "urban density 0: one minimum town placed so siting has an anchor"
+    assert note in notes_for(text)
+
+
 def test_healthcare_as_supplier_is_a_note() -> None:
     text = (
         "recipe_version: 1\ncouplings:\n  switched_on:\n"
