@@ -904,9 +904,9 @@ class Unobserved(_Section):
         description="Repair rates.",
     )
     failure_mode: CategoricalDrawnQuantity = Field(
-        default_factory=lambda: CategoricalDrawnQuantity(heterogeneity_pct=30),
+        default_factory=lambda: CategoricalDrawnQuantity(heterogeneity_pct=10),
         description="Failure mode (throttle or trip). Heterogeneity: share of elements whose "
-        "failure mode departs from their type's canon default.",
+        "failure mode departs from their class default; 10% per §4.4a (decision 0010).",
     )
     links_on_nodes_only_layers: CategoricalDrawnQuantity = Field(
         default_factory=lambda: CategoricalDrawnQuantity(heterogeneity_pct=35),
@@ -1190,10 +1190,10 @@ class ModelingRules(_Section):
     registry_sha256: str | None = Field(
         None, description="SHA-256 of the registry file. Filled in on resolution."
     )
-    overrides: dict[str, float] = Field(
+    overrides: dict[str, Any] = Field(
         default_factory=dict,
         description="New values for named rules, for sensitivity runs (for example "
-        "dependencies.rule_5.tertiary_second_feed_share). Only rules marked overridable.",
+        "dependencies.rule_5.tertiary_second_feed_share). Any rule may be overridden.",
     )
 
 

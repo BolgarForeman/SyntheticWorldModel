@@ -12,7 +12,7 @@ Spec: structure v0.4 §4.1a, §4.2 and §5; Work Order 3, Part B.
 import heapq
 import math
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field, fields, replace
+from dataclasses import dataclass, field, fields
 from itertools import combinations, pairwise
 from typing import Any
 
@@ -30,7 +30,7 @@ from swm.recipe.schema import (
     LayerState,
     NodeClass,
 )
-from swm.rules.registry import RULES
+from swm.rules.registry import RULES, Registry
 from swm.stages.terrain import (
     D8_OFFSETS,
     GRID_CELLS,
@@ -67,6 +67,9 @@ LAYER_CODES: Mapping[Layer, str] = {
 TREE_LAYERS = frozenset({Layer.WATER, Layer.FUEL})
 """Layers whose signature is a tree: they stop at n - 1 links (decision 0006)."""
 
+M_PER_KM = 1000.0
+"""Metres per kilometre."""
+
 WEIGHT_RESOLUTION = 1_000_000
 """Siting weights are quantised to integers at this resolution, so draws are exact."""
 
@@ -78,17 +81,6 @@ class ClassShare:
     node_class: NodeClass
     share: float
     backbone: bool
-
-
-COMPOSITION: Mapping[Layer, tuple[ClassShare, ...]] = {
-    layer: tuple(
-        ClassShare(NodeClass(entry["node_class"]), entry["share"], entry["backbone"])
-        for entry in RULES.value(f"layers.composition.{layer}")
-    )
-    for layer in Layer
-}
-"""Each layer's class shares (registry ``layers.composition.*``). Backbone classes get one node
-each, in order, while the count allows; the rest go by largest shortfall against the shares."""
 
 
 @dataclass(frozen=True)
@@ -174,50 +166,6 @@ class SitingMappings:
     """Extra siting weight of small-town cells for clinics (ratio)."""
 
 
-def _siting_value(name: str) -> Any:
-    value = RULES.value(f"layers.siting.{name}")
-    return tuple(value) if isinstance(value, list) else value
-
-
-SITING = SitingMappings(**{f.name: _siting_value(f.name) for f in fields(SitingMappings)})
-
-
-ATTRIBUTE_RANGES: Mapping[NodeClass, Mapping[str, tuple[float, float]]] = {
-    node_class: {
-        name: (low, high)
-        for name, (low, high) in RULES.value(f"layers.attributes.{node_class}").items()
-    }
-    for node_class in NodeClass
-    if RULES.has(f"layers.attributes.{node_class}")
-}
-"""Numeric attribute ranges per class, with the unit in each name (``layers.attributes.*``)."""
-
-CITY_SIZE_WEIGHT = RULES.number("layers.attributes.city_size_weight")
-"""Share of a drawn attribute's range set by the served city's size (ratio)."""
-
-ATTRIBUTE_DRAW_WEIGHT = RULES.number("layers.attributes.draw_weight")
-"""Share of a drawn attribute's range set at random (ratio)."""
-
-BRIDGE_ACCUMULATION_SCALE = RULES.number("layers.attributes.bridge_accumulation_scale")
-"""Square root of upstream cells at which a bridge reaches full length."""
-
-
-def _share_table[T](rule_id: str, kind: type[T]) -> tuple[tuple[float, T], ...]:
-    return tuple((float(share), kind(value)) for share, value in RULES.value(rule_id))  # type: ignore[call-arg]
-
-
-TRANSMISSION_VOLTAGES_KV = _share_table("layers.attributes.transmission_voltage_kv", float)
-"""Transmission voltage by served city share: (share at or above, kV). Taipower's levels."""
-
-DISTRIBUTION_VOLTAGES_KV = _share_table("layers.attributes.distribution_voltage_kv", float)
-"""Distribution voltage by served city share: (share at or above, kV). Taipower's levels."""
-
-AIRPORT_SIZES = _share_table("layers.attributes.airport_size_class", str)
-"""Airport size class by served city share, in OurAirports' own values."""
-
-SEAPORT_SIZES = _share_table("layers.attributes.seaport_size_class", str)
-"""Seaport harbour size by served city share, in the World Port Index's values."""
-
 OBSERVED_FUEL_TYPE: Mapping[str, str] = {
     "lng": "gas",
     "oil": "oil",
@@ -225,15 +173,6 @@ OBSERVED_FUEL_TYPE: Mapping[str, str] = {
     "hydro": "hydro",
 }
 """The observed fuel_type a source reports for each true fuel_kind (WRI's primary_fuel)."""
-
-RESERVE_MARGIN = RULES.number("sizing.power.reserve_margin")
-"""Generation capacity over the load it serves (ratio; registry, structure v0.5 §4.2)."""
-
-POWER_FACTOR = RULES.number("sizing.power.power_factor")
-"""Real over apparent power, converting MVA to MW (ratio; registry, structure v0.5 §4.2)."""
-
-GENERATION_SPLIT_FLOOR = RULES.number("sizing.power.generation_split_floor")
-"""Floor of each plant's share weight when generation is split across plants (ratio)."""
 
 
 @dataclass(frozen=True)
@@ -266,17 +205,115 @@ class SubtypeShares:
     """Chance a backup consumer has a diesel standby generator (ratio)."""
 
 
-def _subtype_value(name: str) -> Any:
-    value = RULES.value(f"layers.subtypes.{name}")
-    if isinstance(value, dict):
-        return tuple((NodeClass(k), float(v)) for k, v in value.items())
-    if isinstance(value, list):
-        return tuple((str(k), float(v)) for k, v in value)
-    return value
+@dataclass(frozen=True)
+class LayerRules:
+    """Every modeling rule the layers stage reads, taken from one registry (``layers.*``)."""
+
+    composition: Mapping[Layer, tuple[ClassShare, ...]]
+    """Each layer's class shares. Backbone classes get one node each, in order, while the count
+    allows; the rest go by largest shortfall against the shares."""
+    siting: SitingMappings
+    attribute_ranges: Mapping[NodeClass, Mapping[str, tuple[float, float]]]
+    """Numeric attribute ranges per class, with the unit in each name."""
+    city_size_weight: float
+    """Share of a drawn attribute's range set by the served city's size (ratio)."""
+    draw_weight: float
+    """Share of a drawn attribute's range set at random (ratio)."""
+    bridge_accumulation_scale: float
+    """Square root of upstream cells at which a bridge reaches full length."""
+    transmission_voltages_kv: tuple[tuple[float, float], ...]
+    """Transmission voltage by served city share: (share at or above, kV). Taipower's levels."""
+    distribution_voltages_kv: tuple[tuple[float, float], ...]
+    """Distribution voltage by served city share: (share at or above, kV). Taipower's levels."""
+    airport_sizes: tuple[tuple[float, str], ...]
+    """Airport size class by the served city's urban footprint: (km² at or above, class)."""
+    seaport_sizes: tuple[tuple[float, str], ...]
+    """Harbour size by the served city's urban footprint: (km² at or above, WPI class)."""
+    subtypes: SubtypeShares
+
+    @classmethod
+    def from_registry(cls, rules: Registry) -> "LayerRules":
+        """Read the layers stage's rules from a registry, with any recipe overrides.
+
+        Parameters
+        ----------
+        rules : Registry
+            The modeling rules in force.
+
+        Returns
+        -------
+        LayerRules
+            The rules.
+
+        Spec: Work Order 5, A2 and A3; decision 0010.
+        """
+
+        def siting(name: str) -> Any:
+            value = rules.value(f"layers.siting.{name}")
+            return tuple(value) if isinstance(value, list) else value
+
+        def subtype(name: str) -> Any:
+            value = rules.value(f"layers.subtypes.{name}")
+            if isinstance(value, dict):
+                return tuple((NodeClass(k), float(v)) for k, v in value.items())
+            if isinstance(value, list):
+                return tuple((str(k), float(v)) for k, v in value)
+            return value
+
+        def table(rule_id: str, kind: type) -> Any:
+            return tuple((float(at), kind(value)) for at, value in rules.value(rule_id))
+
+        return cls(
+            composition={
+                layer: tuple(
+                    ClassShare(NodeClass(entry["node_class"]), entry["share"], entry["backbone"])
+                    for entry in rules.value(f"layers.composition.{layer}")
+                )
+                for layer in Layer
+            },
+            siting=SitingMappings(**{f.name: siting(f.name) for f in fields(SitingMappings)}),
+            attribute_ranges={
+                node_class: {
+                    name: (low, high)
+                    for name, (low, high) in rules.value(f"layers.attributes.{node_class}").items()
+                }
+                for node_class in NodeClass
+                if rules.has(f"layers.attributes.{node_class}")
+            },
+            city_size_weight=rules.number("layers.attributes.city_size_weight"),
+            draw_weight=rules.number("layers.attributes.draw_weight"),
+            bridge_accumulation_scale=rules.number("layers.attributes.bridge_accumulation_scale"),
+            transmission_voltages_kv=table("layers.attributes.transmission_voltage_kv", float),
+            distribution_voltages_kv=table("layers.attributes.distribution_voltage_kv", float),
+            airport_sizes=table("layers.attributes.airport_size_class", str),
+            seaport_sizes=table("layers.attributes.seaport_size_class", str),
+            subtypes=SubtypeShares(**{f.name: subtype(f.name) for f in fields(SubtypeShares)}),
+        )
 
 
-SUBTYPES = SubtypeShares(**{f.name: _subtype_value(f.name) for f in fields(SubtypeShares)})
-"""The subtype shares in force."""
+_LAYER_RULES: dict[tuple[str, str], LayerRules] = {}
+
+
+def layer_rules(rules: Registry = RULES) -> LayerRules:
+    """Return the layers stage's rules for a registry, built once per registry and overrides.
+
+    Parameters
+    ----------
+    rules : Registry
+        The modeling rules in force.
+
+    Returns
+    -------
+    LayerRules
+        The rules.
+
+    Spec: Work Order 5, A3; decision 0010.
+    """
+    key = (rules.sha256, rules.overrides_key)
+    if key not in _LAYER_RULES:
+        _LAYER_RULES[key] = LayerRules.from_registry(rules)
+    return _LAYER_RULES[key]
+
 
 TELECOM_OPERATORS = ("SWM Telecom A", "SWM Telecom B")
 """Synthetic operator names, from a reserved list (CLAUDE.md §9)."""
@@ -378,7 +415,7 @@ def layers_streams(root_seed: int) -> LayersStreams:
     )
 
 
-def class_counts(layer: Layer, node_count: int) -> dict[NodeClass, int]:
+def class_counts(layer: Layer, node_count: int, rules: Registry = RULES) -> dict[NodeClass, int]:
     """Split a layer's node count across its classes by the composition table.
 
     Parameters
@@ -387,6 +424,8 @@ def class_counts(layer: Layer, node_count: int) -> dict[NodeClass, int]:
         The layer.
     node_count : int
         Nodes in the layer.
+    rules : Registry
+        The modeling rules in force.
 
     Returns
     -------
@@ -395,7 +434,13 @@ def class_counts(layer: Layer, node_count: int) -> dict[NodeClass, int]:
 
     Spec: Work Order 3, B2.
     """
-    shares = COMPOSITION[layer]
+    return _split(layer, node_count, layer_rules(rules).composition)
+
+
+def _split(
+    layer: Layer, node_count: int, composition: Mapping[Layer, tuple[ClassShare, ...]]
+) -> dict[NodeClass, int]:
+    shares = composition[layer]
     counts = dict.fromkeys((share.node_class for share in shares), 0)
     remaining = node_count
     for share in shares:
@@ -410,7 +455,9 @@ def class_counts(layer: Layer, node_count: int) -> dict[NodeClass, int]:
     return counts
 
 
-def build_layers(layers: Layers, terrain: TerrainResult, streams: LayersStreams) -> LayersResult:
+def build_layers(
+    layers: Layers, terrain: TerrainResult, streams: LayersStreams, rules: Registry = RULES
+) -> LayersResult:
     """Site every node of every layer that is not off, and build each layer's links.
 
     Parameters
@@ -421,15 +468,18 @@ def build_layers(layers: Layers, terrain: TerrainResult, streams: LayersStreams)
         The terrain stage's output.
     streams : LayersStreams
         The layers streams.
+    rules : Registry
+        The modeling rules in force, with the recipe's overrides.
 
     Returns
     -------
     LayersResult
-        Node and link tables, layer states and realised statistics with siting notes.
+        Node and link tables, layer states and realised statistics with siting notes. Power
+        is sized to load later, by the requirements stage (decision 0010).
 
     Spec: structure v0.4 §4.2; Work Order 3, Part B; decision 0006.
     """
-    ground = _Ground.from_terrain(terrain)
+    ground = _Ground.from_terrain(terrain, layer_rules(rules))
     siter = _Siter(ground)
     for layer in SITING_ORDER:
         settings = layers.get(layer)
@@ -452,8 +502,6 @@ def build_layers(layers: Layers, terrain: TerrainResult, streams: LayersStreams)
         builder = _LinkBuilder(layer, layer_nodes, siter, ground, settings.links_per_node)
         layer_links = builder.build()
         notes = siter.notes.get(layer, []) + builder.notes
-        if layer == Layer.POWER:
-            layer_nodes = _size_power(layer_nodes, layer_links, stream, notes)
         nodes.extend(layer_nodes)
         links.extend(layer_links)
         statistics.append(_statistics(layer, settings, layer_nodes, layer_links, notes))
@@ -581,10 +629,11 @@ class _Ground:
     rows: NDArray[np.int64]
     columns: NDArray[np.int64]
     occupied: NDArray[np.bool_]
+    rules: LayerRules
     _city_distance: dict[int, NDArray[np.int64]] = field(default_factory=dict)
 
     @classmethod
-    def from_terrain(cls, terrain: TerrainResult) -> "_Ground":
+    def from_terrain(cls, terrain: TerrainResult, rules: LayerRules) -> "_Ground":
         land = np.asarray(terrain.land)
         river = np.asarray(terrain.river)
         wetland = np.asarray(terrain.land_cover) == CoverClass.WETLAND
@@ -614,6 +663,7 @@ class _Ground:
             rows=rows,
             columns=columns,
             occupied=np.zeros_like(land),
+            rules=rules,
         )
 
     def cells_for_km(self, km: float) -> int:
@@ -690,7 +740,8 @@ class _Siter:
         self.sited[layer] = []
         self.notes[layer] = []
         rules = _RULES[layer]
-        for node_class, count in class_counts(layer, node_count).items():
+        composition = {layer: self.ground.rules.composition[layer]}
+        for node_class, count in _split(layer, node_count, composition).items():
             for index in range(count):
                 if dual and node_class == NodeClass.GENERATION and index == 0:
                     dam = self._hydro_dam(streams.dual_membership)
@@ -770,8 +821,8 @@ def _site_seaport(s: _Siter, layer: Layer, index: int, stream: np.random.Generat
     g = s.ground
     city = g.city_for(index)
     distance = g.city_distance(city)
-    strict = g.coast & (distance <= g.cells_for_km(SITING.seaport_city_km))
-    weight = _shelter(g) * _near(distance, g.cells_for_km(SITING.seaport_city_pull_km))
+    strict = g.coast & (distance <= g.cells_for_km(g.rules.siting.seaport_city_km))
+    weight = _shelter(g) * _near(distance, g.cells_for_km(g.rules.siting.seaport_city_pull_km))
     cell = s.place(
         layer,
         NodeClass.SEAPORT,
@@ -788,7 +839,7 @@ def _site_seaport(s: _Siter, layer: Layer, index: int, stream: np.random.Generat
 def _site_airport(s: _Siter, layer: Layer, index: int, stream: np.random.Generator) -> _Sited:
     g = s.ground
     usable = s._usable(layer)
-    near_city = _any_city_distance(g) <= g.cells_for_km(SITING.runway_city_km)
+    near_city = _any_city_distance(g) <= g.cells_for_km(g.rules.siting.runway_city_km)
     directions = _runway_directions(g, usable)
     qualifying = [
         (d, int(start))
@@ -802,14 +853,14 @@ def _site_airport(s: _Siter, layer: Layer, index: int, stream: np.random.Generat
             (
                 1.0
                 - directions[d].range_m.flat[start] / directions[d].limit_m
-                + SITING.airport_grade_bonus
+                + g.rules.siting.airport_grade_bonus
             )
             * float(
                 1.0
                 / (
                     1.0
                     + _any_city_distance(g)[directions[d].middle_of].flat[start]
-                    / SITING.airport_city_pull_cells
+                    / g.rules.siting.airport_city_pull_cells
                 )
             )
             for d, start in qualifying
@@ -828,12 +879,12 @@ def _site_airport(s: _Siter, layer: Layer, index: int, stream: np.random.Generat
                 "a straight flat run",
                 stream,
                 usable,
-                _near(g.slope, SITING.airport_fallback_slope_scale),
+                _near(g.slope, g.rules.siting.airport_fallback_slope_scale),
                 how_relaxed="no straight run fits on buildable land; placed on the flattest "
                 "ground, with no runway line",
             )
             return _Sited(NodeClass.AIRPORT, cell)
-        flat_enough = [c for c in candidates if c[0] <= SITING.runway_grade]
+        flat_enough = [c for c in candidates if c[0] <= g.rules.siting.runway_grade]
         if flat_enough:
             # Flat runs exist but none near a city: take the flat run nearest a city.
             city_km = _city_km(g)
@@ -841,17 +892,18 @@ def _site_airport(s: _Siter, layer: Layer, index: int, stream: np.random.Generat
                 (float(city_km[directions[d].middle_of].flat[start]), d, start)
                 for _, d, start in flat_enough
             )
+            siting = g.rules.siting
             s.notes[layer].append(
-                f"airport: no {SITING.runway_km:g} km run within {SITING.runway_grade:.0%} "
-                f"grade lies within {SITING.runway_city_km:g} km of a city; placed on the "
+                f"airport: no {siting.runway_km:g} km run within {siting.runway_grade:.0%} "
+                f"grade lies within {siting.runway_city_km:g} km of a city; placed on the "
                 f"nearest such run, {distance_km:.1f} km from a city centre"
             )
         else:
             grade, d, start = min(candidates)
             runs = directions[d]
             s.notes[layer].append(
-                f"airport: no {SITING.runway_km:g} km run lies within "
-                f"{SITING.runway_grade:.0%} grade; the flattest run varies "
+                f"airport: no {g.rules.siting.runway_km:g} km run lies within "
+                f"{g.rules.siting.runway_grade:.0%} grade; the flattest run varies "
                 f"{runs.range_m.flat[start]:.0f} m over {runs.length_m / 1000:.2f} km "
                 f"({grade:.1%})"
             )
@@ -870,10 +922,10 @@ def _site_freight_yard(s: _Siter, layer: Layer, index: int, stream: np.random.Ge
     road_start, road_end = _main_road_ends(s, port)
     to_road = _segment_distance(g, road_start, road_end)[0]
     to_port = g.distance_to(*divmod(port, GRID_CELLS)) if port is not None else to_road
-    near_city = distance <= g.cells_for_km(SITING.near_city_km)
-    strict = near_city & (g.slope <= SITING.flat_slope)
-    weight = _near(to_road, g.cells_for_km(SITING.freight_road_km)) * _near(
-        to_port, SITING.freight_port_pull_cells
+    near_city = distance <= g.cells_for_km(g.rules.siting.near_city_km)
+    strict = near_city & (g.slope <= g.rules.siting.flat_slope)
+    weight = _near(to_road, g.cells_for_km(g.rules.siting.freight_road_km)) * _near(
+        to_port, g.rules.siting.freight_port_pull_cells
     )
     cell = s.place(
         layer,
@@ -944,7 +996,10 @@ def _site_road_junction(s: _Siter, layer: Layer, index: int, stream: np.random.G
     if index < len(g.cities):
         city = g.cities[index]
         strict = g.city_distance(city) == 0
-        weight = _near(g.distance_to(city.centre_row, city.centre_column), SITING.anchor_pull_cells)
+        weight = _near(
+            g.distance_to(city.centre_row, city.centre_column),
+            g.rules.siting.anchor_pull_cells,
+        )
         rule = "in a city"
     else:
         pairs = list(combinations(g.cities, 2)) or [(g.cities[0], g.cities[0])]
@@ -954,9 +1009,13 @@ def _site_road_junction(s: _Siter, layer: Layer, index: int, stream: np.random.G
             a.centre_row * GRID_CELLS + a.centre_column,
             b.centre_row * GRID_CELLS + b.centre_column,
         )
-        low, high = SITING.road_junction_band
-        strict = (distance <= SITING.road_junction_corridor_cells) & (along > low) & (along < high)
-        weight = _near(np.abs(along - 0.5), SITING.midpoint_pull_share)
+        low, high = g.rules.siting.road_junction_band
+        strict = (
+            (distance <= g.rules.siting.road_junction_corridor_cells)
+            & (along > low)
+            & (along < high)
+        )
+        weight = _near(np.abs(along - 0.5), g.rules.siting.midpoint_pull_share)
         rule = "on the road between cities"
     cell = s.place(layer, NodeClass.ROAD_JUNCTION, rule, stream, strict, weight)
     return _Sited(NodeClass.ROAD_JUNCTION, cell)
@@ -966,7 +1025,7 @@ def _site_reservoir(s: _Siter, layer: Layer, index: int, stream: np.random.Gener
     g = s.ground
     # CHOICE: "on a river" means beside a river cell; nodes never sit on river cells.
     river_accumulation = _neighbour_river_accumulation(g)
-    uplands = g.height >= SITING.upland_share
+    uplands = g.height >= g.rules.siting.upland_share
     strict = uplands & (river_accumulation > 0)
     weight = np.sqrt(river_accumulation.astype(np.float64))
     cell = s.place(
@@ -991,10 +1050,11 @@ def _site_treatment(s: _Siter, layer: Layer, index: int, stream: np.random.Gener
     for cell in _downstream_path(g, reservoir):
         path.flat[cell] = True
     lower = g.elevation_m < g.elevation_m.flat[reservoir]
-    apart = g.distance_to(*divmod(reservoir, GRID_CELLS)) >= SITING.treatment_gap_cells
+    apart = g.distance_to(*divmod(reservoir, GRID_CELLS)) >= g.rules.siting.treatment_gap_cells
     largest = g.cities[0]
     weight = _near(
-        g.distance_to(largest.centre_row, largest.centre_column), SITING.treatment_city_pull_cells
+        g.distance_to(largest.centre_row, largest.centre_column),
+        g.rules.siting.treatment_city_pull_cells,
     )
     cell = s.place(
         layer,
@@ -1020,11 +1080,11 @@ def _site_between(
 ) -> int:
     g = s.ground
     distance, along = _segment_distance(g, start, end)
-    half = SITING.corridor_middle_share / 2
+    half = g.rules.siting.corridor_middle_share / 2
     middle = (along >= 0.5 - half) & (along <= 0.5 + half)
-    strict = (distance <= g.cells_for_km(SITING.corridor_km)) & middle
-    weight = _near(np.abs(along - 0.5), SITING.midpoint_pull_share) * _near(
-        distance, SITING.corridor_pull_cells
+    strict = (distance <= g.cells_for_km(g.rules.siting.corridor_km)) & middle
+    weight = _near(np.abs(along - 0.5), g.rules.siting.midpoint_pull_share) * _near(
+        distance, g.rules.siting.corridor_pull_cells
     )
     return s.place(
         layer,
@@ -1053,7 +1113,7 @@ def _site_storage(s: _Siter, layer: Layer, index: int, stream: np.random.Generat
     g = s.ground
     city = g.city_for(index)
     distance = g.city_distance(city)
-    beside = (distance >= 1) & (distance <= g.cells_for_km(SITING.storage_beside_city_km))
+    beside = (distance >= 1) & (distance <= g.cells_for_km(g.rules.siting.storage_beside_city_km))
     footprint = distance == 0
     city_height = float(np.mean(g.elevation_m[footprint])) if footprint.any() else 0.0
     raised = np.maximum(g.elevation_m - city_height, 0.0)
@@ -1063,8 +1123,8 @@ def _site_storage(s: _Siter, layer: Layer, index: int, stream: np.random.Generat
         "on raised ground beside a city",
         stream,
         beside,
-        raised / SITING.storage_height_scale_m + SITING.storage_height_floor,
-        relaxed=distance <= g.cells_for_km(SITING.storage_relaxed_km),
+        raised / g.rules.siting.storage_height_scale_m + g.rules.siting.storage_height_floor,
+        relaxed=distance <= g.cells_for_km(g.rules.siting.storage_relaxed_km),
         how_relaxed="placed on the highest land near that city",
     )
     return _Sited(NodeClass.STORAGE, cell)
@@ -1074,14 +1134,14 @@ def _site_generation(s: _Siter, layer: Layer, index: int, stream: np.random.Gene
     g = s.ground
     city = g.city_for(index)
     distance = g.city_distance(city)
-    strict = g.coast & (distance <= g.cells_for_km(SITING.near_city_km))
+    strict = g.coast & (distance <= g.cells_for_km(g.rules.siting.near_city_km))
     cell = s.place(
         layer,
         NodeClass.GENERATION,
         "on the coast near a city",
         stream,
         strict,
-        _near(distance, SITING.anchor_pull_cells),
+        _near(distance, g.rules.siting.anchor_pull_cells),
         relaxed=g.coast,
         how_relaxed="placed on the coast nearest the cities",
     )
@@ -1107,8 +1167,10 @@ def _site_transmission(s: _Siter, layer: Layer, index: int, stream: np.random.Ge
 def _site_distribution(s: _Siter, layer: Layer, index: int, stream: np.random.Generator) -> _Sited:
     g = s.ground
     city = g.city_for(index)
-    strict = g.city_distance(city) <= g.cells_for_km(SITING.beside_city_km)
-    weight = _near(g.distance_to(city.centre_row, city.centre_column), SITING.anchor_pull_cells)
+    strict = g.city_distance(city) <= g.cells_for_km(g.rules.siting.beside_city_km)
+    weight = _near(
+        g.distance_to(city.centre_row, city.centre_column), g.rules.siting.anchor_pull_cells
+    )
     cell = s.place(
         layer, NodeClass.DISTRIBUTION_SUBSTATION, "in or beside a city", stream, strict, weight
     )
@@ -1122,7 +1184,10 @@ def _site_in_city(
         g = s.ground
         city = city_index(s, index)
         strict = g.city_distance(city) == 0
-        weight = _near(g.distance_to(city.centre_row, city.centre_column), SITING.anchor_pull_cells)
+        weight = _near(
+            g.distance_to(city.centre_row, city.centre_column),
+            g.rules.siting.anchor_pull_cells,
+        )
         cell = s.place(
             layer,
             node_class,
@@ -1130,7 +1195,7 @@ def _site_in_city(
             stream,
             strict,
             weight,
-            relaxed=g.city_distance(city) <= g.cells_for_km(SITING.beside_city_km),
+            relaxed=g.city_distance(city) <= g.cells_for_km(g.rules.siting.beside_city_km),
             how_relaxed="placed beside that city",
         )
         return _Sited(node_class, cell)
@@ -1139,10 +1204,11 @@ def _site_in_city(
 
 
 def _site_spaced(
-    node_class: NodeClass, spacing_km: float, weight_of: Callable[[_Ground], NDArray[np.float64]]
+    node_class: NodeClass, spacing_field: str, weight_of: Callable[[_Ground], NDArray[np.float64]]
 ) -> SitingRule:
     def site(s: _Siter, layer: Layer, index: int, stream: np.random.Generator) -> _Sited:
         g = s.ground
+        spacing_km: float = getattr(g.rules.siting, spacing_field)
         taken = np.zeros(g.land.shape, dtype=bool)
         for sited in s.sited[layer]:
             taken.flat[sited.cell] = True
@@ -1165,21 +1231,24 @@ def _site_spaced(
 
 def _mast_weight(g: _Ground) -> NDArray[np.float64]:
     urban = (np.asarray(g.terrain.urban_id) >= 0).astype(np.float64)
-    return 1.0 + SITING.mast_urban_bonus * urban + SITING.mast_height_bonus * g.height
+    return (
+        1.0 + g.rules.siting.mast_urban_bonus * urban + g.rules.siting.mast_height_bonus * g.height
+    )
 
 
 def _clinic_weight(g: _Ground) -> NDArray[np.float64]:
     urban_id = np.asarray(g.terrain.urban_id)
     big = {c.city_id for c in g.cities[:2]}
     in_town = (urban_id >= 0) & ~np.isin(urban_id, sorted(big))
-    return 1.0 + SITING.clinic_town_bonus * in_town.astype(np.float64)
+    return 1.0 + g.rules.siting.clinic_town_bonus * in_town.astype(np.float64)
 
 
 def _site_on_coast_near(
-    node_class: NodeClass, anchor: Callable[[_Siter, int], int | None], km: float, rule: str
+    node_class: NodeClass, anchor: Callable[[_Siter, int], int | None], km_field: str, rule: str
 ) -> SitingRule:
     def site(s: _Siter, layer: Layer, index: int, stream: np.random.Generator) -> _Sited:
         g = s.ground
+        km: float = getattr(g.rules.siting, km_field)
         target = anchor(s, index)
         if target is None:
             city = g.city_for(index)
@@ -1192,7 +1261,7 @@ def _site_on_coast_near(
             rule,
             stream,
             strict,
-            _near(distance, SITING.anchor_pull_cells),
+            _near(distance, g.rules.siting.anchor_pull_cells),
             relaxed=g.coast,
             how_relaxed="placed on the nearest coast instead",
         )
@@ -1224,14 +1293,14 @@ def _site_tank_farm(s: _Siter, layer: Layer, index: int, stream: np.random.Gener
         else largest.centre_row * GRID_CELLS + largest.centre_column
     )
     distance = g.distance_to(*divmod(anchor, GRID_CELLS))
-    strict = distance <= g.cells_for_km(SITING.tank_farm_km)
+    strict = distance <= g.cells_for_km(g.rules.siting.tank_farm_km)
     cell = s.place(
         layer,
         NodeClass.TANK_FARM,
         "near the import terminal",
         stream,
         strict,
-        _near(distance, SITING.tank_farm_pull_cells),
+        _near(distance, g.rules.siting.tank_farm_pull_cells),
     )
     return _Sited(NodeClass.TANK_FARM, cell)
 
@@ -1277,7 +1346,7 @@ _RULES: Mapping[Layer, Mapping[NodeClass, SitingRule]] = {
         NodeClass.IMPORT_TERMINAL: _site_on_coast_near(
             NodeClass.IMPORT_TERMINAL,
             _seaport_city_centre,
-            SITING.near_city_km,
+            "near_city_km",
             "on the coast, preferring the seaport's city",
         ),
         NodeClass.TANK_FARM: _site_tank_farm,
@@ -1285,7 +1354,7 @@ _RULES: Mapping[Layer, Mapping[NodeClass, SitingRule]] = {
         NodeClass.REFINERY: _site_on_coast_near(
             NodeClass.REFINERY,
             _terminal_cell,
-            SITING.refinery_km,
+            "refinery_km",
             "on the coast near an import terminal",
         ),
     },
@@ -1293,14 +1362,14 @@ _RULES: Mapping[Layer, Mapping[NodeClass, SitingRule]] = {
         NodeClass.EXCHANGE: _site_in_city(
             NodeClass.EXCHANGE, _largest_city_first, "in the largest city"
         ),
-        NodeClass.MAST: _site_spaced(NodeClass.MAST, SITING.mast_spacing_km, _mast_weight),
+        NodeClass.MAST: _site_spaced(NodeClass.MAST, "mast_spacing_km", _mast_weight),
         NodeClass.DATA_CENTRE: _site_in_city(
             NodeClass.DATA_CENTRE, _largest_city_first, "in a city"
         ),
         NodeClass.CABLE_LANDING: _site_on_coast_near(
             NodeClass.CABLE_LANDING,
             lambda s, i: None,
-            SITING.near_city_km,
+            "near_city_km",
             "on the coast near a city",
         ),
     },
@@ -1311,7 +1380,7 @@ _RULES: Mapping[Layer, Mapping[NodeClass, SitingRule]] = {
         NodeClass.REGIONAL: _site_in_city(
             NodeClass.REGIONAL, _hospital_city(NodeClass.REGIONAL, 1), "in the second city"
         ),
-        NodeClass.CLINIC: _site_spaced(NodeClass.CLINIC, SITING.clinic_spacing_km, _clinic_weight),
+        NodeClass.CLINIC: _site_spaced(NodeClass.CLINIC, "clinic_spacing_km", _clinic_weight),
         NodeClass.BLOOD_BANK: _site_in_city(
             NodeClass.BLOOD_BANK,
             _hospital_city(NodeClass.BLOOD_BANK, 0),
@@ -1347,7 +1416,7 @@ def _draw_index(stream: np.random.Generator, weights: Sequence[float]) -> int:
 
 def _shelter(g: _Ground) -> NDArray[np.float64]:
     """One minus the share of sea in a square window: higher in bays than on headlands."""
-    radius = SITING.shelter_radius_cells
+    radius = g.rules.siting.shelter_radius_cells
     sea = np.pad(g.sea.astype(np.int64), radius + 1)
     integral = sea.cumsum(axis=0).cumsum(axis=1)
     size = 2 * radius + 1
@@ -1460,7 +1529,7 @@ def _runway_directions(g: _Ground, usable: NDArray[np.bool_]) -> list[_Runs]:
     cell_m = g.terrain.grid.cell_size_m
     for dr, dc in ((0, 1), (1, 0), (1, 1), (1, -1)):
         step_m = cell_m * (SQRT_2 if dr and dc else 1.0)
-        steps = math.ceil(SITING.runway_km * 1000 / step_m)
+        steps = math.ceil(g.rules.siting.runway_km * 1000 / step_m)
         fits = usable.copy()
         highest = g.elevation_m.copy()
         lowest = g.elevation_m.copy()
@@ -1480,8 +1549,8 @@ def _runway_directions(g: _Ground, usable: NDArray[np.bool_]) -> list[_Runs]:
                 fits=fits,
                 range_m=range_m,
                 length_m=length_m,
-                limit_m=SITING.runway_grade * length_m,
-                flat_enough=range_m <= SITING.runway_grade * length_m,
+                limit_m=g.rules.siting.runway_grade * length_m,
+                flat_enough=range_m <= g.rules.siting.runway_grade * length_m,
                 middle_of=(middle_rows, middle_columns),
             )
         )
@@ -1544,7 +1613,7 @@ def _road_route(g: _Ground, start: int, end: int) -> tuple[list[tuple[int, int]]
     rows, columns = np.divmod(candidates, GRID_CELLS)
     via_a = np.sqrt((rows - a[0]) ** 2.0 + (columns - a[1]) ** 2.0)
     via_b = np.sqrt((rows - b[0]) ** 2.0 + (columns - b[1]) ** 2.0)
-    order = np.argsort(via_a + via_b, kind="stable")[: SITING.waypoint_candidates]
+    order = np.argsort(via_a + via_b, kind="stable")[: g.rules.siting.waypoint_candidates]
     for index in order:
         waypoint = (int(rows[index]), int(columns[index]))
         if not _crosses_sea(g, a, waypoint) and not _crosses_sea(g, waypoint, b):
@@ -1618,6 +1687,8 @@ def _make_nodes(
         longitude, latitude = to_lonlat(x_m, y_m)
         city = ground.city_of(sited.cell)
         share = city.cell_count / largest
+        cell_km = grid.cell_size_m / M_PER_KM
+        footprint_km2 = city.cell_count * cell_km * cell_km
         runway = None
         if sited.runway is not None:
             runway = (
@@ -1636,7 +1707,9 @@ def _make_nodes(
                 longitude=longitude,
                 latitude=latitude,
                 city_id=city.city_id,
-                attributes=_attributes(layer, sited, share, subtypes[number - 1], stream),
+                attributes=_attributes(
+                    layer, sited, share, footprint_km2, subtypes[number - 1], ground.rules, stream
+                ),
                 runway=runway,
                 subtype=tuple(sorted(subtypes[number - 1].items())),
             )
@@ -1648,32 +1721,35 @@ def _attributes(
     layer: Layer,
     sited: _Sited,
     share: float,
+    footprint_km2: float,
     subtype: Mapping[str, AttributeValue],
+    rules: LayerRules,
     stream: np.random.Generator,
 ) -> tuple[tuple[str, AttributeValue], ...]:
     """Observed attributes, scaled by the served city's size relative to the largest city."""
     # CHOICE: the served city is the city the node lies in, or else the nearest city.
     node_class = sited.node_class
     values: dict[str, AttributeValue] = {"status": OPERATIONAL}
-    for name, (low, high) in ATTRIBUTE_RANGES.get(node_class, {}).items():
+    for name, (low, high) in rules.attribute_ranges.get(node_class, {}).items():
         size = share
         if node_class == NodeClass.BRIDGE:
-            size = min(1.0, math.sqrt(sited.river_accumulation) / BRIDGE_ACCUMULATION_SCALE)
+            size = min(1.0, math.sqrt(sited.river_accumulation) / rules.bridge_accumulation_scale)
         scaled = low + (high - low) * (
-            CITY_SIZE_WEIGHT * size + ATTRIBUTE_DRAW_WEIGHT * float(stream.random())
+            rules.city_size_weight * size + rules.draw_weight * float(stream.random())
         )
         values[name] = _round_attribute(name, scaled)
     if node_class == NodeClass.GENERATION:
         # The observed fuel type is what a source reports of the true fuel kind.
         values["fuel_type"] = OBSERVED_FUEL_TYPE[str(subtype["fuel_kind"])]
     if node_class == NodeClass.TRANSMISSION_SUBSTATION:
-        values["voltage_kv"] = _by_share(TRANSMISSION_VOLTAGES_KV, share)
+        values["voltage_kv"] = _by_share(rules.transmission_voltages_kv, share)
     if node_class == NodeClass.DISTRIBUTION_SUBSTATION:
-        values["voltage_kv"] = _by_share(DISTRIBUTION_VOLTAGES_KV, share)
+        values["voltage_kv"] = _by_share(rules.distribution_voltages_kv, share)
     if node_class == NodeClass.AIRPORT:
-        values["size_class"] = _by_share(AIRPORT_SIZES, share)
+        # The class follows the size of the city served, not its rank (decision 0010).
+        values["size_class"] = _by_share(rules.airport_sizes, footprint_km2)
     if node_class == NodeClass.SEAPORT:
-        values["size_class"] = _by_share(SEAPORT_SIZES, share)
+        values["size_class"] = _by_share(rules.seaport_sizes, footprint_km2)
     if node_class == NodeClass.BRIDGE:
         values["deck_class"] = "road"
     if layer == Layer.TELECOM:
@@ -1722,7 +1798,7 @@ def _draw_subtypes(
                 values["product"] = (
                     needed[position]
                     if position < len(needed)
-                    else _choose(stream, SUBTYPES.terminal_product)
+                    else _choose(stream, siter.ground.rules.subtypes.terminal_product)
                 )
             elif node.node_class != NodeClass.GENERATION:
                 values.update(_class_subtype(siter, node, sited, stream))
@@ -1759,7 +1835,7 @@ def _draw_generation(
         else:
             allowed = tuple(
                 (k, w)
-                for k, w in SUBTYPES.thermal_fuel
+                for k, w in siter.ground.rules.subtypes.thermal_fuel
                 if not fuel
                 or (k == "oil" and oil_served)
                 or (k != "oil" and (k in needed or len(needed) < terminals))
@@ -1768,7 +1844,7 @@ def _draw_generation(
         if kind in ("lng", "coal") and kind not in needed:
             needed.append(kind)
         values["fuel_kind"] = kind
-        values["makeup_water"] = _choose(stream, SUBTYPES.makeup_water)
+        values["makeup_water"] = _choose(stream, siter.ground.rules.subtypes.makeup_water)
     if needed and not fuel:
         siter.notes[Layer.POWER].append(
             "generation: the fuel layer is off, so no import terminal serves fuel-fired plants"
@@ -1780,7 +1856,7 @@ def _class_subtype(
     siter: _Siter, node: _Sited, sited: list[_Sited], stream: np.random.Generator
 ) -> dict[str, AttributeValue]:
     """Draw the subtype attributes of a node other than generation or an import terminal."""
-    shares, node_class = SUBTYPES, node.node_class
+    shares, node_class = siter.ground.rules.subtypes, node.node_class
     values: dict[str, AttributeValue] = {}
     if node_class == NodeClass.AIRPORT:
         largest = _largest_airport(siter, sited)
@@ -1822,52 +1898,6 @@ def _chance(stream: np.random.Generator, probability: float) -> bool:
 
 def _choose(stream: np.random.Generator, shares: tuple[tuple[str, float], ...]) -> str:
     return shares[_draw_index(stream, [weight for _, weight in shares])][0]
-
-
-def _size_power(
-    nodes: list[Node], links: list[Link], stream: np.random.Generator, notes: list[str]
-) -> list[Node]:
-    """Size generation and transmission to the distribution load (structure v0.5 §4.2).
-
-    A transmission substation carries at least the distribution it feeds in the power links,
-    times the reserve margin. Total generation is total distribution times the margin,
-    converted to MW with the power factor, and split across plants by draw.
-    """
-    distribution = {
-        node.node_id: float(dict(node.attributes)["capacity_mva"])
-        for node in nodes
-        if node.node_class == NodeClass.DISTRIBUTION_SUBSTATION
-    }
-    sized: dict[str, dict[str, AttributeValue]] = {}
-    for node in nodes:
-        if node.node_class == NodeClass.TRANSMISSION_SUBSTATION:
-            fed = sorted(
-                (link.to_id if link.from_id == node.node_id else link.from_id)
-                for link in links
-                if node.node_id in (link.from_id, link.to_id)
-                and (link.to_id if link.from_id == node.node_id else link.from_id) in distribution
-            )
-            needed = math.ceil(RESERVE_MARGIN * math.fsum(distribution[i] for i in fed))
-            drawn = int(dict(node.attributes)["capacity_mva"])
-            sized[node.node_id] = {"capacity_mva": max(drawn, needed)}
-    plants = [node for node in nodes if node.node_class == NodeClass.GENERATION]
-    load_mva = math.fsum(distribution.values())
-    if plants and load_mva == 0.0:
-        notes.append("generation: no distribution substations, so plants keep drawn capacities")
-    elif plants:
-        total_mw = load_mva * RESERVE_MARGIN * POWER_FACTOR
-        weights = [GENERATION_SPLIT_FLOOR + float(stream.random()) for _ in plants]
-        whole = math.fsum(weights)
-        for plant, weight in zip(plants, weights, strict=True):
-            sized[plant.node_id] = {"capacity_mw": round(total_mw * weight / whole, 1)}
-    return [
-        replace(
-            node, attributes=tuple(sorted({**dict(node.attributes), **sized[node.node_id]}.items()))
-        )
-        if node.node_id in sized
-        else node
-        for node in nodes
-    ]
 
 
 # --- Links ----------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: 67ba0cf0cb94734c85863552b04277ef410529316a3d82efe17c187a22a70a3c
+  registry_sha256: f9571c60e58c5c89d5759878abd6e3b55ead2fbab8b04f86a1a8c6f13bd215f3
   overrides: {}
 levers:
   heterogeneity: 0.4
@@ -9,22 +9,24 @@ levers:
   spread_capped: false
 electricity_mw:
   nodes: 17
-  total: 106.859764
+  total: 31.024146
 peak_mw:
   nodes: 17
-  total: 138.917693
+  total: 40.33139
 water_m3_per_day:
   nodes: 9
   total: 4719.752119
 fuel_gj_per_day:
-  nodes: 1
-  total: 16802.200799
+  nodes: 4
+  total: 22986.443432
 backup_burn_l_per_h:
   nodes: 8
   total: 2347.560242
+power_sizing:
+  total_peak_mw: 40.33139
+  transmission_fed_peak_mw: 22.487113
+  threshold_mw: 5.0
+  generation_mw: 52.4
 telecom_consumers: 18
 transport_consumers: 7
-notes:
-- 'airport: fuel draw has no target (open decision: jet_uplift_per_departure_m3)'
-- 'freight_yard: fuel draw has no target (open decision: freight_yard_diesel)'
-- 'seaport: fuel draw has no target (open decision: seaport_fuel)'
+notes: []

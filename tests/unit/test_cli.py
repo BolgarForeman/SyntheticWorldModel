@@ -67,7 +67,7 @@ def test_requirements_writes_statistics_and_a_hash(
     assert "\nelectricity_mw:\n" in stats
     hashes = (tmp_path / "requirements_sha256.txt").read_text(encoding="utf-8").splitlines()
     assert [line.split("  ")[1] for line in hashes] == ["requirements"]
-    assert "seaport: fuel draw has no target" in capsys.readouterr().out
+    assert "\npower_sizing:\n" in stats
 
 
 def test_rules_renders_the_modeling_rules_page_without_a_recipe(tmp_path: Path) -> None:
@@ -108,7 +108,7 @@ def test_export_gis_writes_a_readable_geopackage_and_geotiffs(
 
     assert main(["export-gis", str(pilot_path), "-o", str(tmp_path)]) == 0
     package = str(tmp_path / "world.gpkg")
-    expected = {"nodes": 24, "links": 23, "couplings": 71}
+    expected = {"nodes": 24, "links": 23, "couplings": 72}
     for layer in ("power", "telecom", "water", "transport", "fuel", "healthcare"):
         expected[f"nodes_{layer}"] = 4
     for layer, count in expected.items():

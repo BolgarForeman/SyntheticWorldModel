@@ -13,7 +13,7 @@ from enum import StrEnum
 from typing import Any
 
 from swm.recipe.schema import DEFAULT_COUPLINGS, LAYER_NODE_CLASSES, Layer, NodeClass
-from swm.rules.registry import RULES, Rule
+from swm.rules.registry import RULES, Registry, Rule
 
 TABLE_PREFIX = "dependencies.table."
 """Registry ids of the table's rows start with this."""
@@ -158,7 +158,7 @@ class DependencyRow:
         return f"{self.supplier_layer}>{self.consumer_class}{suffix}"
 
 
-def _row(rule: Rule) -> DependencyRow:
+def _row(rule: Rule, commodities: Mapping[Layer, str]) -> DependencyRow:
     """Build one table row from its registry entry."""
     value: dict[str, Any] = rule.value
     condition = value["condition"]
@@ -176,7 +176,7 @@ def _row(rule: Rule) -> DependencyRow:
         role=None if value["role"] is None else Role(value["role"]),
         commodity=None
         if value["dependency"] == Dependency.NONE
-        else COMMODITIES[Layer(value["supplier_layer"])],
+        else commodities[Layer(value["supplier_layer"])],
         suppliers=tuple(
             SupplierOption(
                 node_class=NodeClass(option["node_class"]),
@@ -195,10 +195,38 @@ def _row(rule: Rule) -> DependencyRow:
     )
 
 
-DEPENDENCY_TABLE: tuple[DependencyRow, ...] = tuple(
-    _row(rule) for rule in RULES.rules if rule.id.startswith(TABLE_PREFIX)
-)
-"""Structure v0.6 §4.3a, in registry order. Placeholder (open decision: realism ranges)."""
+_TABLES: dict[tuple[str, str], tuple[DependencyRow, ...]] = {}
+
+
+def dependency_table(rules: Registry = RULES) -> tuple[DependencyRow, ...]:
+    """Return the dependency table a registry holds, built once per registry and overrides.
+
+    Parameters
+    ----------
+    rules : Registry
+        The modeling rules in force, with any recipe overrides.
+
+    Returns
+    -------
+    tuple of DependencyRow
+        Structure v0.6 §4.3a, in registry order.
+
+    Spec: structure v0.6 §4.3a; Work Order 5, A2 and A3.
+    """
+    key = (rules.sha256, rules.overrides_key)
+    if key not in _TABLES:
+        commodities = {
+            Layer(layer): commodity
+            for layer, commodity in rules.value("dependencies.commodities").items()
+        }
+        _TABLES[key] = tuple(
+            _row(rule, commodities) for rule in rules.rules if rule.id.startswith(TABLE_PREFIX)
+        )
+    return _TABLES[key]
+
+
+DEPENDENCY_TABLE = dependency_table()
+"""The shipped §4.3a table, in registry order. Placeholder (open decision: realism ranges)."""
 
 
 SUBTYPE_VALUES: Mapping[NodeClass, Mapping[str, tuple[object, ...]]] = {
@@ -221,7 +249,9 @@ def coupling_pairs() -> tuple[tuple[Layer, Layer], ...]:
     return DEFAULT_COUPLINGS
 
 
-def rows_for(supplier: Layer, consumer_class: NodeClass) -> tuple[DependencyRow, ...]:
+def rows_for(
+    supplier: Layer, consumer_class: NodeClass, rules: Registry = RULES
+) -> tuple[DependencyRow, ...]:
     """Return every row for one supplier layer and one consumer class.
 
     Parameters
@@ -230,6 +260,8 @@ def rows_for(supplier: Layer, consumer_class: NodeClass) -> tuple[DependencyRow,
         The supplier layer.
     consumer_class : NodeClass
         The consumer node class.
+    rules : Registry
+        The modeling rules in force.
 
     Returns
     -------
@@ -240,13 +272,16 @@ def rows_for(supplier: Layer, consumer_class: NodeClass) -> tuple[DependencyRow,
     """
     return tuple(
         row
-        for row in DEPENDENCY_TABLE
+        for row in dependency_table(rules)
         if row.supplier_layer == supplier and row.consumer_class == consumer_class
     )
 
 
 def resolve_row(
-    supplier: Layer, consumer_class: NodeClass, subtype: Mapping[str, object]
+    supplier: Layer,
+    consumer_class: NodeClass,
+    subtype: Mapping[str, object],
+    rules: Registry = RULES,
 ) -> DependencyRow:
     """Return the one row that applies to a consumer with these subtype attributes.
 
@@ -258,6 +293,8 @@ def resolve_row(
         The consumer node class.
     subtype : Mapping[str, object]
         The consumer's subtype attributes.
+    rules : Registry
+        The modeling rules in force.
 
     Returns
     -------
@@ -272,7 +309,8 @@ def resolve_row(
 
     Spec: structure v0.5 §4.3a; Work Order 4, A2.
     """
-    matching = [row for row in rows_for(supplier, consumer_class) if row.condition.matches(subtype)]
+    rows = rows_for(supplier, consumer_class, rules)
+    matching = [row for row in rows if row.condition.matches(subtype)]
     if len(matching) != 1:
         raise LookupError(
             f"{supplier} → {consumer_class} with {dict(subtype)} matches {len(matching)} rows"

@@ -64,12 +64,13 @@ def moments(values: list[float]) -> tuple[float, float]:
 
 
 def spread(values: list[float]) -> float:
+    """Return the standard deviation of a piecewise-linear quantile function."""
     mean, second = moments(values)
     return math.sqrt(max(0.0, second - mean * mean))
 
 
 def solve(target: float) -> list[float]:
-    """The table whose own standard deviation (median 1) equals target."""
+    """Return the table whose own standard deviation (median 1) equals target."""
     if target == 0:
         return [1.0] * len(KNOTS)
     low, high = 0.0, 5.0
@@ -83,6 +84,7 @@ def solve(target: float) -> list[float]:
 
 
 def main() -> None:
+    """Print the tables as the YAML value of the registry entry ``draws.quantile_table``."""
     lines = ["    knots: [" + ", ".join(repr(u) for u in KNOTS) + "]", "    tables:"]
     for s in GRID:
         values = [round(v, DIGITS) for v in solve(s)]

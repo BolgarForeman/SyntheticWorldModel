@@ -17,17 +17,19 @@ from swm import rng
 from swm.recipe.schema import SOURCE_SCOPES, Layer, LayerState, NodeClass, Recipe
 from swm.stages import layers as layers_stage
 from swm.stages.layers import (
-    ATTRIBUTE_RANGES,
-    COMPOSITION,
-    SITING,
     TELECOM_OPERATORS,
     TREE_LAYERS,
     LayersResult,
     class_counts,
+    layer_rules,
     link_table,
     node_table,
 )
 from swm.stages.terrain import GRID_CELLS, TerrainResult, array_hashes
+
+ATTRIBUTE_RANGES = layer_rules().attribute_ranges
+COMPOSITION = layer_rules().composition
+SITING = layer_rules().siting
 
 PILOT_COMPOSITION = {
     Layer.POWER: {"generation": 1, "transmission_substation": 1, "distribution_substation": 2},
@@ -304,8 +306,8 @@ def test_an_airport_far_from_every_city_is_noted() -> None:
 def test_a_class_with_no_eligible_land_is_an_error(monkeypatch: pytest.MonkeyPatch) -> None:
     original = layers_stage._Ground.from_terrain
 
-    def no_land(terrain: TerrainResult) -> Any:
-        ground = original(terrain)
+    def no_land(terrain: TerrainResult, rules: Any) -> Any:
+        ground = original(terrain, rules)
         ground.buildable = np.zeros_like(ground.buildable)
         return ground
 
@@ -446,31 +448,20 @@ def test_generation_is_served_by_an_import_terminal_or_bulk_storage() -> None:
                 assert bulk
 
 
-def feeds(result: LayersResult) -> dict[str, list[str]]:
-    power = {n.node_id: n for n in result.nodes if n.layer == Layer.POWER}
-    fed: dict[str, list[str]] = {i: [] for i in power}
-    for link in result.links:
-        if link.layer == Layer.POWER:
-            fed[link.from_id].append(link.to_id)
-            fed[link.to_id].append(link.from_id)
-    return fed
+def test_the_layers_stage_leaves_power_at_its_drawn_size(pilot: Any) -> None:
+    # Power is sized to load by the requirements stage (decision 0010).
+    _, _, result = pilot
+    plant = next(n for n in result.nodes if n.node_class == NodeClass.GENERATION)
+    low, high = ATTRIBUTE_RANGES[NodeClass.GENERATION]["capacity_mw"]
+    assert low <= float(dict(plant.attributes)["capacity_mw"]) <= high
 
 
-@pytest.mark.parametrize("sections", [{}, {"layers": {"power": {"node_count": 17}}}])
-def test_power_capacities_hang_together(sections: dict[str, Any]) -> None:
-    _, _, result = build_world(**sections)
-    power = {n.node_id: n for n in result.nodes if n.layer == Layer.POWER}
-    mva = {
-        i: float(dict(n.attributes)["capacity_mva"])
-        for i, n in power.items()
-        if n.node_class == NodeClass.DISTRIBUTION_SUBSTATION
+def test_ports_and_airports_are_sized_by_the_city_they_serve(pilot: Any) -> None:
+    _, _, result = pilot
+    classes = {
+        n.node_class: dict(n.attributes).get("size_class")
+        for n in result.nodes
+        if n.node_class in (NodeClass.SEAPORT, NodeClass.AIRPORT)
     }
-    plants = [n for n in power.values() if n.node_class == NodeClass.GENERATION]
-    total_mw = sum(float(dict(n.attributes)["capacity_mw"]) for n in plants)
-    expected = sum(mva.values()) * layers_stage.RESERVE_MARGIN * layers_stage.POWER_FACTOR
-    assert total_mw == pytest.approx(expected, abs=0.05 * len(plants) + 1e-9)
-    for node_id, neighbours in feeds(result).items():
-        node = power[node_id]
-        if node.node_class == NodeClass.TRANSMISSION_SUBSTATION:
-            fed = sum(mva[i] for i in neighbours if i in mva)
-            assert float(dict(node.attributes)["capacity_mva"]) >= layers_stage.RESERVE_MARGIN * fed
+    assert classes[NodeClass.SEAPORT] == "S"
+    assert classes[NodeClass.AIRPORT] == "small_airport"

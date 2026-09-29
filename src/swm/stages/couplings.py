@@ -263,7 +263,7 @@ def build_couplings(
 
     Spec: structure v0.6 §4.3 and §4.3a; Work Order 4, E1-E11; Work Order 5, Part C.
     """
-    world = _World(terrain, layers)
+    world = _World(terrain, layers, rules)
     # CHOICE: every pair of present layers is built, then pairs switched off under
     # not_generated are dropped. Density, two-way and numbering therefore never depend on which
     # pairs are switched, as E2 and the Part G stream tests require.
@@ -468,7 +468,8 @@ def statistics_record(result: CouplingsResult) -> dict[str, object]:
 class _World:
     """Nodes by layer, and what the table's conditions and rule 3 read from the ground."""
 
-    def __init__(self, terrain: TerrainResult, layers: LayersResult) -> None:
+    def __init__(self, terrain: TerrainResult, layers: LayersResult, rules: Registry) -> None:
+        self.rules = rules
         land = np.asarray(terrain.land)
         labels, sizes = _label_land(land)
         self.labels = labels
@@ -588,7 +589,7 @@ def _needs_of(pair: Pair, world: _World, large: _LargeLoads) -> list[_Need]:
     needs = []
     for node in world.nodes[consumer]:
         subtype = dict(node.subtype)
-        row = resolve_row(supplier, node.node_class, subtype)
+        row = resolve_row(supplier, node.node_class, subtype, world.rules)
         if row.dependency == Dependency.NONE:
             continue
         options = large.suppliers(row, node)

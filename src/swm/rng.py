@@ -39,7 +39,6 @@ def _registry() -> dict[str, str]:
     paths |= {
         "shared_causes/scenarios": "Element failures drawn conditionally on the hazard fields.",
         "unobserved/reserves": "Reserves, drawn per element from context.",
-        "unobserved/requirements": "Node requirements per commodity, drawn from context.",
         "unobserved/repair_rates": "Repair rates, drawn per element from context.",
         "unobserved/failure_mode": "Failure mode (throttle or trip) per element.",
         "unobserved/links_on_nodes_only_layers": "Links on layers whose sources report nodes only.",

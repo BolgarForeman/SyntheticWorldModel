@@ -30,12 +30,13 @@ def exact(world: World) -> Any:
         layers,
         RULES,
         requirements_streams(recipe.root_seed),
+        11.4,
     )
 
 
 def test_at_zero_levers_every_requirement_is_its_section_4_4a_target(rich: World) -> None:
     result = exact(rich)
-    nodes = {n.node_id: n for n in rich[2].nodes}
+    nodes = {n.node_id: n for n in result.layers.nodes}
     n = RULES.number
     checked = set()
     for req in result.nodes:
@@ -110,11 +111,94 @@ def test_backup_burn_is_a_rate_only_for_diesel_standby(rich: World) -> None:
             assert req.backup_burn_l_per_h is None
 
 
-def test_open_fuel_targets_are_noted_not_drawn(rich: World) -> None:
+def test_airports_seaports_and_freight_yards_draw_placeholder_fuel(rich: World) -> None:
     result = exact(rich)
-    seaport = next(r for r in result.nodes if r.node_class == NodeClass.SEAPORT)
-    assert seaport.fuel_gj_per_day is None
-    assert any("seaport: fuel draw has no target" in note for note in result.notes)
+    nodes = {n.node_id: n for n in result.layers.nodes}
+    n = RULES.number
+    seen = set()
+    for req in result.nodes:
+        attributes = dict(nodes[req.node_id].attributes)
+        if req.node_class == NodeClass.AIRPORT:
+            table = RULES.value("requirements.throughput.airport_passengers_per_year")
+            litres = table[attributes["size_class"]] * n(
+                "requirements.fuel.airport_jet_fuel_l_per_passenger"
+            )
+            expected = litres / 1000 / 365 * n("requirements.fuel.jet_fuel_gj_per_m3")
+        elif req.node_class == NodeClass.SEAPORT:
+            teu = RULES.value("requirements.throughput.seaport_teu_per_year")[
+                attributes["size_class"]
+            ]
+            per_box = n("requirements.fuel.seaport_cargo_diesel_l_per_box") + n(
+                "requirements.fuel.seaport_bunkers_l_per_box"
+            )
+            litres = teu / 1.6 * per_box
+            expected = litres / 1000 / 365 * n("requirements.fuel.diesel_gj_per_m3")
+        elif req.node_class == NodeClass.FREIGHT_YARD:
+            litres = float(attributes["area_m2"]) * n(
+                "requirements.fuel.freight_yard_diesel_l_per_m2_day"
+            )
+            expected = litres / 1000 * n("requirements.fuel.diesel_gj_per_m3")
+        else:
+            continue
+        seen.add(req.node_class)
+        assert req.fuel_gj_per_day == pytest.approx(expected), req.node_id
+    assert seen == {NodeClass.AIRPORT, NodeClass.SEAPORT, NodeClass.FREIGHT_YARD}
+    assert not any("fuel draw has no target" in note for note in result.notes)
+
+
+@pytest.mark.parametrize("voltage_kv", [11.4, 22.8])
+def test_generation_is_sized_to_every_power_consumers_peak(rich: World, voltage_kv: float) -> None:
+    result = requirements_of(rich, voltage_kv=voltage_kv)
+    peaks = [r.peak_mw for r in result.nodes if r.peak_mw is not None]
+    plants = [n for n in result.layers.nodes if n.node_class == NodeClass.GENERATION]
+    total = sum(float(dict(p.attributes)["capacity_mw"]) for p in plants)
+    assert total == pytest.approx(sum(peaks) * 1.3, abs=0.05 * len(plants) + 1e-9)
+    assert result.power.total_peak_mw == pytest.approx(sum(peaks))
+    assert result.power.threshold_mw == (5.0 if voltage_kv == 11.4 else 10.0)
+
+
+def test_transmission_carries_what_it_feeds(rich: World) -> None:
+    result = requirements_of(rich)
+    power = {n.node_id: n for n in result.layers.nodes if n.layer == Layer.POWER}
+    fed: dict[str, list[str]] = {i: [] for i in power}
+    for link in result.layers.links:
+        if link.layer == Layer.POWER:
+            fed[link.from_id].append(link.to_id)
+            fed[link.to_id].append(link.from_id)
+    distribution = {
+        i: float(dict(n.attributes)["capacity_mva"])
+        for i, n in power.items()
+        if n.node_class == NodeClass.DISTRIBUTION_SUBSTATION
+    }
+    large = result.power.transmission_fed_peak_mw
+    assert large > 0
+    for node_id, node in power.items():
+        if node.node_class == NodeClass.TRANSMISSION_SUBSTATION:
+            load = sum(distribution[i] for i in fed[node_id] if i in distribution) + large / 0.9
+            assert float(dict(node.attributes)["capacity_mva"]) >= 1.3 * load
+
+
+def test_the_pilot_port_and_airport_are_small_and_generation_follows_load() -> None:
+    from pathlib import Path
+
+    from swm.recipe.io import load_recipe
+    from swm.recipe.resolve import resolve
+    from swm.stages.layers import build_layers, layers_streams
+    from swm.stages.terrain import build_terrain, terrain_streams
+
+    pilot = Path(__file__).resolve().parents[1] / "fixtures" / "pilot_hand_check.yaml"
+    recipe = resolve(load_recipe(pilot)).recipe
+    terrain = build_terrain(
+        recipe.terrain, terrain_streams(recipe.root_seed, recipe.terrain.terrain_seed)
+    )
+    layers = build_layers(recipe.layers, terrain, layers_streams(recipe.root_seed))
+    result = requirements_of((recipe, terrain, layers))
+    by_class = {r.node_class: r for r in result.nodes}
+    assert by_class[NodeClass.AIRPORT].peak_mw < 5.0
+    plant = next(n for n in result.layers.nodes if n.node_class == NodeClass.GENERATION)
+    assert float(dict(plant.attributes)["capacity_mw"]) == pytest.approx(
+        result.power.total_peak_mw * 1.3, abs=0.05
+    )
 
 
 def test_realised_requirements_scale_with_the_levers(rich: World) -> None:
@@ -126,6 +210,7 @@ def test_realised_requirements_scale_with_the_levers(rich: World) -> None:
             layers,
             RULES,
             requirements_streams(recipe.root_seed),
+            11.4,
         )
         base = exact(rich)
         for a, b in zip(drawn.nodes, base.nodes, strict=True):

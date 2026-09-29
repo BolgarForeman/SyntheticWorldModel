@@ -138,7 +138,8 @@ def rules_page_html(registry: Registry) -> bytes:
 <header>
 <h1>Modeling Rules</h1>
 <p>Every rule and number that shapes a SyntheticWorldModel world, with its source and reasoning.
-Rules change only by a reviewed edit to the registry.</p>
+Rules change only by a reviewed edit to the registry; a recipe may override any rule
+for a sensitivity run, and its overrides are stamped on the world.</p>
 <p>Registry version {html.escape(registry.version)} · SHA-256 {registry.sha256} ·
 {len(registry.rules)} rules: {counts["ruled"]} ruled, {counts["placeholder"]} placeholder,
 {counts["open"]} open</p>
@@ -169,8 +170,6 @@ def _card(rule: Rule) -> str:
         badges.append(
             f'<span class="badge plain">open decision: {html.escape(rule.open_decision)}</span>'
         )
-    if rule.overridable:
-        badges.append('<span class="badge plain">overridable</span>')
     applies = ", ".join(
         f"{name.replace('_', ' ')} {html.escape(value)}"
         for name, value in (
