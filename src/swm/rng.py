@@ -6,7 +6,7 @@ from typing import TypedDict
 
 import numpy as np
 
-from swm.recipe.schema import Hazard, Layer, Source
+from swm.recipe.schema import DEFAULT_COUPLINGS, Hazard, Layer, Source
 
 STABLE_ID_BYTES = 8
 """Bytes of the SHA-256 digest kept by ``stable_id`` (Work Order 1, item 1)."""
@@ -49,10 +49,75 @@ def _registry() -> dict[str, str]:
         "unobserved/links_on_nodes_only_layers": "Links on layers whose sources report nodes only.",
         "unobserved/crews_and_depots": "Siting of repair crews and depots.",
     }
+    paths |= _coupling_paths()
     for hazard in Hazard:
         paths[f"shared_causes/{hazard}/field"] = f"Latent {hazard} field with distance decay."
     for source in Source:
         paths[f"errors/{source}"] = f"Error induction on the {source} source."
+    return paths
+
+
+COUPLING_PURPOSES: Mapping[str, str] = {
+    "density": "Which optional dependencies are taken",
+    "feed_configuration": "Which dependencies are fed single, two full or two half",
+    "hub": "The hub supplier",
+    "concentration": "Which dependencies the hub carries",
+    "supplier_not_nearest": "Which dependencies take a supplier other than the nearest",
+}
+"""Per-pair coupling streams, so switching one pair never moves another (Work Order 4, E2)."""
+
+
+def pair_label(supplier: Layer, consumer: Layer) -> str:
+    """Return a coupling pair's path segment, such as ``power-telecom``.
+
+    Parameters
+    ----------
+    supplier : Layer
+        The supplier layer.
+    consumer : Layer
+        The consumer layer.
+
+    Returns
+    -------
+    str
+        The segment.
+
+    Spec: Work Order 4, E2.
+    """
+    return f"{supplier}-{consumer}"
+
+
+def mutual_couples() -> tuple[tuple[Layer, Layer], ...]:
+    """Return each modeled pair whose reverse is also modeled, earlier of the two first.
+
+    Returns
+    -------
+    tuple of (Layer, Layer)
+        One entry per couple of layers that can depend on each other, in the order of the 21.
+
+    Spec: structure v0.5 §4.3 (two-way); Work Order 4, E9.
+    """
+    pairs = list(DEFAULT_COUPLINGS)
+    return tuple(
+        (supplier, consumer)
+        for index, (supplier, consumer) in enumerate(pairs)
+        if (consumer, supplier) in pairs[index + 1 :]
+    )
+
+
+def _coupling_paths() -> dict[str, str]:
+    paths = {}
+    for supplier, consumer in DEFAULT_COUPLINGS:
+        label = pair_label(supplier, consumer)
+        for purpose, description in COUPLING_PURPOSES.items():
+            paths[f"couplings/{purpose}/{label}"] = f"{description}: {supplier} to {consumer}."
+    paths["couplings/tertiary_second_feed/power-healthcare"] = (
+        "Which tertiary hospitals take a second distribution substation (§4.3a rule 5)."
+    )
+    for supplier, consumer in mutual_couples():
+        paths[f"couplings/two_way/{pair_label(supplier, consumer)}"] = (
+            f"Which node pairs of {supplier} and {consumer} depend on each other."
+        )
     return paths
 
 

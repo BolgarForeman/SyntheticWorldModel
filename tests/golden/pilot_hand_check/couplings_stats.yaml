@@ -1,0 +1,462 @@
+pairs:
+  power-telecom:
+    switched_on: true
+    dependencies: 4
+    absent: 0
+    edges: 6
+    feed_counts:
+      single: 2
+      two_full: 1
+      two_half: 1
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 0.5
+      two_full: 0.25
+      two_half: 0.25
+    non_nearest_share: 0.5
+    hub: SWM-POW-0003
+    hub_share: 0.75
+    mutual_pairs_allowed: 2
+    mutual_pairs: 0
+    notes:
+    - concentration puts 2 first feeds off the nearest supplier, above the 1 supplier_not_nearest asks for; concentration wins
+    - 'two-way with telecom-power: 2 allowed mutual pairs, 0 wanted, 0 built'
+  power-water:
+    switched_on: true
+    dependencies: 2
+    absent: 0
+    edges: 3
+    feed_counts:
+      single: 1
+      two_full: 1
+      two_half: 0
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 0.5
+      two_full: 0.5
+      two_half: 0.0
+    non_nearest_share: 0.5
+    hub: SWM-POW-0003
+    hub_share: 1.0
+    mutual_pairs_allowed: 0
+    mutual_pairs: 0
+    notes:
+    - 'two-way with water-power: 0 allowed mutual pairs, 0 wanted, 0 built'
+  power-transport:
+    switched_on: false
+    dependencies: 2
+    absent: 0
+    edges: 3
+    feed_counts:
+      single: 1
+      two_full: 1
+      two_half: 0
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 0.5
+      two_full: 0.5
+      two_half: 0.0
+    non_nearest_share: 0.5
+    hub: SWM-POW-0003
+    hub_share: 0.5
+    mutual_pairs_allowed: 0
+    mutual_pairs: 0
+    notes: []
+  power-fuel:
+    switched_on: false
+    dependencies: 4
+    absent: 0
+    edges: 6
+    feed_counts:
+      single: 2
+      two_full: 1
+      two_half: 1
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 0.5
+      two_full: 0.25
+      two_half: 0.25
+    non_nearest_share: 0.25
+    hub: SWM-POW-0002
+    hub_share: 0.25
+    mutual_pairs_allowed: 0
+    mutual_pairs: 0
+    notes:
+    - 'two-way with fuel-power: 0 allowed mutual pairs, 0 wanted, 0 built'
+  power-healthcare:
+    switched_on: true
+    dependencies: 4
+    absent: 0
+    edges: 5
+    feed_counts:
+      single: 3
+      two_full: 1
+      two_half: 0
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 0.667
+      two_full: 0.333
+      two_half: 0.0
+    non_nearest_share: 0.25
+    hub: SWM-POW-0004
+    hub_share: 0.75
+    mutual_pairs_allowed: 0
+    mutual_pairs: 0
+    notes: []
+  telecom-power:
+    switched_on: true
+    dependencies: 4
+    absent: 0
+    edges: 4
+    feed_counts:
+      single: 3
+      two_full: 0
+      two_half: 1
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 0.75
+      two_full: 0.0
+      two_half: 0.25
+    non_nearest_share: 0.333
+    hub: SWM-TEL-0003
+    hub_share: 0.0
+    mutual_pairs_allowed: 2
+    mutual_pairs: 0
+    notes:
+    - 'two-way with power-telecom: 2 allowed mutual pairs, 0 wanted, 0 built'
+  telecom-water:
+    switched_on: false
+    dependencies: 2
+    absent: 0
+    edges: 3
+    feed_counts:
+      single: 1
+      two_full: 1
+      two_half: 0
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 0.5
+      two_full: 0.5
+      two_half: 0.0
+    non_nearest_share: 0.5
+    hub: SWM-TEL-0001
+    hub_share: 1.0
+    mutual_pairs_allowed: 0
+    mutual_pairs: 0
+    notes:
+    - 'two-way with water-telecom: 0 allowed mutual pairs, 0 wanted, 0 built'
+  telecom-transport:
+    switched_on: false
+    dependencies: 3
+    absent: 0
+    edges: 4
+    feed_counts:
+      single: 2
+      two_full: 1
+      two_half: 0
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 0.667
+      two_full: 0.333
+      two_half: 0.0
+    non_nearest_share: 0.333
+    hub: SWM-TEL-0002
+    hub_share: 0.333
+    mutual_pairs_allowed: 0
+    mutual_pairs: 0
+    notes: []
+  telecom-fuel:
+    switched_on: false
+    dependencies: 3
+    absent: 0
+    edges: 4
+    feed_counts:
+      single: 2
+      two_full: 1
+      two_half: 0
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 0.667
+      two_full: 0.333
+      two_half: 0.0
+    non_nearest_share: 0.333
+    hub: SWM-TEL-0003
+    hub_share: 0.333
+    mutual_pairs_allowed: 1
+    mutual_pairs: 0
+    notes:
+    - 'two-way with fuel-telecom: 1 allowed mutual pairs, 0 wanted, 0 built'
+  telecom-healthcare:
+    switched_on: false
+    dependencies: 4
+    absent: 0
+    edges: 6
+    feed_counts:
+      single: 2
+      two_full: 1
+      two_half: 1
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 0.5
+      two_full: 0.25
+      two_half: 0.25
+    non_nearest_share: 0.25
+    hub: SWM-TEL-0001
+    hub_share: 0.75
+    mutual_pairs_allowed: 0
+    mutual_pairs: 0
+    notes: []
+  water-power:
+    switched_on: false
+    dependencies: 1
+    absent: 0
+    edges: 1
+    feed_counts:
+      single: 1
+      two_full: 0
+      two_half: 0
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 1.0
+      two_full: 0.0
+      two_half: 0.0
+    non_nearest_share: 0.0
+    hub: SWM-WAT-0003
+    hub_share: 1.0
+    mutual_pairs_allowed: 0
+    mutual_pairs: 0
+    notes:
+    - 'two-way with power-water: 0 allowed mutual pairs, 0 wanted, 0 built'
+  water-telecom:
+    switched_on: false
+    dependencies: 0
+    absent: 0
+    edges: 0
+    feed_counts:
+      single: 0
+      two_full: 0
+      two_half: 0
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 0.0
+      two_full: 0.0
+      two_half: 0.0
+    non_nearest_share: 0.0
+    hub: null
+    hub_share: 0.0
+    mutual_pairs_allowed: 0
+    mutual_pairs: 0
+    notes:
+    - 'two-way with telecom-water: 0 allowed mutual pairs, 0 wanted, 0 built'
+  water-fuel:
+    switched_on: false
+    dependencies: 0
+    absent: 0
+    edges: 0
+    feed_counts:
+      single: 0
+      two_full: 0
+      two_half: 0
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 0.0
+      two_full: 0.0
+      two_half: 0.0
+    non_nearest_share: 0.0
+    hub: null
+    hub_share: 0.0
+    mutual_pairs_allowed: 0
+    mutual_pairs: 0
+    notes:
+    - 'two-way with fuel-water: 0 allowed mutual pairs, 0 wanted, 0 built'
+  water-healthcare:
+    switched_on: true
+    dependencies: 3
+    absent: 0
+    edges: 4
+    feed_counts:
+      single: 2
+      two_full: 1
+      two_half: 0
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 0.667
+      two_full: 0.333
+      two_half: 0.0
+    non_nearest_share: 0.333
+    hub: SWM-WAT-0004
+    hub_share: 0.667
+    mutual_pairs_allowed: 0
+    mutual_pairs: 0
+    notes: []
+  transport-fuel:
+    switched_on: true
+    dependencies: 3
+    absent: 0
+    edges: 3
+    feed_counts:
+      single: 0
+      two_full: 0
+      two_half: 0
+      any_reachable: 3
+      none: 0
+    feed_shares:
+      single: 0.0
+      two_full: 0.0
+      two_half: 0.0
+    non_nearest_share: 0.0
+    hub: null
+    hub_share: 0.0
+    mutual_pairs_allowed: 1
+    mutual_pairs: 0
+    notes:
+    - 'two-way with fuel-transport: 1 allowed mutual pairs, 0 wanted, 0 built'
+  transport-healthcare:
+    switched_on: false
+    dependencies: 4
+    absent: 0
+    edges: 9
+    feed_counts:
+      single: 0
+      two_full: 0
+      two_half: 0
+      any_reachable: 4
+      none: 0
+    feed_shares:
+      single: 0.0
+      two_full: 0.0
+      two_half: 0.0
+    non_nearest_share: 0.0
+    hub: null
+    hub_share: 0.0
+    mutual_pairs_allowed: 0
+    mutual_pairs: 0
+    notes: []
+  fuel-power:
+    switched_on: true
+    dependencies: 1
+    absent: 0
+    edges: 1
+    feed_counts:
+      single: 1
+      two_full: 0
+      two_half: 0
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 1.0
+      two_full: 0.0
+      two_half: 0.0
+    non_nearest_share: 0.0
+    hub: SWM-FUE-0001
+    hub_share: 1.0
+    mutual_pairs_allowed: 0
+    mutual_pairs: 0
+    notes:
+    - 'two-way with power-fuel: 0 allowed mutual pairs, 0 wanted, 0 built'
+  fuel-telecom:
+    switched_on: false
+    dependencies: 2
+    absent: 1
+    edges: 1
+    feed_counts:
+      single: 1
+      two_full: 0
+      two_half: 0
+      any_reachable: 0
+      none: 1
+    feed_shares:
+      single: 0.0
+      two_full: 0.0
+      two_half: 0.0
+    non_nearest_share: 1.0
+    hub: SWM-FUE-0002
+    hub_share: 1.0
+    mutual_pairs_allowed: 1
+    mutual_pairs: 0
+    notes:
+    - 'two-way with telecom-fuel: 1 allowed mutual pairs, 0 wanted, 0 built'
+  fuel-water:
+    switched_on: false
+    dependencies: 2
+    absent: 1
+    edges: 1
+    feed_counts:
+      single: 1
+      two_full: 0
+      two_half: 0
+      any_reachable: 0
+      none: 1
+    feed_shares:
+      single: 0.0
+      two_full: 0.0
+      two_half: 0.0
+    non_nearest_share: 0.0
+    hub: SWM-FUE-0003
+    hub_share: 1.0
+    mutual_pairs_allowed: 0
+    mutual_pairs: 0
+    notes:
+    - 'two-way with water-fuel: 0 allowed mutual pairs, 0 wanted, 0 built'
+  fuel-transport:
+    switched_on: false
+    dependencies: 3
+    absent: 0
+    edges: 4
+    feed_counts:
+      single: 2
+      two_full: 1
+      two_half: 0
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 0.667
+      two_full: 0.333
+      two_half: 0.0
+    non_nearest_share: 0.333
+    hub: SWM-FUE-0002
+    hub_share: 0.667
+    mutual_pairs_allowed: 1
+    mutual_pairs: 0
+    notes:
+    - 'two-way with transport-fuel: 1 allowed mutual pairs, 0 wanted, 0 built'
+  fuel-healthcare:
+    switched_on: false
+    dependencies: 3
+    absent: 0
+    edges: 3
+    feed_counts:
+      single: 3
+      two_full: 0
+      two_half: 0
+      any_reachable: 0
+      none: 0
+    feed_shares:
+      single: 0.0
+      two_full: 0.0
+      two_half: 0.0
+    non_nearest_share: 0.333
+    hub: SWM-FUE-0002
+    hub_share: 0.0
+    mutual_pairs_allowed: 0
+    mutual_pairs: 0
+    notes: []
+totals:
+  coupling_edges: 71
+  switched_on_coupling_edges: 26
+  intra_layer_links: 23
+  total_edges: 49

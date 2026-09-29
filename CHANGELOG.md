@@ -27,6 +27,18 @@ All notable changes to this project are recorded here. Each phase closes with a 
 - New couplings settings: `two_way_pct`, `public_telecom_share`, `tertiary_second_feed_pct` and `transmission_connection_threshold_mw` (Work Order 4, A3).
 - Subtype attributes on every node, drawn from new `layers/<layer>/subtype` streams, as unobserved truth (Work Order 4, B).
 - Typed GeoPackage tables: `nodes` plus one `nodes_<layer>` per layer, with typed columns and nulls (Work Order 4, D).
+- The couplings stage (Work Order 4, E; decision 0008). It builds every dependency and coupling edge from the dependency table, handling:
+  - density, the feed mix, the hub and not-nearest suppliers;
+  - two-way pairs;
+  - road reachability, with a sea leg to outlying islands;
+  - buffer resupply and the public telecom share.
+
+  Each pair draws from its own `couplings/<purpose>/<supplier>-<consumer>` streams.
+- New commands (Work Order 4, F):
+  - `swm couplings`;
+  - `swm preview-couplings`, a schematic for the hand trace;
+  - a `couplings` table in world.gpkg;
+  - coupling edges in `swm preview-world`, with `--no-couplings`.
 
 ### Changed
 
@@ -34,6 +46,9 @@ All notable changes to this project are recorded here. Each phase closes with a 
 - Power is sized to load. Generation totals distribution × 1.3 × 0.9, and each transmission substation carries at least 1.3 × the distribution it feeds (Work Order 4, C).
 - Generation's observed `fuel_type` now follows its true `fuel_kind`, and is no longer drawn on its own (Work Order 4, B).
 - The pilot switches on its seven couplings, with density 0 and `two_way_pct` 0 (Work Order 4, A4).
+- Five supplier lists of the dependency table are narrowed to what the research lanes found (decision 0008, answer 1):
+  - fuel → cable landing and fuel → regional;
+  - telecom → transmission substation, blood bank and refinery.
 - Heterogeneity is `heterogeneity_pct` on every drawn quantity (Work Order 2, B1).
 - Sizes up to 20 nodes per layer and 2,000 km² are Phase 1; concave transfer forms are refused until Phase 5 (Work Order 2, B2 and B3).
 - Coverage runs 0-100% and snapshot age 0-30 years (Work Order 2, B5).
