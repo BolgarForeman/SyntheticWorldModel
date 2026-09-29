@@ -7,6 +7,7 @@ import numpy as np
 from swm.recipe.resolve import resolve
 from swm.recipe.schema import Recipe
 from swm.stages.terrain import (
+    BASE_RELIEF_M,
     D8_OFFSETS,
     GRID_CELLS,
     MAX_ELEVATION_AT_100_M,
@@ -49,4 +50,43 @@ def area_tolerance_km2(result: TerrainResult) -> float:
 
 
 def elevation_bound_m(mountainous: int) -> float:
-    return mountainous / 100 * MAX_ELEVATION_AT_100_M
+    return BASE_RELIEF_M + mountainous / 100 * (MAX_ELEVATION_AT_100_M - BASE_RELIEF_M)
+
+
+def coastal(land: np.ndarray) -> np.ndarray:
+    """Land cells with a sea cell among their four neighbours."""
+    padded = np.pad(land, 1)
+    sea_neighbour = ~padded[:-2, 1:-1] | ~padded[2:, 1:-1] | ~padded[1:-1, :-2] | ~padded[1:-1, 2:]
+    return land & sea_neighbour
+
+
+def coastline_index(result: TerrainResult) -> float:
+    """Coastline length (land-sea cell edges) over the perimeter of a circle of equal area."""
+    land = np.asarray(result.land)
+    padded = np.pad(land, 1)
+    neighbours = (padded[:-2, 1:-1], padded[2:, 1:-1], padded[1:-1, :-2], padded[1:-1, 2:])
+    edges = sum(int(np.count_nonzero(land & ~neighbour)) for neighbour in neighbours)
+    return edges / (2 * np.sqrt(np.pi * np.count_nonzero(land)))
+
+
+def river_mouths_and_heads(result: TerrainResult) -> tuple[np.ndarray, np.ndarray]:
+    """River mouths (flow into the sea) and heads (no river flows in), as flat masks."""
+    land = result.land.ravel()
+    river = result.river.ravel()
+    after = downstream(result)
+    mouths = river & ~land[after]
+    inflow = np.bincount(after[river & ~mouths], minlength=river.size)
+    return mouths, river & (inflow == 0)
+
+
+def main_island_ratio(result: TerrainResult) -> float:
+    """Length over width of the main island along its principal axes (test measure only)."""
+    from swm.stages.terrain import _label_land
+
+    labels, sizes = _label_land(np.asarray(result.land))
+    rows, columns = np.nonzero(labels == 1 + int(np.argmax(sizes)))
+    points = np.column_stack([rows, columns]).astype(float)
+    points -= points.mean(axis=0)
+    _, axes = np.linalg.eigh(np.cov(points.T))
+    projected = points @ axes
+    return float(np.ptp(projected[:, 1]) / np.ptp(projected[:, 0]))

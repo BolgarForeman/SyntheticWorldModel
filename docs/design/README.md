@@ -10,5 +10,3 @@ These documents are the specification the code is built against. They are mainta
 | `Working_Protocol.md` | How work orders, reports and review flow | v0.1 |
 | `Repository_Rules_DRAFT.md` | Draft of the repository's `CLAUDE.md`; installed by Work Order 0 | v0.1 |
 | `Interface_Mockup_v0_5.dc.html` | Source of the clickable interface mockup. Every control and the recipe fields are defined in its script block. It renders only inside its design tool; read it as a reference, not a page | v0.5 |
-
-**Superseded content.** The pilot spec's closing section, "Before the generator runs", is superseded: the export ask was ruled out of scope on 2026-09-28, and the Magliocca consult runs alongside the build rather than ahead of it.

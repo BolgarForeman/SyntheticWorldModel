@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from numpy.typing import NDArray
 
-from swm.stages.terrain import CoverClass, TerrainResult
+from swm.stages.terrain import D8_OFFSETS, CoverClass, TerrainResult
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -46,13 +46,20 @@ def terrain_preview_png(result: TerrainResult, title: str) -> bytes:
 
     Spec: Work Order 2, A10.
     """
+    from matplotlib.artist import Artist
+    from matplotlib.collections import LineCollection
     from matplotlib.figure import Figure
+    from matplotlib.lines import Line2D
     from matplotlib.patches import Patch
 
     side_km = result.grid.cells * result.grid.cell_size_m / 1000
-    figure = Figure(figsize=(8, 9.5))
+    figure = Figure(figsize=(10, 9.5))
     axes = figure.add_subplot()
     axes.imshow(_shaded_cover(result), extent=(0, side_km, 0, side_km), interpolation="nearest")
+    # Rivers are drawn as lines above the cover, each reach joined to its downstream cell.
+    axes.add_collection(
+        LineCollection(_river_segments(result, side_km), colors=[RIVER_COLOUR], linewidths=1.1)
+    )
     for city in result.cities:
         footprint = np.where(result.urban_id == city.city_id, 1.0, 0.0)
         axes.contour(
@@ -65,11 +72,11 @@ def terrain_preview_png(result: TerrainResult, title: str) -> bytes:
     axes.set_ylabel("km north of the domain origin")
     axes.set_title(title)
     _scale_bar(axes, west, east, south, north)
-    legend = [Patch(color=COVER_COLOURS[c], label=c.name.lower()) for c in CoverClass]
-    legend.append(Patch(color=RIVER_COLOUR, label="river"))
-    axes.legend(handles=legend, loc="upper right", fontsize=8)
+    legend: list[Artist] = [Patch(color=COVER_COLOURS[c], label=c.name.lower()) for c in CoverClass]
+    legend.append(Line2D([], [], color=RIVER_COLOUR, label="river"))
+    axes.legend(handles=legend, loc="upper left", bbox_to_anchor=(1.02, 1.0), fontsize=8)
     figure.text(0.02, 0.02, _caption(result), fontsize=8, family="monospace", va="bottom")
-    figure.subplots_adjust(bottom=0.2)
+    figure.subplots_adjust(bottom=0.2, right=0.8)
     buffer = io.BytesIO()
     figure.savefig(buffer, format="png", dpi=PREVIEW_DPI)
     return buffer.getvalue()
@@ -86,8 +93,18 @@ def _shaded_cover(result: TerrainResult) -> NDArray[np.float64]:
     shaded: NDArray[np.float64] = np.clip(
         colours * np.where(result.land, shade, 1.0)[..., None], 0.0, 1.0
     )
-    shaded[result.river] = RIVER_COLOUR
     return shaded
+
+
+def _river_segments(result: TerrainResult, side_km: float) -> list[list[tuple[float, float]]]:
+    cell_km = result.grid.cell_size_m / 1000
+    segments = []
+    for row, column in zip(*np.nonzero(result.river), strict=True):
+        dr, dc = D8_OFFSETS[int(result.flow_direction[row, column])]
+        start = ((column + 0.5) * cell_km, side_km - (row + 0.5) * cell_km)
+        end = ((column + dc + 0.5) * cell_km, side_km - (row + dr + 0.5) * cell_km)
+        segments.append([start, end])
+    return segments
 
 
 def _land_window(result: TerrainResult, side_km: float) -> tuple[float, float, float, float]:

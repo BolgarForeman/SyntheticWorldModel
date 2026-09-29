@@ -10,6 +10,7 @@ Row 0 of every array is the northern edge. They are tied to no real place (open 
 
 import hashlib
 import heapq
+import math
 from collections import deque
 from dataclasses import dataclass
 from enum import IntEnum
@@ -30,6 +31,9 @@ MAX_ELEVATION_AT_100_M = 4_000.0
 placeholder (open decision: realism ranges), anchored on Taiwan's highest peak, about 3,950 m.
 """
 
+BASE_RELIEF_M = 100.0
+"""Highest elevation at mountainous = 0, in m: a floor so every island drains (decision 0005)."""
+
 TERRAIN_STREAM_PATHS = (
     "terrain/elevation",
     "terrain/coastline",
@@ -40,7 +44,7 @@ TERRAIN_STREAM_PATHS = (
 
 # D8 neighbour offsets as (row, column); a flow direction is an index into this tuple.
 D8_OFFSETS = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
-SQRT_2 = 2.0**0.5
+SQRT_2 = math.sqrt(2.0)
 
 
 class CoverClass(IntEnum):
@@ -65,45 +69,49 @@ class TerrainMappings:
 
     spine_control_points: int = 5
     """Control points of the spine spline (count)."""
-    spine_start_v: float = 0.14
-    """Northern end of the spine (domain)."""
-    spine_end_v: float = 0.86
-    """Southern end of the spine (domain)."""
-    spine_lateral_jitter: float = 0.05
-    """Largest east-west offset of a control point from the centre line (domain)."""
+    spine_start: float = 0.10
+    """North-west end of the spine, on the diagonal: row and column fraction (domain)."""
+    spine_end: float = 0.90
+    """South-east end of the spine, on the diagonal: row and column fraction (domain)."""
+    spine_perpendicular_jitter: float = 0.03
+    """Largest offset of a control point across the diagonal (domain)."""
     spine_samples_per_segment: int = 16
     """Polyline samples per spline segment (count)."""
-    island_half_width: float = 0.12
-    """Distance from spine to coast at the island's middle (domain)."""
+    length_to_width: float = 3.5
+    """Length over greatest width of the smooth shape, before shoreline noise (ratio).
+
+    Shoreline noise widens the realised island, so 3.5 here realises about 3 : 1 (decision 0005;
+    2.75-3.3 across terrain seeds) with land about a third of the domain.
+    """
     end_half_width_share: float = 0.35
     """Half-width at the spine's ends, as a share of the middle half-width (ratio)."""
-    coast_noise_at_0: float = 0.04
+    coast_noise_at_0: float = 0.02
     """Shoreline noise amplitude at coastline complexity 0 (share of the half-width)."""
-    coast_noise_at_100: float = 0.50
+    coast_noise_at_100: float = 1.6
     """Shoreline noise amplitude at coastline complexity 100 (share of the half-width)."""
-    coast_noise_lattice_cells: int = 16
+    coast_noise_lattice_cells: int = 32
     """Coarsest lattice spacing of the shoreline noise (cells)."""
-    coast_noise_octaves: int = 4
+    coast_noise_octaves: int = 5
     """Octaves of shoreline noise (count)."""
-    relief_share: float = 0.60
-    """Share of the ridge profile that noise can remove (ratio)."""
-    relief_noise_lattice_cells: int = 16
+    relief_share: float = 0.85
+    """Share of the elevation profile carried by relief noise (ratio)."""
+    relief_noise_lattice_cells: int = 128
     """Coarsest lattice spacing of the relief noise (cells)."""
-    relief_noise_octaves: int = 5
+    relief_noise_octaves: int = 8
     """Octaves of relief noise (count)."""
     border_cells: int = 4
     """Sea margin kept clear at the domain edge (cells)."""
-    outlying_island_radius_min_cells: int = 2
+    outlying_island_radius_min_cells: int = 3
     """Smallest outlying-island radius (cells)."""
-    outlying_island_radius_max_cells: int = 4
+    outlying_island_radius_max_cells: int = 6
     """Largest outlying-island radius (cells)."""
-    outlying_island_gap_cells: int = 3
+    outlying_island_gap_cells: int = 5
     """Open water kept between an outlying island and any other land (cells)."""
     outlying_island_peak_share: float = 0.15
     """Outlying-island peak as a share of the maximum elevation (ratio)."""
     outlying_island_attempts: int = 5_000
     """Placement attempts before the stage reports failure (count)."""
-    river_threshold_share_at_100: float = 0.004
+    river_threshold_share_at_100: float = 0.0006
     """Upstream area that starts a river at river density 100 (share of land cells)."""
     river_threshold_min_cells: int = 3
     """Smallest upstream area that starts a river (cells)."""
@@ -111,10 +119,24 @@ class TerrainMappings:
     """Lowland: ground at or below this share of the island's highest point (ratio)."""
     flat_slope: float = 0.06
     """Flat ground: slope at or below this (m/m)."""
-    near_water_cells: int = 6
+    near_water_cells: int = 9
     """Near water: within this distance of the coast or a river (cells, chessboard)."""
     wetland_max_share: float = 0.30
     """Wetland share of land at lowland and wetland 100 (ratio)."""
+    wetland_mouth_cells_at_0: int = 4
+    """Wetland reach from a river mouth at lowland and wetland 0 (cells, chessboard)."""
+    wetland_mouth_cells_at_100: int = 24
+    """Wetland reach from a river mouth at lowland and wetland 100 (cells, chessboard)."""
+    wetland_slope_at_0: float = 0.04
+    """Steepest wetland ground at lowland and wetland 0 (m/m)."""
+    wetland_slope_at_100: float = 0.20
+    """Steepest wetland ground at lowland and wetland 100 (m/m)."""
+    wetland_coast_cells: int = 3
+    """...or within this distance of the sea, on coastal lowland (cells, chessboard)."""
+    wetland_patch_share: float = 0.5
+    """Wetland forms only where patch noise is at or above this (0-1), so it comes in patches."""
+    wetland_patch_lattice_cells: int = 8
+    """Coarsest lattice spacing of wetland patchiness (cells)."""
     barren_high_share: float = 0.80
     """High barren ground: at or above this share of the island's highest point (ratio)."""
     barren_steep_slope: float = 0.45
@@ -135,10 +157,12 @@ class TerrainMappings:
     """Most cities under 'several cities' (count)."""
     dispersed_towns: int = 12
     """Towns under 'dispersed towns' (count)."""
-    city_spacing_cells: int = 10
+    city_spacing_cells: int = 15
     """Least distance between city centres (cells, chessboard)."""
-    town_spacing_cells: int = 5
+    town_spacing_cells: int = 8
     """Least distance between dispersed-town centres (cells, chessboard)."""
+    minimum_town_km2: float = 1.0
+    """Area of the one town placed when urban density gives none (km²; decision 0005)."""
 
 
 TERRAIN_MAPPINGS = TerrainMappings()
@@ -250,7 +274,9 @@ def build_terrain(terrain: Terrain, streams: TerrainStreams) -> TerrainResult:
         raise ValueError("build_terrain needs a resolved recipe: terrain.area_km2 is not set")
     mappings = TERRAIN_MAPPINGS
     character = terrain.character
-    max_elevation_m = character.mountainous / 100 * MAX_ELEVATION_AT_100_M
+    max_elevation_m = BASE_RELIEF_M + character.mountainous / 100 * (
+        MAX_ELEVATION_AT_100_M - BASE_RELIEF_M
+    )
 
     field, spine_elevation = _spine_island(character.coastline_complexity, streams, mappings)
     land = _single_landmass(field > 0, mappings.border_cells)
@@ -260,19 +286,22 @@ def build_terrain(terrain: Terrain, streams: TerrainStreams) -> TerrainResult:
     )
     elevation_dm = _quantise_dm(elevation_m, land)
     land_cells = int(np.count_nonzero(land))
-    cell_size_m = (terrain.area_km2 * 1_000_000 / land_cells) ** 0.5
+    cell_size_m = math.sqrt(terrain.area_km2 * 1_000_000 / land_cells)
 
     flow_direction, flow_accumulation = _drainage(elevation_dm, land)
     river = _rivers(flow_accumulation, land, character.river_density, mappings)
     slope = _slope(elevation_dm, cell_size_m)
     water_distance = _chessboard_distance(~land | river, mappings.near_water_cells + 1)
+    wetland_reach = _wetland_reach(
+        land, river, flow_direction, character.lowland_and_wetland, mappings
+    )
     urban_id, cities = _urban_extents(
         land, elevation_dm, slope, water_distance, character.urban_density,
-        terrain.urban_pattern, streams.urban_extents, mappings,
+        terrain.urban_pattern, cell_size_m, streams.urban_extents, mappings,
     )  # fmt: skip
     land_cover = _land_cover(
-        land, elevation_dm, slope, water_distance, urban_id, character, streams.land_cover,
-        mappings,
+        land, elevation_dm, slope, water_distance, wetland_reach, urban_id, character,
+        streams.land_cover, mappings,
     )  # fmt: skip
     grid = Grid(GRID_CELLS, cell_size_m, (0.0, 0.0))
     statistics = _statistics(grid, elevation_dm, land, river, flow_direction, land_cover, cities)
@@ -365,7 +394,7 @@ def _spine_island(
     taper = mappings.end_half_width_share + (1 - mappings.end_half_width_share) * 4 * along * (
         1 - along
     )
-    half_width = mappings.island_half_width * taper
+    half_width = _middle_half_width(spine, mappings) * taper
     coast_amplitude = mappings.coast_noise_at_0 + (
         mappings.coast_noise_at_100 - mappings.coast_noise_at_0
     ) * (coastline_complexity / 100)
@@ -381,17 +410,38 @@ def _spine_island(
         mappings.relief_noise_octaves,
     )
     shape = np.clip(field, 0.0, 1.0)
-    profile = shape * shape * ((1 - mappings.relief_share) + mappings.relief_share * relief)
+    # CHOICE: relief noise scales with shape to the power 1.5: between shape (rough to the shore,
+    # no coastal plain) and shape squared (smooth planar flanks, parallel rivers). It keeps
+    # enough small-scale relief for flow to converge, and still leaves a coastal plain.
+    ridge = shape * shape
+    relief_scale = shape * np.sqrt(shape)
+    profile = (1 - mappings.relief_share) * ridge + mappings.relief_share * relief_scale * relief
     return field, profile
 
 
+def _middle_half_width(spine: NDArray[np.float64], mappings: TerrainMappings) -> float:
+    """Half-width at mid-spine giving the length-to-width ratio, with rounded tapered ends.
+
+    Island length is the spine plus the two end half-widths; width is twice the middle
+    half-width. Solving length / width = ratio for the half-width gives the formula below.
+    """
+    steps = spine[1:] - spine[:-1]
+    lengths = np.sqrt(steps[:, 0] * steps[:, 0] + steps[:, 1] * steps[:, 1])
+    # math.fsum is exactly rounded, so the total does not depend on summation order.
+    spine_length = math.fsum(lengths.tolist())
+    return spine_length / (2 * mappings.length_to_width - 2 * mappings.end_half_width_share)
+
+
 def _spine_polyline(stream: np.random.Generator, mappings: TerrainMappings) -> NDArray[np.float64]:
-    """Return points (v, u) along a Catmull-Rom spline through jittered control points."""
+    """Return points (v, u) along a Catmull-Rom spline through jittered control points.
+
+    The spine runs north-west to south-east along the domain diagonal (decision 0005).
+    """
     count = mappings.spine_control_points
-    v = np.linspace(mappings.spine_start_v, mappings.spine_end_v, count)
-    jitter = stream.random(count)
-    u = 0.5 + mappings.spine_lateral_jitter * (2 * jitter - 1)
-    control = np.column_stack([v, u])
+    along = np.linspace(mappings.spine_start, mappings.spine_end, count)
+    offset = mappings.spine_perpendicular_jitter * (2 * stream.random(count) - 1)
+    across = offset / SQRT_2
+    control = np.column_stack([along + across, along - across])
     padded = np.vstack([2 * control[0] - control[1], control, 2 * control[-1] - control[-2]])
     t = np.arange(mappings.spine_samples_per_segment) / mappings.spine_samples_per_segment
     t2, t3 = t * t, t * t * t
@@ -528,7 +578,7 @@ def _drainage(
 def _priority_flood(
     elevation_dm: NDArray[np.int32], land: NDArray[np.bool_]
 ) -> tuple[NDArray[np.int64], NDArray[np.int64], list[int]]:
-    """Fill depressions from the sea inward; ties are broken by cell index."""
+    """Fill depressions from the sea inward, with a 1 dm epsilon; ties go by cell index."""
     flat_land = land.ravel()
     filled = elevation_dm.ravel().astype(np.int64)
     parent = np.full(flat_land.size, -1, dtype=np.int64)
@@ -550,7 +600,9 @@ def _priority_flood(
             neighbour = cell + offset
             if not visited[neighbour]:
                 visited[neighbour] = True
-                filled[neighbour] = max(int(filled[neighbour]), level)
+                # CHOICE: epsilon fill; a filled cell sits 1 dm above the cell it drains to, so
+                # flats and filled depressions keep a gradient toward their outlet.
+                filled[neighbour] = max(int(filled[neighbour]), level + 1)
                 parent[neighbour] = cell
                 heapq.heappush(heap, (int(filled[neighbour]), neighbour))
     return filled, parent, order
@@ -581,15 +633,21 @@ def _urban_extents(
     water_distance: NDArray[np.int64],
     urban_density: int,
     pattern: UrbanPattern,
+    cell_size_m: float,
     stream: np.random.Generator,
     mappings: TerrainMappings,
 ) -> tuple[NDArray[np.int16], tuple[City, ...]]:
-    """Site cities on flat lowland near water and grow each to its share of the urban area."""
+    """Site cities on flat lowland near water and grow each to its share of the urban area.
+
+    Every world has at least one town, so siting always has an anchor (decision 0005).
+    """
     urban_id = np.full(land.shape, -1, dtype=np.int16)
     target = int(np.count_nonzero(land) * mappings.urban_max_share * urban_density / 100 + 0.5)
     sizes = _city_sizes(target, pattern, stream, mappings)
     if not sizes:
-        return urban_id, ()
+        # CHOICE: the minimum town is 1 km², and at least one cell.
+        cell_km2 = cell_size_m * cell_size_m / 1_000_000
+        sizes = [max(1, int(mappings.minimum_town_km2 / cell_km2 + 0.5))]
     spacing = (
         mappings.town_spacing_cells
         if pattern == UrbanPattern.DISPERSED_TOWNS
@@ -693,6 +751,7 @@ def _land_cover(
     elevation_dm: NDArray[np.int32],
     slope: NDArray[np.float64],
     water_distance: NDArray[np.int64],
+    wetland_reach: NDArray[np.float64],
     urban_id: NDArray[np.int16],
     character: TerrainCharacter,
     stream: np.random.Generator,
@@ -706,18 +765,18 @@ def _land_cover(
     peak_dm = max(int(elevation_dm.max()), 1)
     height = elevation_dm / peak_dm
 
-    wet_ok = _lowland(land, elevation_dm, mappings) & (slope <= mappings.flat_slope)
-    wet_ok &= water_distance <= mappings.near_water_cells
+    patches = _value_noise(_draw_seed(stream), mappings.wetland_patch_lattice_cells, 3)
+    wetness = character.lowland_and_wetland / 100
+    wet_slope = (
+        mappings.wetland_slope_at_0
+        + (mappings.wetland_slope_at_100 - mappings.wetland_slope_at_0) * wetness
+    )
+    wet_ok = _lowland(land, elevation_dm, mappings) & (slope <= wet_slope)
+    wet_ok &= (wetland_reach <= 1.0) & (patches >= mappings.wetland_patch_share)
     wet_target = _share_to_cells(
         land_cells, mappings.wetland_max_share, character.lowland_and_wetland
     )
-    _assign(
-        cover,
-        wet_ok,
-        height + water_distance / mappings.near_water_cells,
-        wet_target,
-        CoverClass.WETLAND,
-    )
+    _assign(cover, wet_ok, wetland_reach - patches, wet_target, CoverClass.WETLAND)
 
     high = (height >= mappings.barren_high_share) & (slope >= mappings.barren_steep_slope)
     cover[(cover == CoverClass.OPEN) & high & (elevation_dm > 0)] = CoverClass.BARREN
@@ -736,6 +795,42 @@ def _land_cover(
     dryness = water_distance / mappings.near_water_cells + height
     _assign(cover, cover == CoverClass.OPEN, -dryness, dry_target, CoverClass.BARREN)
     return cover
+
+
+def _wetland_reach(
+    land: NDArray[np.bool_],
+    river: NDArray[np.bool_],
+    flow_direction: NDArray[np.int8],
+    lowland_and_wetland: int,
+    mappings: TerrainMappings,
+) -> NDArray[np.float64]:
+    """Return how far each cell is from wetland ground: 0 at a river mouth, 1 at the limit.
+
+    Wetland belongs near river mouths and on coastal lowland. Cells beyond both reaches get a
+    value above 1 and are never wetland.
+    """
+    mouths = river & _drains_to_sea(land, flow_direction)
+    reach_cells = mappings.wetland_mouth_cells_at_0 + int(
+        (mappings.wetland_mouth_cells_at_100 - mappings.wetland_mouth_cells_at_0)
+        * lowland_and_wetland
+        / 100
+        + 0.5
+    )
+    to_mouth = _chessboard_distance(mouths, reach_cells + 1) / reach_cells
+    to_sea = _chessboard_distance(~land, mappings.wetland_coast_cells + 1)
+    coastal = land & (to_sea <= mappings.wetland_coast_cells)
+    # Coastal lowland counts as within reach, but ranks behind ground near a mouth.
+    return np.where(coastal, np.minimum(to_mouth, 1.0), to_mouth)
+
+
+def _drains_to_sea(land: NDArray[np.bool_], flow_direction: NDArray[np.int8]) -> NDArray[np.bool_]:
+    """Return land cells whose flow direction points into the sea."""
+    padded = np.pad(land, 1)
+    into_sea = np.zeros_like(land)
+    for code, (dr, dc) in enumerate(D8_OFFSETS):
+        target_land = padded[1 + dr : 1 + dr + land.shape[0], 1 + dc : 1 + dc + land.shape[1]]
+        into_sea |= land & (flow_direction == code) & ~target_land
+    return into_sea
 
 
 def _assign(

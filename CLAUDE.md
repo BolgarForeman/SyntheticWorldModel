@@ -48,6 +48,7 @@ src/swm/
   solve/       answer-key solver (separate; reads the true world only)
   checks/      the world checks and request checks
   cli.py       swm resolve | check-recipe | terrain | preview-terrain | build | solve | check
+  preview.py   face-validity previews (optional `preview` extra; not part of the identity check)
 tests/
   unit/  property/  fixtures/  golden/
 docs/

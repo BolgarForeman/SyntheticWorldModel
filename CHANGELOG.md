@@ -23,6 +23,14 @@ All notable changes to this project are recorded here. Each phase closes with a 
 - Coverage runs 0-100% and snapshot age 0-30 years (Work Order 2, B5).
 - The golden pilot resolved recipe changed with B1 and B4 (recipe schema v1 stays open until Phase 1 closes; decision 0004).
 - CI installs the `preview` extra so the preview is linted, type-checked and tested.
+- Terrain revised to the Work Order 2 review (decision 0005):
+  - a diagonal 3 : 1 spine island filling about a third of the domain;
+  - dendritic rivers from finer relief and an epsilon fill;
+  - patchy wetland near river mouths;
+  - indented coastlines;
+  - a 100 m base relief;
+  - a minimum town at urban density 0;
+  - the preview legend outside the map, with rivers drawn above the cover.
 
 ### Removed
 

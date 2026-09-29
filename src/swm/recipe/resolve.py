@@ -66,6 +66,8 @@ def resolve(recipe: Recipe) -> Resolution:
             "errors": errors,
         }
     )
+    if terrain.character.urban_density == 0:
+        notes.append("urban density 0: one minimum town placed so siting has an anchor")
     notes.extend(_layer_notes(layers))
     notes.extend(_coupling_notes(couplings))
     notes.extend(_error_notes(errors, layers))

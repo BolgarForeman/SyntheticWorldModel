@@ -7,18 +7,26 @@ import pytest
 
 from swm import rng
 from swm.stages.terrain import (
+    GRID_CELLS,
+    TERRAIN_MAPPINGS,
     TERRAIN_STREAM_PATHS,
     CoverClass,
     TerrainResult,
+    _chessboard_distance,
+    _lowland,
     array_hashes,
     statistics_record,
 )
 from terrain_helpers import (
     area_tolerance_km2,
     build,
+    coastal,
+    coastline_index,
     downstream,
     drains_to_sea,
     elevation_bound_m,
+    main_island_ratio,
+    river_mouths_and_heads,
 )
 
 
@@ -77,11 +85,27 @@ def test_sea_cells_are_zero_and_the_maximum_is_bounded(pilot: TerrainResult) -> 
     assert pilot.statistics.max_elevation_m > 0.5 * elevation_bound_m(60)
 
 
-def test_mountainous_zero_gives_low_relief() -> None:
-    flat = build(character={"mountainous": 0})
-    low = build(character={"mountainous": 10})
-    assert flat.statistics.max_elevation_m == 0
-    assert low.statistics.max_elevation_m <= elevation_bound_m(10)
+def test_mountainous_zero_gives_low_relief_that_still_drains() -> None:
+    low = build(character={"mountainous": 0})
+    assert 0 < low.statistics.max_elevation_m <= 100
+    assert drains_to_sea(low)
+    assert low.river.any()
+
+
+def test_land_fills_about_a_third_of_the_domain(pilot: TerrainResult) -> None:
+    assert 0.30 <= pilot.land.mean() <= 0.40
+    assert pilot.grid.cell_size_m < 145
+
+
+def test_the_spine_island_is_about_three_times_as_long_as_it_is_wide(
+    pilot: TerrainResult,
+) -> None:
+    assert 2.5 <= main_island_ratio(pilot) <= 3.5
+
+
+def test_the_spine_runs_north_west_to_south_east(pilot: TerrainResult) -> None:
+    rows, columns = np.nonzero(pilot.land)
+    assert np.corrcoef(rows, columns)[0, 1] > 0.8
 
 
 def test_other_map_types_are_refused() -> None:
@@ -152,6 +176,50 @@ def test_river_density_raises_river_length() -> None:
     assert rising(lengths)
 
 
+def test_coastline_complexity_indents_the_coast() -> None:
+    indices = [coastline_index(build(character={"coastline_complexity": c})) for c in (0, 50, 100)]
+    assert rising(indices)
+
+
+# --- Dendritic drainage and wetland placement (decision 0005, R1 and R2) --------------------
+
+
+def test_channels_join_before_the_sea(pilot: TerrainResult) -> None:
+    # Mouths per head is 1 when every channel runs alone to the sea (parallel runs) and falls
+    # as channels join; the pilot sits near 0.5.
+    mouths, heads = river_mouths_and_heads(pilot)
+    assert np.count_nonzero(mouths) <= 0.6 * np.count_nonzero(heads)
+
+
+def test_both_flanks_drain_from_near_the_ridge(pilot: TerrainResult) -> None:
+    rows, columns = np.divmod(np.arange(GRID_CELLS * GRID_CELLS), GRID_CELLS)
+    river = pilot.river.ravel()
+    north_east = np.count_nonzero(river & (columns > rows))
+    south_west = np.count_nonzero(river & (columns < rows))
+    assert min(north_east, south_west) >= 0.3 * np.count_nonzero(river)
+    _, heads = river_mouths_and_heads(pilot)
+    head_heights = pilot.elevation_dm.ravel()[heads] / pilot.elevation_dm.max()
+    assert np.percentile(head_heights, 90) >= 0.5
+
+
+def test_the_network_is_denser_than_before_the_review(pilot: TerrainResult) -> None:
+    assert pilot.statistics.river_length_km > 2 * 53
+
+
+def test_most_coastal_land_is_not_wetland(pilot: TerrainResult) -> None:
+    wetland = pilot.land_cover == CoverClass.WETLAND
+    assert wetland.any()
+    assert wetland[coastal(np.asarray(pilot.land))].mean() < 0.5
+
+
+def test_wetland_clusters_near_river_mouths(pilot: TerrainResult) -> None:
+    mouths, _ = river_mouths_and_heads(pilot)
+    to_mouth = _chessboard_distance(mouths.reshape(pilot.land.shape), 40)
+    wetland = pilot.land_cover == CoverClass.WETLAND
+    lowland = _lowland(np.asarray(pilot.land), np.asarray(pilot.elevation_dm), TERRAIN_MAPPINGS)
+    assert to_mouth[wetland].mean() < 0.75 * to_mouth[lowland].mean()
+
+
 # --- Islands, cover and cities --------------------------------------------------------------
 
 
@@ -184,10 +252,11 @@ def test_city_count_follows_the_pattern(pattern: str, counts: set[int]) -> None:
         assert result.land[city.centre_row, city.centre_column]
 
 
-def test_urban_density_zero_gives_no_cities() -> None:
-    result = build(character={"urban_density": 0})
-    assert result.cities == ()
-    assert not (result.urban_id >= 0).any()
+def test_urban_density_zero_places_one_minimum_town() -> None:
+    result = build(character={"urban_density": 0}, urban_pattern="several_cities")
+    assert len(result.cities) == 1
+    town_km2 = result.cities[0].cell_count * (result.grid.cell_size_m / 1000) ** 2
+    assert town_km2 == pytest.approx(TERRAIN_MAPPINGS.minimum_town_km2, rel=0.05)
 
 
 def test_arrays_are_read_only(pilot: TerrainResult) -> None:
