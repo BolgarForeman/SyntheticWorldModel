@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.4 · 2026-09-28 · companion to the World Generator Interface mockup v0.5 and recipe schema v1 · supersedes v0.3*
+*v0.5 · 2026-09-29 · companion to the World Generator Interface mockup v0.5 and recipe schema v1 · supersedes v0.4*
 
 ## 1. What this is
 
@@ -95,6 +95,7 @@ Each stage reads the recipe and the outputs of earlier stages, draws from its ow
   - nodes, sited by layer rules driven by terrain, urban extents and other layers, with node classes per layer;
   - intra-layer links, each layer keeping its own structural signature;
   - dual-membership assets.
+- **Capacities hang together.** Total generation capacity is total distribution capacity times a reserve margin, and a transmission substation carries at least what it feeds (placeholders: margin 1.3, power factor 0.9).
 - **Hidden state.** A hidden layer is in the world and every answer key but reaches no source. Its true contribution is known, so the bias from leaving it out is measured rather than cited. This implements generate-six-hide-one.
 - **Overlap.** Assets that appear in more than one source are not conveniently aligned: each source's copy takes its own independent differences in the error stage, and only the truth manifest records which records are the same asset.
 
@@ -103,15 +104,143 @@ Each stage reads the recipe and the outputs of earlier stages, draws from its ow
 - **Coupling controls:**
   - the 6×6 matrix of which layer supplies which, switchable cell by cell, defaulting to the 21 modeled;
   - whether switched-off couplings are generated and hidden;
-  - coupling density and two-way dependencies;
+  - **coupling density**, 0–100. At 0, each consumer takes only its core dependencies (§4.3a). At 100, it takes every dependency the table allows;
+  - **two-way dependency**, 0–100: the share of possible mutual node pairs that are built. A mutual pair is two nodes that each depend on the other, such as a substation feeding an exchange that controls it. At 0 there are none; at 100, every mutual pair the table allows;
   - the share of consumers whose true supplier is not the nearest one (quiet planting against the nearest-supplier shortcut);
-  - **dependency concentration:** how many consumers draw on the same few suppliers, from spread evenly to concentrated on a few. It is a shape setting, not a count; the number of heavily shared suppliers follows from it and the layer sizes;
-  - **feed configuration mix:** single feed, two full feeds (either covers the need), two half feeds (both needed). The three shares are coupled and always total 100%; moving one redistributes the other two in proportion.
+  - **dependency concentration**, 0–100: how strongly consumers are pulled toward one hub supplier per coupling. At 0 each consumer takes its nearest eligible supplier, with no pull toward a hub. At 100 the hub carries every consumer it is eligible for. When concentration and supplier-not-nearest conflict, concentration wins and a note records it;
+  - **feed configuration mix:** single feed, two full feeds (either covers the need), two half feeds (both needed). The three shares are coupled and always total 100%; moving one redistributes the other two in proportion;
+  - **public telecom share** for control dependencies on power, water and pipelines (§4.3a, rule 1).
 - **Per dependency type:** the transfer form, from the four canon forms: linear, concave, threshold (the cliff), step. Defaults: physical flow linear, logistic threshold, control step, service linear. Concave arrives with the simulation tier; an exact-tier world that uses it is refused at build. Where a node has several inbound dependencies, the combining function is the typed weakest link.
-- **Index meanings:** coupling density runs from 0 (each consumer has the minimum one supplier per coupled layer) to 100 (the most the matrix allows); concentration from 0 (supply spread evenly) to 100 (one supplier per layer carries every consumer).
 - **Shared causes:** hazard fields (storm corridor, seismic zone, flood plain), each switchable with its own correlation length and its own severity (0 = no damage; 100 = every exposed element in the hazard core fails); the number of scenarios.
-- **Produces:** cross-layer edges, each with its supplier, commodity, dependency type, feed configuration and transfer form; a latent field per active hazard with distance-decay correlation; the scenario set, with element failures drawn conditionally on the fields.
+- **Produces:** cross-layer edges, each with its supplier, commodity, dependency type, role, feed configuration and transfer form; a latent field per active hazard with distance-decay correlation; the scenario set, with element failures drawn conditionally on the fields.
 - **Note:** redundancy is planted as a configuration and recorded per edge, never as a total. Two full feeds and four half feeds carry the same total supply and fail differently.
+
+### 4.3a The dependency table
+
+The table below says, for every one of the 21 couplings, which consumer node classes depend on the supplier layer, on which supplier classes, and how. It is the core truth of every constructed world. It was built from sources by five research lanes and checked by an independent reviewer. Every row's source, quote and evidence grade is in `evidence/Dependency_Table_Evidence_v0_1.md`, and the author's rulings are in decision record 0007. Grades:
+- **S**: a standard or regulation (US standards are marked US where they stand in for Taiwan practice);
+- **L**: literature or a government report;
+- **J**: judgment.
+
+Every row is a CHOICE-level placeholder until the realism ranges are measured (§10, item 4).
+
+**Rules that apply across the table.**
+
+1. **Public telecom share.** Control dependencies of power, water and pipeline facilities (fuel tank farms and import terminals) ride partly on the utility's own private network and partly on the public telecom layer. Each such edge carries a public share (0–100%), drawn from a recipe setting per consumer layer. Only the public share is exposed to the telecom layer. Defaults (placeholder): generation and transmission 20%, distribution 50%, water and pipelines 50%. Source: DOE (2023); Taipower's more than 10,000 km of company fibre (台電月刊 Vol. 700).
+2. **Buffer resupply.** Fuel edges to backup-generator consumers have the role `buffer_resupply`. They do nothing while the consumer's power supply is up. When it is lost, they extend the generator's runtime; they never fail the consumer on their own. All other edges have the role `primary_supply`. This is Appendix B's "the buffer has a buffer".
+3. **Road reachability.** Transport edges run from origins (seaport, airport, freight yard) of the eligible kinds. A consumer is supplied if any eligible origin reaches it over the road network, so its transport dependency lists every such origin with feed configuration `any_reachable`. Roads carry; they are not suppliers. A depot's function is delivered fuel, so the depot's road leg plus the fuel edge from the depot carries trucked delivery to backup consumers. The excluded couplings transport → telecom and transport → water stay excluded.
+4. **Large loads.** A consumer whose load exceeds a threshold (placeholder) is supplied from a transmission substation; others from a distribution substation.
+5. **Tertiary second feed.** A tertiary hospital takes a second distribution substation with a recipe probability (placeholder 50%). It is not a rule for the class.
+6. **Water storage** consumes nothing. Its volume is the buffer on downstream water edges.
+7. **Phase 1 transport nodes.** Bridges, road junctions and rail nodes consume nothing in Phase 1. There is no rail in Phase 1.
+8. **Out of scope in Phase 1:** staff access to hospitals over roads (a service dependency; later it rides rule 3).
+
+**Subtype attributes.** Some rows depend on what kind of node it is. These are generated with the node (layers stage), as real-but-unobserved truth unless a source carries them:
+
+| Class | Attribute | Values |
+|---|---|---|
+| Generation | fuel_kind | lng, oil, coal, hydro |
+| Generation | makeup_water | municipal, own_intake |
+| Import terminal | product | oil, lng, coal |
+| Airport | towered; fuel_receipt | yes/no; pipeline, truck |
+| Data centre | cooling | evaporative (default, per Appendix B), dry |
+| Refinery | crude_receipt | marine, pipeline |
+| Tank farm | pipeline_connected; has_jetty; has_truck_rack | yes/no each |
+| Healthcare | records_hosted | yes/no |
+| Backup consumers | standby_fuel | diesel, none |
+
+**The table.** Key:
+- **Dep.:** C core, O optional, — none.
+- **Type:** PF physical flow, L logistic, Ctl control, Svc service.
+- **Role:** P primary supply, B buffer resupply.
+
+*power → (electricity, PF, P)*
+
+| Consumer | Dep. | Suppliers | Grade |
+|---|---|---|---|
+| exchange, mast, cable_landing | C | distribution substation | L (J for cable landing) |
+| data_centre | C | distribution; transmission if large | L |
+| treatment | C | distribution; transmission if large | S (US) |
+| pumping | C | distribution | S (US) |
+| reservoir, storage | — | | J |
+| seaport | C | distribution; transmission if large | L |
+| airport | C | distribution | S (US) |
+| freight_yard | O | distribution | J |
+| refinery | C | transmission | L |
+| tank_farm, depot | C | distribution | L |
+| import_terminal | C | distribution (oil, coal); transmission (lng) | L |
+| tertiary | C | distribution (second feed by rule 5) | S (US) |
+| regional, clinic, blood_bank | C | distribution | S (US) / L |
+
+*telecom → (communications, P)*
+
+| Consumer | Dep. | Type | Suppliers | Grade |
+|---|---|---|---|---|
+| generation, transmission and distribution substations | C | Ctl (rule 1) | exchange; mast | L |
+| treatment, pumping | C | Ctl (rule 1) | exchange; mast | L |
+| reservoir | O | Ctl (rule 1) | mast; exchange | J |
+| storage | — | | | J |
+| airport, towered | C | Ctl | exchange | L |
+| airport, not towered | O | Svc | exchange; mast | J |
+| seaport, freight_yard | C | Svc | exchange; mast; data_centre | L / J |
+| refinery, depot | C | Svc | exchange; mast; data_centre | J |
+| tank_farm, pipeline-connected | C | Ctl (rule 1) | exchange; mast | S (US) |
+| tank_farm, not connected | O | Svc | exchange; mast | J |
+| import_terminal | C | Ctl (rule 1) | exchange; mast | S (US) |
+| tertiary, regional, clinic, blood_bank | C | Svc (a shorter buffer if records are hosted) | exchange; mast; data_centre | L / J |
+
+cable_landing supplies no consumer directly. It feeds the exchange and data centre within telecom.
+
+*water → (water, PF, P)*
+
+| Consumer | Dep. | Suppliers | Grade |
+|---|---|---|---|
+| generation (fuel-fired, municipal make-up) | C | storage; pumping; reservoir as raw water if inland | L / J (Taiwan) |
+| generation (own intake) or hydro | — | | L |
+| substations, exchange, mast, cable_landing | — | | J |
+| data_centre (evaporative) | C | storage; pumping | L |
+| refinery | C | storage; pumping; reservoir (raw) | L |
+| tank_farm, import_terminal, depot | O | storage; pumping | J |
+| tertiary, regional, clinic | C | storage; pumping | S (US) / L |
+| blood_bank | O | storage; pumping | J |
+
+*transport → (transport access, L, P, rule 3)*
+
+| Consumer | Dep. | Origins | Grade |
+|---|---|---|---|
+| import_terminal | C | seaport | L |
+| refinery (marine crude) | C | seaport | L |
+| refinery (pipeline crude) | — | | J |
+| tank_farm (jetty or truck rack) | O | seaport (jetty); freight_yard (rack) | L |
+| depot | C | freight_yard; seaport if on an outlying island | L |
+| tertiary, regional | C | freight_yard; seaport; airport | L |
+| clinic | C | freight_yard | L / J |
+| blood_bank | C | freight_yard; airport | L |
+
+The airport supplies no fuel class.
+
+*fuel → (fuel)*
+
+| Consumer | Dep. | Type | Role | Suppliers | Grade |
+|---|---|---|---|---|---|
+| generation, lng | C | PF | P | import_terminal (lng) | L |
+| generation, oil | C | PF | P | tank_farm; refinery | J |
+| generation, coal | C | L | P | import_terminal (coal) | L |
+| generation, hydro; substations | — | | | | J |
+| exchange, data_centre, cable_landing | C | L | B | depot; tank_farm | L / J |
+| mast | O | L | B | depot | L |
+| treatment | C | L | B | depot; tank_farm | S (US) |
+| pumping | O | L | B | depot | L |
+| reservoir, storage | — | | | | J |
+| seaport | C | L | P | tank_farm; import_terminal (oil); refinery; depot | L |
+| airport, pipeline receipt | C | PF | P | refinery; tank_farm; import_terminal (oil) | L |
+| airport, truck receipt | C | L | P | depot | L |
+| freight_yard | C | L | P | depot; tank_farm | L |
+| tertiary, regional | C | L | B | depot; tank_farm | S (US) |
+| clinic | O | L | B | depot | J |
+| blood_bank | C | L | B | depot | L |
+
+An LNG or coal import terminal never supplies bunkers, jet fuel or diesel.
 
 ### 4.4 What sources don't show
 
@@ -307,6 +436,18 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.4
+
+All ruled by the author, 2026-09-29 (repository decision record 0007):
+
+- New §4.3a: the dependency table for the 21 couplings, built from sources and checked independently, with its cross-table rules (public telecom share, buffer resupply, road reachability, large loads, the tertiary second feed) and subtype attributes.
+- Concentration 0 now means nearest supplier with no pull toward a hub, not "spread evenly".
+- Two-way dependency is a 0–100 setting over node-level mutual pairs, not an on/off switch.
+- The airport is a transport origin (blood products and urgent supplies by air).
+- Coal is carried by the import terminal, so coal generation has a fuel supplier inside the 21 couplings.
+- Telecom → healthcare is typed service, not control.
+- Power capacities are sized to load (§4.2).
 
 ## Changes from v0.3
 
