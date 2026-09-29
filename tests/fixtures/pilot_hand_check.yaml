@@ -1,5 +1,9 @@
-# The pilot world: Pilot_Spec.md v0.4 (decisions 0003, 0004 and 0006).
+# The pilot world: Pilot_Spec.md v0.5 (decisions 0003, 0004, 0006 and 0007).
 # Fields the pilot spec does not set are left to the schema defaults.
+#
+# Subtype attributes (decision 0007, R9) are drawn in the layers stage, not set here. The
+# pilot's one generation plant is fuel_kind lng, and its one import terminal carries product
+# lng, so the pilot's fuel -> power runs from the import terminal to the plant.
 recipe_version: 1
 
 terrain:
@@ -26,6 +30,20 @@ layers:
   healthcare:
     state: emitted
     sources: [osm_health, facility_register]  # ruling A3: deliberate source disagreement
+
+couplings:
+  # Pilot_Spec v0.5: seven of the 21, so a cascade crosses every layer and can be traced by hand.
+  switched_on:
+    - {supplier: fuel, consumer: power}
+    - {supplier: power, consumer: telecom}
+    - {supplier: telecom, consumer: power}
+    - {supplier: power, consumer: water}
+    - {supplier: water, consumer: healthcare}
+    - {supplier: power, consumer: healthcare}
+    - {supplier: transport, consumer: fuel}
+  switched_off_handling: generate_and_hide  # the other 14 exist in the truth, hidden
+  density: 0                                # core dependencies only
+  two_way_pct: 0                            # no mutual pairs: keeps the hand trace simple
 
 shared_causes:
   hazards:

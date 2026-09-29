@@ -23,7 +23,6 @@ PILOT_FEATURES = {
     "source_overlap",
     "couplings",
     "couplings_hidden",
-    "couplings_two_way",
     "hazard:storm_corridor",
     "unobserved_quantities",
     "crews_and_depots",
@@ -158,6 +157,6 @@ def test_features_with_no_switched_off_pairs_are_not_hidden() -> None:
         for c in ("power", "telecom", "water", "transport", "fuel", "healthcare")
         if s != c
     )
-    used = features_used(resolved("couplings:\n  two_way: false\n  switched_on:\n" + pairs))
+    used = features_used(resolved("couplings:\n  two_way_pct: 0\n  switched_on:\n" + pairs))
     assert "couplings_hidden" not in used
     assert "couplings_two_way" not in used

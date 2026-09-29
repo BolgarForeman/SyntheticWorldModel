@@ -76,52 +76,32 @@ couplings:
   - supplier: power
     consumer: water
   - supplier: power
-    consumer: transport
-  - supplier: power
-    consumer: fuel
-  - supplier: power
     consumer: healthcare
   - supplier: telecom
     consumer: power
-  - supplier: telecom
-    consumer: water
-  - supplier: telecom
-    consumer: transport
-  - supplier: telecom
-    consumer: fuel
-  - supplier: telecom
-    consumer: healthcare
-  - supplier: water
-    consumer: power
-  - supplier: water
-    consumer: telecom
-  - supplier: water
-    consumer: fuel
   - supplier: water
     consumer: healthcare
   - supplier: transport
     consumer: fuel
-  - supplier: transport
-    consumer: healthcare
   - supplier: fuel
     consumer: power
-  - supplier: fuel
-    consumer: telecom
-  - supplier: fuel
-    consumer: water
-  - supplier: fuel
-    consumer: transport
-  - supplier: fuel
-    consumer: healthcare
   switched_off_handling: generate_and_hide
-  density: 50
-  two_way: true
+  density: 0
+  two_way_pct: 0
   supplier_not_nearest_pct: 25
   concentration: 40
   feed_mix:
     single_feed_pct: 60
     two_full_feeds_pct: 25
     two_half_feeds_pct: 15
+  public_telecom_share:
+    generation_pct: 20
+    transmission_pct: 20
+    distribution_pct: 50
+    water_pct: 50
+    pipelines_pct: 50
+  tertiary_second_feed_pct: 50
+  transmission_connection_threshold_mw: 5.0
 shared_causes:
   hazards:
     storm_corridor:

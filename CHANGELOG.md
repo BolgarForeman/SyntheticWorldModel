@@ -23,10 +23,17 @@ All notable changes to this project are recorded here. Each phase closes with a 
   - `swm export-gis` (world.gpkg and GeoTIFFs; optional `export` extra);
   - `swm preview-world`.
 - Source scopes with the OpenStreetMap backbone; freight yard and bridge transport classes; the freight yard as an end use with Lifeline weight 4 (Work Order 3, B2 and E2).
+- The dependency table of structure v0.5 §4.3a as one immutable table in `swm.recipe.dependencies` (Work Order 4, A1–A2; decision 0007).
+- New couplings settings: `two_way_pct`, `public_telecom_share`, `tertiary_second_feed_pct` and `transmission_connection_threshold_mw` (Work Order 4, A3).
+- Subtype attributes on every node, drawn from new `layers/<layer>/subtype` streams, as unobserved truth (Work Order 4, B).
+- Typed GeoPackage tables: `nodes` plus one `nodes_<layer>` per layer, with typed columns and nulls (Work Order 4, D).
 
 ### Changed
 
 - CI runs on pushes to `main` and on pull requests only (Work Order 1).
+- Power is sized to load. Generation totals distribution × 1.3 × 0.9, and each transmission substation carries at least 1.3 × the distribution it feeds (Work Order 4, C).
+- Generation's observed `fuel_type` now follows its true `fuel_kind`, and is no longer drawn on its own (Work Order 4, B).
+- The pilot switches on its seven couplings, with density 0 and `two_way_pct` 0 (Work Order 4, A4).
 - Heterogeneity is `heterogeneity_pct` on every drawn quantity (Work Order 2, B1).
 - Sizes up to 20 nodes per layer and 2,000 km² are Phase 1; concave transfer forms are refused until Phase 5 (Work Order 2, B2 and B3).
 - Coverage runs 0-100% and snapshot age 0-30 years (Work Order 2, B5).
@@ -47,3 +54,4 @@ All notable changes to this project are recorded here. Each phase closes with a 
 ### Removed
 
 - The `healthcare_first` service-weight preset, replaced by `lifeline` (Work Order 2, B4).
+- The `two_way` switch, replaced by `two_way_pct` (Work Order 4, A3).

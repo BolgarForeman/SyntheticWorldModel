@@ -12,7 +12,7 @@ Spec: structure v0.4 §4.1a, §4.2 and §5; Work Order 3, Part B.
 import heapq
 import math
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from itertools import combinations, pairwise
 
 import numpy as np
@@ -204,8 +204,73 @@ AIRPORT_SIZES = ((0.66, "large_airport"), (0.33, "medium_airport"), (0.0, "small
 SEAPORT_SIZES = ((0.75, "L"), (0.5, "M"), (0.25, "S"), (0.0, "V"))
 """Seaport harbour size by served city share, in the World Port Index's values."""
 
-FUEL_TYPES = (("gas", 0.5), ("coal", 0.3), ("oil", 0.2))
-"""Thermal generation fuel types and their draw weights. placeholder (open decision)."""
+OBSERVED_FUEL_TYPE: Mapping[str, str] = {
+    "lng": "gas",
+    "oil": "oil",
+    "coal": "coal",
+    "hydro": "hydro",
+}
+"""The observed fuel_type a source reports for each true fuel_kind (WRI's primary_fuel)."""
+
+RESERVE_MARGIN = 1.3
+"""Generation capacity over the load it serves (ratio). CHOICE: placeholder (open decision:
+realism ranges); structure v0.5 §4.2."""
+
+POWER_FACTOR = 0.9
+"""Real over apparent power, converting MVA to MW (ratio). CHOICE: placeholder (open decision:
+realism ranges); structure v0.5 §4.2."""
+
+
+# CHOICE: every subtype share below, placeholder (open decision: realism ranges); decision 0007.
+@dataclass(frozen=True)
+class SubtypeShares:
+    """How subtype attributes are drawn (structure v0.5 §4.3a subtype table)."""
+
+    thermal_fuel: tuple[tuple[str, float], ...] = (("lng", 0.40), ("coal", 0.35), ("oil", 0.25))
+    """Fuel kind of thermal plants after the first, which is lng (ratio each)."""
+    makeup_water: tuple[tuple[str, float], ...] = (("municipal", 0.7), ("own_intake", 0.3))
+    """Make-up water source of fuel-fired plants (ratio each)."""
+    terminal_product: tuple[tuple[str, float], ...] = (("oil", 0.5), ("lng", 0.3), ("coal", 0.2))
+    """Product of import terminals beyond those generation needs (ratio each)."""
+    towered: float = 0.5
+    """Chance an airport other than the largest is towered (ratio)."""
+    pipeline_fuel_receipt: float = 0.3
+    """Chance an airport other than the largest receives fuel by pipeline (ratio)."""
+    marine_crude: float = 0.75
+    """Chance a refinery receives crude by sea (ratio). Taiwan: three of four."""
+    pipeline_connected: float = 0.7
+    """Chance a tank farm is pipeline-connected (ratio)."""
+    jetty_on_coast: float = 0.5
+    """Chance a tank farm on the coast has a jetty; inland tank farms have none (ratio)."""
+    truck_rack: float = 0.5
+    """Chance a tank farm has a truck loading rack (ratio)."""
+    evaporative_cooling: float = 1.0
+    """Chance a data centre cools by evaporation: the Appendix B default (ratio)."""
+    records_hosted: tuple[tuple[NodeClass, float], ...] = (
+        (NodeClass.TERTIARY, 0.2),
+        (NodeClass.REGIONAL, 0.4),
+        (NodeClass.CLINIC, 0.7),
+        (NodeClass.BLOOD_BANK, 0.5),
+    )
+    """Chance a healthcare facility's records are hosted off site, rising down the tiers."""
+    diesel_standby: tuple[tuple[NodeClass, float], ...] = (
+        (NodeClass.EXCHANGE, 1.0),
+        (NodeClass.DATA_CENTRE, 1.0),
+        (NodeClass.CABLE_LANDING, 1.0),
+        (NodeClass.TREATMENT, 1.0),
+        (NodeClass.TERTIARY, 1.0),
+        (NodeClass.REGIONAL, 1.0),
+        (NodeClass.BLOOD_BANK, 1.0),
+        (NodeClass.MAST, 0.5),
+        (NodeClass.PUMPING, 0.5),
+        (NodeClass.CLINIC, 0.5),
+    )
+    """Chance a backup consumer has a diesel standby generator: certain where its fuel row is
+    core, even where it is optional (ratio)."""
+
+
+SUBTYPES = SubtypeShares()
+"""The subtype shares in force."""
 
 TELECOM_OPERATORS = ("SWM Telecom A", "SWM Telecom B")
 """Synthetic operator names, from a reserved list (CLAUDE.md §9)."""
@@ -213,7 +278,7 @@ TELECOM_OPERATORS = ("SWM Telecom A", "SWM Telecom B")
 OPERATIONAL = "operational"
 """Every node's status in Phase 1 (Work Order 3, B4)."""
 
-AttributeValue = str | int | float
+AttributeValue = str | int | float | bool
 
 
 @dataclass(frozen=True)
@@ -232,6 +297,8 @@ class Node:
     city_id: int
     attributes: tuple[tuple[str, AttributeValue], ...]
     runway: tuple[tuple[float, float], tuple[float, float]] | None
+    subtype: tuple[tuple[str, AttributeValue], ...]
+    """Real but unobserved subtype attributes (decision 0007): never emitted."""
 
 
 @dataclass(frozen=True)
@@ -278,6 +345,7 @@ class LayersStreams:
 
     siting: Mapping[Layer, np.random.Generator]
     attributes: Mapping[Layer, np.random.Generator]
+    subtype: Mapping[Layer, np.random.Generator]
     dual_membership: np.random.Generator
 
 
@@ -292,13 +360,14 @@ def layers_streams(root_seed: int) -> LayersStreams:
     Returns
     -------
     LayersStreams
-        Siting and attribute streams per layer, and the dual-membership stream.
+        Siting, attribute and subtype streams per layer, and the dual-membership stream.
 
     Spec: structure v0.4 §3 (independent random streams); Work Order 3, B1.
     """
     return LayersStreams(
         siting={layer: rng.stream(root_seed, f"layers/{layer}/siting") for layer in Layer},
         attributes={layer: rng.stream(root_seed, f"layers/{layer}/attributes") for layer in Layer},
+        subtype={layer: rng.stream(root_seed, f"layers/{layer}/subtype") for layer in Layer},
         dual_membership=rng.stream(root_seed, "layers/dual_membership"),
     )
 
@@ -364,6 +433,7 @@ def build_layers(layers: Layers, terrain: TerrainResult, streams: LayersStreams)
             raise ValueError("build_layers needs a resolved recipe: node counts are not set")
         dual = layers.dual_membership and layer == Layer.POWER
         siter.site_layer(layer, settings.node_count, streams.siting[layer], dual, streams)
+    subtypes = _draw_subtypes(siter, streams.subtype)
     nodes: list[Node] = []
     links: list[Link] = []
     statistics: list[LayerStatistics] = []
@@ -371,12 +441,15 @@ def build_layers(layers: Layers, terrain: TerrainResult, streams: LayersStreams)
         settings = layers.get(layer)
         if settings.state == LayerState.OFF:
             continue
-        layer_nodes = _make_nodes(layer, siter, ground, streams.attributes[layer])
+        stream = streams.attributes[layer]
+        layer_nodes = _make_nodes(layer, siter, ground, stream, subtypes[layer])
         builder = _LinkBuilder(layer, layer_nodes, siter, ground, settings.links_per_node)
         layer_links = builder.build()
+        notes = siter.notes.get(layer, []) + builder.notes
+        if layer == Layer.POWER:
+            layer_nodes = _size_power(layer_nodes, layer_links, stream, notes)
         nodes.extend(layer_nodes)
         links.extend(layer_links)
-        notes = siter.notes.get(layer, []) + builder.notes
         statistics.append(_statistics(layer, settings, layer_nodes, layer_links, notes))
     states = {layer: layers.get(layer).state for layer in Layer}
     return LayersResult(tuple(nodes), tuple(links), states, tuple(statistics))
@@ -411,6 +484,7 @@ def node_table(result: LayersResult) -> list[dict[str, object]]:
             "runway_m": None
             if node.runway is None
             else [[round(x, 2), round(y, 2)] for x, y in node.runway],
+            "subtype": dict(node.subtype),
         }
         for node in result.nodes
     ]
@@ -1465,6 +1539,10 @@ def _grid_path(g: _Ground, start: int, end: int) -> list[tuple[int, int]]:
             r, c = row + dr, column + dc
             if not (0 <= r < GRID_CELLS and 0 <= c < GRID_CELLS) or not g.land[r, c]:
                 continue
+            # A diagonal step between land cells that meet only at a corner cuts across the
+            # sea; the same segment test as every road piece keeps it off.
+            if dr and dc and _crosses_sea(g, (row, column), (r, c)):
+                continue
             step = 14 if dr and dc else 10
             neighbour = r * GRID_CELLS + c
             if cost + step < best.get(neighbour, 1 << 62):
@@ -1496,7 +1574,11 @@ def _simplify(g: _Ground, path: list[tuple[int, int]]) -> list[tuple[int, int]]:
 
 
 def _make_nodes(
-    layer: Layer, siter: _Siter, ground: _Ground, stream: np.random.Generator
+    layer: Layer,
+    siter: _Siter,
+    ground: _Ground,
+    stream: np.random.Generator,
+    subtypes: list[dict[str, AttributeValue]],
 ) -> list[Node]:
     grid = ground.terrain.grid
     largest = ground.cities[0].cell_count
@@ -1525,15 +1607,20 @@ def _make_nodes(
                 longitude=longitude,
                 latitude=latitude,
                 city_id=city.city_id,
-                attributes=_attributes(layer, sited, share, ground, stream),
+                attributes=_attributes(layer, sited, share, subtypes[number - 1], stream),
                 runway=runway,
+                subtype=tuple(sorted(subtypes[number - 1].items())),
             )
         )
     return nodes
 
 
 def _attributes(
-    layer: Layer, sited: _Sited, share: float, ground: _Ground, stream: np.random.Generator
+    layer: Layer,
+    sited: _Sited,
+    share: float,
+    subtype: Mapping[str, AttributeValue],
+    stream: np.random.Generator,
 ) -> tuple[tuple[str, AttributeValue], ...]:
     """Observed attributes, scaled by the served city's size relative to the largest city."""
     # CHOICE: the served city is the city the node lies in, or else the nearest city.
@@ -1546,7 +1633,8 @@ def _attributes(
         scaled = low + (high - low) * (0.7 * size + 0.3 * float(stream.random()))
         values[name] = _round_attribute(name, scaled)
     if node_class == NodeClass.GENERATION:
-        values["fuel_type"] = "hydro" if sited.dam_of is not None else _draw_fuel(stream)
+        # The observed fuel type is what a source reports of the true fuel kind.
+        values["fuel_type"] = OBSERVED_FUEL_TYPE[str(subtype["fuel_kind"])]
     if node_class == NodeClass.TRANSMISSION_SUBSTATION:
         values["voltage_kv"] = _by_share(TRANSMISSION_VOLTAGES_KV, share)
     if node_class == NodeClass.DISTRIBUTION_SUBSTATION:
@@ -1581,8 +1669,174 @@ def _by_share[T](table: tuple[tuple[float, T], ...], share: float) -> T:
     return table[-1][1]
 
 
-def _draw_fuel(stream: np.random.Generator) -> str:
-    return FUEL_TYPES[_draw_index(stream, [weight for _, weight in FUEL_TYPES])][0]
+def _draw_subtypes(
+    siter: _Siter, streams: Mapping[Layer, np.random.Generator]
+) -> dict[Layer, list[dict[str, AttributeValue]]]:
+    """Draw every node's subtype attributes (structure v0.5 §4.3a; Work Order 4, B1).
+
+    Power is drawn first, because import terminals take the products generation needs.
+    """
+    drawn: dict[Layer, list[dict[str, AttributeValue]]] = {
+        layer: [{} for _ in sited] for layer, sited in siter.sited.items()
+    }
+    fuel = siter.sited.get(Layer.FUEL, [])
+    needed = _draw_generation(siter, drawn, streams[Layer.POWER], fuel)
+    for layer, sited in siter.sited.items():
+        stream = streams[layer]
+        terminals = [s for s in sited if s.node_class == NodeClass.IMPORT_TERMINAL]
+        for index, node in enumerate(sited):
+            values = drawn[layer][index]
+            if node.node_class == NodeClass.IMPORT_TERMINAL:
+                position = terminals.index(node)
+                values["product"] = (
+                    needed[position]
+                    if position < len(needed)
+                    else _choose(stream, SUBTYPES.terminal_product)
+                )
+            elif node.node_class != NodeClass.GENERATION:
+                values.update(_class_subtype(siter, node, sited, stream))
+    return drawn
+
+
+def _draw_generation(
+    siter: _Siter,
+    drawn: dict[Layer, list[dict[str, AttributeValue]]],
+    stream: np.random.Generator,
+    fuel: list[_Sited],
+) -> list[str]:
+    """Draw generation fuel kinds; return the products import terminals must carry.
+
+    Every world with fuel-fired generation has an import terminal whose product serves it
+    (Work Order 4, B1): a plant takes a kind needing a new terminal only while one remains, and
+    takes oil only where a tank farm or refinery can serve it.
+    """
+    terminals = sum(1 for s in fuel if s.node_class == NodeClass.IMPORT_TERMINAL)
+    oil_served = any(s.node_class in (NodeClass.TANK_FARM, NodeClass.REFINERY) for s in fuel)
+    needed: list[str] = []
+    first_thermal = True
+    for index, node in enumerate(siter.sited.get(Layer.POWER, [])):
+        if node.node_class != NodeClass.GENERATION:
+            continue
+        values = drawn[Layer.POWER][index]
+        if node.dam_of is not None:
+            values["fuel_kind"] = "hydro"
+            continue
+        if first_thermal:
+            # CHOICE: the first thermal plant burns lng, the default fuel kind (ruling R9).
+            kind = "lng"
+            first_thermal = False
+        else:
+            allowed = tuple(
+                (k, w)
+                for k, w in SUBTYPES.thermal_fuel
+                if not fuel
+                or (k == "oil" and oil_served)
+                or (k != "oil" and (k in needed or len(needed) < terminals))
+            )
+            kind = _choose(stream, allowed or (("lng", 1.0),))
+        if kind in ("lng", "coal") and kind not in needed:
+            needed.append(kind)
+        values["fuel_kind"] = kind
+        values["makeup_water"] = _choose(stream, SUBTYPES.makeup_water)
+    if needed and not fuel:
+        siter.notes[Layer.POWER].append(
+            "generation: the fuel layer is off, so no import terminal serves fuel-fired plants"
+        )
+    return needed
+
+
+def _class_subtype(
+    siter: _Siter, node: _Sited, sited: list[_Sited], stream: np.random.Generator
+) -> dict[str, AttributeValue]:
+    """Draw the subtype attributes of a node other than generation or an import terminal."""
+    shares, node_class = SUBTYPES, node.node_class
+    values: dict[str, AttributeValue] = {}
+    if node_class == NodeClass.AIRPORT:
+        largest = _largest_airport(siter, sited)
+        values["towered"] = node is largest or _chance(stream, shares.towered)
+        pipeline = node is largest or _chance(stream, shares.pipeline_fuel_receipt)
+        values["fuel_receipt"] = "pipeline" if pipeline else "truck"
+    elif node_class == NodeClass.DATA_CENTRE:
+        evaporative = _chance(stream, shares.evaporative_cooling)
+        values["cooling"] = "evaporative" if evaporative else "dry"
+    elif node_class == NodeClass.REFINERY:
+        marine = _chance(stream, shares.marine_crude)
+        values["crude_receipt"] = "marine" if marine else "pipeline"
+    elif node_class == NodeClass.TANK_FARM:
+        values["pipeline_connected"] = _chance(stream, shares.pipeline_connected)
+        on_coast = bool(siter.ground.coast.flat[node.cell])
+        values["has_jetty"] = on_coast and _chance(stream, shares.jetty_on_coast)
+        values["has_truck_rack"] = _chance(stream, shares.truck_rack)
+    hosted = dict(shares.records_hosted)
+    if node_class in hosted:
+        values["records_hosted"] = _chance(stream, hosted[node_class])
+    diesel = dict(shares.diesel_standby)
+    if node_class in diesel:
+        values["standby_fuel"] = "diesel" if _chance(stream, diesel[node_class]) else "none"
+    return values
+
+
+def _largest_airport(siter: _Siter, sited: list[_Sited]) -> _Sited:
+    """Return the airport serving the largest city; ties go to the first sited."""
+    airports = [n for n in sited if n.node_class == NodeClass.AIRPORT]
+    return max(
+        airports,
+        key=lambda n: (siter.ground.city_of(n.cell).cell_count, -airports.index(n)),
+    )
+
+
+def _chance(stream: np.random.Generator, probability: float) -> bool:
+    return float(stream.random()) < probability
+
+
+def _choose(stream: np.random.Generator, shares: tuple[tuple[str, float], ...]) -> str:
+    return shares[_draw_index(stream, [weight for _, weight in shares])][0]
+
+
+def _size_power(
+    nodes: list[Node], links: list[Link], stream: np.random.Generator, notes: list[str]
+) -> list[Node]:
+    """Size generation and transmission to the distribution load (structure v0.5 §4.2).
+
+    A transmission substation carries at least the distribution it feeds in the power links,
+    times the reserve margin. Total generation is total distribution times the margin,
+    converted to MW with the power factor, and split across plants by draw.
+    """
+    distribution = {
+        node.node_id: float(dict(node.attributes)["capacity_mva"])
+        for node in nodes
+        if node.node_class == NodeClass.DISTRIBUTION_SUBSTATION
+    }
+    sized: dict[str, dict[str, AttributeValue]] = {}
+    for node in nodes:
+        if node.node_class == NodeClass.TRANSMISSION_SUBSTATION:
+            fed = sorted(
+                (link.to_id if link.from_id == node.node_id else link.from_id)
+                for link in links
+                if node.node_id in (link.from_id, link.to_id)
+                and (link.to_id if link.from_id == node.node_id else link.from_id) in distribution
+            )
+            needed = math.ceil(RESERVE_MARGIN * math.fsum(distribution[i] for i in fed))
+            drawn = int(dict(node.attributes)["capacity_mva"])
+            sized[node.node_id] = {"capacity_mva": max(drawn, needed)}
+    plants = [node for node in nodes if node.node_class == NodeClass.GENERATION]
+    load_mva = math.fsum(distribution.values())
+    if plants and load_mva == 0.0:
+        notes.append("generation: no distribution substations, so plants keep drawn capacities")
+    elif plants:
+        total_mw = load_mva * RESERVE_MARGIN * POWER_FACTOR
+        weights = [0.5 + float(stream.random()) for _ in plants]
+        whole = math.fsum(weights)
+        for plant, weight in zip(plants, weights, strict=True):
+            sized[plant.node_id] = {"capacity_mw": round(total_mw * weight / whole, 1)}
+    return [
+        replace(
+            node, attributes=tuple(sorted({**dict(node.attributes), **sized[node.node_id]}.items()))
+        )
+        if node.node_id in sized
+        else node
+        for node in nodes
+    ]
 
 
 # --- Links ----------------------------------------------------------------------------------

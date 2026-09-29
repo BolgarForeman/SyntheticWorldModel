@@ -35,6 +35,7 @@ def _registry() -> dict[str, str]:
         paths[f"layers/{layer}/attributes"] = f"Observed attributes of {layer} nodes."
         paths[f"layers/{layer}/links"] = f"Intra-layer links of the {layer} layer."
         paths[f"layers/{layer}/overlap"] = f"Which {layer} assets appear in more than one source."
+        paths[f"layers/{layer}/subtype"] = f"Subtype attributes of {layer} nodes (unobserved)."
     paths |= {
         "couplings/edges": "Which consumers draw on which suppliers across layers.",
         "couplings/supplier_not_nearest": "Consumers whose true supplier is not the nearest one.",
