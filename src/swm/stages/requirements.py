@@ -163,6 +163,9 @@ def build_requirements(
 
 def _consumed(node: Node) -> set[Layer]:
     """Supplier layers the node takes a primary-supply dependency from (core or optional)."""
+    # CHOICE: a requirement is drawn for every commodity the table lets the node take, core or
+    # optional, since requirements come before density decides which optional edges exist.
+    # Buffer-resupply fuel is a backup burn, recorded as a rate, not a requirement.
     subtype = dict(node.subtype)
     consumed = set()
     for supplier, consumer in coupling_pairs():
@@ -213,6 +216,8 @@ class _Targets:
         return derived[node.node_class](attributes, subtype)
 
     def data_centre_site_mw(self) -> float:
+        # CHOICE: a data centre's water follows its target site load, not its drawn one, so
+        # the two requirements are drawn independently around their own targets.
         return self.n("electricity.data_centre_it_load_mw") * self.n("electricity.data_centre_pue")
 
     def refinery_barrels(self) -> float:
@@ -285,6 +290,8 @@ class _Targets:
             notes.add(f"{node.node_class}: fuel draw has no target (open decision: {decision})")
             return None
         attributes, subtype = dict(node.attributes), dict(node.subtype)
+        # CHOICE: a plant's output is its capacity times a capacity factor near 1 / the
+        # reserve margin, since generation is sized to load times that margin.
         heat_rate = self.n(f"fuel.{subtype['fuel_kind']}_gj_per_mwh")
         output_mw = float(attributes["capacity_mw"]) * self.n("fuel.generation_capacity_factor")
         return output_mw * HOURS_PER_DAY * heat_rate
@@ -293,6 +300,8 @@ class _Targets:
         """Full-load burn of the node's diesel standby generator, if it has one (L/h)."""
         if electricity_mw is None or dict(node.subtype).get("standby_fuel") != "diesel":
             return None
+        # CHOICE: the rate is at full load on the node's drawn electricity; the reserves stage
+        # turns it into hours at the expected (essential) load (PR 5b).
         return electricity_mw * self.n("fuel.backup_generator_l_per_h_per_mw")
 
 

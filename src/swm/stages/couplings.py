@@ -574,6 +574,9 @@ class _LargeLoads:
     def suppliers(self, row: DependencyRow, consumer: Node) -> tuple[SupplierOption, ...]:
         """Return the row's suppliers, or a transmission substation for a large power consumer."""
         peak = self.peak_mw.get(consumer.node_id)
+        # CHOICE: rule 4 moves a large consumer onto transmission; a smaller one keeps its row's
+        # suppliers, so rows that already name a transmission substation (refinery, LNG
+        # terminal) are not moved down to distribution.
         if row.supplier_layer != Layer.POWER or peak is None or peak < self.threshold_mw:
             return row.suppliers
         return (SupplierOption(NodeClass.TRANSMISSION_SUBSTATION),)
