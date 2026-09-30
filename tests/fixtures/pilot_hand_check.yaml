@@ -54,6 +54,8 @@ shared_causes:
 unobserved:
   crews: 2                          # ruling A2; one pool, a declared scarcity (§4.4a)
   crew_base: 1                      # §4.4a pilot: one crew base
+  mobile_substations: 1             # §4.4a pilot emergency pool (ruling T11)
+  mobile_cell_sites: 1
 
 dynamics:
   tier: exact

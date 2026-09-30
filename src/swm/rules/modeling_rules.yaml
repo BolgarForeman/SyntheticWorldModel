@@ -7284,34 +7284,44 @@ rules:
   reasoning: Mean days to restored function by class and damage state; seaport is waterfront structures,
     airport the tower and terminal, mast, data centre and cable landing take the communication facility,
     depots and terminals the tank farm, and freight yards railway facilities (nearest classes, J). The
-    mean is the centre of lead time plus crew work.
+    mean is the centre of lead time plus crew work. The MR4 restoration functions rest largely on expert
+    judgment (ATC-13) and US earthquake experience, not Taiwan typhoon restoration; Taipower's typhoon
+    record may be faster. They estimate typical restoration, so the recipe's repair gap defaults to 0
+    and each class and damage state takes its own spread, standard deviation / mean (decision 0011).
   status: ruled
   open_decision: null
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0009'
+    date: '2026-09-30'
+    decision: '0011'
   history: []
 - id: repair.crew_work_h
   title: Crew work hours by damage state
   stage: repair
-  value: {slight: 8.0, moderate: 24.0}
+  value: {slight: 8.0, moderate: 24.0, extensive: 72.0, complete: 168.0}
   units: h
   applies_to: {layer: null, node_class: null, condition: null}
   grade: J
   jurisdiction: null
   sources:
+  - {citation: 'PR 5c answers (decision 0011, addendum)', url: docs/work_orders/WO-05c-answers.md, quote: null,
+    verified: null}
   - {citation: Ruling T6; review F7, url: docs/design/evidence/Design_Targets_Ruling_Sheet_v0_2.md, quote: null,
     verified: null}
   reasoning: Repair splits into a lead time that holds no crew and crew work; lead time is the Hazus mean
-    less the crew work, floored at 0.
+    less the crew work, floored at 0. Every damage state is recorded for every class with a Hazus row;
+    the pilot's storm causes slight and moderate damage only (ruling T6).
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0009'
-  history: []
+    date: '2026-09-30'
+    decision: '0011'
+  history:
+  - value: {slight: 8.0, moderate: 24.0}
+    units: h
+    date: '2026-09-30'
+    decision: '0011'
 - id: repair.unrepairable
   title: Classes not repairable within the window
   stage: repair
@@ -7330,6 +7340,26 @@ rules:
     by: the author (Foreman)
     date: '2026-09-29'
     decision: '0009'
+  history: []
+- id: repair.no_repair_rows
+  title: Classes with no repair rows
+  stage: repair
+  value: [road_junction, rail_node]
+  units: null
+  applies_to: {layer: transport, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'PR 5c answers (decision 0011, addendum)', url: docs/work_orders/WO-05c-answers.md, quote: null,
+    verified: null}
+  reasoning: 'Rail is out of Phase 1 (rule 7). A road junction is not a facility: road damage will sit
+    on the road links in Work Order 6, so the junction itself is never repaired.'
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-30'
+    decision: '0011'
   history: []
 - id: repair.pilot_damage_states
   title: Damage states the pilot storm causes at facilities
@@ -7366,7 +7396,9 @@ rules:
     quote: null, verified: null}
   - {citation: Ruling T11, url: docs/design/evidence/Design_Targets_Ruling_Sheet_v0_2.md, quote: null,
     verified: null}
-  reasoning: Restores about 25 MVA against the node's normal peak load for the rest of the event.
+  reasoning: Restores about 25 MVA against the node's normal peak load for the rest of the event. The
+    source's 12-24 h includes travel; the model takes the 12 h low end as set-up and adds the modelled
+    road travel, so pilot totals land at 12-15 h (decision 0011).
   status: ruled
   open_decision: null
   ruling:
@@ -7387,7 +7419,8 @@ rules:
     quote: null, verified: null}
   - {citation: Ruling T11, url: docs/design/evidence/Design_Targets_Ruling_Sheet_v0_2.md, quote: null,
     verified: null}
-  reasoning: About 14 h; the capacity 0.5 is judgment.
+  reasoning: About 14 h, taken as set-up, with the modelled road travel added, so pilot totals land at
+    12-15 h (decision 0011); the capacity 0.5 is judgment.
   status: ruled
   open_decision: null
   ruling:
@@ -7410,26 +7443,6 @@ rules:
     damage; bridges, transmission and plants do not pay inside 72 h.
   status: ruled
   open_decision: null
-  ruling:
-    by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0009'
-  history: []
-- id: repair.emergency.pool
-  title: 'Emergency pool: mobile units in the world'
-  stage: repair
-  value: {mobile_substation: 1, mobile_cell_site: 1}
-  units: units
-  applies_to: {layer: null, node_class: null, condition: null}
-  grade: J
-  jurisdiction: null
-  sources:
-  - {citation: Ruling T11 (the pilot pool of one of each), url: docs/design/evidence/Design_Targets_Ruling_Sheet_v0_2.md,
-    quote: null, verified: null}
-  reasoning: A finite pool of one mobile substation and one mobile cell site, as ruled for the pilot.
-    The recipe has no pool control, so every world takes this pool unless its recipe overrides the rule.
-  status: placeholder
-  open_decision: realism ranges
   ruling:
     by: the author (Foreman)
     date: '2026-09-29'
@@ -7465,7 +7478,9 @@ rules:
   sources:
   - {citation: Rulings T6 and T11, url: docs/design/evidence/Design_Targets_Ruling_Sheet_v0_2.md, quote: null,
     verified: null}
-  reasoning: Two crews in one pool is a declared scarcity (sensitivity at 1, 2 and 3).
+  reasoning: Two crews in one pool is a declared scarcity (sensitivity at 1, 2 and 3). The emergency pool
+    is set in the recipe (unobserved.mobile_substations and mobile_cell_sites, default 1 and 1); it was
+    the registry rule repair.emergency.pool until decision 0011 moved it.
   status: ruled
   open_decision: null
   ruling:
@@ -7520,13 +7535,18 @@ rules:
   grade: J
   jurisdiction: null
   sources:
+  - {citation: 'PR 5c answers (decision 0011, addendum)', url: docs/work_orders/WO-05c-answers.md, quote: null,
+    verified: null}
   - {citation: 'Work Order 5, G3 (travel over the road network is its own term)', url: docs/work_orders/WO-05.md,
     quote: null, verified: null}
   reasoning: Travel time is the road distance from the crew base over this speed. No source gives a crew's
     average road speed in a disruption; 40 km/h is a judgment for mixed town and rural roads.
   status: placeholder
   open_decision: realism ranges
-  ruling: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-30'
+    decision: '0011'
   history: []
 - id: strength.supply_days
   title: Days of its own stock a supplier delivers in a day's turnover

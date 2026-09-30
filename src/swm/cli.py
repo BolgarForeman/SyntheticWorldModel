@@ -354,13 +354,7 @@ def _repair_command(resolution: Resolution, arguments: argparse.Namespace) -> No
     couplings = _couplings(resolution, terrain, requirements)
     rules = _rules(resolution)
     try:
-        crews = build_crews(
-            recipe.unobserved.crews,
-            recipe.unobserved.crew_base,
-            terrain,
-            requirements.layers,
-            rules,
-        )
+        crews = build_crews(recipe.unobserved, terrain, requirements.layers)
     except ValueError as error:
         raise CommandError(str(error)) from error
     result = build_repair(

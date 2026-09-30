@@ -2,7 +2,7 @@ recipe_version: 2
 root_seed: 91577
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: 79fa9936fe1151282dfb75c040c6b3d8c357590ba1584e9f9dba7ad099a9e931
+  registry_sha256: 9b38a9c16a89a38e56d9c938aa4a9e1957fee4eefea859eb8236d1266fab3861
   overrides: {}
 terrain:
   map_type: spine_island
@@ -128,8 +128,8 @@ unobserved:
     heterogeneity_pct: 40
     compliance_gap_pct: 0
   repair_rates:
-    heterogeneity_pct: 45
-    compliance_gap_pct: 20
+    heterogeneity_pct: null
+    compliance_gap_pct: 0
   failure_mode:
     heterogeneity_pct: 10
     compliance_gap_pct: 0
@@ -138,6 +138,8 @@ unobserved:
     compliance_gap_pct: 0
   crews: 2
   crew_base: 1
+  mobile_substations: 1
+  mobile_cell_sites: 1
 dynamics:
   tier: exact
   combining: typed_weakest_link

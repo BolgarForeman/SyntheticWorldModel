@@ -7,13 +7,16 @@ import pytest
 from couplings_helpers import World, couple, requirements_of, rich_world
 from repair_helpers import crews_of, pilot_world, repair_of
 from swm import rng
+from swm.draws import DrawMethod
 from swm.recipe.dependencies import Role
 from swm.recipe.schema import Layer, NodeClass
+from swm.rules.registry import load_registry
 from swm.stages import repair as stage
 from swm.stages.crews import RoadNetwork
 from swm.stages.terrain import _label_land
 
 C = NodeClass
+RULES = load_registry()
 HAZUS_DAYS = {
     (C.DISTRIBUTION_SUBSTATION, "slight"): 1.0,
     (C.DISTRIBUTION_SUBSTATION, "moderate"): 3.0,
@@ -64,9 +67,35 @@ def test_the_centres_are_the_registry_hazus_means(exact: Any, rich: World) -> No
     assert seen == set(HAZUS_DAYS)
 
 
-def test_crew_work_is_8_h_slight_and_24_h_moderate_the_only_states(exact: Any) -> None:
+def test_every_damage_state_is_recorded_with_its_crew_work(exact: Any, rich: World) -> None:
     work = {(r.damage_state, r.crew_work_h) for r in exact.permanent}
-    assert work == {("slight", 8.0), ("moderate", 24.0)}
+    assert work == {("slight", 8.0), ("moderate", 24.0), ("extensive", 72.0), ("complete", 168.0)}
+    states: dict[str, list[str]] = {}
+    for record in exact.permanent:
+        states.setdefault(record.node_id, []).append(record.damage_state)
+    assert all(s == ["slight", "moderate", "extensive", "complete"] for s in states.values())
+
+
+def test_by_default_each_state_takes_the_hazus_spread(rich: World) -> None:
+    result = repair_of(rich, heterogeneity_pct=None)
+    method = DrawMethod.from_registry(RULES)
+    streams = stage.repair_streams(rich[0].root_seed)
+    draws = {
+        n.node_id: float(streams[n.layer].random()) for n in requirements_of(rich).layers.nodes
+    }
+    spreads = set()
+    for record in result.permanent:
+        expected = record.hazus_sd_h / record.hazus_mean_h if record.hazus_mean_h else 0.0
+        assert record.spread == pytest.approx(expected)
+        quantile = method.quantile(method.mixture(expected), draws[record.node_id])
+        assert record.repair_h == pytest.approx(record.hazus_mean_h / quantile)
+        spreads.add(round(record.spread, 6))
+    assert len(spreads) > 5
+
+
+def test_the_recipe_heterogeneity_overrides_the_hazus_spread(rich: World) -> None:
+    result = repair_of(rich, heterogeneity_pct=30)
+    assert {r.spread for r in result.permanent} == {0.3}
 
 
 def test_a_positive_gap_slows_repair(rich: World) -> None:
@@ -87,7 +116,7 @@ def test_heterogeneity_spreads_nodes_but_one_draw_serves_every_damage_state(rich
     assert len({next(iter(r)) for r in ratios.values()}) > len(ratios) // 2
 
 
-def test_reservoirs_are_unrepairable_and_nodes_without_a_hazus_row_are_noted(
+def test_reservoirs_are_unrepairable_and_junctions_have_no_repair_rows(
     exact: Any, rich: World
 ) -> None:
     by_id = classes(rich)
@@ -96,8 +125,15 @@ def test_reservoirs_are_unrepairable_and_nodes_without_a_hazus_row_are_noted(
     assert list(exact.unrepairable) == reservoirs
     repaired = {r.node_id for r in exact.permanent}
     assert not repaired & set(reservoirs)
+    assert any(c == C.ROAD_JUNCTION for c in by_id.values())
     assert not any(by_id[i] == C.ROAD_JUNCTION for i in repaired)
-    assert "road_junction: no Hazus restoration row; no permanent repair" in exact.notes
+    assert RULES.value("repair.no_repair_rows") == ["road_junction", "rail_node"]
+    assert not any("road_junction" in note for note in exact.notes)
+
+
+def test_a_class_with_no_hazus_row_and_no_ruling_is_noted(rich: World) -> None:
+    result = repair_of(rich, overrides={"repair.no_repair_rows": ["rail_node"]})
+    assert "road_junction: no Hazus restoration row; no permanent repair" in result.notes
 
 
 def test_every_node_draws_so_a_rule_change_moves_no_other_node(rich: World) -> None:
@@ -152,8 +188,7 @@ def test_a_mobile_substation_restores_25_mva_against_the_normal_peak(rich: World
 
 
 def test_a_pool_without_a_unit_kind_offers_no_such_option(rich: World) -> None:
-    pool = {"repair.emergency.pool": {"mobile_substation": 1, "mobile_cell_site": 0}}
-    result = repair_of(rich, overrides=pool)
+    result = repair_of(rich, mobile_cell_sites=0)
     assert {e.unit_kind for e in result.emergency} == {"mobile_substation"}
     assert "mast: the emergency pool holds no mobile_cell_site" in result.notes
 

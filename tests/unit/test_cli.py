@@ -139,6 +139,33 @@ def test_the_crew_sensitivity_recipes_differ_from_the_pilot_only_in_crews(
     assert f"\ncrews: {crews}\n" in stats
 
 
+@pytest.mark.parametrize(("name", "gap"), [("plus_20", 20), ("minus_20", -20)])
+def test_the_repair_sensitivity_recipes_differ_from_the_pilot_only_in_the_gap(
+    name: str, gap: int, pilot_path: Path, tmp_path: Path
+) -> None:
+    from swm.recipe.io import load_recipe
+
+    fixture = pilot_path.parent / "repair_sensitivity" / f"pilot_repair_gap_{name}.yaml"
+    recipe = load_recipe(fixture)
+    pilot = load_recipe(pilot_path)
+    assert recipe.unobserved.repair_rates.compliance_gap_pct == gap
+    assert recipe.unobserved.repair_rates.heterogeneity_pct is None
+    unobserved = recipe.unobserved.model_copy(
+        update={"repair_rates": pilot.unobserved.repair_rates}
+    )
+    assert recipe.model_copy(update={"unobserved": unobserved}) == pilot
+    assert main(["repair", str(fixture), "-o", str(tmp_path)]) == 0
+
+
+def test_repair_defaults_to_the_hazus_centre_and_spread_with_a_pool_of_one_each() -> None:
+    from swm.recipe.schema import Unobserved
+
+    unobserved = Unobserved()
+    assert unobserved.repair_rates.compliance_gap_pct == 0
+    assert unobserved.repair_rates.heterogeneity_pct is None
+    assert (unobserved.mobile_substations, unobserved.mobile_cell_sites) == (1, 1)
+
+
 def test_a_recipe_can_lower_the_share_of_well_maintained_generators(
     pilot_path: Path, tmp_path: Path
 ) -> None:

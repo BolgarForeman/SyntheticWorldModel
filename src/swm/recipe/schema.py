@@ -869,6 +869,27 @@ class ContinuousDrawnQuantity(_Section):
     )
 
 
+class RepairRates(_Section):
+    """Repair-rate levers. Spec: structure v0.6 §4.4 and §4.4a (repair); decision 0011."""
+
+    heterogeneity_pct: int | None = Field(
+        None,
+        ge=0,
+        le=100,
+        description="Spread of repair rates, as a percent of the target. Unset: each class and "
+        "damage state takes the Hazus spread (standard deviation / mean); set: this spread "
+        "overrides it everywhere.",
+    )
+    compliance_gap_pct: int = Field(
+        0,
+        ge=-50,
+        le=95,
+        description="Shortfall of repair rates below Hazus, as a percent. Positive: slower "
+        "repair; negative: faster. 0: centred on the Hazus means, which already estimate "
+        "typical restoration (decision 0011).",
+    )
+
+
 class CategoricalDrawnQuantity(_Section):
     """A drawn quantity with no numeric target. Compliance gap does not apply (ruling C1)."""
 
@@ -900,11 +921,9 @@ class Unobserved(_Section):
         default_factory=lambda: ContinuousDrawnQuantity(heterogeneity_pct=40),
         description="Node requirements per commodity.",
     )
-    repair_rates: ContinuousDrawnQuantity = Field(
-        default_factory=lambda: ContinuousDrawnQuantity(
-            heterogeneity_pct=45, compliance_gap_pct=20
-        ),
-        description="Repair rates.",
+    repair_rates: RepairRates = Field(
+        default_factory=RepairRates,
+        description="Repair rates, drawn around the Hazus restoration means.",
     )
     failure_mode: CategoricalDrawnQuantity = Field(
         default_factory=lambda: CategoricalDrawnQuantity(heterogeneity_pct=10),
@@ -923,6 +942,18 @@ class Unobserved(_Section):
         le=10,
         description="Crew bases the crews deploy from, sited in towns by road access. Distinct "
         "from the fuel depot class (decision 0011).",
+    )
+    mobile_substations: int = Field(
+        1,
+        ge=0,
+        le=10,
+        description="Mobile substations in the emergency pool (§4.4a; ruling T11).",
+    )
+    mobile_cell_sites: int = Field(
+        1,
+        ge=0,
+        le=10,
+        description="Mobile cell sites in the emergency pool (§4.4a; ruling T11).",
     )
 
 

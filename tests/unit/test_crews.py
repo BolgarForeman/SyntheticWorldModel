@@ -98,9 +98,8 @@ def test_crews_are_dealt_to_the_bases_in_turn(rich: World) -> None:
     ]  # fmt: skip
 
 
-def test_the_emergency_pool_comes_from_the_registry(rich: World) -> None:
-    pool = {"repair.emergency.pool": {"mobile_substation": 2, "mobile_cell_site": 0}}
-    result = crews_of(rich, overrides=pool)
+def test_the_emergency_pool_comes_from_the_recipe(rich: World) -> None:
+    result = crews_of(rich, mobile_substations=2, mobile_cell_sites=0)
     assert [unit.unit_id for unit in result.units] == ["MSS-0001", "MSS-0002"]
 
 

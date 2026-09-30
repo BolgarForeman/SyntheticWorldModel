@@ -3,7 +3,7 @@
 Crews are counted in the recipe and form one pool. Crew bases (``crew_base``, distinct from the
 fuel depot class) sit at town centres. They are chosen one at a time, each time taking the town
 that most shortens the total road distance from the nearest base to every node. The emergency
-pool of mobile units comes from the modeling rules registry.
+pool of mobile units is counted in the recipe.
 
 Nothing here is drawn, so the stage reads no stream. All of it is real but unobserved.
 
@@ -16,8 +16,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from swm.recipe.schema import Layer, NodeClass
-from swm.rules.registry import Registry
+from swm.recipe.schema import Layer, NodeClass, Unobserved
 from swm.stages.layers import LayersResult, Node
 from swm.stages.terrain import City, TerrainResult, _label_land
 
@@ -130,22 +129,19 @@ class RoadNetwork:
 
 
 def build_crews(
-    crews: int, crew_base: int, terrain: TerrainResult, layers: LayersResult, rules: Registry
+    unobserved: Unobserved, terrain: TerrainResult, layers: LayersResult
 ) -> CrewsResult:
     """Site the crew bases, deal the crews to them, and keep the emergency pool at the first.
 
     Parameters
     ----------
-    crews : int
-        Repair crews in the world, in one pool (recipe ``unobserved.crews``).
-    crew_base : int
-        Crew bases to site (recipe ``unobserved.crew_base``).
+    unobserved : Unobserved
+        The recipe's counts: ``crews`` (one pool), ``crew_base``, and the emergency pool's
+        ``mobile_substations`` and ``mobile_cell_sites``.
     terrain : TerrainResult
         The ground: land, cities and cell size.
     layers : LayersResult
         The layers; the transport links are the roads.
-    rules : Registry
-        The modeling rules in force (the emergency pool).
 
     Returns
     -------
@@ -159,6 +155,7 @@ def build_crews(
 
     Spec: structure v0.6 §4.4a (crews; repair: pilot); Work Order 5, H1-H2.
     """
+    crews, crew_base = unobserved.crews, unobserved.crew_base
     network = RoadNetwork(terrain, layers)
     sited = _site_bases(crew_base, terrain.cities, layers.nodes, network)
     # CHOICE: the crews are dealt to the bases in turn, starting at the first sited.
@@ -176,7 +173,7 @@ def build_crews(
         for i, (city, node, km) in enumerate(sited)
     )
     crew_list = tuple(Crew(f"CRW-{i + 1:04d}", bases[i % crew_base].base_id) for i in range(crews))
-    return CrewsResult(bases, crew_list, _emergency_pool(bases[0], rules))
+    return CrewsResult(bases, crew_list, _emergency_pool(bases[0], unobserved))
 
 
 def _site_bases(
@@ -249,13 +246,16 @@ def _distances_from(
     }
 
 
-def _emergency_pool(home: CrewBase, rules: Registry) -> tuple[MobileUnit, ...]:
+def _emergency_pool(home: CrewBase, unobserved: Unobserved) -> tuple[MobileUnit, ...]:
     # CHOICE: the pool is kept at the first sited base, the one with the best road access.
-    pool = rules.value("repair.emergency.pool")
+    pool = {
+        "mobile_cell_site": unobserved.mobile_cell_sites,
+        "mobile_substation": unobserved.mobile_substations,
+    }
     return tuple(
         MobileUnit(f"{MOBILE_UNIT_CODES[kind]}-{i + 1:04d}", kind, home.base_id)
-        for kind in sorted(pool)
-        for i in range(int(pool[kind]))
+        for kind, count in pool.items()
+        for i in range(count)
     )
 
 

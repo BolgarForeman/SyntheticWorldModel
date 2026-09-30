@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: 79fa9936fe1151282dfb75c040c6b3d8c357590ba1584e9f9dba7ad099a9e931
+  registry_sha256: 9b38a9c16a89a38e56d9c938aa4a9e1957fee4eefea859eb8236d1266fab3861
   overrides: {}
 crew_bases:
 - base_id: CRB-0001
@@ -20,15 +20,31 @@ permanent_repair:
   slight:
     nodes: 23
     mean_hazus_h: 35.687
-    mean_repair_h: 37.851
-    mean_lead_time_h: 30.321
-    lead_time_floored: 2
+    mean_repair_h: 32.843
+    mean_spread: 0.379
+    mean_lead_time_h: 25.309
+    lead_time_floored: 3
   moderate:
     nodes: 23
     mean_hazus_h: 147.861
-    mean_repair_h: 155.373
-    mean_lead_time_h: 132.327
-    lead_time_floored: 3
+    mean_repair_h: 147.663
+    mean_spread: 0.755
+    mean_lead_time_h: 125.592
+    lead_time_floored: 4
+  extensive:
+    nodes: 23
+    mean_hazus_h: 880.174
+    mean_repair_h: 934.041
+    mean_spread: 0.73
+    mean_lead_time_h: 863.649
+    lead_time_floored: 1
+  complete:
+    nodes: 23
+    mean_hazus_h: 2222.609
+    mean_repair_h: 2301.224
+    mean_spread: 0.627
+    mean_lead_time_h: 2133.224
+    lead_time_floored: 0
 emergency_repair:
   mobile_substation:
     options: 2

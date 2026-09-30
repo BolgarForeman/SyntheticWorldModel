@@ -57,6 +57,8 @@ shared_causes:
 unobserved:
   crews: 3                          # the sensitivity setting
   crew_base: 1                      # §4.4a pilot: one crew base
+  mobile_substations: 1             # §4.4a pilot emergency pool (ruling T11)
+  mobile_cell_sites: 1
 
 dynamics:
   tier: exact

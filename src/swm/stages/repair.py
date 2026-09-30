@@ -3,8 +3,9 @@
 Every damaged node has up to two alternative modes (structure v0.6 §4.4a):
 - **permanent:** a lead time that holds no crew (assessment and parts), then crew work hours,
   restoring full capacity. The centre is the Hazus MR4 restoration mean for the node's class
-  and damage state; crew work is a placeholder by damage state, and lead time is the drawn
-  repair time less the crew work, floored at 0;
+  and damage state, and the spread its Hazus standard deviation / mean unless the recipe sets
+  one; crew work is a placeholder by damage state, and lead time is the drawn repair time less
+  the crew work, floored at 0;
 - **emergency**, for distribution substations (a mobile substation) and masts (a mobile cell
   site) only: set-up plus travel, using one unit from a finite pool, restoring reduced capacity
   for the rest of the event.
@@ -27,7 +28,7 @@ import numpy as np
 from swm import rng
 from swm.draws import DrawMethod, Levers
 from swm.recipe.dependencies import Role
-from swm.recipe.schema import ContinuousDrawnQuantity, Layer, NodeClass
+from swm.recipe.schema import Layer, NodeClass, RepairRates
 from swm.rules.registry import Registry
 from swm.stages.couplings import CouplingsResult
 from swm.stages.crews import ELIGIBLE_CLASS, CrewBase, CrewsResult, RoadNetwork
@@ -59,6 +60,8 @@ class PermanentRepair:
     damage_state: str
     hazus_mean_h: float
     hazus_sd_h: float
+    spread: float
+    """The repair rate's spread: the Hazus standard deviation / mean, or the recipe's override."""
     repair_h: float
     """Drawn around the Hazus mean; lead time plus crew work, unless the floor applies."""
     crew_work_h: float
@@ -112,7 +115,7 @@ def repair_streams(root_seed: int) -> Mapping[Layer, np.random.Generator]:
 
 
 def build_repair(
-    levers: ContinuousDrawnQuantity,
+    levers: RepairRates,
     crews: CrewsResult,
     terrain: TerrainResult,
     layers: LayersResult,
@@ -125,8 +128,9 @@ def build_repair(
 
     Parameters
     ----------
-    levers : ContinuousDrawnQuantity
-        The recipe's repair-rate levers: heterogeneity and compliance gap, in percent.
+    levers : RepairRates
+        The recipe's repair-rate levers, in percent: the compliance gap, and the heterogeneity
+        that overrides the Hazus spread when set.
     crews : CrewsResult
         The crew bases and the emergency pool.
     terrain : TerrainResult
@@ -197,7 +201,7 @@ def _travel(
 
 
 def _permanent(
-    levers: ContinuousDrawnQuantity,
+    levers: RepairRates,
     layers: LayersResult,
     rules: Registry,
     streams: Mapping[Layer, np.random.Generator],
@@ -207,9 +211,8 @@ def _permanent(
     hazus = rules.value("repair.hazus_restoration_days")
     crew_work = rules.value("repair.crew_work_h")
     unrepairable_classes = set(rules.value("repair.unrepairable"))
-    method = DrawMethod.from_registry(rules)
-    rate = Levers.from_percent(levers.heterogeneity_pct, levers.compliance_gap_pct)
-    table = method.mixture(rate.spread)
+    no_rows = set(rules.value("repair.no_repair_rows"))
+    rates = _RateDraw(levers, DrawMethod.from_registry(rules))
     records: list[PermanentRepair] = []
     unrepairable: list[str] = []
     for node in layers.nodes:
@@ -218,30 +221,60 @@ def _permanent(
         if node.node_class in unrepairable_classes:
             unrepairable.append(node.node_id)
             continue
+        if node.node_class in no_rows:
+            continue
         if node.node_class not in hazus:
             notes.add(f"{node.node_class}: no Hazus restoration row; no permanent repair")
             continue
-        # CHOICE: the drawn quantity is the repair rate, so a positive compliance gap slows
-        # repair (median time = Hazus mean / (1 - gap)); one draw per node serves every damage
-        # state, so a node slow to repair is slow at each.
-        factor = (1.0 - rate.compliance_gap) * method.quantile(table, u)
-        # CHOICE: the damage states recorded are those with crew work hours (§4.4a).
-        for state in crew_work:
-            mean_h = float(hazus[node.node_class][state]["mean"]) * HOURS_PER_DAY
-            repair_h = mean_h / factor
-            work_h = float(crew_work[state])
+        # CHOICE: one draw per node serves every damage state, each at its own spread, so a
+        # node slow to repair is slow at each.
+        for state, work_h in crew_work.items():
+            row = hazus[node.node_class][state]
+            mean_h = float(row["mean"]) * HOURS_PER_DAY
+            sd_h = float(row["sd"]) * HOURS_PER_DAY
+            spread = rates.spread(mean_h, sd_h)
+            repair_h = mean_h / rates.factor(spread, u)
             records.append(
                 PermanentRepair(
                     node_id=node.node_id,
                     damage_state=state,
                     hazus_mean_h=mean_h,
-                    hazus_sd_h=float(hazus[node.node_class][state]["sd"]) * HOURS_PER_DAY,
+                    hazus_sd_h=sd_h,
+                    spread=spread,
                     repair_h=repair_h,
-                    crew_work_h=work_h,
-                    lead_time_h=max(0.0, repair_h - work_h),
+                    crew_work_h=float(work_h),
+                    lead_time_h=max(0.0, repair_h - float(work_h)),
                 )
             )
     return records, unrepairable
+
+
+class _RateDraw:
+    """The repair-rate draw: Hazus spread by default, the recipe's heterogeneity if set."""
+
+    def __init__(self, levers: RepairRates, method: DrawMethod) -> None:
+        self.override = levers.heterogeneity_pct
+        self.gap = levers.compliance_gap_pct / 100.0
+        self.method = method
+        self._tables: dict[float, tuple[float, ...]] = {}
+
+    def spread(self, mean_h: float, sd_h: float) -> float:
+        """Return the rate spread (standard deviation / target) at one class and state."""
+        if self.override is not None:
+            return self.override / 100.0
+        return sd_h / mean_h if mean_h > 0.0 else 0.0
+
+    def factor(self, spread: float, u: float) -> float:
+        """Draw the rate as a multiple of the Hazus rate: (1 - gap) x Q(u).
+
+        CHOICE: the drawn quantity is the repair rate, so a positive gap slows repair (median
+        time = Hazus mean / (1 - gap)). The reciprocal of a lognormal keeps its log spread, so
+        the time takes the same spread as the rate.
+        """
+        levers = Levers(spread, self.gap)
+        if levers.spread not in self._tables:
+            self._tables[levers.spread] = self.method.mixture(levers.spread)
+        return (1.0 - self.gap) * self.method.quantile(self._tables[levers.spread], u)
 
 
 def _emergency(
@@ -374,6 +407,7 @@ def statistics_record(result: RepairResult, crews: CrewsResult) -> dict[str, obj
             "nodes": len(records),
             "mean_hazus_h": _mean([p.hazus_mean_h for p in records]),
             "mean_repair_h": _mean([p.repair_h for p in records]),
+            "mean_spread": _mean([p.spread for p in records]),
             "mean_lead_time_h": _mean([p.lead_time_h for p in records]),
             "lead_time_floored": sum(p.repair_h < p.crew_work_h for p in records),
         }
