@@ -1,6 +1,6 @@
 # Pilot Spec — The Full Chain on a Hand-Checkable Constructed World
 
-*v0.5 · 2026-09-29 · feeds Ch7 §7.2 and Figures 7.1, 7.2 and 7.4 · aligned with World_Generator_Structure v0.5 and the pilot recipe in the SyntheticWorldModel repository*
+*v0.6 · 2026-09-30 · feeds Ch7 §7.2 and Figures 7.1, 7.2 and 7.4 · aligned with World_Generator_Structure v0.7 and the pilot recipe in the SyntheticWorldModel repository*
 
 ## Purpose
 
@@ -19,7 +19,7 @@ It is a Phase 0 run in the sense of the generator design (§1.7.6). The proposal
 - **Coupling.** Cross-layer edges carry commodity, coupling strength κ and a failure mode (throttle or trip). Reserves are drawn per node from context like every other unobserved quantity, and each reserve sets its buffer time τ (reserve ÷ draw) during the run. The earlier single planted reserve on the fuel→power link is superseded.
 - **Sources.** One small source file per layer in its real container. Power (OpenStreetMap and the WRI plant database) and healthcare (OpenStreetMap and the government facility register) each have two sources that deliberately disagree; the other four layers have one. Fuel and healthcare sources report nodes only.
 - **Crews.** The world has two repair crews.
-- **Disruption.** One storm corridor is drawn as a shared latent field, and element failures are drawn conditionally on it. The run uses 5–8 scenarios so each can be traced.
+- **Disruption.** One storm corridor is drawn as a shared latent field (Structure §4.3b), and element damage is drawn conditionally on it. The storm is a moderate typhoon (severity 50). It cuts overhead power lines and aerial telecom links by wind and floods low-lying facilities; facility damage is slight or moderate only. The run uses 8 equally weighted scenarios so each can be traced; they are an illustrative set, not a probability estimate of real storms.
 - **Dynamics.** Calibration-tier forms only (linear, threshold, discrete recovery), over a short window. This is a declared restriction.
 - **Determinism.** One master seed with named substreams. The world holds fixed while the error varies.
 
@@ -41,7 +41,7 @@ All four are posed on the same network, dynamics, criticality and ledger. The ob
 |---|---|---|
 | **Defensive (INROP-D)** | Spend a budget of 3–4 on protection actions (defined below) before the storm to minimize expected unserved demand-hours | Brute force over every affordable action set, cross-checked against the MIP |
 | **Offensive (INROP-O)** | Strike k nodes (k = 2, 3), degrading their condition, to maximize unserved demand-hours. The attack is posed on its own, not coupled to the defender | Brute force |
-| **Restorative (INROP-R)** | After one fixed storm scenario, sequence the world's two repair crews across the failed nodes to minimize unserved demand-hours during recovery | Brute force over repair orders |
+| **Restorative (INROP-R)** | After one fixed storm scenario, sequence the world's two repair crews across the failed nodes and failed overhead lines to minimize unserved demand-hours during recovery | Brute force over repair orders |
 | **Informative (INROP-I)** | Choose one or two uncertain cross-layer edges to observe before hardening, to maximize the improvement in the defensive decision | Enumeration over the observation choices and their outcomes |
 
 The coupled attacker–defender formulation stays future research. Attack itself is in the family and is exercised here. Attacking a reserve directly, such as draining a tank without damaging the facility, is in scope for the full demonstration and is left out of the pilot only.
@@ -52,10 +52,10 @@ Node state is condition × supply level, with a reserve held against a dependenc
 
 | Action | Cost | What it changes | Real-world instance |
 |---|---|---|---|
-| **Protect condition** | 2 | The storm cannot damage the node's own equipment: its condition stays at 1 in every scenario. Its supply level can still fall through a cascade | A flood wall or raised switchgear at a substation; a sealed pump station; a hardened pole line |
+| **Protect condition** | 2 | The storm cannot damage the element: a protected facility or overhead line keeps condition 1 in every scenario. Its supply level can still fall through a cascade. This is the fortification convention, so it gives an upper bound on the value of real hardening | A flood wall or raised switchgear at a substation; a sealed pump station; a hardened pole line |
 | **Add reserve** | 1 | The node gains a reserve on one inbound dependency, which extends τ on that edge. The node keeps operating on the reserve and fails only if supply has not returned when the reserve runs out | A backup generator with 72 hours of fuel at a hospital; elevated storage above a water pump station; a battery bank at a telecom exchange |
 
-At most one of each action per node. A protected node can still go dark when the node feeding it fails, and a node with a reserve can still be destroyed by the storm. That separation is the point of the pair: the optimizer faces a real trade between one wall and two generators.
+At most one of each action per element (protection may target a facility or an overhead line; a reserve targets a node). A protected node can still go dark when the node feeding it fails, and a node with a reserve can still be destroyed by the storm. That separation is the point of the pair: the optimizer faces a real trade between one wall and two generators.
 
 A third action, **add a redundant feed** (a new cross-layer edge with its own κ, such as a tie line from a second substation), is held out of the pilot so the topology stays fixed for the hand trace. It is the next action to add, since the design already carries the edge-addition variable.
 
@@ -102,6 +102,13 @@ The measure is distance to the optimum, normalized as (objective of the recommen
 ## Deliberately out of scope
 
 The following are left out: a second model within any class, the coupled attacker–defender formulation, error mechanisms beyond simple parametric noise, the tempo and equity objectives, the simulation tier, layer-level generate-six-hide-one, and full source fidelity beyond one small file per layer.
+
+## Changes from v0.5
+
+Ruled by the author, 2026-09-30 (decision 0012):
+- The storm is specified (Structure §4.3b): overhead lines fail by wind, facilities by flood; severity 50; 8 equally weighted scenarios.
+- The restorative model sequences crews across failed overhead lines as well as failed nodes.
+- Protect condition can target an overhead line, and is stated as the fortification convention (an upper bound).
 
 ## Changes from v0.3
 

@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.6 · 2026-09-29 · companion to the World Generator Interface mockup v0.5 and recipe schema v1 · supersedes v0.5*
+*v0.7 · 2026-09-30 · companion to the World Generator Interface mockup v0.5 and recipe schema v2 · supersedes v0.6*
 
 ## 1. What this is
 
@@ -111,8 +111,8 @@ Each stage reads the recipe and the outputs of earlier stages, draws from its ow
   - **feed configuration mix:** single feed, two full feeds (either covers the need), two half feeds (both needed). The three shares are coupled and always total 100%; moving one redistributes the other two in proportion;
   - **public telecom share** for control dependencies on power, water and pipelines (§4.3a, rule 1).
 - **Per dependency type:** the transfer form, from the four canon forms: linear, concave, threshold (the cliff), step. Defaults: physical flow linear, logistic threshold, control step, service linear. Concave arrives with the simulation tier; an exact-tier world that uses it is refused at build. Where a node has several inbound dependencies, the combining function is the typed weakest link.
-- **Shared causes:** hazard fields (storm corridor, seismic zone, flood plain), each switchable with its own correlation length and its own severity (0 = no damage; 100 = every exposed element in the hazard core fails); the number of scenarios.
-- **Produces:** cross-layer edges, each with its supplier, commodity, dependency type, role, feed configuration and transfer form; a latent field per active hazard with distance-decay correlation; the scenario set, with element failures drawn conditionally on the fields.
+- **Shared causes:** hazard fields (storm corridor, seismic zone, flood plain), each switchable with its own correlation length and its own severity; the number of scenarios. The storm corridor is specified in §4.3b. Severity is anchored to Taiwan's typhoon classes (§4.3b); the seismic zone and flood plain stay switched off and unbuilt in Phase 1.
+- **Produces:** cross-layer edges, each with its supplier, commodity, dependency type, role, feed configuration and transfer form; a latent field per active hazard with distance-decay correlation; the scenario set, with element damage drawn conditionally on the fields (§4.3b).
 - **Note:** redundancy is planted as a configuration and recorded per edge, never as a total. Two full feeds and four half feeds carry the same total supply and fail differently.
 
 ### 4.3a The dependency table
@@ -247,6 +247,56 @@ The airport supplies no fuel class.
 
 An LNG or coal import terminal never supplies bunkers, jet fuel or diesel.
 
+### 4.3b Shared causes: the storm
+
+Ruled by the author, 2026-09-30 (decision 0012). Evidence: `evidence/Hazards_Evidence_v0_1.md`, three research lanes and an independent review (23 load-bearing claims: 15 confirmed, 6 overstated, 2 unreachable, none wrong). Ruling sheet: `evidence/Hazards_Ruling_Sheet_v0_1.md`. Every value is placeholder-grade until the realism ranges are measured (§10, item 4).
+
+**What the storm damages.** Real typhoon outages come mostly from poles and overhead lines, and from facilities losing grid power or telecom backhaul, not from damaged facilities (Faxai 2019: about 2,000 poles broken and no mast collapsed from wind; Hurricane Ian 2022: 2.3% of cell sites out were physically damaged; Hazus Hurricane has no wind model for lifelines). So:
+- **Overhead power lines** fail by wind: the power layer's links, and the power feeds from a substation to its consumers.
+- **Aerial telecom links** fail by wind with the same pole-line fragility, since aerial fibre rides the same poles · J.
+- **Facilities** fail by flood only. None fails from wind in Phase 1.
+- **Not damaged in Phase 1:** buried water mains, roads and bridges. Roads stay open; road blockage and bridge scour come later (declared restriction).
+
+**The wind field.** A typhoon moves on a straight track across the island. Wind is a 10-minute sustained speed in m/s, as Taiwan's Central Weather Administration (CWA) reports it. At each place it is built in order:
+1. **Profile.** Modified Rankine: inside the radius of maximum wind, speed rises linearly to the peak; beyond it, V = V_max × sqrt(R_max ÷ r). Exponent 0.5, literature range 0.4–0.6 (Geoscience Australia TCRM) · L.
+2. **Sea to land.** Land keeps 0.83 of the sea wind, most of the drop within 1 km of the coast (Vickery et al. 2009) · L (US).
+3. **Local surface.** Taiwan building wind code terrain classes: 0.476 of open-ground wind in a city core, 0.662 in a town, 1.0 in the open or on the coast · S (TW) for the factors, J for their use in a hazard field.
+4. **Mountain lee.** Places in the lee of the spine keep 0.6 · J, bounded by the >40% weakening of typhoons crossing the Central Mountain Range (Brand & Blelloch, as quoted in Wu & Kuo 1999; whether wind or pressure is unconfirmed).
+5. **Random variation.** A smooth random field from a Wendland kernel, (1 − t)⁴(1 + 4t), valid in 2-D (Bevilacqua et al. 2019), with normal values built from uniform draws. Correlation length 10 km, spread 10% · J (placeholders).
+
+For line fragility the 10-minute wind converts to a 3-second gust: ×1.75 inland, ×1.30 at the coast (WMO) · L.
+
+**Severity.** 0 means no storm. Otherwise the peak 10-minute wind at sea is V_max = 17.2 + 0.53 × severity m/s, so mild typhoons (17.2–32.6 m/s) fall at 1–29, moderate (32.7–50.9) at 29–64 and strong (≥ 51) at 64–100, topping out near 70 m/s. The CWA classes are S (TW); the linear map is J. Severity also sets 24-hour rainfall on the Water Resources Agency flood-map ladder: 300 mm up to 33, 450 mm up to 66, 600 mm above. **Pilot: severity 50**, a moderate typhoon near 44 m/s at sea, with 450 mm.
+
+**Flood.**
+- Flood depth at a facility = the scenario's flood stage − the site's height above the nearest drainage, the standard single flood index (Nobre 2011) · L.
+- Flood stage: 1 m at 300 mm, 2 m at 450 mm, 3 m at 600 mm · J (placeholders; next source: the NCDR flood map handbook).
+- A facility floods out at its Hazus functional depth (Hazus 6.1 Inventory Technical Manual) · L (US):
+  - substations, power plants, water treatment and pumping: 1.2 m (4 ft);
+  - tank farms and depots: any water;
+  - hospitals, clinics and blood banks: 0.15 m (0.5 ft), measured from grade;
+  - telecom facilities: 1.2 m, borrowing the substation value (Hazus maps them without a damage rule) · J;
+  - water storage: on-ground tanks 7.3 m (24 ft);
+  - reservoirs, ports and airports: not flood-damaged in Phase 1.
+- Damage state by depth over the threshold: up to 0.5 m slight; above 0.5 m moderate; above 1.5 m extensive; above 3 m complete · J. The pilot caps facility damage at moderate (§4.4a).
+
+**Overhead lines.** A line's chance of failing in a scenario comes from a stored table indexed by 3-second gust, per km of line, centred on 0.05 per km at a 45 m/s gust. Anchor: wood distribution poles fail with probability 0.02–0.12 at a 100 mph gust when new and 0.1–0.9 when old · L (US); the per-km conversion is J. Transmission towers collapse only near 285 km/h gusts (Cyclone Fani curves) · L and do not fail at pilot severity. A failed line is repaired by crew work of 6 h with no lead time, travelling from the crew base · J, anchored on Taipower's typical restoration within 1–3 days of large typhoons.
+
+**Damage and function.** A damaged element is off (condition 0) from the storm until its repair completes, then fully back (condition 1). This is the failed-or-working convention of most interdependent-infrastructure models (Dueñas-Osorio 2007; Ouyang & Dueñas-Osorio 2014; Lee, Mitchell & Wallace 2007) · L. Slight damage repairs within about a day, which reproduces Hazus's near-full function one day after slight damage. Partial capacity by damage state comes later (declared).
+
+**Hospitals** are damaged by flood only. Hazus's hurricane evidence is that most hospitals stay open on backup power; their storm outages come through the cascade, cushioned by their reserves (§4.4a) · L (US).
+
+**Scenarios.**
+- Each scenario draws its track position and angle, its peak wind within the severity's CWA class band, and its random-variation field, from its own stream.
+- Each element then fails independently given the field. This is the Hazus structure, and the shared field carries the spatial correlation (Adachi & Ellingwood 2009; Jayaram & Baker 2010) · L. Correlation beyond the field is left out (declared).
+- Scenarios are equally weighted. The pilot keeps 8. Published studies use 30–200, so the pilot's expected values are over an illustrative set, not a probability estimate of real storms; the run note says so.
+
+**Protection.** A protected element cannot be damaged in any scenario: the fortification convention of defender–attacker models (Brown et al. 2006: a defended asset "becomes invulnerable") · L. Real hardening lowers the failure chance rather than removing it, so defensive answers are an upper bound on the value of protection (declared). Protection can target a facility or an overhead line.
+
+**Arithmetic.** Every curve that needs exp or erf (line fragility, any lognormal) is built offline into a stored table in the rules registry. At runtime only +, −, ×, ÷ and sqrt are used (§3). Each hazard rule goes in the registry with its source, grade and Theta role (θ\*-dynamics).
+
+**Damage-state names.** Slight, moderate, extensive and complete, the Hazus lifeline names the repair times use.
+
 ### 4.4 What sources don't show
 
 These are the real-but-unobserved quantities. They split into two groups by how they are made, and their design targets are set in §4.4a. Stage order: **layers → requirements → couplings → reserves, strength, modes and repair.** Requirements are drawn before couplings because they decide which substation supplies a consumer (§4.3a, rule 4).
@@ -378,7 +428,8 @@ The last two rows were added on 2026-09-29 under decision 0010: a non-towered ai
 - Heterogeneity default 10%. J with L support (US: NERC load modelling; Lee, Mitchell & Wallace 2007).
 
 **Repair.** Two alternative modes per eligible damaged node:
-- **Permanent:** a lead time that holds no crew (assessment and parts), then crew work hours, restoring full capacity. The centre is the Hazus restoration mean by class and damage state (Hazus MR4 technical manual; 6.1 values unverified) · L (US). Crew work hours are 8 h at slight damage and 24 h at moderate (placeholders); lead time is the Hazus mean less the crew work, floored at 0.
+- **Permanent:** a lead time that holds no crew (assessment and parts), then crew work hours, restoring full capacity. The centre is the Hazus restoration mean by class and damage state (Hazus MR4 technical manual; 6.1 values unverified) · L (US). Crew work hours are 8 h at slight damage, 24 h at moderate, 72 h at extensive and 168 h at complete (placeholders; the last two ruled 2026-09-30, decision 0011 addendum); lead time is the Hazus mean less the crew work, floored at 0. The centre is not shifted by default (repair compliance gap 0) and the spread is Hazus's own standard deviation ÷ mean; the recipe's heterogeneity lever for repair is an optional override (decision 0011 addendum).
+- **Overhead lines:** 6 h crew work, no lead time (§4.3b).
 - **Emergency:** travel over roads from the crew base plus set-up, using one unit from a finite pool. It restores reduced capacity for the rest of the event.
   - Distribution substation: mobile substation, 12–24 h including travel, about 25 MVA against the node's normal peak load (L, US DOE).
   - Mast: mobile cell site, about 14 h, capacity 0.5 (L, US; capacity J).
@@ -388,8 +439,8 @@ The last two rows were added on 2026-09-29 under decision 0010: a non-towered ai
 - **Pilot:**
   - 2 crews in one pool, a declared scarcity (sensitivity test at 1, 2 and 3);
   - one crew base (`crew_base`);
-  - an emergency pool of 1 mobile substation and 1 mobile cell site;
-  - the storm causes slight and moderate damage only at facilities (hazards, Work Order 6).
+  - an emergency pool of 1 mobile substation and 1 mobile cell site, set in the recipe (`mobile_substations`, `mobile_cell_sites`);
+  - the storm causes slight and moderate damage only at facilities, plus overhead-line failures (§4.3b).
 
 **Crews:**
 - Crews are counted in the recipe.
@@ -555,6 +606,14 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.6
+
+All ruled by the author, 2026-09-30 (decision 0012, and the decision 0011 addendum for repair):
+
+- New §4.3b, the storm: overhead lines fail by wind and facilities by flood; a modified Rankine wind field with sea-to-land, Taiwan wind-code, mountain-lee and random-variation factors; flood depth from height above drainage; equally weighted scenarios; protection as immunity, for facilities and overhead lines.
+- Severity re-anchored to Taiwan's typhoon classes (peak wind and rainfall), replacing "100 = every exposed element in the hazard core fails" (§4.3, §4.3b). Pilot severity 50.
+- Repair: crew work for extensive (72 h) and complete (168 h) damage; repair centred on Hazus (gap 0) with Hazus spread; the emergency pool moved to the recipe; overhead-line repair added (§4.4a).
 
 ## Changes from v0.5
 
