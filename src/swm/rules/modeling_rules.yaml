@@ -186,6 +186,32 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+- id: draws.exponential_table
+  title: Exponential quantile table for times to failure
+  stage: draws
+  value:
+    knots: [0.0, 0.005, 0.01, 0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6,
+      0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99, 0.995, 1.0]
+    quantiles: [0.00500716, 0.00500716, 0.010039546, 0.025290627, 0.051238226, 0.1052474, 0.162344449,
+      0.222903984, 0.287373216, 0.356292017, 0.430320427, 0.5102772, 0.597195162, 0.692403016, 0.797650417,
+      0.915307, 1.048695034, 1.202680217, 1.384806033, 1.607710017, 1.895083233, 2.300113033, 2.99251605,
+      3.684919066, 4.600226067, 5.292629083, 5.292629083]
+  units: null
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: tools/build_quantile_table.py --exponential, url: null, quote: null, verified: null}
+  reasoning: A component with a constant failure rate fails after an exponentially distributed time. The
+    table is Q(u) = -ln(1 - u) on the shared knots, clipped at the 0.5% and 99.5% quantiles and scaled
+    to mean 1, so a time is the mean × Q(u) using only arithmetic at runtime.
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-29'
+    decision: '0009'
+  history: []
 - id: draws.lever_meaning
   title: What heterogeneity and the compliance gap mean
   stage: draws
@@ -1488,21 +1514,29 @@ rules:
   title: Chance a backup consumer has a diesel standby generator
   stage: layers
   value: {exchange: 1.0, data_centre: 1.0, cable_landing: 1.0, treatment: 1.0, tertiary: 1.0, regional: 1.0,
-    blood_bank: 1.0, mast: 0.5, pumping: 0.5, clinic: 0.5}
+    blood_bank: 1.0, mast: 0.0, pumping: 0.5, clinic: 0.0}
   units: null
   applies_to: {layer: null, node_class: null, condition: null}
   grade: J
   jurisdiction: null
-  sources: []
-  reasoning: Chance a backup consumer has a diesel standby generator. A share for drawing the §4.3a subtype
-    attributes (ruling R9); shares are placeholders.
+  sources:
+  - {citation: 'PR 5b answers (decision 0010, second addendum)', url: docs/work_orders/WO-05b-answers.md,
+    quote: null, verified: null}
+  reasoning: 'Chance a backup consumer has a diesel standby generator: certain where its fuel row is core,
+    and even where it is optional. Masts carry the Taiwan 4 h battery instead and clinics have no generator
+    by default (§4.4a; decision 0010), so both are 0.'
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
     date: '2026-09-29'
-    decision: '0007'
-  history: []
+    decision: '0010'
+  history:
+  - value: {exchange: 1.0, data_centre: 1.0, cable_landing: 1.0, treatment: 1.0, tertiary: 1.0, regional: 1.0,
+      blood_bank: 1.0, mast: 0.5, pumping: 0.5, clinic: 0.5}
+    units: null
+    date: '2026-09-29'
+    decision: '0010'
 - id: sizing.power.reserve_margin
   title: Generation capacity over the load it serves
   stage: sizing
@@ -6537,26 +6571,121 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
-- id: reserves.generator_availability
-  title: Backup generator reliability
+- id: reserves.compliance_gap.national_stocks_pct
+  title: 'Compliance gap: national LNG, oil and coal stocks'
   stage: reserves
-  value: {poorly_maintained_fail_within_48h: 0.5, well_maintained_fail_within_336h: 0.2}
-  units: probability
-  applies_to: {layer: null, node_class: null, condition: null}
-  grade: L
-  jurisdiction: US
+  value: 0.0
+  units: percent
+  applies_to: {layer: fuel, node_class: null, condition: null}
+  grade: J
+  jurisdiction: TW
   sources:
-  - {citation: 'Marqusee & Jenket, Reliability of emergency and standby diesel generators, Applied Energy
-      268, 2020', url: 'https://www.sciencedirect.com/science/article/abs/pii/S030626192030430X', quote: Poorly
-      maintained generators are 50% likely to fail within 48 h, verified: true}
-  reasoning: A separate per-generator availability draw, not a stock gap (ruling T7, review F10). The
-    fail-to-start and fail-to-run rates are derived in PR 5b.
+  - {citation: 'PR 5b answers (decision 0010, second addendum)', url: docs/work_orders/WO-05b-answers.md,
+    quote: null, verified: null}
+  reasoning: The LNG, oil and coal stocks are statutory stockholding obligations reported to the government;
+    a default shortfall would contradict their S grade, so they are centred on the legal floor.
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-29'
+    decision: '0010'
+  history: []
+- id: reserves.compliance_gap.other_classes
+  title: Compliance gap of classes §4.4a lists none for
+  stage: reserves
+  value: the recipe's reserves gap (unobserved.reserves.compliance_gap_pct, default 30)
+  units: null
+  applies_to: {layer: null, node_class: 'blood_bank, cable_landing', condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'PR 5b answers (decision 0010, second addendum)', url: docs/work_orders/WO-05b-answers.md,
+    quote: null, verified: null}
+  reasoning: Blood banks and cable landings have no §4.4a gap, so they take the recipe's reserves gap.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
     date: '2026-09-29'
-    decision: '0009'
+    decision: '0010'
+  history: []
+- id: reserves.generator_availability
+  title: Backup generator reliability
+  stage: reserves
+  value:
+    well_maintained: {fail_to_start: 0.0013, mttf_h: 1662.0}
+    poorly_maintained: {fail_to_start: 0.0165, mttf_h: 61.0}
+  units: fail-to-start probability per start; mean run hours to failure
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: L
+  jurisdiction: US
+  sources:
+  - {citation: 'Marqusee & Jenket, Reliability of emergency and standby diesel generators, Applied Energy
+      268 (2020), accepted manuscript, Tables 2 and 3', url: 'https://www.osti.gov/servlets/purl/1659849',
+    quote: resulting in an estimated FTS of .13%, verified: true}
+  - {citation: 'Marqusee & Jenket, Reliability of emergency and standby diesel generators, Applied Energy
+      268, 2020', url: 'https://www.sciencedirect.com/science/article/abs/pii/S030626192030430X', quote: Poorly
+      maintained generators are 50% likely to fail within 48 h, verified: true}
+  reasoning: 'A separate per-generator draw: the generator fails to start with probability fail_to_start,
+    and otherwise runs until a time to failure drawn around mttf_h (a constant failure rate). Well maintained
+    is the Fehr data set (239 EDGs), poorly maintained the Hong Kong one (147 EDGs); the 50% and 20% figures
+    the evidence quoted follow from these.'
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-29'
+    decision: '0010'
+  history:
+  - value: {poorly_maintained_fail_within_48h: 0.5, well_maintained_fail_within_336h: 0.2}
+    units: probability
+    date: '2026-09-29'
+    decision: '0010'
+- id: reserves.generator_availability.well_maintained_share
+  title: Share of backup generators that are well maintained
+  stage: reserves
+  value: 1.0
+  units: ratio
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'PR 5b answers (decision 0010, second addendum)', url: docs/work_orders/WO-05b-answers.md,
+    quote: null, verified: null}
+  - {citation: 'Marqusee & Jenket, Reliability of emergency and standby diesel generators, Applied Energy
+      268 (2020), accepted manuscript, Tables 2 and 3', url: 'https://www.osti.gov/servlets/purl/1659849',
+    quote: resulting in an estimated FTS of .13%, verified: true}
+  reasoning: 'Every generator is well maintained by default, the level Taiwan''s hospital accreditation
+    inspects. A recipe may lower the share (modeling_rules.overrides) for a sensitivity run: a poorly
+    maintained set fails on average at 61 h, inside a 72 h window, so it is not the default (decision
+    0010).'
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-29'
+    decision: '0010'
+  history: []
+- id: reserves.mast.designated_share
+  title: Share of masts that are designated disaster-response sites
+  stage: reserves
+  value: 0.0
+  units: ratio
+  applies_to: {layer: null, node_class: mast, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Design targets evidence, lane: reserves §1a (mast_disaster_site_share)', url: docs/design/evidence/Design_Targets_Evidence_v0_1.md,
+    quote: null, verified: null}
+  reasoning: Designated disaster-response sites hold 72 h of battery instead of 4 h, but no source gives
+    how many there are. The share stays 0 until a source gives a count (decision 0010).
+  status: open
+  open_decision: mast_disaster_site_share
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-29'
+    decision: '0010'
   history: []
 - id: tolerance.towered_airport
   title: 'Telecom tolerance: airport'
@@ -6889,6 +7018,46 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+- id: tolerance.airport_not_towered
+  title: 'Telecom tolerance: airport, not towered'
+  stage: tolerance
+  value: {t_h: 24.0, d: 0.8}
+  units: null
+  applies_to: {layer: null, node_class: airport, condition: towered = false}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'PR 5b answers (decision 0010, second addendum)', url: docs/work_orders/WO-05b-answers.md,
+    quote: null, verified: null}
+  reasoning: Full function on manual fallback for T hours, then level d; d_eff = 1 − public share × (1
+    − d). Flights run on radio; telecom loss mainly hits bookings and fuel orders.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-29'
+    decision: '0010'
+  history: []
+- id: tolerance.tank_farm_not_connected
+  title: 'Telecom tolerance: tank farm, not pipeline-connected'
+  stage: tolerance
+  value: {t_h: 12.0, d: 0.6}
+  units: null
+  applies_to: {layer: null, node_class: tank_farm, condition: pipeline_connected = false}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'PR 5b answers (decision 0010, second addendum)', url: docs/work_orders/WO-05b-answers.md,
+    quote: null, verified: null}
+  reasoning: Full function on manual fallback for T hours, then level d; d_eff = 1 − public share × (1
+    − d). A truck-fed tank farm works like a fuel depot, and takes the depot's values.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-29'
+    decision: '0010'
+  history: []
 - id: failure_modes.defaults
   title: Default consumer response to a shortfall, by dependency type
   stage: failure_modes
@@ -6915,9 +7084,13 @@ rules:
   title: Class departures from the default failure mode
   stage: failure_modes
   value:
-    throttle: [transmission_substation, distribution_substation, treatment, pumping (multi-pump stations)]
-    step_to_floor: ['tertiary and regional on generator, at the essential fraction']
-    trip: [towered airport on telecom]
+  - {node_class: transmission_substation, supplier: null, when: null, mode: throttle}
+  - {node_class: distribution_substation, supplier: null, when: null, mode: throttle}
+  - {node_class: treatment, supplier: null, when: null, mode: throttle}
+  - {node_class: pumping, supplier: null, when: null, mode: throttle}
+  - {node_class: tertiary, supplier: power, when: has_generator, mode: step_to_floor}
+  - {node_class: regional, supplier: power, when: has_generator, mode: step_to_floor}
+  - {node_class: airport, supplier: telecom, when: towered, mode: trip}
   units: null
   applies_to: {layer: null, node_class: null, condition: null}
   grade: J
@@ -6927,14 +7100,23 @@ rules:
     quote: null, verified: null}
   - {citation: 'Lee, Mitchell & Wallace 2007; NERC load modelling (as reported in the lane)', url: docs/design/evidence/Design_Targets_Evidence_v0_1.md,
     quote: null, verified: null}
-  reasoning: Systematic class behaviour is set per type × class, not left to noise.
+  reasoning: Systematic class behaviour is set per type × class, not left to noise. A hospital on generator
+    steps to its essential fraction (reserves.hospital.essential_load_fraction). Every pumping station
+    is taken as multi-pump. The same departures as before, written so code can read them.
   status: ruled
   open_decision: null
   ruling:
     by: the author (Foreman)
     date: '2026-09-29'
     decision: '0009'
-  history: []
+  history:
+  - value:
+      throttle: [transmission_substation, distribution_substation, treatment, pumping (multi-pump stations)]
+      step_to_floor: ['tertiary and regional on generator, at the essential fraction']
+      trip: [towered airport on telecom]
+    units: null
+    date: '2026-09-29'
+    decision: '0010'
 - id: failure_modes.heterogeneity_pct
   title: Share of elements departing from the class default
   stage: failure_modes
@@ -7305,4 +7487,77 @@ rules:
   status: placeholder
   open_decision: realism ranges
   ruling: null
+  history: []
+- id: strength.supply_days
+  title: Days of its own stock a supplier delivers in a day's turnover
+  stage: strength
+  value: {storage: 0.5, reservoir: 365.0, import_terminal_lng: 11.0, import_terminal_oil: 60.0, import_terminal_coal: 30.0,
+    refinery: 60.0, tank_farm: 60.0, depot: 3.0}
+  units: days
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'PR 5b answers (decision 0010, second addendum)', url: docs/work_orders/WO-05b-answers.md,
+    quote: null, verified: null}
+  - {citation: Structure v0.6 §4.4 (κ from supplier capacity) and §4.4a (stock days), url: null, quote: null,
+    verified: null}
+  reasoning: 'Water storage and fuel stores report a volume, not a delivery rate. A store holding N days
+    of what it supplies can deliver its volume ÷ N per day, so N is the stock target: storage 12 h (§4.4a),
+    LNG 11 days, oil 60 days of industry stock, coal 30 days (§4.4a); depots 3 days and reservoirs a year
+    are judgment. Confirmed as the method (decision 0010); the depot and reservoir values are judgment.'
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-29'
+    decision: '0010'
+  history: []
+- id: strength.lng_gj_per_m3
+  title: Energy in liquefied natural gas
+  stage: strength
+  value: 22.5
+  units: GJ/m³
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: L
+  jurisdiction: TW
+  sources:
+  - {citation: '經濟部能源署, 能源產品單位熱值表 (僅供能源統計用), note 1', url: 'https://www.moeaea.gov.tw/ecw/main/content/wHandMenuFile.ashx?file_id=1502',
+    quote: 液化天然氣：1 公斤(液態)＝1.320 立方公尺(氣態)＝2.207 公升(液態), verified: true}
+  - {citation: '經濟部能源署, 能源產品單位熱值表: (進口)液化天然氣, 9,000 千卡 per m³ of gas', url: 'https://www.moeaea.gov.tw/ecw/main/content/wHandMenuFile.ashx?file_id=1502',
+    quote: '(進口)液化天然氣 立方公尺(m3) 9,000 1.0000 2008', verified: true}
+  - {citation: 'PR 5b answers (decision 0010, second addendum)', url: docs/work_orders/WO-05b-answers.md,
+    quote: null, verified: null}
+  reasoning: 'A cubic metre of LNG is 1,000 ÷ 2.207 = 453 kg, which regasifies to 453 × 1.320 = 598 m³
+    of gas at 9,000 kcal (net) each: 5.38 million kcal, 22.5 GJ. Taiwan''s energy statistics give both
+    figures.'
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-29'
+    decision: '0010'
+  history: []
+- id: strength.coal_gj_per_m3
+  title: Energy in stockpiled coal
+  stage: strength
+  value: 20.0
+  units: GJ/m³
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: TW
+  sources:
+  - {citation: '經濟部能源署, 能源產品單位熱值表: 煙煤-燃料煤, 進口, 發電業 (imported steam coal for power generation)', url: 'https://www.moeaea.gov.tw/ecw/main/content/wHandMenuFile.ashx?file_id=1502',
+    quote: '發 電 業 公 斤 ( k g ) 5,700 0.6333 2012 Power Generation', verified: true}
+  - {citation: 'PR 5b answers (decision 0010, second addendum)', url: docs/work_orders/WO-05b-answers.md,
+    quote: null, verified: null}
+  reasoning: Imported steam coal for power generation carries 5,700 kcal/kg net (23.9 GJ/t) in Taiwan's
+    energy statistics. At a stockpile bulk density of about 0.84 t/m³ that is 20 GJ/m³; no published density
+    could be fetched, so the value stays a placeholder.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-29'
+    decision: '0010'
   history: []

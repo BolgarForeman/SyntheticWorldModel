@@ -18,6 +18,7 @@ STAGE_TITLES = {
     Stage.DEPENDENCIES: "Dependencies",
     Stage.REQUIREMENTS: "Requirements",
     Stage.RESERVES: "Reserves",
+    Stage.STRENGTH: "Coupling strength",
     Stage.TOLERANCE: "Tolerance",
     Stage.FAILURE_MODES: "Failure modes",
     Stage.REPAIR: "Repair",

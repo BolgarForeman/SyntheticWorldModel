@@ -1,0 +1,11 @@
+modeling_rules:
+  registry_version: '0.1'
+  registry_sha256: e67b963861eef3888bf1d99e9cd80a035b746efb6fe637e54440bd98cfdc6920
+  overrides: {}
+edges: 72
+kappa_below_1: 10
+min_kappa: 0.2
+min_headroom: 5.977022
+dependencies: 47
+dependencies_short: 0
+notes: []

@@ -81,6 +81,58 @@ def test_rules_renders_the_modeling_rules_page_without_a_recipe(tmp_path: Path) 
     assert load_registry().sha256 in text
 
 
+def test_buffers_and_strength_write_statistics_and_hashes(
+    pilot_path: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["buffers", str(pilot_path), "-o", str(tmp_path)]) == 0
+    stats = (tmp_path / "buffers_stats.yaml").read_text(encoding="utf-8")
+    assert "\nreserves:\n" in stats
+    assert "\nfailure_modes:\n" in stats
+    hashes = (tmp_path / "buffers_sha256.txt").read_text(encoding="utf-8").splitlines()
+    assert [line.split("  ")[1] for line in hashes] == [
+        "reserves", "backups", "resupply", "tolerance", "failure_modes",
+    ]  # fmt: skip
+    assert main(["strength", str(pilot_path), "-o", str(tmp_path)]) == 0
+    stats = (tmp_path / "strength_stats.yaml").read_text(encoding="utf-8")
+    assert "\ndependencies_short: 0\n" in stats
+    assert "every consumer is fully supplied" in capsys.readouterr().out
+
+
+def test_a_recipe_can_lower_the_share_of_well_maintained_generators(
+    pilot_path: Path, tmp_path: Path
+) -> None:
+    recipe = tmp_path / "poorly_maintained.yaml"
+    recipe.write_text(
+        pilot_path.read_text(encoding="utf-8")
+        + "modeling_rules:\n  overrides:\n"
+        + "    reserves.generator_availability.well_maintained_share: 0.0\n",
+        encoding="utf-8",
+    )
+    assert main(["buffers", str(recipe), "-o", str(tmp_path)]) == 0
+    stats = (tmp_path / "buffers_stats.yaml").read_text(encoding="utf-8")
+    assert "reserves.generator_availability.well_maintained_share: 0.0" in stats
+    assert "\n  well_maintained: 0\n" in stats
+
+
+def test_check_passes_the_pilot_and_stops_a_short_world(
+    pilot_path: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["check", str(pilot_path)]) == 0
+    assert "every consumer is fully supplied" in capsys.readouterr().out
+    short = tmp_path / "short.yaml"
+    short.write_text(
+        "recipe_version: 1\n"
+        "modeling_rules:\n"
+        "  overrides:\n"
+        "    layers.attributes.distribution_substation: {capacity_mva: [0.0, 0.0]}\n",
+        encoding="utf-8",
+    )
+    assert main(["check", str(short)]) == 1
+    err = capsys.readouterr().err
+    assert "undisturbed supply:" in err
+    assert "power: R = 0.0000" in err
+
+
 def test_preview_couplings_writes_a_png(pilot_path: Path, tmp_path: Path) -> None:
     pytest.importorskip("matplotlib")
     image = tmp_path / "couplings.png"

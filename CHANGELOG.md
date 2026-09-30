@@ -50,6 +50,14 @@ All notable changes to this project are recorded here. Each phase closes with a 
   Code reads rules by id. The registry's version and hash are stamped on the resolved recipe and on every stage's statistics; overridable rules take recipe overrides.
 - `swm rules`: the Modeling Rules page (Work Order 5, A4).
 - The requirements stage and `swm requirements` (Work Order 5, Part B). It draws electricity, water, fuel and access per node around the §4.4a targets, with the shared quantile-table draw method (`swm.draws`; offline builder in `tools/`).
+- The buffers stage and `swm buffers` (Work Order 5, Parts D and F):
+  - reserves at the expected draw;
+  - backup presence from the subtype attributes, and generator availability (Marqusee & Jenket);
+  - fuel resupply on buffer-resupply edges;
+  - the telecom tolerance buffer;
+  - failure modes.
+- The strength stage and `swm strength` (Work Order 5, Part E): κ and headroom on every edge, and each dependency's supply ratio.
+- `swm check`: the undisturbed-supply world check (Work Order 5, E2).
 
 ### Changed
 
@@ -61,6 +69,8 @@ All notable changes to this project are recorded here. Each phase closes with a 
 - Power is sized to load in the requirements stage: generation to the total peak load of every power consumer × 1.3, and each transmission substation to at least what it feeds (decision 0010).
 - Any modeling rule may be overridden by a recipe; the layers stage and the dependency table read the registry passed to them (decision 0010).
 - Airports, seaports and freight yards draw placeholder fuel (decision 0010).
+- The compliance gap is capped at 95 (Work Order 5, D2).
+- Masts and clinics hold no diesel standby set; the national LNG, oil and coal stocks take a compliance gap of 0; non-towered airports and truck-fed tank farms get telecom tolerance rows (decision 0010, second addendum).
 - Failure-mode heterogeneity defaults to 10%, as §4.4a says (decision 0010).
 - Rule 4 applies by load: a consumer whose peak load is at or above 5 MW (10 MW with `distribution_voltage_kv: 22.8`) is supplied from a transmission substation (Work Order 5, C1).
 - The recipe's couplings section replaces `tertiary_second_feed_pct` and `transmission_connection_threshold_mw` with `distribution_voltage_kv`. The tertiary second-feed share is now an overridable modeling rule, and the recipe gains a `modeling_rules` section.
@@ -90,4 +100,5 @@ All notable changes to this project are recorded here. Each phase closes with a 
 - The `healthcare_first` service-weight preset, replaced by `lifeline` (Work Order 2, B4).
 - The `two_way` switch, replaced by `two_way_pct` (Work Order 4, A3).
 - The unused Work Order 1 stream `unobserved/requirements` (decision 0010).
+- The unused Work Order 1 streams `unobserved/reserves` and `unobserved/failure_mode`, superseded by `reserves/<layer>` and `failure_mode/<layer>`.
 - The four unused Work Order 1 streams `couplings/edges`, `couplings/supplier_not_nearest`, `couplings/feed_configuration` and `couplings/two_way` (decision 0008).

@@ -364,6 +364,10 @@ Battery and generator hours add. Fire-reserve water does not count toward the po
 | Hospital, records hosted off site | 0.5, ramping linearly to d by 4 h | 0.65 | L (US) |
 | Clinic | 24 | 0.8 | S (TW) / J |
 | Blood bank | 24 | 0.7 | J |
+| Airport, not towered | 24 | 0.8 | J |
+| Tank farm, not pipeline-connected (truck-fed) | 12 | 0.6 | J |
+
+The last two rows were added on 2026-09-29 under decision 0010: a non-towered airport's flights run on radio, so telecom loss mainly hits bookings and fuel orders; a truck-fed tank farm works like a fuel depot and takes its values.
 
 **Failure mode** (the consumer's response to a shortfall on one commodity, drawn per node and commodity):
 - **Defaults:** physical flow → trip; logistic, control and service → throttle.

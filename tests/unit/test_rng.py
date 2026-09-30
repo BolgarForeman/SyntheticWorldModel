@@ -73,8 +73,8 @@ def test_empty_segment_is_refused() -> None:
 def test_registry_covers_every_stage() -> None:
     roots = {path.split("/")[0] for path in STREAM_REGISTRY}
     assert roots == {
-        "terrain", "layers", "requirements", "couplings", "shared_causes", "unobserved",
-        "errors",
+        "terrain", "layers", "requirements", "couplings", "reserves", "availability",
+        "failure_mode", "shared_causes", "unobserved", "errors",
     }  # fmt: skip
     assert all(purpose for purpose in STREAM_REGISTRY.values())
 

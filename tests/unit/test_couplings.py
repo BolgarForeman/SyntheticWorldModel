@@ -235,17 +235,24 @@ def test_two_feed_dependencies_have_two_distinct_suppliers(rich: World) -> None:
 
 
 def test_a_dependency_with_one_eligible_supplier_stays_single_with_a_note() -> None:
-    world = build_world(layers={"fuel": {"node_count": 3}, "telecom": {"node_count": 8}})
-    result = couple(world, feed_mix={"single_feed_pct": 0, "two_full_feeds_pct": 100,
-                                     "two_half_feeds_pct": 0})  # fmt: skip
-    masts = [
+    # Every mixed dependency is drawn two full feeds; those with one eligible supplier node
+    # (for example an LNG terminal on the world's only transmission substation) stay single.
+    world = build_world(layers={"fuel": {"node_count": 3}})
+    result = couple(world, two_way_pct=100, feed_mix={"single_feed_pct": 0,
+                    "two_full_feeds_pct": 100, "two_half_feeds_pct": 0})  # fmt: skip
+    single = [
         d
         for d in result.dependencies
-        if d.row_key.startswith("fuel>mast") and d.feed_configuration != FeedConfiguration.NONE
+        if d.role == Role.PRIMARY_SUPPLY
+        and d.supplier_layer != Layer.TRANSPORT
+        and not d.row_key.startswith("power>tertiary")
+        and d.feed_configuration == FeedConfiguration.SINGLE
+        and d.edge_ids
+        and d.dependency_id not in touched_by_two_way(result)
     ]
-    assert masts  # one depot in a three-node fuel layer: a mast's only eligible supplier
-    for d in masts:
-        assert d.feed_configuration == FeedConfiguration.SINGLE
+    assert single
+    for d in single:
+        assert any("only one eligible supplier node" in note for note in d.notes), d.row_key
 
 
 def test_tertiary_second_feed_is_all_or_nothing_at_its_bounds(rich: World) -> None:
@@ -465,7 +472,10 @@ def test_no_standby_generator_means_no_buffer_edge_and_a_note(
 ) -> None:
     nodes = nodes_by_id(pilot_world[2])
     absent = [d for d in pilot.dependencies if d.feed_configuration == FeedConfiguration.NONE]
-    assert {d.consumer_id for d in absent} == {"SWM-TEL-0004", "SWM-WAT-0003"}
+    # Masts and clinics hold no diesel set (decision 0010), nor does one pumping station.
+    assert {d.consumer_id for d in absent} == {
+        "SWM-TEL-0002", "SWM-TEL-0003", "SWM-TEL-0004", "SWM-HLT-0003", "SWM-WAT-0003",
+    }  # fmt: skip
     for d in absent:
         assert dict(nodes[d.consumer_id].subtype)["standby_fuel"] == "none"
         assert d.edge_ids == ()
@@ -682,7 +692,13 @@ def _imports(path: Path) -> set[str]:
 
 
 def test_emission_and_error_code_cannot_reach_the_couplings_output() -> None:
-    forbidden = {"swm.stages.couplings", "swm.stages.requirements", "swm.recipe.dependencies"}
+    forbidden = {
+        "swm.stages.couplings",
+        "swm.stages.requirements",
+        "swm.stages.buffers",
+        "swm.stages.strength",
+        "swm.recipe.dependencies",
+    }
     for folder in ("emit", "errors"):
         for path in (SRC / folder).rglob("*.py"):
             assert not _imports(path) & forbidden, path

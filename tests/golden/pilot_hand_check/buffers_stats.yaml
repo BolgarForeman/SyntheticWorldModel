@@ -1,0 +1,54 @@
+modeling_rules:
+  registry_version: '0.1'
+  registry_sha256: e67b963861eef3888bf1d99e9cd80a035b746efb6fe637e54440bd98cfdc6920
+  overrides: {}
+reserves:
+  battery:
+    count: 4
+    mean_hours: 4.594
+    mean_target_hours: 4.0
+  blood:
+    count: 1
+    mean_hours: 127.273
+    mean_target_hours: 168.0
+  distribution_water:
+    count: 1
+    mean_hours: 24.011
+    mean_target_hours: 12.0
+  generator_fuel:
+    count: 5
+    mean_hours: 47.458
+    mean_target_hours: 57.6
+  lng:
+    count: 1
+    mean_hours: 316.305
+    mean_target_hours: 264.0
+  oil_government:
+    count: 1
+    mean_hours: 1513.544
+    mean_target_hours: 720.0
+  oil_industry:
+    count: 1
+    mean_hours: 2190.215
+    mean_target_hours: 1440.0
+  supplies:
+    count: 2
+    mean_hours: 73.67
+    mean_target_hours: 72.0
+  water:
+    count: 2
+    mean_hours: 82.512
+    mean_target_hours: 72.0
+backup:
+  generators: 5
+  batteries: 4
+  fail_to_start: 0
+  well_maintained: 5
+resupply_edges: 5
+tolerance_buffers: 16
+failure_modes:
+  step_to_floor: 2
+  throttle: 23
+  trip: 22
+failure_modes_departed: 5
+notes: []

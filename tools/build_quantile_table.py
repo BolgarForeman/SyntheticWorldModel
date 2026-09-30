@@ -11,13 +11,18 @@ Each table is a piecewise-linear quantile function Q(u) on fixed u-knots:
 - sigma is chosen by bisection so that the piecewise-linear table itself has standard
   deviation exactly equal to the grid value s, relative to its median.
 
-Run: ``uv run python tools/build_quantile_table.py``.
+It also builds ``draws.exponential_table`` (``--exponential``): the time-to-failure shape of
+a component with a constant failure rate, Q(u) = -ln(1 - u), on the same knots and clip, scaled
+so the piecewise-linear table has mean exactly 1. A value is then the mean time x Q(u).
+
+Run: ``uv run python tools/build_quantile_table.py`` (or with ``--exponential``).
 
 Spec: structure v0.6 §4.4 (draw method); Work Order 5, B3; review F4 and F8 of the design
 targets evidence.
 """
 
 import math
+import sys
 
 KNOTS = (
     0.0, 0.005, 0.01, 0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5,
@@ -83,8 +88,20 @@ def solve(target: float) -> list[float]:
     return table((low + high) / 2)
 
 
+def exponential() -> list[float]:
+    """Return the clipped exponential quantile knots, scaled to mean exactly 1."""
+    values = [-math.log(1 - min(max(u, CLIP), 1 - CLIP)) for u in KNOTS]
+    mean, _ = moments(values)
+    return [v / mean for v in values]
+
+
 def main() -> None:
     """Print the tables as the YAML value of the registry entry ``draws.quantile_table``."""
+    if "--exponential" in sys.argv:
+        values = [round(v, DIGITS) for v in exponential()]
+        print("    knots: [" + ", ".join(repr(u) for u in KNOTS) + "]")  # noqa: T201
+        print("    quantiles: [" + ", ".join(repr(v) for v in values) + "]")  # noqa: T201
+        return
     lines = ["    knots: [" + ", ".join(repr(u) for u in KNOTS) + "]", "    tables:"]
     for s in GRID:
         values = [round(v, DIGITS) for v in solve(s)]

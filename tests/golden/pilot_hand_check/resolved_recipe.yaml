@@ -2,7 +2,7 @@ recipe_version: 1
 root_seed: 91577
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: f9571c60e58c5c89d5759878abd6e3b55ead2fbab8b04f86a1a8c6f13bd215f3
+  registry_sha256: e67b963861eef3888bf1d99e9cd80a035b746efb6fe637e54440bd98cfdc6920
   overrides: {}
 terrain:
   map_type: spine_island
