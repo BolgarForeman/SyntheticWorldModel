@@ -1,3 +1,4 @@
+import dataclasses
 from collections.abc import Callable
 from itertools import pairwise
 from typing import Any
@@ -12,6 +13,8 @@ from swm.stages.terrain import (
     TERRAIN_STREAM_PATHS,
     CoverClass,
     TerrainResult,
+    _add_outlying_islands,
+    _check_island_count,
     _chessboard_distance,
     _lowland,
     array_hashes,
@@ -232,6 +235,31 @@ def test_wetland_clusters_near_river_mouths(pilot: TerrainResult) -> None:
 @pytest.mark.parametrize("count", [0, 1, 4, 8])
 def test_outlying_island_count_equals_the_setting(count: int) -> None:
     assert build(character={"outlying_islands": count}).statistics.island_count == count + 1
+
+
+def test_an_outlying_island_near_the_grid_edge_stays_clear_of_the_main_island() -> None:
+    # This seed once placed its island within the edge band beside the main island, where the
+    # clearance window was empty, and the two merged (decision 0010, item 3).
+    character = {"coastline_complexity": 34, "outlying_islands": 1, "urban_density": 0}
+    result = build(character=character, terrain_seed=295, area_km2=1.0)
+    assert result.statistics.island_count == 2
+
+
+def test_an_island_count_the_terrain_cannot_place_stops_the_build_naming_the_setting() -> None:
+    land = np.zeros((GRID_CELLS, GRID_CELLS), dtype=bool)
+    no_attempts = dataclasses.replace(TERRAIN_MAPPINGS, outlying_island_attempts=0)
+    with pytest.raises(ValueError, match=r"terrain\.character\.outlying_islands = 3"):
+        _add_outlying_islands(
+            land, np.zeros(land.shape), 3, 100.0, np.random.default_rng(0), no_attempts
+        )
+
+
+def test_a_realised_count_short_of_the_setting_stops_the_build() -> None:
+    land = np.zeros((GRID_CELLS, GRID_CELLS), dtype=bool)
+    land[20:30, 20:30] = land[100:110, 100:110] = True
+    _check_island_count(land, 1)
+    with pytest.raises(ValueError, match=r"outlying_islands = 2: the terrain realised 1"):
+        _check_island_count(land, 2)
 
 
 def test_every_land_cell_has_one_cover_class(pilot: TerrainResult) -> None:

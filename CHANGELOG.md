@@ -95,6 +95,10 @@ All notable changes to this project are recorded here. Each phase closes with a 
 - The terrain peak is rescaled to its bound after carving (Work Order 3, E1).
 - `osm_roads_rail` is renamed `osm_transport` (Work Order 3, E2).
 
+### Fixed
+
+- The terrain now delivers exactly the requested number of outlying islands. An island placed near the grid edge could merge with the main island, because its clearance window was cut empty. If the count can't be met, the build stops with an error naming `terrain.character.outlying_islands` (decision 0010, item 3). The pilot terrain is unchanged.
+
 ### Removed
 
 - The `healthcare_first` service-weight preset, replaced by `lifeline` (Work Order 2, B4).
