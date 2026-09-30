@@ -28,12 +28,16 @@ from swm.rules.page import rules_page_html
 from swm.rules.registry import Registry, load_registry
 from swm.stages import buffers as buffers_stage
 from swm.stages import couplings as couplings_stage
+from swm.stages import crews as crews_stage
 from swm.stages import layers as layers_stage
+from swm.stages import repair as repair_stage
 from swm.stages import requirements as requirements_stage
 from swm.stages import strength as strength_stage
 from swm.stages.buffers import buffers_streams, build_buffers
 from swm.stages.couplings import CouplingsResult, build_couplings, couplings_streams
+from swm.stages.crews import build_crews
 from swm.stages.layers import LayersResult, build_layers, layers_streams
+from swm.stages.repair import build_repair, repair_streams
 from swm.stages.requirements import RequirementsResult, build_requirements, requirements_streams
 from swm.stages.strength import StrengthResult, build_strength
 from swm.stages.terrain import (
@@ -57,6 +61,8 @@ BUFFERS_STATS_FILE = "buffers_stats.yaml"
 BUFFERS_HASHES_FILE = "buffers_sha256.txt"
 STRENGTH_STATS_FILE = "strength_stats.yaml"
 STRENGTH_HASHES_FILE = "strength_sha256.txt"
+REPAIR_STATS_FILE = "repair_stats.yaml"
+REPAIR_HASHES_FILE = "repair_sha256.txt"
 REQUIREMENTS_HASHES_FILE = "requirements_sha256.txt"
 COUPLINGS_STATS_FILE = "couplings_stats.yaml"
 COUPLINGS_HASHES_FILE = "couplings_sha256.txt"
@@ -341,6 +347,47 @@ def _strength_command(resolution: Resolution, arguments: argparse.Namespace) -> 
     _check_supply(result)
 
 
+def _repair_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    recipe = resolution.recipe
+    terrain = _terrain(resolution)
+    requirements = _requirements(resolution, terrain)
+    couplings = _couplings(resolution, terrain, requirements)
+    rules = _rules(resolution)
+    try:
+        crews = build_crews(
+            recipe.unobserved.crews,
+            recipe.unobserved.crew_base,
+            terrain,
+            requirements.layers,
+            rules,
+        )
+    except ValueError as error:
+        raise CommandError(str(error)) from error
+    result = build_repair(
+        recipe.unobserved.repair_rates,
+        crews,
+        terrain,
+        requirements.layers,
+        requirements,
+        couplings,
+        rules,
+        repair_streams(recipe.root_seed),
+    )
+    out_dir = Path(arguments.out_dir)
+    write_canonical_yaml(
+        _stamped(repair_stage.statistics_record(result, crews), resolution),
+        out_dir / REPAIR_STATS_FILE,
+    )
+    tables = crews_stage.crews_tables(crews) | repair_stage.repair_tables(result)
+    hashes = [
+        (name, hashlib.sha256(canonical_yaml({name: rows})).hexdigest())
+        for name, rows in tables.items()
+    ]
+    write_hash_list(hashes, out_dir / REPAIR_HASHES_FILE)
+    for note in result.notes:
+        sys.stdout.write(f"repair: {note}\n")
+
+
 def _check_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
     _check_supply(_strength(resolution))
 
@@ -413,6 +460,7 @@ COMMANDS: dict[str, Callable[[Resolution, argparse.Namespace], None]] = {
     "couplings": _couplings_command,
     "buffers": _buffers_command,
     "strength": _strength_command,
+    "repair": _repair_command,
     "check": _check_command,
     "preview-couplings": _preview_couplings_command,
     "export-gis": _export_gis_command,
@@ -458,6 +506,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     strength_command.add_argument("recipe", help="recipe YAML file")
     strength_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    repair_command = commands.add_parser(
+        "repair", help="site crew bases; record travel, permanent and emergency repair"
+    )
+    repair_command.add_argument("recipe", help="recipe YAML file")
+    repair_command.add_argument("-o", "--out-dir", required=True, help="output folder")
     world_check = commands.add_parser(
         "check", help="run the world checks: every consumer supplied before any disruption"
     )

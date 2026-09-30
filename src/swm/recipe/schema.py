@@ -11,11 +11,12 @@ from typing import Annotated, Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-RECIPE_VERSION: Literal[1] = 1
-"""The recipe schema version this module defines."""
+RECIPE_VERSION: Literal[2] = 2
+"""The recipe schema version this module defines. Version 2 renamed ``unobserved.depots`` to
+``unobserved.crew_base`` (decision 0011)."""
 
-SUPPORTED_RECIPE_VERSIONS = (1,)
-"""Recipe versions this code reads."""
+SUPPORTED_RECIPE_VERSIONS = (1, 2)
+"""Recipe versions this code reads; version 1 is migrated on loading (``swm.recipe.io``)."""
 
 ROOT_SEED_UPPER_BOUND = 2**64 - 1
 """Largest root or terrain seed (ruling C4, decision 0003)."""
@@ -915,8 +916,14 @@ class Unobserved(_Section):
         description="Links on nodes-only layers. Heterogeneity: share of links that depart "
         "from the shortest road route.",
     )
-    crews: int = Field(6, ge=1, le=40, description="Repair crews in the world.")
-    depots: int = Field(2, ge=1, le=10, description="Depots the crews deploy from.")
+    crews: int = Field(6, ge=1, le=40, description="Repair crews in the world, in one pool.")
+    crew_base: int = Field(
+        2,
+        ge=1,
+        le=10,
+        description="Crew bases the crews deploy from, sited in towns by road access. Distinct "
+        "from the fuel depot class (decision 0011).",
+    )
 
 
 # --- Dynamics -------------------------------------------------------------------------------
@@ -1205,7 +1212,7 @@ class Recipe(_Section):
     Spec: structure v0.2 §3 (the recipe is the record) and §4; Work Order 1, item 2.
     """
 
-    recipe_version: Literal[1] = Field(
+    recipe_version: Literal[2] = Field(
         RECIPE_VERSION, description="The recipe schema version the recipe was written for."
     )
     root_seed: int = Field(

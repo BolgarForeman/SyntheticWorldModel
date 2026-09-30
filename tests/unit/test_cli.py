@@ -98,6 +98,47 @@ def test_buffers_and_strength_write_statistics_and_hashes(
     assert "every consumer is fully supplied" in capsys.readouterr().out
 
 
+def test_repair_writes_statistics_and_hashes(pilot_path: Path, tmp_path: Path) -> None:
+    assert main(["repair", str(pilot_path), "-o", str(tmp_path)]) == 0
+    stats = (tmp_path / "repair_stats.yaml").read_text(encoding="utf-8")
+    assert stats.startswith("modeling_rules:\n  registry_version:")
+    assert "\ncrew_bases:\n- base_id: CRB-0001\n" in stats
+    assert "\ncrews: 2\n" in stats
+    hashes = (tmp_path / "repair_sha256.txt").read_text(encoding="utf-8").splitlines()
+    assert [line.split("  ")[1] for line in hashes] == [
+        "crew_bases", "crews", "mobile_units",
+        "travel", "permanent_repair", "emergency_repair", "unrepairable",
+    ]  # fmt: skip
+
+
+def test_more_crew_bases_than_towns_exits_1_naming_the_setting(
+    pilot_path: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    recipe = tmp_path / "bases.yaml"
+    recipe.write_text(
+        pilot_path.read_text(encoding="utf-8").replace("  crew_base: 1 ", "  crew_base: 9 "),
+        encoding="utf-8",
+    )
+    assert main(["repair", str(recipe), "-o", str(tmp_path)]) == 1
+    assert "unobserved.crew_base = 9" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("crews", [1, 2, 3])
+def test_the_crew_sensitivity_recipes_differ_from_the_pilot_only_in_crews(
+    crews: int, pilot_path: Path, tmp_path: Path
+) -> None:
+    from swm.recipe.io import load_recipe
+
+    fixture = pilot_path.parent / "crew_sensitivity" / f"pilot_crews_{crews}.yaml"
+    recipe = load_recipe(fixture)
+    pilot = load_recipe(pilot_path)
+    assert recipe.unobserved.crews == crews
+    assert recipe.model_copy(update={"unobserved": pilot.unobserved}) == pilot
+    assert main(["repair", str(fixture), "-o", str(tmp_path)]) == 0
+    stats = (tmp_path / "repair_stats.yaml").read_text(encoding="utf-8")
+    assert f"\ncrews: {crews}\n" in stats
+
+
 def test_a_recipe_can_lower_the_share_of_well_maintained_generators(
     pilot_path: Path, tmp_path: Path
 ) -> None:
@@ -336,5 +377,5 @@ def test_unknown_version_exits_1(tmp_path: Path, capsys: pytest.CaptureFixture[s
     bad = tmp_path / "old.yaml"
     bad.write_text("recipe_version: 0\n", encoding="utf-8")
     assert main(["resolve", str(bad), "-o", str(tmp_path / "out")]) == 1
-    assert "this code reads version 1" in capsys.readouterr().err
+    assert "this code reads version 1, 2" in capsys.readouterr().err
     assert not (tmp_path / "out").exists()

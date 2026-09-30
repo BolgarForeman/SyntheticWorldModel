@@ -4,7 +4,7 @@
 # Subtype attributes (decision 0007, R9) are drawn in the layers stage, not set here. The
 # pilot's one generation plant is fuel_kind lng, and its one import terminal carries product
 # lng, so the pilot's fuel -> power runs from the import terminal to the plant.
-recipe_version: 1
+recipe_version: 2
 
 terrain:
   map_type: spine_island
@@ -52,7 +52,8 @@ shared_causes:
   scenarios: 8
 
 unobserved:
-  crews: 2                          # ruling A2
+  crews: 2                          # ruling A2; one pool, a declared scarcity (§4.4a)
+  crew_base: 1                      # §4.4a pilot: one crew base
 
 dynamics:
   tier: exact

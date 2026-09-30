@@ -38,15 +38,14 @@ def _registry() -> dict[str, str]:
         paths[f"layers/{layer}/subtype"] = f"Subtype attributes of {layer} nodes (unobserved)."
     paths |= {
         "shared_causes/scenarios": "Element failures drawn conditionally on the hazard fields.",
-        "unobserved/repair_rates": "Repair rates, drawn per element from context.",
         "unobserved/links_on_nodes_only_layers": "Links on layers whose sources report nodes only.",
-        "unobserved/crews_and_depots": "Siting of repair crews and depots.",
     }
     for layer in Layer:
         paths[f"requirements/{layer}"] = f"Requirements of {layer} nodes, per commodity."
         paths[f"reserves/{layer}"] = f"Reserves of {layer} nodes, in hours around their targets."
         paths[f"availability/{layer}"] = f"Backup generator availability at {layer} nodes."
         paths[f"failure_mode/{layer}"] = f"Which {layer} failure modes depart from the default."
+        paths[f"repair/{layer}"] = f"Repair rates of {layer} nodes, one draw per node."
     paths |= _coupling_paths()
     for hazard in Hazard:
         paths[f"shared_causes/{hazard}/field"] = f"Latent {hazard} field with distance decay."

@@ -1,8 +1,8 @@
-recipe_version: 1
+recipe_version: 2
 root_seed: 91577
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: e67b963861eef3888bf1d99e9cd80a035b746efb6fe637e54440bd98cfdc6920
+  registry_sha256: 79fa9936fe1151282dfb75c040c6b3d8c357590ba1584e9f9dba7ad099a9e931
   overrides: {}
 terrain:
   map_type: spine_island
@@ -137,7 +137,7 @@ unobserved:
     heterogeneity_pct: 35
     compliance_gap_pct: 0
   crews: 2
-  depots: 2
+  crew_base: 1
 dynamics:
   tier: exact
   combining: typed_weakest_link

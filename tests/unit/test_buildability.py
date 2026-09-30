@@ -25,7 +25,7 @@ PILOT_FEATURES = {
     "couplings_hidden",
     "hazard:storm_corridor",
     "unobserved_quantities",
-    "crews_and_depots",
+    "crews_and_crew_bases",
     "tier:exact",
     "transfer_form:linear",
     "transfer_form:threshold",

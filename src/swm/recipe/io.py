@@ -10,7 +10,7 @@ from typing import Any
 
 import yaml
 
-from swm.recipe.schema import SUPPORTED_RECIPE_VERSIONS, Recipe
+from swm.recipe.schema import RECIPE_VERSION, SUPPORTED_RECIPE_VERSIONS, Recipe
 from swm.rng import StreamRecord
 
 RESOLVED_RECIPE_FILE = "resolved_recipe.yaml"
@@ -82,7 +82,35 @@ def parse_recipe(text: str) -> Recipe:
         raise RecipeVersionError(
             f"recipe_version {version!r} is not supported; this code reads version {readable}"
         )
+    if version == 1:
+        data = _migrate_version_1(data)
+    elif isinstance(data.get("unobserved"), dict) and "depots" in data["unobserved"]:
+        raise RecipeVersionError(
+            "unobserved.depots was renamed unobserved.crew_base in recipe_version 2"
+        )
     return Recipe.model_validate(data)
+
+
+def _migrate_version_1(data: dict[str, Any]) -> dict[str, Any]:
+    """Read a version 1 recipe as version 2: ``unobserved.depots`` becomes ``crew_base``.
+
+    Spec: CLAUDE.md §8 (old recipes load or fail with a clear message); decision 0011.
+    """
+    migrated = dict(data, recipe_version=RECIPE_VERSION)
+    unobserved = data.get("unobserved")
+    if not isinstance(unobserved, dict):
+        return migrated
+    if "crew_base" in unobserved:
+        raise RecipeVersionError(
+            "unobserved.crew_base is a recipe_version 2 setting; a version 1 recipe names it "
+            "unobserved.depots. Set recipe_version: 2, or use depots"
+        )
+    if "depots" in unobserved:
+        unobserved = {
+            ("crew_base" if key == "depots" else key): value for key, value in unobserved.items()
+        }
+    migrated["unobserved"] = unobserved
+    return migrated
 
 
 def load_recipe(path: Path) -> Recipe:
