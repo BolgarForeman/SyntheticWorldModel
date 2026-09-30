@@ -49,13 +49,14 @@ def pilot_world() -> World:
 
 @pytest.fixture(scope="module")
 def pilot(pilot_world: World) -> CouplingsResult:
-    recipe, terrain, layers = pilot_world
+    recipe, terrain, _ = pilot_world
+    requirements = requirements_of(pilot_world)
     return build_couplings(
         recipe.couplings,
         recipe.dynamics.transfer_forms,
         terrain,
-        layers,
-        requirements_of(pilot_world),
+        requirements.layers,
+        requirements,
         load_registry(),
         couplings_streams(recipe.root_seed),
     )
@@ -408,7 +409,7 @@ def test_mutual_pairs_rise_with_two_way(rich: World) -> None:
 
 def test_every_listed_origin_reaches_its_consumer(rich: World) -> None:
     result = couple(rich, density=100)
-    world = stage._World(rich[1], rich[2])
+    world = stage._World(rich[1], rich[2], load_registry())
     nodes = nodes_by_id(rich[2])
     for edge in result.edges:
         if edge.supplier_layer != Layer.TRANSPORT:
@@ -719,7 +720,9 @@ def _eligible_of(world: World, d: Any) -> Any:
     row = _row_of(world, d)
     consumer = _node(world, d.consumer_id)
     options = _large(world).suppliers(row, consumer)
-    return stage._eligible(row.supplier_layer, options, consumer, stage._World(world[1], world[2]))
+    return stage._eligible(
+        row.supplier_layer, options, consumer, stage._World(world[1], world[2], load_registry())
+    )
 
 
 def _row_of(world: World, d: Any) -> Any:

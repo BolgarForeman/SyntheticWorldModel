@@ -57,6 +57,11 @@ All notable changes to this project are recorded here. Each phase closes with a 
 - Power is sized to load. Generation totals distribution × 1.3 × 0.9, and each transmission substation carries at least 1.3 × the distribution it feeds (Work Order 4, C).
 - Generation's observed `fuel_type` now follows its true `fuel_kind`, and is no longer drawn on its own (Work Order 4, B).
 - The pilot switches on its seven couplings, with density 0 and `two_way_pct` 0 (Work Order 4, A4).
+- Ports and airports are sized by the urban footprint of the city they serve, not its rank (decision 0010).
+- Power is sized to load in the requirements stage: generation to the total peak load of every power consumer × 1.3, and each transmission substation to at least what it feeds (decision 0010).
+- Any modeling rule may be overridden by a recipe; the layers stage and the dependency table read the registry passed to them (decision 0010).
+- Airports, seaports and freight yards draw placeholder fuel (decision 0010).
+- Failure-mode heterogeneity defaults to 10%, as §4.4a says (decision 0010).
 - Rule 4 applies by load: a consumer whose peak load is at or above 5 MW (10 MW with `distribution_voltage_kv: 22.8`) is supplied from a transmission substation (Work Order 5, C1).
 - The recipe's couplings section replaces `tertiary_second_feed_pct` and `transmission_connection_threshold_mw` with `distribution_voltage_kv`. The tertiary second-feed share is now an overridable modeling rule, and the recipe gains a `modeling_rules` section.
 - The schematic's mutual-pair rings sit on the pair's own arrows (Work Order 5, C3).
@@ -84,4 +89,5 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 - The `healthcare_first` service-weight preset, replaced by `lifeline` (Work Order 2, B4).
 - The `two_way` switch, replaced by `two_way_pct` (Work Order 4, A3).
+- The unused Work Order 1 stream `unobserved/requirements` (decision 0010).
 - The four unused Work Order 1 streams `couplings/edges`, `couplings/supplier_not_nearest`, `couplings/feed_configuration` and `couplings/two_way` (decision 0008).

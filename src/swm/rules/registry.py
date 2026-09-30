@@ -11,6 +11,7 @@ Spec: Work Order 5, Part A; decision 0009.
 
 import functools
 import hashlib
+import json
 from collections.abc import Mapping
 from enum import StrEnum
 from importlib import resources
@@ -124,9 +125,6 @@ class Rule(_Strict):
     open_decision: str | None = None
     ruling: Ruling | None = None
     history: tuple[HistoryItem, ...] = ()
-    overridable: bool = Field(
-        False, description="Whether a recipe may override the value for a sensitivity run."
-    )
 
     @model_validator(mode="after")
     def _complete(self) -> Self:
@@ -136,8 +134,6 @@ class Rule(_Strict):
             raise ValueError(f"{self.id}: needs a grade, or a ruling that stands in for one")
         if not self.sources and self.status == Status.RULED:
             raise ValueError(f"{self.id}: a ruled entry needs at least one source")
-        if self.overridable and not _is_number(self.value):
-            raise ValueError(f"{self.id}: only numeric values can be overridden")
         return self
 
 
@@ -147,7 +143,7 @@ class Registry(_Strict):
     version: str = Field(min_length=1)
     rules: tuple[Rule, ...]
     sha256: str = Field("", description="SHA-256 of the registry file's bytes.")
-    overrides: tuple[tuple[str, float], ...] = Field(
+    overrides: tuple[tuple[str, Any], ...] = Field(
         (), description="Recipe overrides applied to this copy, in id order."
     )
 
@@ -216,12 +212,15 @@ class Registry(_Strict):
             raise TypeError(f"modeling rule {rule_id!r} is not a number")
         return float(value)
 
-    def with_overrides(self, overrides: Mapping[str, float]) -> "Registry":
-        """Return a copy with a recipe's overrides applied to overridable numeric rules.
+    def with_overrides(self, overrides: Mapping[str, Any]) -> "Registry":
+        """Return a copy with a recipe's overrides applied, for a sensitivity run.
+
+        Any rule may be overridden (decision 0010). A new value must be of the same kind as the
+        old one (a number for a number, a table for a table), and the entry is revalidated.
 
         Parameters
         ----------
-        overrides : Mapping[str, float]
+        overrides : Mapping[str, Any]
             New values by rule id.
 
         Returns
@@ -231,29 +230,47 @@ class Registry(_Strict):
 
         Raises
         ------
+        KeyError
+            If an id names no rule.
         ValueError
-            If an id is unknown or its rule may not be overridden.
+            If a new value is not of the same kind as the old one.
 
-        Spec: Work Order 5, A3.
+        Spec: Work Order 5, A3; decision 0010.
         """
         if not overrides:
             return self
-        rules = []
-        for rule in self.rules:
-            if rule.id in overrides:
-                rules.append(rule.model_copy(update={"value": overrides[rule.id]}))
-            else:
-                rules.append(rule)
-        for rule_id in overrides:
-            if not self.rule(rule_id).overridable:
-                raise ValueError(f"modeling rule {rule_id!r} may not be overridden by a recipe")
+        for rule_id, value in overrides.items():
+            if _kind(value) != _kind(self.rule(rule_id).value):
+                raise ValueError(
+                    f"modeling rule {rule_id!r} holds a {_kind(self.rule(rule_id).value)}; the "
+                    f"override is a {_kind(value)}"
+                )
+        rules = tuple(
+            Rule.model_validate({**rule.model_dump(), "value": overrides[rule.id]})
+            if rule.id in overrides
+            else rule
+            for rule in self.rules
+        )
         # A fresh model, not a copy: a copy would carry this registry's cached id index.
         return Registry(
             version=self.version,
-            rules=tuple(rules),
+            rules=rules,
             sha256=self.sha256,
-            overrides=tuple(sorted((k, float(v)) for k, v in overrides.items())),
+            overrides=tuple(sorted(overrides.items())),
         )
+
+    @property
+    def overrides_key(self) -> str:
+        """The overrides as canonical text, to key what is built from this registry."""
+        return json.dumps(self.overrides, sort_keys=True)
+
+
+def _kind(value: object) -> str:
+    if _is_number(value):
+        return "number"
+    return {bool: "yes/no value", str: "text", list: "list", dict: "table"}.get(
+        type(value), "empty value"
+    )
 
 
 def _is_number(value: object) -> bool:

@@ -31,28 +31,33 @@ def rich_world() -> World:
     return build_world(terrain={"area_km2": 1500}, layers=RICH_LAYERS)
 
 
-def requirements_of(world: World, overrides: Mapping[str, float] | None = None) -> Any:
-    """Draw a world's requirements under the recipe's levers and the given rule overrides."""
+def requirements_of(
+    world: World, overrides: Mapping[str, Any] | None = None, voltage_kv: float = 11.4
+) -> Any:
+    """Draw a world's requirements, and size its power, under the given rule overrides."""
     recipe, _, layers = world
     return build_requirements(
         recipe.unobserved.requirements,
         layers,
         load_registry().with_overrides(overrides or {}),
         requirements_streams(recipe.root_seed),
+        voltage_kv,
     )
 
 
 def couple(
-    world: World, overrides: Mapping[str, float] | None = None, **settings: Any
+    world: World, overrides: Mapping[str, Any] | None = None, **settings: Any
 ) -> CouplingsResult:
     """Build a world's couplings under couplings settings given in part."""
-    recipe, terrain, layers = world
+    recipe, terrain, _ = world
+    couplings = Couplings.model_validate(settings)
+    requirements = requirements_of(world, overrides, couplings.distribution_voltage_kv)
     return build_couplings(
-        Couplings.model_validate(settings),
+        couplings,
         recipe.dynamics.transfer_forms,
         terrain,
-        layers,
-        requirements_of(world, overrides),
+        requirements.layers,
+        requirements,
         load_registry().with_overrides(overrides or {}),
         couplings_streams(recipe.root_seed),
     )

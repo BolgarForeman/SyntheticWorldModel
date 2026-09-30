@@ -173,7 +173,7 @@ def _layers_command(resolution: Resolution, arguments: argparse.Namespace) -> No
 
 def _requirements_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
     terrain = _terrain(resolution)
-    result = _requirements(resolution, _layers(resolution, terrain))
+    result = _requirements(resolution, terrain)
     out_dir = Path(arguments.out_dir)
     write_canonical_yaml(
         _stamped(requirements_stage.statistics_record(result), resolution),
@@ -189,8 +189,9 @@ def _requirements_command(resolution: Resolution, arguments: argparse.Namespace)
 
 def _couplings_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
     terrain = _terrain(resolution)
-    layers = _layers(resolution, terrain)
-    result = _couplings(resolution, terrain, layers)
+    requirements = _requirements(resolution, terrain)
+    layers = requirements.layers
+    result = _couplings(resolution, terrain, requirements)
     out_dir = Path(arguments.out_dir)
     write_canonical_yaml(
         _stamped(couplings_stage.statistics_record(result), resolution),
@@ -221,8 +222,9 @@ def _preview_couplings_command(resolution: Resolution, arguments: argparse.Names
             "the preview needs matplotlib; install it with: uv sync --extra preview"
         ) from error
     terrain = _terrain(resolution)
-    layers = _layers(resolution, terrain)
-    result = _couplings(resolution, terrain, layers)
+    requirements = _requirements(resolution, terrain)
+    layers = requirements.layers
+    result = _couplings(resolution, terrain, requirements)
     title = f"{Path(arguments.recipe).name}: couplings"
     write_binary(couplings_preview_png(layers, result, title), Path(arguments.output))
 
@@ -236,8 +238,9 @@ def _export_gis_command(resolution: Resolution, arguments: argparse.Namespace) -
             "uv sync --extra export"
         ) from error
     terrain = _terrain(resolution)
-    layers = _layers(resolution, terrain)
-    couplings = _couplings(resolution, terrain, layers)
+    requirements = _requirements(resolution, terrain)
+    layers = requirements.layers
+    couplings = _couplings(resolution, terrain, requirements)
     stamp = _rules_stamp(resolution)
     for path in export_gis(terrain, layers, couplings, Path(arguments.out_dir), stamp):
         sys.stdout.write(f"{path}\n")
@@ -251,42 +254,51 @@ def _preview_world_command(resolution: Resolution, arguments: argparse.Namespace
             "the preview needs matplotlib; install it with: uv sync --extra preview"
         ) from error
     terrain = _terrain(resolution)
-    result = _layers(resolution, terrain)
-    couplings = None if arguments.no_couplings else _couplings(resolution, terrain, result)
+    requirements = _requirements(resolution, terrain)
+    result = requirements.layers
+    couplings = None if arguments.no_couplings else _couplings(resolution, terrain, requirements)
     title = f"{Path(arguments.recipe).name}: {resolution.recipe.terrain.map_type} with its layers"
     write_binary(world_preview_png(terrain, result, title, couplings), Path(arguments.output))
 
 
 def _layers(resolution: Resolution, terrain: TerrainResult) -> LayersResult:
+    """Return the layers as they stand once power is sized to load (decision 0010)."""
+    return _requirements(resolution, terrain).layers
+
+
+def _drawn_layers(resolution: Resolution, terrain: TerrainResult) -> LayersResult:
     recipe = resolution.recipe
     try:
-        return build_layers(recipe.layers, terrain, layers_streams(recipe.root_seed))
+        return build_layers(
+            recipe.layers, terrain, layers_streams(recipe.root_seed), _rules(resolution)
+        )
     except ValueError as error:
         raise CommandError(str(error)) from error
 
 
+def _requirements(resolution: Resolution, terrain: TerrainResult) -> RequirementsResult:
+    recipe = resolution.recipe
+    return build_requirements(
+        recipe.unobserved.requirements,
+        _drawn_layers(resolution, terrain),
+        _rules(resolution),
+        requirements_streams(recipe.root_seed),
+        recipe.couplings.distribution_voltage_kv,
+    )
+
+
 def _couplings(
-    resolution: Resolution, terrain: TerrainResult, layers: LayersResult
+    resolution: Resolution, terrain: TerrainResult, requirements: RequirementsResult
 ) -> CouplingsResult:
     recipe = resolution.recipe
     return build_couplings(
         recipe.couplings,
         recipe.dynamics.transfer_forms,
         terrain,
-        layers,
-        _requirements(resolution, layers),
+        requirements.layers,
+        requirements,
         _rules(resolution),
         couplings_streams(recipe.root_seed),
-    )
-
-
-def _requirements(resolution: Resolution, layers: LayersResult) -> RequirementsResult:
-    recipe = resolution.recipe
-    return build_requirements(
-        recipe.unobserved.requirements,
-        layers,
-        _rules(resolution),
-        requirements_streams(recipe.root_seed),
     )
 
 

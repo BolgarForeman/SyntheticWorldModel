@@ -145,17 +145,51 @@ def test_section_4_4a_targets_hold_their_ruled_values() -> None:
 # --- Overrides and stamping (A3) ------------------------------------------------------------
 
 
-def test_overrides_apply_only_to_overridable_rules() -> None:
+def test_any_rule_may_be_overridden_by_a_value_of_its_kind() -> None:
     rules = load_registry()
-    changed = rules.with_overrides({"dependencies.rule_5.tertiary_second_feed_share": 0.8})
+    changed = rules.with_overrides(
+        {
+            "dependencies.rule_5.tertiary_second_feed_share": 0.8,
+            "sizing.power.reserve_margin": 1.5,
+            "layers.attributes.airport_size_class": [[0.0, "large_airport"]],
+        }
+    )
     assert changed.number("dependencies.rule_5.tertiary_second_feed_share") == 0.8
-    assert rules.number("dependencies.rule_5.tertiary_second_feed_share") == 0.5
-    assert changed.overrides == (("dependencies.rule_5.tertiary_second_feed_share", 0.8),)
+    assert changed.number("sizing.power.reserve_margin") == 1.5
+    assert changed.value("layers.attributes.airport_size_class") == [[0.0, "large_airport"]]
+    assert rules.number("sizing.power.reserve_margin") == 1.3
+    assert [rule_id for rule_id, _ in changed.overrides] == sorted(
+        [
+            "dependencies.rule_5.tertiary_second_feed_share",
+            "sizing.power.reserve_margin",
+            "layers.attributes.airport_size_class",
+        ]
+    )
     assert changed.sha256 == rules.sha256
-    with pytest.raises(ValueError, match="may not be overridden"):
-        rules.with_overrides({"sizing.power.reserve_margin": 1.5})
+    with pytest.raises(ValueError, match="holds a number; the override is a text"):
+        rules.with_overrides({"sizing.power.reserve_margin": "high"})
     with pytest.raises(KeyError, match="no modeling rule"):
         rules.with_overrides({"requirements.nothing": 1.0})
+
+
+def test_an_override_reaches_the_layers_and_the_dependency_table() -> None:
+    from layers_helpers import build_world
+    from swm.recipe.dependencies import resolve_row
+    from swm.recipe.schema import Layer, NodeClass
+    from swm.stages.layers import build_layers, layers_streams
+
+    recipe, terrain, _ = build_world()
+    rules = load_registry().with_overrides(
+        {"layers.attributes.airport_size_class": [[0.0, "large_airport"]]}
+    )
+    overridden = build_layers(recipe.layers, terrain, layers_streams(recipe.root_seed), rules)
+    airport = next(n for n in overridden.nodes if n.node_class == NodeClass.AIRPORT)
+    assert dict(airport.attributes)["size_class"] == "large_airport"
+    row_id = "dependencies.table.power.clinic"
+    row = load_registry().value(row_id)
+    rules = load_registry().with_overrides({row_id: {**row, "dependency": "optional"}})
+    assert resolve_row(Layer.POWER, NodeClass.CLINIC, {}, rules).dependency == "optional"
+    assert resolve_row(Layer.POWER, NodeClass.CLINIC, {}).dependency == "core"
 
 
 def test_the_resolved_recipe_carries_the_registry_hash_and_the_overrides() -> None:
@@ -174,8 +208,8 @@ def test_a_recipe_resolved_against_another_registry_is_refused() -> None:
 
 
 def test_a_bad_override_is_refused_on_resolution() -> None:
-    bad = Recipe.model_validate({"modeling_rules": {"overrides": {"layers.siting.runway_km": 3}}})
-    with pytest.raises(ValueError, match="may not be overridden"):
+    bad = Recipe.model_validate({"modeling_rules": {"overrides": {"layers.siting.runway_km": "x"}}})
+    with pytest.raises(ValueError, match="the override is a text"):
         resolve(bad)
 
 
@@ -257,6 +291,7 @@ ALLOWED_LITERALS: dict[str, dict[float, str]] = {
         24.0: "hours per day",
         8760.0: "hours per year",
         86400.0: "seconds per day",
+        365.0: "days per year",
         1000.0: "kW per MW",
         0.158987294928: "m³ per barrel",
         6: "rounding decimals",

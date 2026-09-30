@@ -8,7 +8,7 @@ nodes:
   latitude: -48.8595966
   city_id: 0
   attributes:
-    capacity_mw: 150.9
+    capacity_mw: 52.4
     fuel_type: gas
     status: operational
   runway_m: null
@@ -184,7 +184,7 @@ nodes:
   latitude: -48.8235236
   city_id: 0
   attributes:
-    size_class: L
+    size_class: S
     status: operational
     type: seaport
   runway_m: null
@@ -198,7 +198,7 @@ nodes:
   latitude: -48.8416128
   city_id: 0
   attributes:
-    size_class: large_airport
+    size_class: small_airport
     status: operational
     type: airport
   runway_m:
