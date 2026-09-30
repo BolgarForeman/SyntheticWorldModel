@@ -1,0 +1,505 @@
+facilities:
+- node_id: SWM-POW-0001
+  class: generation
+  height_above_drainage_m: 0.1
+  wind_m_per_s:
+  - 20.312
+  - 17.888
+  - 20.856
+  - 17.65
+  - 14.469
+  - 19.325
+  - 18.603
+  - 22.687
+  flood_depth_m:
+  - 1.9
+  - 1.9
+  - 1.9
+  - 1.9
+  - 1.9
+  - 1.9
+  - 1.9
+  - 1.9
+- node_id: SWM-POW-0002
+  class: transmission_substation
+  height_above_drainage_m: 653.1
+  wind_m_per_s:
+  - 41.727
+  - 17.93
+  - 18.855
+  - 31.939
+  - 37.096
+  - 18.234
+  - 34.401
+  - 24.513
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-POW-0003
+  class: distribution_substation
+  height_above_drainage_m: 26.1
+  wind_m_per_s:
+  - 38.195
+  - 30.963
+  - 34.137
+  - 28.728
+  - 22.61
+  - 35.697
+  - 34.376
+  - 50.035
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-POW-0004
+  class: distribution_substation
+  height_above_drainage_m: 100.0
+  wind_m_per_s:
+  - 26.138
+  - 13.433
+  - 13.856
+  - 27.434
+  - 24.176
+  - 21.389
+  - 24.137
+  - 16.24
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-TEL-0001
+  class: exchange
+  height_above_drainage_m: 3.1
+  wind_m_per_s:
+  - 13.067
+  - 15.802
+  - 20.573
+  - 19.763
+  - 13.385
+  - 18.496
+  - 20.728
+  - 20.676
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-TEL-0002
+  class: mast
+  height_above_drainage_m: 2258.5
+  wind_m_per_s:
+  - 20.953
+  - 35.552
+  - 34.365
+  - 37.138
+  - 19.908
+  - 33.461
+  - 23.113
+  - 42.198
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-TEL-0003
+  class: mast
+  height_above_drainage_m: 507.3
+  wind_m_per_s:
+  - 22.387
+  - 29.93
+  - 31.85
+  - 33.938
+  - 23.54
+  - 36.679
+  - 22.805
+  - 43.042
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-TEL-0004
+  class: mast
+  height_above_drainage_m: 802.4
+  wind_m_per_s:
+  - 23.057
+  - 20.15
+  - 23.466
+  - 38.35
+  - 35.561
+  - 32.699
+  - 35.086
+  - 23.725
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-WAT-0001
+  class: reservoir
+  height_above_drainage_m: 201.9
+  wind_m_per_s:
+  - 25.018
+  - 33.345
+  - 33.724
+  - 40.973
+  - 24.546
+  - 34.87
+  - 21.473
+  - 41.136
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-WAT-0002
+  class: treatment
+  height_above_drainage_m: 158.8
+  wind_m_per_s:
+  - 22.553
+  - 34.343
+  - 34.434
+  - 43.282
+  - 24.77
+  - 35.328
+  - 20.946
+  - 44.022
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-WAT-0003
+  class: pumping
+  height_above_drainage_m: 95.0
+  wind_m_per_s:
+  - 24.572
+  - 34.533
+  - 33.116
+  - 36.714
+  - 25.323
+  - 32.227
+  - 19.982
+  - 34.708
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-WAT-0004
+  class: storage
+  height_above_drainage_m: 598.7
+  wind_m_per_s:
+  - 36.631
+  - 29.824
+  - 29.861
+  - 18.617
+  - 21.735
+  - 27.067
+  - 19.503
+  - 37.628
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-TRN-0001
+  class: seaport
+  height_above_drainage_m: 7.6
+  wind_m_per_s:
+  - 27.643
+  - 37.925
+  - 37.743
+  - 46.807
+  - 31.1
+  - 38.429
+  - 25.284
+  - 47.477
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-TRN-0002
+  class: airport
+  height_above_drainage_m: 9.0
+  wind_m_per_s:
+  - 11.9
+  - 15.083
+  - 19.377
+  - 18.94
+  - 12.785
+  - 17.773
+  - 19.421
+  - 19.644
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-TRN-0003
+  class: freight_yard
+  height_above_drainage_m: 106.4
+  wind_m_per_s:
+  - 25.405
+  - 31.006
+  - 19.006
+  - 19.638
+  - 23.357
+  - 16.211
+  - 19.27
+  - 39.292
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-TRN-0004
+  class: bridge
+  height_above_drainage_m: 0.0
+  wind_m_per_s:
+  - 25.768
+  - 13.315
+  - 13.633
+  - 27.335
+  - 25.2
+  - 21.938
+  - 24.222
+  - 15.953
+  flood_depth_m:
+  - 2.0
+  - 2.0
+  - 2.0
+  - 2.0
+  - 2.0
+  - 2.0
+  - 2.0
+  - 2.0
+- node_id: SWM-FUE-0001
+  class: import_terminal
+  height_above_drainage_m: 3.2
+  wind_m_per_s:
+  - 20.708
+  - 17.982
+  - 21.032
+  - 17.412
+  - 14.569
+  - 19.297
+  - 18.688
+  - 23.075
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-FUE-0002
+  class: tank_farm
+  height_above_drainage_m: 353.4
+  wind_m_per_s:
+  - 20.106
+  - 14.971
+  - 16.366
+  - 13.172
+  - 11.928
+  - 16.483
+  - 15.383
+  - 20.999
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-FUE-0003
+  class: depot
+  height_above_drainage_m: 123.8
+  wind_m_per_s:
+  - 9.932
+  - 14.825
+  - 15.943
+  - 16.366
+  - 11.71
+  - 17.815
+  - 14.962
+  - 18.746
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-FUE-0004
+  class: depot
+  height_above_drainage_m: 30.2
+  wind_m_per_s:
+  - 27.312
+  - 13.595
+  - 14.179
+  - 28.562
+  - 30.144
+  - 25.525
+  - 25.543
+  - 16.186
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-HLT-0001
+  class: tertiary
+  height_above_drainage_m: 18.4
+  wind_m_per_s:
+  - 10.249
+  - 15.269
+  - 15.485
+  - 17.335
+  - 11.572
+  - 19.152
+  - 14.746
+  - 18.082
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-HLT-0002
+  class: regional
+  height_above_drainage_m: 20.3
+  wind_m_per_s:
+  - 28.619
+  - 14.272
+  - 14.818
+  - 29.185
+  - 31.106
+  - 26.37
+  - 26.661
+  - 16.56
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-HLT-0003
+  class: clinic
+  height_above_drainage_m: 644.5
+  wind_m_per_s:
+  - 37.394
+  - 40.195
+  - 36.41
+  - 35.893
+  - 23.377
+  - 43.008
+  - 21.173
+  - 48.146
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+- node_id: SWM-HLT-0004
+  class: blood_bank
+  height_above_drainage_m: 100.6
+  wind_m_per_s:
+  - 18.357
+  - 14.137
+  - 16.319
+  - 19.574
+  - 11.013
+  - 17.919
+  - 16.754
+  - 18.502
+  flood_depth_m:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0

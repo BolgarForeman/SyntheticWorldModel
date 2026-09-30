@@ -23,6 +23,7 @@ STAGE_TITLES = {
     Stage.FAILURE_MODES: "Failure modes",
     Stage.REPAIR: "Repair",
     Stage.CREWS: "Crews",
+    Stage.STORM: "Storm",
     Stage.SIZING: "Sizing",
     Stage.LAYERS: "Layers",
     Stage.DRAWS: "Draws",
@@ -167,6 +168,8 @@ def _card(rule: Rule) -> str:
     ]
     if rule.jurisdiction:
         badges.append(f'<span class="badge plain">{rule.jurisdiction.value}</span>')
+    if rule.theta_role:
+        badges.append(f'<span class="badge plain">θ*-{rule.theta_role.value}</span>')
     if rule.open_decision:
         badges.append(
             f'<span class="badge plain">open decision: {html.escape(rule.open_decision)}</span>'

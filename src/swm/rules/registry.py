@@ -65,6 +65,13 @@ class Stage(StrEnum):
     SIZING = "sizing"
     STRENGTH = "strength"
     DRAWS = "draws"
+    STORM = "storm"
+
+
+class ThetaRole(StrEnum):
+    """The rule's role in the Theta List (draft v0.1): only the dynamics role so far."""
+
+    DYNAMICS = "dynamics"
 
 
 class _Strict(BaseModel):
@@ -126,6 +133,9 @@ class Rule(_Strict):
     open_decision: str | None = None
     ruling: Ruling | None = None
     history: tuple[HistoryItem, ...] = ()
+    theta_role: ThetaRole | None = Field(
+        None, description="The rule's Theta List role; the hazard rules are θ*-dynamics."
+    )
 
     @model_validator(mode="after")
     def _complete(self) -> Self:

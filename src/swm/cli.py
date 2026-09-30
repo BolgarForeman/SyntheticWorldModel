@@ -32,6 +32,7 @@ from swm.stages import crews as crews_stage
 from swm.stages import layers as layers_stage
 from swm.stages import repair as repair_stage
 from swm.stages import requirements as requirements_stage
+from swm.stages import storm as storm_stage
 from swm.stages import strength as strength_stage
 from swm.stages.buffers import buffers_streams, build_buffers
 from swm.stages.couplings import CouplingsResult, build_couplings, couplings_streams
@@ -39,6 +40,7 @@ from swm.stages.crews import build_crews
 from swm.stages.layers import LayersResult, build_layers, layers_streams
 from swm.stages.repair import build_repair, repair_streams
 from swm.stages.requirements import RequirementsResult, build_requirements, requirements_streams
+from swm.stages.storm import build_storm, storm_streams
 from swm.stages.strength import StrengthResult, build_strength
 from swm.stages.terrain import (
     TerrainResult,
@@ -63,6 +65,9 @@ STRENGTH_STATS_FILE = "strength_stats.yaml"
 STRENGTH_HASHES_FILE = "strength_sha256.txt"
 REPAIR_STATS_FILE = "repair_stats.yaml"
 REPAIR_HASHES_FILE = "repair_sha256.txt"
+STORM_STATS_FILE = "storm_stats.yaml"
+STORM_FACILITIES_FILE = "storm_facilities.yaml"
+STORM_HASHES_FILE = "storm_sha256.txt"
 REQUIREMENTS_HASHES_FILE = "requirements_sha256.txt"
 COUPLINGS_STATS_FILE = "couplings_stats.yaml"
 COUPLINGS_HASHES_FILE = "couplings_sha256.txt"
@@ -382,6 +387,46 @@ def _repair_command(resolution: Resolution, arguments: argparse.Namespace) -> No
         sys.stdout.write(f"repair: {note}\n")
 
 
+def _storm_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    recipe = resolution.recipe
+    shared = recipe.shared_causes
+    terrain = _terrain(resolution)
+    layers = _drawn_layers(resolution, terrain)
+    result = build_storm(
+        shared.hazards.storm_corridor,
+        shared.scenarios,
+        terrain,
+        _rules(resolution),
+        storm_streams(recipe.root_seed, shared.scenarios),
+    )
+    exposure = storm_stage.facility_exposure(result, layers)
+    out_dir = Path(arguments.out_dir)
+    write_canonical_yaml(
+        _stamped(storm_stage.statistics_record(result, exposure), resolution),
+        out_dir / STORM_STATS_FILE,
+    )
+    write_canonical_yaml(
+        {"facilities": storm_stage.exposure_table(exposure)}, out_dir / STORM_FACILITIES_FILE
+    )
+    write_hash_list(storm_stage.storm_hashes(result), out_dir / STORM_HASHES_FILE)
+    if arguments.scenario is None:
+        return
+    if not 0 <= arguments.scenario < shared.scenarios:
+        raise CommandError(
+            f"--scenario {arguments.scenario}: the recipe draws scenarios 0 to "
+            f"{shared.scenarios - 1}"
+        )
+    try:
+        from swm.preview import storm_preview_png
+    except ImportError as error:
+        raise CommandError(
+            "the preview needs matplotlib; install it with: uv sync --extra preview"
+        ) from error
+    title = f"{Path(arguments.recipe).name}: storm scenario {arguments.scenario}"
+    png = storm_preview_png(terrain, layers, result, arguments.scenario, title)
+    write_binary(png, out_dir / f"storm_scenario_{arguments.scenario}.png")
+
+
 def _check_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
     _check_supply(_strength(resolution))
 
@@ -455,6 +500,7 @@ COMMANDS: dict[str, Callable[[Resolution, argparse.Namespace], None]] = {
     "buffers": _buffers_command,
     "strength": _strength_command,
     "repair": _repair_command,
+    "storm": _storm_command,
     "check": _check_command,
     "preview-couplings": _preview_couplings_command,
     "export-gis": _export_gis_command,
@@ -505,6 +551,17 @@ def _parser() -> argparse.ArgumentParser:
     )
     repair_command.add_argument("recipe", help="recipe YAML file")
     repair_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    storm_command = commands.add_parser(
+        "storm", help="build the storm's wind and flood per scenario; write statistics"
+    )
+    storm_command.add_argument("recipe", help="recipe YAML file")
+    storm_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    storm_command.add_argument(
+        "--scenario",
+        type=int,
+        default=None,
+        help="also render this scenario's preview PNG (needs the preview extra)",
+    )
     world_check = commands.add_parser(
         "check", help="run the world checks: every consumer supplied before any disruption"
     )

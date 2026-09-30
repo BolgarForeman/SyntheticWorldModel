@@ -19,6 +19,9 @@ SUPPORTED_RECIPE_VERSIONS = (1, 2)
 """Recipe versions this code reads; version 1 is migrated on loading (``swm.recipe.io``)."""
 
 ROOT_SEED_UPPER_BOUND = 2**64 - 1
+
+MAX_SCENARIOS = 200
+"""Most disruption scenarios a recipe may ask for; every scenario's streams are registered."""
 """Largest root or terrain seed (ruling C4, decision 0003)."""
 
 DEFAULT_ROOT_SEED = 91577
@@ -791,14 +794,17 @@ class HazardSettings(_Section):
         40,
         ge=5,
         le=150,
-        description="How far apart two assets can be and still tend to fail together, in km.",
+        description="How far apart two assets can be and still tend to fail together, in km. "
+        "For the storm: the correlation length of the wind field's random variation (§4.3b).",
     )
     severity: int = Field(
         60,
         ge=0,
         le=100,
-        description="How hard the hazard hits. 0 = no damage; 100 = every exposed element in "
-        "the hazard core fails.",
+        description="How hard the hazard hits; 0 = no hazard. For the storm (§4.3b; decision "
+        "0012): peak 10-minute wind at sea = 17.2 + 0.53 x severity m/s, on Taiwan's typhoon "
+        "classes (mild 1-29, moderate 29-64, strong 64-100), and 24-hour rainfall 300 mm up to "
+        "33, 450 mm up to 66, 600 mm above.",
     )
 
 
@@ -806,8 +812,8 @@ class Hazards(_Section):
     """The hazard fields. Spec: structure v0.2 §4.3; ruling B4."""
 
     storm_corridor: HazardSettings = Field(
-        default_factory=lambda: HazardSettings(switched_on=True, correlation_km=40),
-        description="Storm corridor.",
+        default_factory=lambda: HazardSettings(switched_on=True, correlation_km=10),
+        description="Storm corridor: a typhoon on a straight track (§4.3b).",
     )
     seismic_zone: HazardSettings = Field(
         default_factory=lambda: HazardSettings(correlation_km=60), description="Seismic zone."
@@ -840,7 +846,10 @@ class SharedCauses(_Section):
 
     hazards: Hazards = Field(default_factory=Hazards, description="The hazard fields.")
     scenarios: int = Field(
-        8, ge=1, le=200, description="Disruption scenarios drawn from the active hazard fields."
+        8,
+        ge=1,
+        le=MAX_SCENARIOS,
+        description="Disruption scenarios drawn from the active hazard fields.",
     )
 
 
