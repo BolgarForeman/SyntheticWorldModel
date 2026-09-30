@@ -98,6 +98,22 @@ def test_buffers_and_strength_write_statistics_and_hashes(
     assert "every consumer is fully supplied" in capsys.readouterr().out
 
 
+def test_a_recipe_can_lower_the_share_of_well_maintained_generators(
+    pilot_path: Path, tmp_path: Path
+) -> None:
+    recipe = tmp_path / "poorly_maintained.yaml"
+    recipe.write_text(
+        pilot_path.read_text(encoding="utf-8")
+        + "modeling_rules:\n  overrides:\n"
+        + "    reserves.generator_availability.well_maintained_share: 0.0\n",
+        encoding="utf-8",
+    )
+    assert main(["buffers", str(recipe), "-o", str(tmp_path)]) == 0
+    stats = (tmp_path / "buffers_stats.yaml").read_text(encoding="utf-8")
+    assert "reserves.generator_availability.well_maintained_share: 0.0" in stats
+    assert "\n  well_maintained: 0\n" in stats
+
+
 def test_check_passes_the_pilot_and_stops_a_short_world(
     pilot_path: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

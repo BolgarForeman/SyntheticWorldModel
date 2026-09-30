@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: f25caea3d133c0f6b77d9abc75e09a63e9bd23b9b2eba85ba97fb7ea7732e1af
+  registry_sha256: e67b963861eef3888bf1d99e9cd80a035b746efb6fe637e54440bd98cfdc6920
   overrides: {}
 levers:
   heterogeneity: 0.4
@@ -20,8 +20,8 @@ fuel_gj_per_day:
   nodes: 4
   total: 22986.443432
 backup_burn_l_per_h:
-  nodes: 8
-  total: 2347.560242
+  nodes: 5
+  total: 2339.046504
 power_sizing:
   total_peak_mw: 40.33139
   transmission_fed_peak_mw: 22.487113

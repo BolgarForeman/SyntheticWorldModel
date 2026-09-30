@@ -44,3 +44,32 @@ PR 5a built the modeling rules registry, the Modeling Rules page, the requiremen
    - The terrain must deliver the requested number of outlying islands. Where it truly cannot, the build stops with a clear error naming the setting, never silently fewer islands.
    - This fixes the edge case the property test found (a 1 km² world asked for one outlying island produced none).
    - It is a small separate pull request, on `terrain/island-count` from main after PR 5b. It must not change the pilot, whose terrain golden files stay unchanged.
+
+## Second addendum: answers to PR 5b (#9)
+
+- **Date:** 2026-09-29
+- **Decided by:** the design side, confirmed by the author (Foreman)
+- **Source:** `docs/work_orders/WO-05b-answers.md`
+- **Recorded by:** the PR 5b follow-up commit
+
+Every value changed in `modeling_rules.yaml` keeps its old value in history, citing this decision.
+
+1. **Delivery rate of stores: confirmed.** A store delivers its volume ÷ the days of stock it holds (`strength.supply_days`). Depots (3 days) and reservoirs (365 days) stand as J placeholders, to be revisited with the realism ranges.
+2. **Energy content: confirmed**, now sourced from Taiwan's energy statistics (經濟部能源署, 能源產品單位熱值表).
+   - **LNG, 22.5 GJ/m³:** a kilogram of liquid is 2.207 L and regasifies to 1.320 m³ at 9,000 kcal each.
+   - **Coal, 20 GJ/m³:** imported steam coal for power carries 5,700 kcal/kg. No published stockpile density could be fetched, so coal stays a placeholder.
+3. **Generator reliability: confirmed.** Marqusee & Jenket's own figures:
+   - well maintained: 0.13% fail to start, a mean time to failure of 1,662 h;
+   - poorly maintained: 1.65% and 61 h.
+
+   The well-maintained share stays 1.0 by default (placeholder). A recipe may lower it through `modeling_rules.overrides` for a sensitivity run; it is not the default, because a poorly maintained set fails on average at 61 h, inside the 72 h window.
+4. **No diesel standby at masts or clinics.** Their shares are set to 0, as §4.4a says: clinics have no generator by default, and masts carry the Taiwan 4 h battery.
+5. **Designated disaster-response masts:** the share stays 0, open, until a source gives a count.
+6. **Compliance gaps where §4.4a lists none.**
+   - Blood banks and cable landings take the recipe's reserves gap (default 30%), placeholder.
+   - The national LNG, oil and coal stocks take a gap of 0 (`reserves.compliance_gap.national_stocks_pct`). They are statutory stockholding obligations reported to the government, and a 30% default shortfall would contradict their S grade.
+7. **The missing telecom tolerance rows are added** (J, placeholder), in the registry and in structure §4.4a:
+   - airport, not towered: T = 24 h, d = 0.8;
+   - tank farm, not pipeline-connected (truck-fed): T = 12 h, d = 0.6, the same as a fuel depot.
+
+The coder's seven choices in the PR 5b report are accepted as marked.

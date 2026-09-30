@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: f25caea3d133c0f6b77d9abc75e09a63e9bd23b9b2eba85ba97fb7ea7732e1af
+  registry_sha256: e67b963861eef3888bf1d99e9cd80a035b746efb6fe637e54440bd98cfdc6920
   overrides: {}
 layers:
   power:

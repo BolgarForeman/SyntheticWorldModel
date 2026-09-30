@@ -86,7 +86,7 @@ nodes:
     type: mast
   runway_m: null
   subtype:
-    standby_fuel: diesel
+    standby_fuel: none
 - id: SWM-TEL-0003
   layer: telecom
   class: mast
@@ -101,7 +101,7 @@ nodes:
     type: mast
   runway_m: null
   subtype:
-    standby_fuel: diesel
+    standby_fuel: none
 - id: SWM-TEL-0004
   layer: telecom
   class: mast
@@ -345,7 +345,7 @@ nodes:
   runway_m: null
   subtype:
     records_hosted: true
-    standby_fuel: diesel
+    standby_fuel: none
 - id: SWM-HLT-0004
   layer: healthcare
   class: blood_bank

@@ -265,3 +265,39 @@ def test_the_stage_opens_only_its_own_streams(monkeypatch: pytest.MonkeyPatch) -
     assert roots == {"reserves", "availability", "failure_mode"}
     assert "unobserved/reserves" not in rng.STREAM_REGISTRY
     assert "unobserved/failure_mode" not in rng.STREAM_REGISTRY
+
+
+# --- Decision 0010, second addendum ---------------------------------------------------------
+
+
+def test_national_stocks_take_their_own_gap_of_0(rich: World) -> None:
+    result = buffers_of(rich, gap_pct=40)
+    national = [r for r in result.reserves if r.kind in ("lng", "oil_industry", "oil_government")]
+    assert national
+    assert all(r.compliance_gap == 0.0 for r in national)
+    cable_or_blood = [r for r in result.reserves if r.kind == "blood"]
+    assert all(r.compliance_gap == pytest.approx(0.4) for r in cable_or_blood)
+
+
+def test_masts_and_clinics_have_no_diesel_generator(exact: Any, rich: World) -> None:
+    by_id = nodes(rich)
+    for node in by_id.values():
+        if node.node_class in (C.MAST, C.CLINIC):
+            assert dict(node.subtype)["standby_fuel"] == "none", node.node_id
+    assert not any("no fuel target" in note for note in exact.notes)
+
+
+def test_every_telecom_dependency_has_a_tolerance_buffer(exact: Any, rich: World) -> None:
+    from couplings_helpers import couple
+
+    telecom = [d for d in couple(rich).dependencies if d.supplier_layer == Layer.TELECOM]
+    assert len(exact.tolerance) == len(telecom)
+    assert not any("tolerance" in note for note in exact.notes)
+    by_id = nodes(rich)
+    for record in exact.tolerance:
+        node = by_id[record.consumer_id]
+        subtype = dict(node.subtype)
+        if node.node_class == C.AIRPORT and subtype["towered"] is False:
+            assert (record.t_h, record.d) == (24.0, 0.8)
+        if node.node_class == C.TANK_FARM and subtype["pipeline_connected"] is False:
+            assert (record.t_h, record.d) == (12.0, 0.6)

@@ -92,6 +92,9 @@ subtype and are chosen in code."""
 
 OIL_HOLDERS = (C.TANK_FARM, C.REFINERY, C.IMPORT_TERMINAL)
 
+NATIONAL_STOCKS = frozenset({"lng", "oil_industry", "oil_government", "coal"})
+"""Statutory stocks, which take the national-stocks gap rather than their class's."""
+
 
 @dataclass(frozen=True)
 class Reserve:
@@ -277,8 +280,14 @@ class _Context:
         self.notes: set[str] = set()
         self._tables: dict[tuple[float, float], tuple[float, ...]] = {}
 
-    def gap(self, node_class: NodeClass) -> float:
-        """Return the compliance gap of a class, as a fraction."""
+    def gap(self, node_class: NodeClass, kind: str = "") -> float:
+        """Return the compliance gap of a reserve, as a fraction.
+
+        The national LNG, oil and coal stocks take their own gap (decision 0010); other stocks
+        take their class's §4.4a gap, or the recipe's where §4.4a lists none.
+        """
+        if kind in NATIONAL_STOCKS:
+            return self.rules.number("reserves.compliance_gap.national_stocks_pct") / 100.0
         if node_class in CLASS_GAP:
             return self.rules.number(CLASS_GAP[node_class]) / 100.0
         return self.recipe_gap / 100.0
@@ -350,7 +359,7 @@ def _reserves(context: _Context, streams: Mapping[Layer, np.random.Generator]) -
     for node in context.layers.nodes:
         stream = streams[node.layer]
         for kind, buffers, target_h, draw, units in _stocks(node, context):
-            gap = context.gap(node.node_class)
+            gap = context.gap(node.node_class, kind)
             hours = context.draw_hours(target_h, gap, float(stream.random()))
             reserves.append(
                 Reserve(
@@ -377,7 +386,7 @@ def _bulk(
     stream: np.random.Generator,
 ) -> Reserve:
     target_h = days * HOURS_PER_DAY
-    gap = context.gap(node.node_class)
+    gap = context.gap(node.node_class, kind)
     hours = context.draw_hours(target_h, gap, float(stream.random()))
     return Reserve(node.node_id, kind, Layer.FUEL, hours * draw, "GJ", draw, hours, target_h, gap)
 
@@ -544,10 +553,11 @@ def _tolerance_rule(node: Node) -> str | None:
             "tolerance.hospital_records_hosted" if hosted else "tolerance.hospital_records_on_site"
         )
     if node.node_class == C.AIRPORT:
-        return "tolerance.towered_airport" if subtype.get("towered") is True else None
+        towered = subtype.get("towered") is True
+        return "tolerance.towered_airport" if towered else "tolerance.airport_not_towered"
     if node.node_class == C.TANK_FARM:
         connected = subtype.get("pipeline_connected") is True
-        return "tolerance.tank_farm_pipeline" if connected else None
+        return "tolerance.tank_farm_pipeline" if connected else "tolerance.tank_farm_not_connected"
     return TOLERANCE.get(node.node_class)
 
 
