@@ -682,7 +682,13 @@ def _imports(path: Path) -> set[str]:
 
 
 def test_emission_and_error_code_cannot_reach_the_couplings_output() -> None:
-    forbidden = {"swm.stages.couplings", "swm.stages.requirements", "swm.recipe.dependencies"}
+    forbidden = {
+        "swm.stages.couplings",
+        "swm.stages.requirements",
+        "swm.stages.buffers",
+        "swm.stages.strength",
+        "swm.recipe.dependencies",
+    }
     for folder in ("emit", "errors"):
         for path in (SRC / folder).rglob("*.py"):
             assert not _imports(path) & forbidden, path

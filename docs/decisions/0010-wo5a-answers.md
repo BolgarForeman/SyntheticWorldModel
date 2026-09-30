@@ -30,3 +30,17 @@ PR 5a built the modeling rules registry, the Modeling Rules page, the requiremen
 6. **Failure-mode heterogeneity** defaults to 10%, as §4.4a says. This is done here, not in PR 5b.
 7. **The unused Work Order 1 stream `unobserved/requirements` is retired.** Requirements draw from `requirements/<layer>`. Streams are keyed by name, so no other stream moves.
 8. **Interface mockup:** no change now. The new recipe fields, `distribution_voltage_kv` and `modeling_rules`, are logged for the Phase 7 interface.
+
+## Addendum: answers to the PR 5a follow-up (#8)
+
+- **Date:** 2026-09-29
+- **Decided by:** the design side, confirmed by the author (Foreman)
+- **Source:** `docs/work_orders/WO-05a-fixes-answers.md`
+- **Recorded by:** PR 5b
+
+1. **Port and airport sizing: confirmed.** The served city's absolute urban footprint in km² is compared with the Taiwan-anchored thresholds in the registry, not ranked among the world's cities.
+2. **Power factor: confirmed.** It applies where MW becomes MVA, in transmission substation sizing. Generation stays in MW.
+3. **The outlying-island count is exact.**
+   - The terrain must deliver the requested number of outlying islands. Where it truly cannot, the build stops with a clear error naming the setting, never silently fewer islands.
+   - This fixes the edge case the property test found (a 1 km² world asked for one outlying island produced none).
+   - It is a small separate pull request, on `terrain/island-count` from main after PR 5b. It must not change the pilot, whose terrain golden files stay unchanged.

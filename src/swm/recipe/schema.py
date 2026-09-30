@@ -860,9 +860,11 @@ class ContinuousDrawnQuantity(_Section):
     compliance_gap_pct: int = Field(
         0,
         ge=-50,
-        le=100,
-        description="Mean departure from the design target, as a percent of the target. "
-        "Positive: shortfall; negative: the element exceeds its target.",
+        le=95,
+        description="Shift of the median below the design target, as a percent of the target "
+        "(structure v0.6 §4.4). Positive: shortfall; negative: above the target. 0 means "
+        "centred on the target, not that every element complies. Capped at 95: absence of a "
+        "backup is carried by the presence attributes, not by a gap of 100.",
     )
 
 

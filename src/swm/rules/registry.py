@@ -63,6 +63,7 @@ class Stage(StrEnum):
     REPAIR = "repair"
     CREWS = "crews"
     SIZING = "sizing"
+    STRENGTH = "strength"
     DRAWS = "draws"
 
 

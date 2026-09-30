@@ -1,0 +1,56 @@
+modeling_rules:
+  registry_version: '0.1'
+  registry_sha256: f25caea3d133c0f6b77d9abc75e09a63e9bd23b9b2eba85ba97fb7ea7732e1af
+  overrides: {}
+reserves:
+  battery:
+    count: 4
+    mean_hours: 4.594
+    mean_target_hours: 4.0
+  blood:
+    count: 1
+    mean_hours: 127.273
+    mean_target_hours: 168.0
+  distribution_water:
+    count: 1
+    mean_hours: 24.011
+    mean_target_hours: 12.0
+  generator_fuel:
+    count: 5
+    mean_hours: 47.458
+    mean_target_hours: 57.6
+  lng:
+    count: 1
+    mean_hours: 233.934
+    mean_target_hours: 264.0
+  oil_government:
+    count: 1
+    mean_hours: 1328.829
+    mean_target_hours: 720.0
+  oil_industry:
+    count: 1
+    mean_hours: 1742.152
+    mean_target_hours: 1440.0
+  supplies:
+    count: 2
+    mean_hours: 73.67
+    mean_target_hours: 72.0
+  water:
+    count: 2
+    mean_hours: 82.512
+    mean_target_hours: 72.0
+backup:
+  generators: 8
+  batteries: 4
+  fail_to_start: 0
+  well_maintained: 8
+resupply_edges: 5
+tolerance_buffers: 16
+failure_modes:
+  step_to_floor: 2
+  throttle: 23
+  trip: 22
+failure_modes_departed: 5
+notes:
+- 'clinic: a diesel standby set but no fuel target in section 4.4a; no stock drawn'
+- 'mast: a diesel standby set but no fuel target in section 4.4a; no stock drawn'

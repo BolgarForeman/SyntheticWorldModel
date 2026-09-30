@@ -186,6 +186,32 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+- id: draws.exponential_table
+  title: Exponential quantile table for times to failure
+  stage: draws
+  value:
+    knots: [0.0, 0.005, 0.01, 0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6,
+      0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.975, 0.99, 0.995, 1.0]
+    quantiles: [0.00500716, 0.00500716, 0.010039546, 0.025290627, 0.051238226, 0.1052474, 0.162344449,
+      0.222903984, 0.287373216, 0.356292017, 0.430320427, 0.5102772, 0.597195162, 0.692403016, 0.797650417,
+      0.915307, 1.048695034, 1.202680217, 1.384806033, 1.607710017, 1.895083233, 2.300113033, 2.99251605,
+      3.684919066, 4.600226067, 5.292629083, 5.292629083]
+  units: null
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: tools/build_quantile_table.py --exponential, url: null, quote: null, verified: null}
+  reasoning: A component with a constant failure rate fails after an exponentially distributed time. The
+    table is Q(u) = -ln(1 - u) on the shared knots, clipped at the 0.5% and 99.5% quantiles and scaled
+    to mean 1, so a time is the mean × Q(u) using only arithmetic at runtime.
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-29'
+    decision: '0009'
+  history: []
 - id: draws.lever_meaning
   title: What heterogeneity and the compliance gap mean
   stage: draws
@@ -6540,23 +6566,69 @@ rules:
 - id: reserves.generator_availability
   title: Backup generator reliability
   stage: reserves
-  value: {poorly_maintained_fail_within_48h: 0.5, well_maintained_fail_within_336h: 0.2}
-  units: probability
+  value:
+    well_maintained: {fail_to_start: 0.0013, mttf_h: 1662.0}
+    poorly_maintained: {fail_to_start: 0.0165, mttf_h: 61.0}
+  units: fail-to-start probability per start; mean run hours to failure
   applies_to: {layer: null, node_class: null, condition: null}
   grade: L
   jurisdiction: US
   sources:
   - {citation: 'Marqusee & Jenket, Reliability of emergency and standby diesel generators, Applied Energy
+      268 (2020), accepted manuscript, Tables 2 and 3', url: 'https://www.osti.gov/servlets/purl/1659849',
+    quote: resulting in an estimated FTS of .13%, verified: true}
+  - {citation: 'Marqusee & Jenket, Reliability of emergency and standby diesel generators, Applied Energy
       268, 2020', url: 'https://www.sciencedirect.com/science/article/abs/pii/S030626192030430X', quote: Poorly
       maintained generators are 50% likely to fail within 48 h, verified: true}
-  reasoning: A separate per-generator availability draw, not a stock gap (ruling T7, review F10). The
-    fail-to-start and fail-to-run rates are derived in PR 5b.
-  status: placeholder
-  open_decision: realism ranges
+  reasoning: 'A separate per-generator draw: the generator fails to start with probability fail_to_start,
+    and otherwise runs until a time to failure drawn around mttf_h (a constant failure rate). Well maintained
+    is the Fehr data set (239 EDGs), poorly maintained the Hong Kong one (147 EDGs); the 50% and 20% figures
+    the evidence quoted follow from these.'
+  status: ruled
+  open_decision: null
   ruling:
     by: the author (Foreman)
     date: '2026-09-29'
     decision: '0009'
+  history:
+  - value: {poorly_maintained_fail_within_48h: 0.5, well_maintained_fail_within_336h: 0.2}
+    units: probability
+    date: '2026-09-29'
+    decision: PR 5b, pending review
+- id: reserves.generator_availability.well_maintained_share
+  title: Share of backup generators that are well maintained
+  stage: reserves
+  value: 1.0
+  units: ratio
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Marqusee & Jenket, Reliability of emergency and standby diesel generators, Applied Energy
+      268 (2020), accepted manuscript, Tables 2 and 3', url: 'https://www.osti.gov/servlets/purl/1659849',
+    quote: resulting in an estimated FTS of .13%, verified: true}
+  reasoning: No source gives the share for Taiwan facilities; every generator is taken as well maintained,
+    the level Taiwan's hospital accreditation inspects. A recipe may override it.
+  status: placeholder
+  open_decision: realism ranges
+  ruling: null
+  history: []
+- id: reserves.mast.designated_share
+  title: Share of masts that are designated disaster-response sites
+  stage: reserves
+  value: 0.0
+  units: ratio
+  applies_to: {layer: null, node_class: mast, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Design targets evidence, lane: reserves §1a (mast_disaster_site_share)', url: docs/design/evidence/Design_Targets_Evidence_v0_1.md,
+    quote: null, verified: null}
+  reasoning: Designated sites hold 72 h of battery instead of 4 h, but no source gives how many there
+    are, so none is designated until the design side sets the share.
+  status: open
+  open_decision: mast_disaster_site_share
+  ruling: null
   history: []
 - id: tolerance.towered_airport
   title: 'Telecom tolerance: airport'
@@ -6915,9 +6987,13 @@ rules:
   title: Class departures from the default failure mode
   stage: failure_modes
   value:
-    throttle: [transmission_substation, distribution_substation, treatment, pumping (multi-pump stations)]
-    step_to_floor: ['tertiary and regional on generator, at the essential fraction']
-    trip: [towered airport on telecom]
+  - {node_class: transmission_substation, supplier: null, when: null, mode: throttle}
+  - {node_class: distribution_substation, supplier: null, when: null, mode: throttle}
+  - {node_class: treatment, supplier: null, when: null, mode: throttle}
+  - {node_class: pumping, supplier: null, when: null, mode: throttle}
+  - {node_class: tertiary, supplier: power, when: has_generator, mode: step_to_floor}
+  - {node_class: regional, supplier: power, when: has_generator, mode: step_to_floor}
+  - {node_class: airport, supplier: telecom, when: towered, mode: trip}
   units: null
   applies_to: {layer: null, node_class: null, condition: null}
   grade: J
@@ -6927,14 +7003,23 @@ rules:
     quote: null, verified: null}
   - {citation: 'Lee, Mitchell & Wallace 2007; NERC load modelling (as reported in the lane)', url: docs/design/evidence/Design_Targets_Evidence_v0_1.md,
     quote: null, verified: null}
-  reasoning: Systematic class behaviour is set per type × class, not left to noise.
+  reasoning: Systematic class behaviour is set per type × class, not left to noise. A hospital on generator
+    steps to its essential fraction (reserves.hospital.essential_load_fraction). Every pumping station
+    is taken as multi-pump. The same departures as before, written so code can read them.
   status: ruled
   open_decision: null
   ruling:
     by: the author (Foreman)
     date: '2026-09-29'
     decision: '0009'
-  history: []
+  history:
+  - value:
+      throttle: [transmission_substation, distribution_substation, treatment, pumping (multi-pump stations)]
+      step_to_floor: ['tertiary and regional on generator, at the essential fraction']
+      trip: [towered airport on telecom]
+    units: null
+    date: '2026-09-29'
+    decision: PR 5b, pending review
 - id: failure_modes.heterogeneity_pct
   title: Share of elements departing from the class default
   stage: failure_modes
@@ -7302,6 +7387,58 @@ rules:
   - {citation: Review answer 22, url: docs/design/evidence/Design_Targets_Evidence_v0_1.md, quote: null,
     verified: null}
   reasoning: Taipower pre-positions island crews, so the delay applies only to surge crews.
+  status: placeholder
+  open_decision: realism ranges
+  ruling: null
+  history: []
+- id: strength.supply_days
+  title: Days of its own stock a supplier delivers in a day's turnover
+  stage: strength
+  value: {storage: 0.5, reservoir: 365.0, import_terminal_lng: 11.0, import_terminal_oil: 60.0, import_terminal_coal: 30.0,
+    refinery: 60.0, tank_farm: 60.0, depot: 3.0}
+  units: days
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Structure v0.6 §4.4 (κ from supplier capacity) and §4.4a (stock days), url: null, quote: null,
+    verified: null}
+  reasoning: 'Water storage and fuel stores report a volume, not a delivery rate. A store holding N days
+    of what it supplies can deliver its volume ÷ N per day, so N is the stock target: storage 12 h (§4.4a),
+    LNG 11 days, oil 60 days of industry stock, coal 30 days (§4.4a); depots 3 days and reservoirs a year
+    are judgment.'
+  status: open
+  open_decision: supplier_delivery_rate
+  ruling: null
+  history: []
+- id: strength.lng_gj_per_m3
+  title: Energy in liquefied natural gas
+  stage: strength
+  value: 22.5
+  units: GJ/m³
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Structure v0.6 §4.4 (κ from supplier capacity) and §4.4a (stock days), url: null, quote: null,
+    verified: null}
+  reasoning: The typical energy of LNG in the tank, to turn terminal volume into send-out.
+  status: placeholder
+  open_decision: realism ranges
+  ruling: null
+  history: []
+- id: strength.coal_gj_per_m3
+  title: Energy in stockpiled coal
+  stage: strength
+  value: 20.0
+  units: GJ/m³
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Structure v0.6 §4.4 (κ from supplier capacity) and §4.4a (stock days), url: null, quote: null,
+    verified: null}
+  reasoning: About 0.8 t per m³ of stockpile at about 25 GJ per tonne.
   status: placeholder
   open_decision: realism ranges
   ruling: null

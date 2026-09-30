@@ -10,6 +10,7 @@ import pydantic
 import yaml
 
 from swm import __version__
+from swm.checks.undisturbed import undisturbed_supply_check
 from swm.recipe.buildability import unbuilt_features
 from swm.recipe.io import (
     canonical_yaml,
@@ -25,12 +26,16 @@ from swm.recipe.resolve import Resolution, resolve
 from swm.rng import stream_record
 from swm.rules.page import rules_page_html
 from swm.rules.registry import Registry, load_registry
+from swm.stages import buffers as buffers_stage
 from swm.stages import couplings as couplings_stage
 from swm.stages import layers as layers_stage
 from swm.stages import requirements as requirements_stage
+from swm.stages import strength as strength_stage
+from swm.stages.buffers import buffers_streams, build_buffers
 from swm.stages.couplings import CouplingsResult, build_couplings, couplings_streams
 from swm.stages.layers import LayersResult, build_layers, layers_streams
 from swm.stages.requirements import RequirementsResult, build_requirements, requirements_streams
+from swm.stages.strength import StrengthResult, build_strength
 from swm.stages.terrain import (
     TerrainResult,
     array_hashes,
@@ -48,6 +53,10 @@ LAYERS_NODES_FILE = "layers_nodes.yaml"
 LAYERS_LINKS_FILE = "layers_links.yaml"
 LAYERS_HASHES_FILE = "layers_sha256.txt"
 REQUIREMENTS_STATS_FILE = "requirements_stats.yaml"
+BUFFERS_STATS_FILE = "buffers_stats.yaml"
+BUFFERS_HASHES_FILE = "buffers_sha256.txt"
+STRENGTH_STATS_FILE = "strength_stats.yaml"
+STRENGTH_HASHES_FILE = "strength_sha256.txt"
 REQUIREMENTS_HASHES_FILE = "requirements_sha256.txt"
 COUPLINGS_STATS_FILE = "couplings_stats.yaml"
 COUPLINGS_HASHES_FILE = "couplings_sha256.txt"
@@ -287,6 +296,70 @@ def _requirements(resolution: Resolution, terrain: TerrainResult) -> Requirement
     )
 
 
+def _buffers_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    recipe = resolution.recipe
+    terrain = _terrain(resolution)
+    requirements = _requirements(resolution, terrain)
+    couplings = _couplings(resolution, terrain, requirements)
+    result = build_buffers(
+        recipe.unobserved.reserves,
+        recipe.unobserved.failure_mode,
+        requirements.layers,
+        requirements,
+        couplings,
+        _rules(resolution),
+        buffers_streams(recipe.root_seed),
+    )
+    out_dir = Path(arguments.out_dir)
+    write_canonical_yaml(
+        _stamped(buffers_stage.statistics_record(result), resolution),
+        out_dir / BUFFERS_STATS_FILE,
+    )
+    tables = buffers_stage.buffer_tables(result)
+    hashes = [
+        (name, hashlib.sha256(canonical_yaml({name: rows})).hexdigest())
+        for name, rows in tables.items()
+    ]
+    write_hash_list(hashes, out_dir / BUFFERS_HASHES_FILE)
+    for note in result.notes:
+        sys.stdout.write(f"buffers: {note}\n")
+
+
+def _strength_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    result = _strength(resolution)
+    out_dir = Path(arguments.out_dir)
+    write_canonical_yaml(
+        _stamped(strength_stage.statistics_record(result), resolution),
+        out_dir / STRENGTH_STATS_FILE,
+    )
+    tables = strength_stage.strength_tables(result)
+    hashes = [
+        (name, hashlib.sha256(canonical_yaml({name: rows})).hexdigest())
+        for name, rows in tables.items()
+    ]
+    write_hash_list(hashes, out_dir / STRENGTH_HASHES_FILE)
+    _check_supply(result)
+
+
+def _check_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    _check_supply(_strength(resolution))
+
+
+def _check_supply(result: StrengthResult) -> None:
+    """Report the undisturbed-supply check; a world that fails it stops the build (E2)."""
+    check = undisturbed_supply_check(result)
+    if not check.passed:
+        raise CommandError(check.report().rstrip("\n"))
+    sys.stdout.write(check.report())
+
+
+def _strength(resolution: Resolution) -> StrengthResult:
+    terrain = _terrain(resolution)
+    requirements = _requirements(resolution, terrain)
+    couplings = _couplings(resolution, terrain, requirements)
+    return build_strength(requirements.layers, requirements, couplings, _rules(resolution))
+
+
 def _couplings(
     resolution: Resolution, terrain: TerrainResult, requirements: RequirementsResult
 ) -> CouplingsResult:
@@ -338,6 +411,9 @@ COMMANDS: dict[str, Callable[[Resolution, argparse.Namespace], None]] = {
     "layers": _layers_command,
     "requirements": _requirements_command,
     "couplings": _couplings_command,
+    "buffers": _buffers_command,
+    "strength": _strength_command,
+    "check": _check_command,
     "preview-couplings": _preview_couplings_command,
     "export-gis": _export_gis_command,
     "preview-world": _preview_world_command,
@@ -372,6 +448,20 @@ def _parser() -> argparse.ArgumentParser:
     )
     layers_command.add_argument("recipe", help="recipe YAML file")
     layers_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    buffers_command = commands.add_parser(
+        "buffers", help="draw reserves, backup, tolerance and failure modes; write statistics"
+    )
+    buffers_command.add_argument("recipe", help="recipe YAML file")
+    buffers_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    strength_command = commands.add_parser(
+        "strength", help="derive coupling strength; write statistics and run the supply check"
+    )
+    strength_command.add_argument("recipe", help="recipe YAML file")
+    strength_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    world_check = commands.add_parser(
+        "check", help="run the world checks: every consumer supplied before any disruption"
+    )
+    world_check.add_argument("recipe", help="recipe YAML file")
     requirements_command = commands.add_parser(
         "requirements", help="draw the requirements; write their statistics and table hash"
     )
