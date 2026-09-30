@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: e67b963861eef3888bf1d99e9cd80a035b746efb6fe637e54440bd98cfdc6920
+  registry_sha256: 9b38a9c16a89a38e56d9c938aa4a9e1957fee4eefea859eb8236d1266fab3861
   overrides: {}
 edges: 72
 kappa_below_1: 10

@@ -139,7 +139,9 @@ def test_section_4_4a_targets_hold_their_ruled_values() -> None:
     }
     assert rules.number("requirements.peak_factor") == 1.3
     assert rules.value("tolerance.generation") == {"t_h": 12.0, "d": 0.95}
-    assert rules.value("repair.crew_work_h") == {"slight": 8.0, "moderate": 24.0}
+    assert rules.value("repair.crew_work_h") == {
+        "slight": 8.0, "moderate": 24.0, "extensive": 72.0, "complete": 168.0,
+    }  # fmt: skip
 
 
 # --- Overrides and stamping (A3) ------------------------------------------------------------

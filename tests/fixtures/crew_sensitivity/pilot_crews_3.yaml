@@ -1,0 +1,98 @@
+# Crew sensitivity (structure v0.6 §4.4a; Work Order 5, H3): the pilot with 3 crews.
+# A fixture, not a golden file: only unobserved.crews differs from the pilot.
+#
+# The pilot world: Pilot_Spec.md v0.5 (decisions 0003, 0004, 0006 and 0007).
+# Fields the pilot spec does not set are left to the schema defaults.
+#
+# Subtype attributes (decision 0007, R9) are drawn in the layers stage, not set here. The
+# pilot's one generation plant is fuel_kind lng, and its one import terminal carries product
+# lng, so the pilot's fuel -> power runs from the import terminal to the plant.
+recipe_version: 2
+
+terrain:
+  map_type: spine_island
+  size_preset: hand_check
+
+layers:
+  dual_membership: false            # ruling A4
+  power:
+    state: emitted
+    sources: [osm_power, wri_gppd]  # ruling A3: deliberate source disagreement
+  telecom:
+    state: emitted
+    sources: [osm_telecom]
+  water:
+    state: emitted
+    sources: [osm_water]
+  transport:
+    state: emitted
+    sources: [osm_transport, ourairports]  # decision 0006: OpenStreetMap backbone, OurAirports crossing it
+  fuel:
+    state: emitted
+    sources: [osm_fuel]
+  healthcare:
+    state: emitted
+    sources: [osm_health, facility_register]  # ruling A3: deliberate source disagreement
+
+couplings:
+  # Pilot_Spec v0.5: seven of the 21, so a cascade crosses every layer and can be traced by hand.
+  switched_on:
+    - {supplier: fuel, consumer: power}
+    - {supplier: power, consumer: telecom}
+    - {supplier: telecom, consumer: power}
+    - {supplier: power, consumer: water}
+    - {supplier: water, consumer: healthcare}
+    - {supplier: power, consumer: healthcare}
+    - {supplier: transport, consumer: fuel}
+  switched_off_handling: generate_and_hide  # the other 14 exist in the truth, hidden
+  density: 0                                # core dependencies only
+  two_way_pct: 0                            # no mutual pairs: keeps the hand trace simple
+
+shared_causes:
+  hazards:
+    storm_corridor:
+      switched_on: true
+  scenarios: 8
+
+unobserved:
+  crews: 3                          # the sensitivity setting
+  crew_base: 1                      # §4.4a pilot: one crew base
+  mobile_substations: 1             # §4.4a pilot emergency pool (ruling T11)
+  mobile_cell_sites: 1
+
+dynamics:
+  tier: exact
+
+errors:
+  default_mechanism: parametric
+
+answer_key_requests:
+  - model: protect_condition_and_add_reserve
+    member_class: defensive
+    budget_cost_units: 3
+    service_weights: lifeline
+    objective: unserved_demand_hours
+  - model: protect_condition_and_add_reserve
+    member_class: defensive
+    budget_cost_units: 4
+    service_weights: lifeline
+    objective: unserved_demand_hours
+  - model: strike_nodes
+    member_class: offensive
+    strikes_k: 2
+    service_weights: lifeline
+    objective: unserved_demand_hours
+  - model: strike_nodes
+    member_class: offensive
+    strikes_k: 3
+    service_weights: lifeline
+    objective: unserved_demand_hours
+  - model: sequence_repair_crews
+    member_class: restorative
+    service_weights: lifeline
+    objective: unserved_demand_hours
+  - model: observe_uncertain_couplings
+    member_class: informative
+    observations_n: 1
+    service_weights: lifeline
+    objective: unserved_demand_hours

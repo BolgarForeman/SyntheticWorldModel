@@ -62,7 +62,7 @@ FEATURE_ARRIVALS: dict[str, Arrival] = {
     "hazard:seismic_zone": Arrival.PHASE_5,
     "hazard:flood_plain": Arrival.PHASE_5,
     "unobserved_quantities": Arrival.PHASE_1,
-    "crews_and_depots": Arrival.PHASE_1,
+    "crews_and_crew_bases": Arrival.PHASE_1,
     "tier:exact": Arrival.PHASE_1,
     "tier:simulation": Arrival.PHASE_5,
     "tier:both": Arrival.PHASE_5,
@@ -203,7 +203,7 @@ def _layer_features(recipe: Recipe) -> set[str]:
     present = [layers.get(layer) for layer in Layer if layers.get(layer).state != LayerState.OFF]
     features: set[str] = set()
     if present:
-        features |= {"layer_siting_and_links", "unobserved_quantities", "crews_and_depots"}
+        features |= {"layer_siting_and_links", "unobserved_quantities", "crews_and_crew_bases"}
     for settings in (layers.get(layer) for layer in Layer):
         if settings.state != LayerState.EMITTED:
             features.add(f"layer_state:{settings.state}")

@@ -697,6 +697,8 @@ def test_emission_and_error_code_cannot_reach_the_couplings_output() -> None:
         "swm.stages.requirements",
         "swm.stages.buffers",
         "swm.stages.strength",
+        "swm.stages.crews",
+        "swm.stages.repair",
         "swm.recipe.dependencies",
     }
     for folder in ("emit", "errors"):

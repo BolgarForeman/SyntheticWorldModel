@@ -58,9 +58,20 @@ All notable changes to this project are recorded here. Each phase closes with a 
   - failure modes.
 - The strength stage and `swm strength` (Work Order 5, Part E): κ and headroom on every edge, and each dependency's supply ratio.
 - `swm check`: the undisturbed-supply world check (Work Order 5, E2).
+- The crews stage (Work Order 5, Part H): crew bases sited at town centres by road access, the crews in one pool, and the emergency pool from the registry.
+- The repair stage and `swm repair` (Work Order 5, Part G). It records, per node:
+  - permanent repair at all four damage states: drawn around the Hazus MR4 mean at the Hazus spread, then split into lead time and crew work (8, 24, 72 and 168 h);
+  - the emergency mode: a mobile substation or a mobile cell site;
+  - travel from the crew base over the roads, as its own term.
+- Crew sensitivity recipes with 1, 2 and 3 crews (`tests/fixtures/crew_sensitivity/`); fixtures, not golden files (Work Order 5, H3).
+- Rules `crews.road_speed_kmh` and `repair.no_repair_rows`.
+- Recipe controls `unobserved.mobile_substations` and `unobserved.mobile_cell_sites` (default 1 and 1), the emergency pool (decision 0011, addendum).
+- Repair sensitivity recipes at a repair gap of +20 and −20 (`tests/fixtures/repair_sensitivity/`); fixtures, not golden files.
 
 ### Changed
 
+- Repair rates default to a gap of 0 and the Hazus spread; the recipe's repair heterogeneity is now an optional override (decision 0011, addendum).
+- The recipe schema is version 2: `unobserved.depots` is renamed `unobserved.crew_base`. Version 1 recipes are migrated on loading (decision 0011). The pilot sets `crew_base: 1`.
 - CI runs on pushes to `main` and on pull requests only (Work Order 1).
 - Power is sized to load. Generation totals distribution × 1.3 × 0.9, and each transmission substation carries at least 1.3 × the distribution it feeds (Work Order 4, C).
 - Generation's observed `fuel_type` now follows its true `fuel_kind`, and is no longer drawn on its own (Work Order 4, B).
@@ -105,4 +116,5 @@ All notable changes to this project are recorded here. Each phase closes with a 
 - The `two_way` switch, replaced by `two_way_pct` (Work Order 4, A3).
 - The unused Work Order 1 stream `unobserved/requirements` (decision 0010).
 - The unused Work Order 1 streams `unobserved/reserves` and `unobserved/failure_mode`, superseded by `reserves/<layer>` and `failure_mode/<layer>`.
+- The unused Work Order 1 streams `unobserved/repair_rates` and `unobserved/crews_and_depots`, superseded by `repair/<layer>` and an undrawn crew-base siting (decision 0011).
 - The four unused Work Order 1 streams `couplings/edges`, `couplings/supplier_not_nearest`, `couplings/feed_configuration` and `couplings/two_way` (decision 0008).
