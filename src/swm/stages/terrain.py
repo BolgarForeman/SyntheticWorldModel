@@ -284,6 +284,7 @@ def build_terrain(terrain: Terrain, streams: TerrainStreams) -> TerrainResult:
     land, elevation_m = _add_outlying_islands(
         land, elevation_m, character.outlying_islands, max_elevation_m, streams.coastline, mappings
     )
+    _check_island_count(land, character.outlying_islands)
     elevation_m = _rescale_to_peak(elevation_m, max_elevation_m)
     elevation_dm = _quantise_dm(elevation_m, land)
     land_cells = int(np.count_nonzero(land))
@@ -515,7 +516,7 @@ def _add_outlying_islands(
     while placed < count:
         attempts += 1
         if attempts > mappings.outlying_island_attempts:
-            raise ValueError(f"could not place {count} outlying islands clear of other land")
+            raise ValueError(_island_count_message(count, placed))
         radius = int(
             stream.integers(
                 mappings.outlying_island_radius_min_cells,
@@ -524,7 +525,11 @@ def _add_outlying_islands(
         )
         row, column = (int(value) for value in stream.integers(margin, GRID_CELLS - margin, 2))
         reach = radius + mappings.outlying_island_gap_cells
-        window = land[row - reach : row + reach + 1, column - reach : column + reach + 1]
+        # The reach can pass the grid edge; a negative slice start would give an empty window
+        # and accept a site beside the main island, merging the two.
+        window = land[
+            max(row - reach, 0) : row + reach + 1, max(column - reach, 0) : column + reach + 1
+        ]
         if window.any():
             continue
         rows = np.arange(-radius, radius + 1)
@@ -537,6 +542,24 @@ def _add_outlying_islands(
         elevation_m[box] = np.where(disc, cone, elevation_m[box])
         placed += 1
     return land, elevation_m
+
+
+def _island_count_message(requested: int, realised: int) -> str:
+    """Name the setting whose outlying-island count the terrain could not deliver."""
+    return (
+        f"terrain.character.outlying_islands = {requested}: the terrain realised {realised} "
+        "outlying islands clear of other land; lower the setting or change terrain_seed"
+    )
+
+
+def _check_island_count(land: NDArray[np.bool_], outlying_islands: int) -> None:
+    """Stop the build if the land is not one main island plus exactly the requested outliers.
+
+    Spec: structure §4.1 (the outlying-island count is exact); decision 0010.
+    """
+    _, sizes = _label_land(land)
+    if len(sizes) != outlying_islands + 1:
+        raise ValueError(_island_count_message(outlying_islands, len(sizes) - 1))
 
 
 def _rescale_to_peak(elevation_m: NDArray[np.float64], peak_m: float) -> NDArray[np.float64]:
