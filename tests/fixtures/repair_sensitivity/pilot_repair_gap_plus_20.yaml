@@ -54,6 +54,7 @@ shared_causes:
       switched_on: true
       severity: 50                  # Pilot_Spec v0.6: a moderate typhoon, about 44 m/s at sea
   scenarios: 8
+  facility_damage_cap: moderate      # §4.4a: the pilot storm damages facilities slightly or moderately
 
 unobserved:
   repair_rates:

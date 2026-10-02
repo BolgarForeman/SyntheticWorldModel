@@ -176,6 +176,15 @@ class SwitchedOffHandling(StrEnum):
     NOT_GENERATED = "not_generated"
 
 
+class DamageState(StrEnum):
+    """Hazus damage states, least to worst (structure v0.7 §4.3b; ruling H10)."""
+
+    SLIGHT = "slight"
+    MODERATE = "moderate"
+    EXTENSIVE = "extensive"
+    COMPLETE = "complete"
+
+
 class Hazard(StrEnum):
     """Shared-cause hazard fields."""
 
@@ -850,6 +859,11 @@ class SharedCauses(_Section):
         ge=1,
         le=MAX_SCENARIOS,
         description="Disruption scenarios drawn from the active hazard fields.",
+    )
+    facility_damage_cap: DamageState = Field(
+        DamageState.COMPLETE,
+        description="The worst damage state a facility can take; a deeper flood is held to it "
+        "(§4.3b; the pilot caps at moderate, §4.4a).",
     )
 
 

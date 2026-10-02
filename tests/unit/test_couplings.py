@@ -700,6 +700,7 @@ def test_emission_and_error_code_cannot_reach_the_couplings_output() -> None:
         "swm.stages.crews",
         "swm.stages.repair",
         "swm.stages.storm",
+        "swm.stages.scenarios",
         "swm.recipe.dependencies",
     }
     for folder in ("emit", "errors"):

@@ -107,7 +107,7 @@ def test_repair_writes_statistics_and_hashes(pilot_path: Path, tmp_path: Path) -
     hashes = (tmp_path / "repair_sha256.txt").read_text(encoding="utf-8").splitlines()
     assert [line.split("  ")[1] for line in hashes] == [
         "crew_bases", "crews", "mobile_units",
-        "travel", "permanent_repair", "emergency_repair", "unrepairable",
+        "travel", "permanent_repair", "emergency_repair", "unrepairable", "line_repair",
     ]  # fmt: skip
 
 

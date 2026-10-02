@@ -221,7 +221,7 @@ def test_a_node_off_the_roads_is_reached_by_sea_after_the_mobilisation_delay(ric
     rows, columns = np.nonzero(labels == island)
     moved = dataclasses.replace(layers.nodes[0], row=int(rows[0]), column=int(columns[0]))
     base = crews_of(rich).bases[0]
-    trip = stage._travel(base, moved, network, 40.0, 12.0)
+    trip = stage._travel(base, moved.node_id, (moved.row, moved.column), network, 40.0, 12.0)
     assert trip is not None
     assert trip.by_sea
     road = network.road_km(base.access_node_id)
@@ -265,5 +265,7 @@ def test_the_stage_opens_only_its_own_streams(monkeypatch: pytest.MonkeyPatch) -
 
 def test_the_tables_hold_every_record(exact: Any) -> None:
     tables = stage.repair_tables(exact)
-    assert list(tables) == ["travel", "permanent_repair", "emergency_repair", "unrepairable"]
+    assert list(tables) == [
+        "travel", "permanent_repair", "emergency_repair", "unrepairable", "line_repair",
+    ]  # fmt: skip
     assert len(tables["permanent_repair"]) == len(exact.permanent)

@@ -34,6 +34,7 @@ from swm.stages.couplings import CouplingsResult
 from swm.stages.crews import ELIGIBLE_CLASS, CrewBase, CrewsResult, RoadNetwork
 from swm.stages.layers import LayersResult, Node
 from swm.stages.requirements import RequirementsResult
+from swm.stages.scenarios import OverheadLine, midpoint_cell, overhead_lines
 from swm.stages.terrain import TerrainResult
 
 HOURS_PER_DAY = 24.0
@@ -85,6 +86,19 @@ class EmergencyRepair:
 
 
 @dataclass(frozen=True)
+class LineRepair:
+    """The repair of one overhead line, should the storm bring it down (§4.3b)."""
+
+    line_id: str
+    crew_work_h: float
+    lead_time_h: float
+    base_id: str | None
+    travel_h: float | None
+    """From the nearest crew base to the line's midpoint; None if no route reaches it."""
+    by_sea: bool
+
+
+@dataclass(frozen=True)
 class RepairResult:
     """The repair stage's output. Real but unobserved: never emitted."""
 
@@ -93,6 +107,7 @@ class RepairResult:
     emergency: tuple[EmergencyRepair, ...]
     unrepairable: tuple[str, ...]
     """Nodes that cannot be repaired inside the window."""
+    lines: tuple[LineRepair, ...]
     notes: tuple[str, ...]
 
 
@@ -159,35 +174,73 @@ def build_repair(
     notes: set[str] = set()
 
     def travel(base: CrewBase, node: Node) -> Travel | None:
-        return _travel(base, node, network, speed_kmh, mobilisation_h)
+        cell = (node.row, node.column)
+        return _travel(base, node.node_id, cell, network, speed_kmh, mobilisation_h)
+
+    def nearest(element_id: str, cell: tuple[int, int]) -> Travel | None:
+        options = [
+            trip
+            for base in crews.bases
+            if (trip := _travel(base, element_id, cell, network, speed_kmh, mobilisation_h))
+        ]
+        return min(options, key=lambda t: (t.travel_h, t.base_id)) if options else None
 
     travels = []
     for node in layers.nodes:
-        options = [t for base in crews.bases if (t := travel(base, node)) is not None]
-        if not options:
+        trip = nearest(node.node_id, (node.row, node.column))
+        if trip is None:
             notes.add(f"{node.node_class}: no road or sea route from a crew base; no travel time")
             continue
-        travels.append(min(options, key=lambda t: (t.travel_h, t.base_id)))
+        travels.append(trip)
     permanent, unrepairable = _permanent(levers, layers, rules, streams, notes)
     emergency = _emergency(crews, layers, requirements, couplings, rules, travel, notes)
+    lines = _line_repairs(overhead_lines(layers, couplings), terrain, rules, nearest)
     return RepairResult(
         tuple(travels),
         tuple(permanent),
         tuple(emergency),
         tuple(unrepairable),
+        tuple(lines),
         tuple(sorted(notes)),
     )
 
 
+def _line_repairs(
+    lines: tuple[OverheadLine, ...],
+    terrain: TerrainResult,
+    rules: Registry,
+    nearest: Callable[[str, tuple[int, int]], Travel | None],
+) -> list[LineRepair]:
+    """Crew work with no lead time, plus travel from the nearest base (§4.3b; E1)."""
+    work_h = rules.number("storm.line_crew_work_h")
+    repairs = []
+    for line in lines:
+        # CHOICE: a crew travels to the line's midpoint, which stands for its length until
+        # the damage says where along it the line came down.
+        trip = nearest(line.line_id, midpoint_cell(line, terrain.grid))
+        if trip is None:
+            repairs.append(LineRepair(line.line_id, work_h, 0.0, None, None, False))
+            continue
+        repairs.append(
+            LineRepair(line.line_id, work_h, 0.0, trip.base_id, trip.travel_h, trip.by_sea)
+        )
+    return repairs
+
+
 def _travel(
-    base: CrewBase, node: Node, network: RoadNetwork, speed_kmh: float, mobilisation_h: float
+    base: CrewBase,
+    element_id: str,
+    cell: tuple[int, int],
+    network: RoadNetwork,
+    speed_kmh: float,
+    mobilisation_h: float,
 ) -> Travel | None:
     """Travel from one base: by road if the roads join them, else to a seaport and by sea."""
     road = network.road_km(base.access_node_id)
-    access = network.access(node.row, node.column)
+    access = network.access(*cell)
     if access is not None and access[0].node_id in road:
         km = base.access_km + road[access[0].node_id] + access[1]
-        return Travel(node.node_id, base.base_id, km, False, km / speed_kmh)
+        return Travel(element_id, base.base_id, km, False, km / speed_kmh)
     seaports = [
         n for n in network.transport if n.node_class == NodeClass.SEAPORT and n.node_id in road
     ]
@@ -197,7 +250,7 @@ def _travel(
     # outlying-island mobilisation delay covers the crossing and the travel on the far side.
     port = min(seaports, key=lambda n: (road[n.node_id], n.node_id))
     km = base.access_km + road[port.node_id]
-    return Travel(node.node_id, base.base_id, km, True, km / speed_kmh + mobilisation_h)
+    return Travel(element_id, base.base_id, km, True, km / speed_kmh + mobilisation_h)
 
 
 def _permanent(
@@ -380,6 +433,7 @@ def repair_tables(result: RepairResult) -> dict[str, list[dict[str, object]]]:
         "permanent_repair": [plain(p) for p in result.permanent],
         "emergency_repair": [plain(e) for e in result.emergency],
         "unrepairable": [{"node_id": node_id} for node_id in result.unrepairable],
+        "line_repair": [plain(line) for line in result.lines],
     }
 
 
@@ -444,7 +498,18 @@ def statistics_record(result: RepairResult, crews: CrewsResult) -> dict[str, obj
         "permanent_repair": states,
         "emergency_repair": emergency,
         "unrepairable": list(result.unrepairable),
+        "line_repair": _line_summary(result.lines),
         "notes": list(result.notes),
+    }
+
+
+def _line_summary(lines: tuple[LineRepair, ...]) -> dict[str, object]:
+    travel = [line.travel_h for line in lines if line.travel_h is not None]
+    return {
+        "lines": len(lines),
+        "crew_work_h": lines[0].crew_work_h if lines else None,
+        "mean_travel_h": _mean(travel),
+        "longest_travel_h": round(max(travel), 3) if travel else None,
     }
 
 

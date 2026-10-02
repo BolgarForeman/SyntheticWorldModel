@@ -75,6 +75,13 @@ All notable changes to this project are recorded here. Each phase closes with a 
   - a Wendland-kernel random variation.
   Flood depth is the flood stage less the height above the nearest drainage. Every node records its wind and flood depth per scenario.
 - `swm storm --scenario N` writes a preview of one scenario (optional `preview` extra).
+- The scenarios stage and `swm scenarios` (Work Order 6, Parts D–G):
+  - overhead lines (power links, substation feeds, telecom links) fail by wind, from stored line and tower fragility tables (`tools/build_fragility_tables.py`) at each line's peak 3-second gust;
+  - facilities fail by flood past their thresholds, with a damage state held to the recipe's `shared_causes.facility_damage_cap`;
+  - every element is marked protectable;
+  - the calm-world check runs at severity 0.
+- Line repair records: 6 h of crew work, no lead time, and travel to each line's midpoint (Work Order 6, E1).
+- A severity-70 copy of the pilot (`tests/fixtures/storm_sensitivity/`), a fixture rather than a golden file, so the flood-damage path is exercised.
 - Each storm scenario draws its closest approach to the island (0–40 km), its radius of maximum wind (20–60 km) and its rainfall (±75 mm of its rung). Power plants and transmission substations stand on 2 m platforms. The lee is measured against the terrain's smooth spine line, now recorded with the terrain; a flat island has none. Wooded land takes the town factor. Refineries and import terminals get flood thresholds (decision 0012, addendum).
 - The storm hazard rules of structure v0.7 §4.3b, each with the new registry field `theta_role: dynamics`.
 
@@ -127,6 +134,7 @@ All notable changes to this project are recorded here. Each phase closes with a 
 - The `two_way` switch, replaced by `two_way_pct` (Work Order 4, A3).
 - The unused Work Order 1 stream `unobserved/requirements` (decision 0010).
 - The unused Work Order 1 streams `unobserved/reserves` and `unobserved/failure_mode`, superseded by `reserves/<layer>` and `failure_mode/<layer>`.
+- The unused Work Order 1 stream `shared_causes/scenarios`, superseded by each scenario's `damage` stream.
 - The unused Work Order 1 stream `shared_causes/storm_corridor/field`, superseded by each scenario's `track` and `variation` streams (decision 0012).
 - The unused Work Order 1 streams `unobserved/repair_rates` and `unobserved/crews_and_depots`, superseded by `repair/<layer>` and an undrawn crew-base siting (decision 0011).
 - The four unused Work Order 1 streams `couplings/edges`, `couplings/supplier_not_nearest`, `couplings/feed_configuration` and `couplings/two_way` (decision 0008).

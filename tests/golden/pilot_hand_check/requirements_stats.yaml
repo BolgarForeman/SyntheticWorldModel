@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: 1093b79cf8d9a0121c3c148901a5ee24a13c000de74003428810dd54629d53cb
+  registry_sha256: 3cdeb2a3ac1d29bbb66037c1cf59205082a4f20089e978686c98601ee5b5d84d
   overrides: {}
 levers:
   heterogeneity: 0.4
