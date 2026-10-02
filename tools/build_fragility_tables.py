@@ -6,9 +6,9 @@ Offline only: this script uses log and the error function, which the generator i
 
 Both are lognormal fragilities against the 3-second gust, P(g) = Phi(ln(g / median) / beta),
 tabulated on whole metres per second and interpolated linearly at runtime:
-- overhead lines on poles: the chance of failing per km of line. The curve passes through
-  0.05 per km at a 45 m/s gust (§4.3b), so median = 45 x exp(beta x z(0.95)) with the
-  placeholder beta of ``LINE_BETA``;
+- overhead lines on poles: the chance of failing per km of line, with the placeholder beta of
+  ``LINE_BETA`` and the median ``LINE_MEDIAN`` found by ``tools/calibrate_line_curve.py``
+  (a declared calibration, decision 0012 second addendum);
 - transmission towers: the chance a towered line collapses, median 285 km/h, beta 0.10
   (Cyclone Fani and Quanta 2009 curves).
 
@@ -22,9 +22,8 @@ import math
 GUSTS = tuple(range(0, 121))
 """Knots: 3-second gust in m/s, 0 to 120 in steps of 1."""
 
-LINE_ANCHOR_GUST = 45.0
-"""Gust at which a line on poles fails with probability 0.05 per km (m/s; §4.3b)."""
-LINE_ANCHOR_PROBABILITY = 0.05
+LINE_MEDIAN = 121.7185
+"""Median gust of the pole-line curve (m/s), calibrated to the pilot's 10% length share."""
 LINE_BETA = 0.3
 """Lognormal dispersion of the pole-line curve: placeholder (open decision: line fragility)."""
 
@@ -38,18 +37,6 @@ def normal_cdf(x: float) -> float:
     return 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
 
 
-def normal_quantile(p: float) -> float:
-    """Inverse standard normal CDF by bisection on erf (offline, so any precision will do)."""
-    low, high = -10.0, 10.0
-    for _ in range(200):
-        middle = (low + high) / 2
-        if normal_cdf(middle) < p:
-            low = middle
-        else:
-            high = middle
-    return (low + high) / 2
-
-
 def lognormal(gust: float, median: float, beta: float) -> float:
     """Lognormal fragility at a gust, rounded to the stored digits; 0 at no gust."""
     if gust <= 0.0:
@@ -57,14 +44,9 @@ def lognormal(gust: float, median: float, beta: float) -> float:
     return round(normal_cdf(math.log(gust / median) / beta), DIGITS)
 
 
-def line_median() -> float:
-    """Median gust that puts 0.05 per km at 45 m/s, for the placeholder beta."""
-    return LINE_ANCHOR_GUST * math.exp(-LINE_BETA * normal_quantile(LINE_ANCHOR_PROBABILITY))
-
-
 def main() -> None:
     """Print both tables as registry YAML."""
-    median = line_median()
+    median = LINE_MEDIAN
     tower_median = TOWER_MEDIAN_KM_PER_H / 3.6
     lines = [
         "storm.line_fragility_table:",

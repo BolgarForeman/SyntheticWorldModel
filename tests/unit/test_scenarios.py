@@ -1,4 +1,5 @@
 import functools
+import itertools
 import math
 from pathlib import Path
 from typing import Any
@@ -91,9 +92,22 @@ def test_the_stored_tables_reproduce_the_offline_curves_at_their_knots(
         assert value == pytest.approx(expected, abs=1e-6)
 
 
-def test_the_line_curve_passes_through_0_05_per_km_at_45_m_per_s() -> None:
+def test_the_line_curve_is_the_declared_calibration_and_keeps_the_old_anchor() -> None:
+    import importlib.util
+
+    builder_path = FIXTURES.parents[1] / "tools" / "build_fragility_tables.py"
+    spec = importlib.util.spec_from_file_location("build_fragility_tables", builder_path)
+    assert spec is not None
+    assert spec.loader is not None
+    builder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(builder)
     table = RULES.value("storm.line_fragility_table")
-    assert table["failures_per_km"][45] == pytest.approx(0.05, abs=1e-9)
+    assert table["median_m_per_s"] == builder.LINE_MEDIAN
+    assert table["beta"] == 0.3
+    targets = RULES.rule("storm.line_fragility_anchor")
+    assert targets.value == {"severity_50_length_share": 0.10, "severity_70_length_share": 0.30}
+    assert targets.history[-1].value == {"gust_m_per_s": 45.0, "failures_per_km": 0.05}
+    assert RULES.rule("storm.line_fragility_table").history[-1].decision == "0012"
 
 
 def test_towers_hardly_fail_below_210_km_per_h_and_half_fail_at_285() -> None:
@@ -112,17 +126,10 @@ def test_lines_fail_more_often_at_higher_gust_and_greater_length(
     low: float, step: float, short: float, extra: float
 ) -> None:
     reader = stage._LineReader(pipeline()[1], RULES)
-    line = stage.OverheadLine("L", LineKind.POWER_FEED, Structure.POLE, "a", "b", (), short)
-    longer = stage.OverheadLine(
-        "M", LineKind.POWER_FEED, Structure.POLE, "a", "b", (), short + extra
-    )
-    tower = stage.OverheadLine("T", LineKind.POWER_LINK, Structure.TOWER, "a", "b", (), short)
-    for chosen in (line, tower):
-        assert (
-            reader.failure_probability(chosen, low)
-            <= reader.failure_probability(chosen, low + step) + 1e-12
-        )
-    assert reader.failure_probability(line, low) <= reader.failure_probability(longer, low) + 1e-12
+    piece = reader.piece_probability
+    assert piece(low, short) <= piece(low + step, short) + 1e-12
+    assert piece(low, short) <= piece(low, short + extra) + 1e-12
+    assert reader.tower_probability(low) <= reader.tower_probability(low + step) + 1e-12
 
 
 @settings(max_examples=60)
@@ -132,10 +139,24 @@ def test_the_power_by_roots_matches_the_power(base: float, exponent: float) -> N
     assert stage._power(base, exponent) == pytest.approx(base**quantised, rel=1e-9, abs=1e-12)
 
 
-def test_a_line_on_poles_fails_with_one_minus_survival_to_the_length() -> None:
+def test_a_piece_fails_with_one_minus_survival_to_its_length() -> None:
     reader = stage._LineReader(pipeline()[1], RULES)
-    line = stage.OverheadLine("L", LineKind.TELECOM_LINK, Structure.POLE, "a", "b", (), 10.0)
-    assert reader.failure_probability(line, 45.0) == pytest.approx(1 - 0.95**10, rel=1e-9)
+    per_km = stage._interpolate(reader.line_table, 80.0)
+    assert reader.piece_probability(80.0, 1.0) == pytest.approx(per_km, rel=1e-9)
+    assert reader.piece_probability(80.0, 0.25) == pytest.approx(1 - (1 - per_km) ** 0.25, rel=1e-9)
+
+
+def test_a_line_splits_into_whole_kilometres_and_a_remainder() -> None:
+    _, terrain, _, _, _, result = pipeline()
+    reader = stage._LineReader(terrain, RULES)
+    for line in result.lines:
+        pieces = reader.pieces(line)
+        assert pieces[0].start_km == 0.0
+        for a, b in itertools.pairwise(pieces):
+            assert a.end_km == b.start_km
+            assert a.end_km - a.start_km == pytest.approx(1.0)
+        assert pieces[-1].end_km == pytest.approx(line.length_km, abs=0.002)
+        assert len(pieces) == max(1, math.ceil(pieces[-1].end_km - 1e-9))
 
 
 # --- Overhead lines and their gust (D1) -----------------------------------------------------
@@ -158,7 +179,10 @@ def test_overhead_lines_are_power_and_telecom_links_and_substation_feeds() -> No
     for line in result.lines:
         ends = {classes[line.from_id], classes[line.to_id]}
         if line.kind == LineKind.POWER_LINK:
-            towers = ends <= {NodeClass.GENERATION, NodeClass.TRANSMISSION_SUBSTATION}
+            towers = ends <= {NodeClass.GENERATION, NodeClass.TRANSMISSION_SUBSTATION} or ends == {
+                NodeClass.TRANSMISSION_SUBSTATION,
+                NodeClass.DISTRIBUTION_SUBSTATION,
+            }
         elif line.kind == LineKind.POWER_FEED:
             towers = classes[line.from_id] == NodeClass.TRANSMISSION_SUBSTATION
         else:
@@ -182,27 +206,49 @@ def test_a_line_reads_its_peak_gust_along_its_length() -> None:
             cells = reader.cells(line)
             for end in (line.from_id, line.to_id):
                 assert nodes[end].row * 256 + nodes[end].column in cells
-            assert outcome.peak_gust_m_per_s == float(gust.ravel()[cells].max())
+            pieces = reader.pieces(line)
+            peak = max(float(gust.ravel()[piece.cells].max()) for piece in pieces)
+            assert outcome.peak_gust_m_per_s == peak
 
 
-def test_the_gust_factor_is_1_30_at_the_coast_and_1_75_a_km_inland() -> None:
+def test_the_gust_factor_is_1_38_at_the_coast_and_1_66_a_km_inland() -> None:
     terrain = pipeline()[1]
     reader = stage._LineReader(terrain, RULES)
     land = np.asarray(terrain.land)
-    assert np.allclose(reader.factor[~land], 1.30)
+    assert np.allclose(reader.factor[~land], 1.38)
     inland = stage._coast_distance_km(land, terrain.grid.cell_size_m / 1000, 1.0) >= 1.0
-    assert np.allclose(reader.factor[land & inland], 1.75)
+    assert np.allclose(reader.factor[land & inland], 1.66)
+    assert RULES.rule("storm.gust_factors").history[-1].value == {"inland": 1.75, "coast": 1.30}
 
 
 # --- Damage draws (D2, D3) ------------------------------------------------------------------
 
 
-def test_each_line_fails_when_its_draw_falls_under_its_chance() -> None:
-    resolution, *_, result = pipeline()
+def test_each_kilometre_fails_at_its_own_gust_and_each_failure_is_a_point() -> None:
+    resolution, terrain, _, _, storm, result = pipeline()
+    reader = stage._LineReader(terrain, RULES)
     streams = scenarios_streams(resolution.recipe.root_seed, 8)
-    for scenario, stream in zip(result.scenarios, streams, strict=True):
-        for outcome in scenario.lines:
-            assert outcome.failed == (float(stream.random()) < outcome.failure_probability)
+    for field, scenario, stream in zip(storm.scenarios, result.scenarios, streams, strict=True):
+        gust = reader.gust(field.wind_m_per_s).ravel()
+        for line, outcome in zip(result.lines, scenario.lines, strict=True):
+            if line.structure == Structure.TOWER:
+                failed = float(stream.random()) < reader.tower_probability(
+                    outcome.peak_gust_m_per_s
+                )
+                assert outcome.failed == failed
+                assert outcome.failure_points == int(failed)
+                continue
+            points = []
+            for piece in reader.pieces(line):
+                chance = reader.piece_probability(
+                    float(gust[piece.cells].max()), piece.end_km - piece.start_km
+                )
+                if float(stream.random()) < chance:
+                    points.append((piece.start_km + piece.end_km) / 2)
+            assert outcome.failure_km == tuple(points)
+            assert outcome.failure_points == len(points)
+            assert outcome.failed == bool(points)
+            assert outcome.crew_work_h == 6.0 * len(points)
 
 
 @pytest.mark.parametrize(
@@ -230,10 +276,11 @@ def test_a_flooded_facility_is_damaged_at_its_state_held_to_the_cap() -> None:
     assert stage._flooded(depth, layers, RULES, DamageState.COMPLETE) == []
 
 
-def test_the_pilot_damages_lines_only_and_something_in_every_scenario() -> None:
+def test_the_pilot_loses_about_a_tenth_of_its_line_length_and_no_facility() -> None:
     result: ScenariosResult = pipeline()[-1]
+    stats = stage.statistics_record(result)
+    assert abs(float(stats["mean_line_length_share_down"]) - 0.10) <= 0.05  # type: ignore[arg-type]
     for scenario in result.scenarios:
-        assert scenario.failed_lines
         assert scenario.facilities == ()
 
 
@@ -265,7 +312,7 @@ def test_with_no_storm_nothing_is_damaged_and_the_check_passes() -> None:
 def test_the_calm_check_names_anything_damaged_with_no_storm() -> None:
     *_, storm, result = pipeline(severity=0, scenarios=3)
     first = result.scenarios[0]
-    broken = stage.LineOutcome(first.lines[0].line_id, 0.0, 0.0, True)
+    broken = stage.LineOutcome(first.lines[0].line_id, 0.0, 0.0, True, 1, (0.5,), 6.0)
     damaged = stage.ScenarioDamage(0, (broken, *first.lines[1:]), first.facilities)
     faulty = ScenariosResult(result.elements, result.lines, (damaged, *result.scenarios[1:]))
     assert calm_world_problems(storm, faulty) == [
@@ -325,7 +372,7 @@ def test_each_overhead_line_has_6_h_of_crew_work_and_travel_to_its_midpoint() ->
     lines = overhead_lines(requirements.layers, couplings)
     assert [r.line_id for r in repair.lines] == [line.line_id for line in lines]
     for record in repair.lines:
-        assert (record.crew_work_h, record.lead_time_h) == (6.0, 0.0)
+        assert (record.crew_work_h_per_failure_point, record.lead_time_h) == (6.0, 0.0)
         assert record.travel_h is not None
         assert record.travel_h > 0.0
 

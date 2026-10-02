@@ -105,3 +105,41 @@ The design review of the first pilot preview found three problems:
 The coder's PR 6a choices and the deviation stand as marked, including:
 - pits floored at height 0;
 - per-facility records reading node positions from the layers.
+
+## Second addendum: answers to PR 6b (#13)
+
+- **Date:** 2026-10-02
+- **Decided by:** the design side, confirmed by the author (Foreman); answer 6 ruled by Foreman
+- **Source:** `docs/work_orders/WO-06b-answers.md`
+- **Spec:** structure v0.7 §4.3b (overhead lines) and §4.4a (repair), updated on the branch to match
+
+At severity 50 the pilot had lost 53–75% of its overhead lines in every scenario, far beyond real storms. The causes:
+- each line was judged by its single peak gust;
+- the per-km anchor (J) was too severe;
+- the gust factors were wrong.
+
+Every changed registry value keeps its old value in history, citing this decision.
+
+1. **Lines by the kilometre.** Each km of a pole line fails or survives at its own local 3-second gust. A line is down if any kilometre fails, and each failed kilometre is a failure point. Each line records its failure points and where they lie.
+2. **Calibration of the pole curve (declared, J).** β stays 0.3 as a placeholder shape. The median is set so that, averaged over each recipe's scenarios, the pilot (severity 50) loses about 10% of overhead line length and the severity-70 copy about 30%.
+   - The targets and reasoning are in `storm.line_fragility_anchor`; the old anchor (0.05 per km at 45 m/s) is in its history.
+   - **One median cannot meet both targets within 5 points at β 0.3** (`tools/calibrate_line_curve.py`):
+
+     | Median (m/s) | Pilot (target 10%) | Severity 70 (target 30%) |
+     |---|---|---|
+     | 121.72 (fitted to the pilot) | 10.4% | 49.4% |
+     | 143.07 (fitted to severity 70) | 3.9% | 30.5% |
+     | 136.45 (best single, minimax) | 3.9% | 35.6%, missing by 6.1 points |
+
+   - β 0.4 with a median of 159.9 m/s would meet both (6.1% and 33.8%). It is reported and not applied.
+   - The stored median is the pilot's fit, 121.72 m/s: the pilot is the world the answer keys are computed on. That choice is the coder's, for the design side to confirm.
+3. **Gust factors** are corrected to Harper, Kepert & Ginger (2010), WMO guidelines, Table 1.1, from a 600 s reference period to a 3 s gust:
+   - 1.66 in-land (roughly open terrain);
+   - 1.38 off-sea (onshore winds at a coastline).
+
+   The old 1.75 and 1.30 were the in-land and at-sea factors for a 3600 s reference period.
+4. **Towers** keep reading the peak gust against the Fani curve. At pilot severity, at most one towered line fails in any scenario (one, in scenario 7), within the stated limit.
+5. **Lines from transmission to distribution substations run on towers** (J; Taipower practice to check later).
+6. **Repair per failure point.** Crew work is 6 h × the line's failure points, with no lead time, plus road travel to the line's midpoint. One line is one job for one crew in Phase 1. A towered line's collapse counts as one failure point for now; tower repair times are open.
+
+The coder's other PR 6b choices stand as marked.

@@ -90,7 +90,8 @@ class LineRepair:
     """The repair of one overhead line, should the storm bring it down (§4.3b)."""
 
     line_id: str
-    crew_work_h: float
+    crew_work_h_per_failure_point: float
+    """The scenario's crew work is this times the line's failure points (§4.3b)."""
     lead_time_h: float
     base_id: str | None
     travel_h: float | None
@@ -211,7 +212,7 @@ def _line_repairs(
     rules: Registry,
     nearest: Callable[[str, tuple[int, int]], Travel | None],
 ) -> list[LineRepair]:
-    """Crew work with no lead time, plus travel from the nearest base (§4.3b; E1)."""
+    """Crew work per failure point, no lead time, and travel from the nearest base (§4.3b)."""
     work_h = rules.number("storm.line_crew_work_h")
     repairs = []
     for line in lines:
@@ -507,7 +508,7 @@ def _line_summary(lines: tuple[LineRepair, ...]) -> dict[str, object]:
     travel = [line.travel_h for line in lines if line.travel_h is not None]
     return {
         "lines": len(lines),
-        "crew_work_h": lines[0].crew_work_h if lines else None,
+        "crew_work_h_per_failure_point": lines[0].crew_work_h_per_failure_point if lines else None,
         "mean_travel_h": _mean(travel),
         "longest_travel_h": round(max(travel), 3) if travel else None,
     }

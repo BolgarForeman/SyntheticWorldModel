@@ -3,10 +3,10 @@
 Given each scenario's wind and flood fields (the storm stage), every element fails independently
 (structure v0.7 §4.3b):
 - **overhead lines** fail by wind: the power layer's links, the power feeds from a substation to
-  its consumers, and the telecom links. A line reads its peak 3-second gust along its length.
-  A line on poles fails with chance 1 - (1 - p)^L, where p is the stored per-km chance at that
-  gust and L its length in km; a line on transmission towers collapses with the stored tower
-  chance at that gust;
+  its consumers, and the telecom links. Each kilometre of a pole line fails or survives at its
+  own local 3-second gust, from the stored per-km chance; a line is down if any kilometre
+  fails, and each failed kilometre is a failure point. A line on transmission towers collapses
+  with the stored tower chance at its peak gust, one failure point;
 - **facilities** fail by flood only, when the water at the site passes their functional depth.
   The damage state follows the depth over the threshold, held to the recipe's cap.
 
@@ -36,6 +36,8 @@ from swm.stages.couplings import CouplingsResult
 from swm.stages.layers import LayersResult, Link, _segment_cells
 from swm.stages.storm import StormResult, _coast_distance_km, flood_threshold_m
 from swm.stages.terrain import GRID_CELLS, Grid, TerrainResult
+
+M_PER_KM = 1000.0
 
 LENGTH_STEPS_PER_KM = 1024
 """Line lengths are taken in 1/1024 km (about 1 m), so (1 - p)^L needs only sqrt and products."""
@@ -94,8 +96,15 @@ class LineOutcome:
 
     line_id: str
     peak_gust_m_per_s: float
+    """The highest 3-second gust anywhere along the line."""
     failure_probability: float
+    """The chance that the line is down: any kilometre failing, or its towers collapsing."""
     failed: bool
+    failure_points: int
+    failure_km: tuple[float, ...]
+    """Where each failure point lies: km along the line from its first end (piece midpoints)."""
+    crew_work_h: float
+    """Crew work to restore it: the per-point crew work times its failure points."""
 
 
 @dataclass(frozen=True)
@@ -179,10 +188,11 @@ def overhead_lines(layers: LayersResult, couplings: CouplingsResult) -> tuple[Ov
     lines = []
     for link in layers.links:
         if link.layer == Layer.POWER:
-            # CHOICE: a power link between generation and transmission substations is carried
-            # on towers; any link reaching a distribution substation is a pole line.
+            # CHOICE: a power link between generation and transmission substations, or from a
+            # transmission to a distribution substation, is carried on towers (the second
+            # ruled J, decision 0012 second addendum); other links are pole lines.
             ends = {classes[link.from_id], classes[link.to_id]}
-            towers = ends <= TOWER_ENDS
+            towers = ends <= TOWER_ENDS or ends == SUBSTATIONS
             structure = Structure.TOWER if towers else Structure.POLE
             lines.append(_link_line(link, LineKind.POWER_LINK, structure))
         elif link.layer == Layer.TELECOM:
@@ -241,18 +251,15 @@ def build_scenarios(
     """
     lines = overhead_lines(layers, couplings)
     reader = _LineReader(terrain, rules)
-    cells = [reader.cells(line) for line in lines]
+    pieces = [reader.pieces(line) for line in lines]
+    work_h = rules.number("storm.line_crew_work_h")
     damaged = []
     for scenario, stream in zip(storm.scenarios, streams, strict=True):
-        gust = reader.gust(scenario.wind_m_per_s)
-        outcomes = []
-        for line, line_cells in zip(lines, cells, strict=True):
-            peak = float(gust.ravel()[line_cells].max())
-            chance = reader.failure_probability(line, peak)
-            # Every line draws, so a line's draw never depends on another's chance.
-            outcomes.append(
-                LineOutcome(line.line_id, peak, chance, float(stream.random()) < chance)
-            )
+        gust = reader.gust(scenario.wind_m_per_s).ravel()
+        outcomes = [
+            _line_outcome(line, line_pieces, gust, reader, work_h, stream)
+            for line, line_pieces in zip(lines, pieces, strict=True)
+        ]
         facilities = _flooded(scenario.flood_depth_m, layers, rules, cap)
         damaged.append(ScenarioDamage(scenario.index, tuple(outcomes), tuple(facilities)))
     return ScenariosResult(_elements(layers, lines, rules), lines, tuple(damaged))
@@ -293,20 +300,98 @@ class _LineReader:
 
     def cells(self, line: OverheadLine) -> NDArray[np.int64]:
         """Return the flat indices of the grid cells the line's polyline crosses."""
-        corners = [cell_of(x, y, self.grid) for x, y in line.points]
+        return self._cells_of(line.points)
+
+    def _cells_of(self, points: Sequence[tuple[float, float]]) -> NDArray[np.int64]:
+        corners = [cell_of(x, y, self.grid) for x, y in points]
         crossed: list[int] = []
         for start, end in pairwise(corners):
             crossed += _segment_cells(start, end)
         return np.array(sorted(set(crossed)), dtype=np.int64)
 
-    def failure_probability(self, line: OverheadLine, gust: float) -> float:
-        """Return the line's chance of failing at its peak gust."""
-        if line.structure == Structure.TOWER:
-            # CHOICE: a towered line collapses with the tower curve's chance at its peak gust,
-            # once per line; §4.3b gives no towers-per-km.
-            return _interpolate(self.tower_table, gust)
+    def pieces(self, line: OverheadLine) -> list["_Piece"]:
+        """Split the line into whole kilometres along its route; the last piece is the rest."""
+        steps = [_length_m(a, b) for a, b in pairwise(line.points)]
+        total_m = math.fsum(steps)
+        count = max(1, math.ceil(total_m / M_PER_KM - 1e-9))
+        pieces = []
+        for k in range(count):
+            start_m, end_m = k * M_PER_KM, min((k + 1) * M_PER_KM, total_m)
+            points = _sub_polyline(line.points, steps, start_m, end_m)
+            pieces.append(_Piece(start_m / M_PER_KM, end_m / M_PER_KM, self._cells_of(points)))
+        return pieces
+
+    def piece_probability(self, gust: float, length_km: float) -> float:
+        """Return a pole-line piece's chance of failing at its local gust: 1 - (1 - p)^length."""
         per_km = _interpolate(self.line_table, gust)
-        return 1.0 - _power(1.0 - per_km, line.length_km)
+        return 1.0 - _power(1.0 - per_km, length_km)
+
+    def tower_probability(self, gust: float) -> float:
+        """Return a towered line's chance of collapsing at its peak gust."""
+        # CHOICE: a towered line collapses once per line at its peak gust; §4.3b gives no
+        # towers-per-km.
+        return _interpolate(self.tower_table, gust)
+
+
+@dataclass(frozen=True)
+class _Piece:
+    """One kilometre of a line (the last may be shorter), and the cells it crosses."""
+
+    start_km: float
+    end_km: float
+    cells: NDArray[np.int64]
+
+
+def _line_outcome(
+    line: OverheadLine,
+    pieces: Sequence[_Piece],
+    gust: NDArray[np.float64],
+    reader: _LineReader,
+    work_h: float,
+    stream: np.random.Generator,
+) -> LineOutcome:
+    """Draw one line in one scenario: kilometre by kilometre on poles, once on towers."""
+    peak = max(float(gust[piece.cells].max()) for piece in pieces)
+    if line.structure == Structure.TOWER:
+        chance = reader.tower_probability(peak)
+        failed = float(stream.random()) < chance
+        points = (round(line.length_km / 2, 6),) if failed else ()
+        return LineOutcome(line.line_id, peak, chance, failed, len(points), points,
+                           work_h * len(points))  # fmt: skip
+    survive = 1.0
+    points_km = []
+    # Every piece draws, so a piece's draw never depends on another's chance.
+    for piece in pieces:
+        local = float(gust[piece.cells].max())
+        chance = reader.piece_probability(local, piece.end_km - piece.start_km)
+        survive *= 1.0 - chance
+        if float(stream.random()) < chance:
+            points_km.append((piece.start_km + piece.end_km) / 2)
+    return LineOutcome(line.line_id, peak, 1.0 - survive, bool(points_km), len(points_km),
+                       tuple(points_km), work_h * len(points_km))  # fmt: skip
+
+
+def _length_m(a: tuple[float, float], b: tuple[float, float]) -> float:
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    return math.sqrt(dx * dx + dy * dy)
+
+
+def _sub_polyline(
+    points: Sequence[tuple[float, float]], steps: Sequence[float], start_m: float, end_m: float
+) -> list[tuple[float, float]]:
+    """Return the part of a polyline between two distances along it, in metres."""
+    result: list[tuple[float, float]] = []
+    walked = 0.0
+    for (a, b), step in zip(pairwise(points), steps, strict=True):
+        low, high = max(start_m, walked), min(end_m, walked + step)
+        if high >= low and step > 0.0:
+            for at in (low, high):
+                share = (at - walked) / step
+                point = (a[0] + share * (b[0] - a[0]), a[1] + share * (b[1] - a[1]))
+                if not result or result[-1] != point:
+                    result.append(point)
+        walked += step
+    return result or [points[0]]
 
 
 def cell_of(x_m: float, y_m: float, grid: Grid) -> tuple[int, int]:
@@ -518,12 +603,20 @@ def statistics_record(result: ScenariosResult) -> dict[str, object]:
     """
     lengths = {line.line_id: line.length_km for line in result.lines}
     kinds = {line.line_id: line.kind.value for line in result.lines}
+    towers = {line.line_id for line in result.lines if line.structure == Structure.TOWER}
+    total_km = math.fsum(lengths.values())
     scenarios = []
+    shares = []
     for scenario in result.scenarios:
         failed = scenario.failed_lines
         by_kind: dict[str, int] = {}
         for line in failed:
             by_kind[kinds[line.line_id]] = by_kind.get(kinds[line.line_id], 0) + 1
+        km_down = math.fsum(lengths[line.line_id] for line in failed)
+        # CHOICE: a line that is down is out over its whole length (failed-or-working), so
+        # the length lost counts every down line in full.
+        share = km_down / total_km if total_km > 0.0 else 0.0
+        shares.append(share)
         facilities: dict[str, dict[str, int]] = {}
         for damage in scenario.facilities:
             states = facilities.setdefault(damage.node_class, {})
@@ -533,7 +626,11 @@ def statistics_record(result: ScenariosResult) -> dict[str, object]:
                 "index": scenario.index,
                 "failed_lines": len(failed),
                 "failed_lines_by_kind": dict(sorted(by_kind.items())),
-                "line_km_down": round(math.fsum(lengths[line.line_id] for line in failed), 3),
+                "failure_points": sum(line.failure_points for line in failed),
+                "towered_lines_down": sum(line.line_id in towers for line in failed),
+                "line_km_down": round(km_down, 3),
+                "line_length_share_down": round(share, 6),
+                "line_crew_work_h": round(math.fsum(line.crew_work_h for line in failed), 3),
                 "failed_line_ids": [line.line_id for line in failed],
                 "damaged_facilities": {
                     k: dict(sorted(v.items())) for k, v in sorted(facilities.items())
@@ -545,6 +642,7 @@ def statistics_record(result: ScenariosResult) -> dict[str, object]:
     return {
         "overhead_lines": _line_summary(result.lines),
         "protectable_elements": sum(e.protectable for e in result.elements),
+        "mean_line_length_share_down": round(math.fsum(shares) / len(shares), 6) if shares else 0.0,
         "scenarios": scenarios,
     }
 
