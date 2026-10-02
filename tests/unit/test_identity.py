@@ -29,6 +29,8 @@ GOLDEN_FILES = (
     "storm_stats.yaml",
     "storm_facilities.yaml",
     "storm_sha256.txt",
+    "scenarios_stats.yaml",
+    "scenarios_sha256.txt",
 )
 
 
@@ -50,6 +52,7 @@ def produced(tmp_path_factory: pytest.TempPathFactory) -> Path:
     assert main(["strength", str(pilot), "-o", str(out_dir)]) == 0
     assert main(["repair", str(pilot), "-o", str(out_dir)]) == 0
     assert main(["storm", str(pilot), "-o", str(out_dir)]) == 0
+    assert main(["scenarios", str(pilot), "-o", str(out_dir)]) == 0
     return out_dir
 
 

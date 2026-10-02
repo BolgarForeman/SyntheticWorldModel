@@ -2,7 +2,7 @@ recipe_version: 2
 root_seed: 91577
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: 1093b79cf8d9a0121c3c148901a5ee24a13c000de74003428810dd54629d53cb
+  registry_sha256: b30910c6951011120ca692e951c3366ab354fe30be3374fb8bd334a44d1700f5
   overrides: {}
 terrain:
   map_type: spine_island
@@ -120,6 +120,7 @@ shared_causes:
       correlation_km: 20
       severity: 60
   scenarios: 8
+  facility_damage_cap: moderate
 unobserved:
   reserves:
     heterogeneity_pct: 50

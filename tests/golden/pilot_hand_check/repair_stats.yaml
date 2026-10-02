@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: 1093b79cf8d9a0121c3c148901a5ee24a13c000de74003428810dd54629d53cb
+  registry_sha256: b30910c6951011120ca692e951c3366ab354fe30be3374fb8bd334a44d1700f5
   overrides: {}
 crew_bases:
 - base_id: CRB-0001
@@ -56,4 +56,11 @@ emergency_repair:
     least_restored_share: 0.5
 unrepairable:
 - SWM-WAT-0001
+line_repair:
+  lines: 32
+  crew_work_h_per_failure_point:
+  - 6.0
+  - 72.0
+  mean_travel_h: 0.248
+  longest_travel_h: 0.673
 notes: []

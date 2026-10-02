@@ -10,6 +10,7 @@ import pydantic
 import yaml
 
 from swm import __version__
+from swm.checks.calm import calm_world_problems
 from swm.checks.undisturbed import undisturbed_supply_check
 from swm.recipe.buildability import unbuilt_features
 from swm.recipe.io import (
@@ -32,6 +33,7 @@ from swm.stages import crews as crews_stage
 from swm.stages import layers as layers_stage
 from swm.stages import repair as repair_stage
 from swm.stages import requirements as requirements_stage
+from swm.stages import scenarios as scenarios_stage
 from swm.stages import storm as storm_stage
 from swm.stages import strength as strength_stage
 from swm.stages.buffers import buffers_streams, build_buffers
@@ -40,7 +42,8 @@ from swm.stages.crews import build_crews
 from swm.stages.layers import LayersResult, build_layers, layers_streams
 from swm.stages.repair import build_repair, repair_streams
 from swm.stages.requirements import RequirementsResult, build_requirements, requirements_streams
-from swm.stages.storm import build_storm, storm_streams
+from swm.stages.scenarios import build_scenarios, scenarios_streams
+from swm.stages.storm import StormResult, build_storm, storm_streams
 from swm.stages.strength import StrengthResult, build_strength
 from swm.stages.terrain import (
     TerrainResult,
@@ -68,6 +71,8 @@ REPAIR_HASHES_FILE = "repair_sha256.txt"
 STORM_STATS_FILE = "storm_stats.yaml"
 STORM_FACILITIES_FILE = "storm_facilities.yaml"
 STORM_HASHES_FILE = "storm_sha256.txt"
+SCENARIOS_STATS_FILE = "scenarios_stats.yaml"
+SCENARIOS_HASHES_FILE = "scenarios_sha256.txt"
 REQUIREMENTS_HASHES_FILE = "requirements_sha256.txt"
 COUPLINGS_STATS_FILE = "couplings_stats.yaml"
 COUPLINGS_HASHES_FILE = "couplings_sha256.txt"
@@ -387,20 +392,25 @@ def _repair_command(resolution: Resolution, arguments: argparse.Namespace) -> No
         sys.stdout.write(f"repair: {note}\n")
 
 
-def _storm_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+def _storm(resolution: Resolution, terrain: TerrainResult) -> StormResult:
     recipe = resolution.recipe
     shared = recipe.shared_causes
-    terrain = _terrain(resolution)
-    layers = _drawn_layers(resolution, terrain)
-    rules = _rules(resolution)
-    result = build_storm(
+    return build_storm(
         shared.hazards.storm_corridor,
         shared.scenarios,
         recipe.terrain.character.mountainous,
         terrain,
-        rules,
+        _rules(resolution),
         storm_streams(recipe.root_seed, shared.scenarios),
     )
+
+
+def _storm_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    shared = resolution.recipe.shared_causes
+    terrain = _terrain(resolution)
+    layers = _drawn_layers(resolution, terrain)
+    rules = _rules(resolution)
+    result = _storm(resolution, terrain)
     exposure = storm_stage.facility_exposure(result, layers, rules)
     out_dir = Path(arguments.out_dir)
     write_canonical_yaml(
@@ -427,6 +437,41 @@ def _storm_command(resolution: Resolution, arguments: argparse.Namespace) -> Non
     title = f"{Path(arguments.recipe).name}: storm scenario {arguments.scenario}"
     png = storm_preview_png(terrain, layers, result, arguments.scenario, title)
     write_binary(png, out_dir / f"storm_scenario_{arguments.scenario}.png")
+
+
+def _scenarios_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    recipe = resolution.recipe
+    terrain = _terrain(resolution)
+    requirements = _requirements(resolution, terrain)
+    couplings = _couplings(resolution, terrain, requirements)
+    storm = _storm(resolution, terrain)
+    result = build_scenarios(
+        recipe.shared_causes.facility_damage_cap,
+        storm,
+        terrain,
+        requirements.layers,
+        couplings,
+        _rules(resolution),
+        scenarios_streams(recipe.root_seed, recipe.shared_causes.scenarios),
+    )
+    out_dir = Path(arguments.out_dir)
+    write_canonical_yaml(
+        _stamped(scenarios_stage.statistics_record(result), resolution),
+        out_dir / SCENARIOS_STATS_FILE,
+    )
+    hashes = [
+        (name, hashlib.sha256(canonical_yaml({name: rows})).hexdigest())
+        for name, rows in scenarios_stage.scenarios_tables(result).items()
+    ]
+    write_hash_list(hashes, out_dir / SCENARIOS_HASHES_FILE)
+    problems = calm_world_problems(storm, result)
+    if problems:
+        raise CommandError("calm world check:\n" + "\n".join(problems))
+    for scenario in result.scenarios:
+        sys.stdout.write(
+            f"scenario {scenario.index}: {len(scenario.failed_lines)} lines down, "
+            f"{len(scenario.facilities)} facilities damaged\n"
+        )
 
 
 def _check_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
@@ -503,6 +548,7 @@ COMMANDS: dict[str, Callable[[Resolution, argparse.Namespace], None]] = {
     "strength": _strength_command,
     "repair": _repair_command,
     "storm": _storm_command,
+    "scenarios": _scenarios_command,
     "check": _check_command,
     "preview-couplings": _preview_couplings_command,
     "export-gis": _export_gis_command,
@@ -558,6 +604,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     storm_command.add_argument("recipe", help="recipe YAML file")
     storm_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    scenarios_command = commands.add_parser(
+        "scenarios", help="draw what each storm scenario damages; write statistics"
+    )
+    scenarios_command.add_argument("recipe", help="recipe YAML file")
+    scenarios_command.add_argument("-o", "--out-dir", required=True, help="output folder")
     storm_command.add_argument(
         "--scenario",
         type=int,

@@ -37,7 +37,6 @@ def _registry() -> dict[str, str]:
         paths[f"layers/{layer}/overlap"] = f"Which {layer} assets appear in more than one source."
         paths[f"layers/{layer}/subtype"] = f"Subtype attributes of {layer} nodes (unobserved)."
     paths |= {
-        "shared_causes/scenarios": "Element failures drawn conditionally on the hazard fields.",
         "unobserved/links_on_nodes_only_layers": "Links on layers whose sources report nodes only.",
     }
     for layer in Layer:
@@ -127,6 +126,7 @@ def _storm_paths() -> dict[str, str]:
         base = f"shared_causes/{Hazard.STORM_CORRIDOR}/{index}"
         paths[f"{base}/track"] = f"Storm track and peak wind of scenario {index}."
         paths[f"{base}/variation"] = f"Random variation of the wind field in scenario {index}."
+        paths[f"{base}/damage"] = f"Overhead-line failures given the field in scenario {index}."
     return paths
 
 
