@@ -67,9 +67,20 @@ All notable changes to this project are recorded here. Each phase closes with a 
 - Rules `crews.road_speed_kmh` and `repair.no_repair_rows`.
 - Recipe controls `unobserved.mobile_substations` and `unobserved.mobile_cell_sites` (default 1 and 1), the emergency pool (decision 0011, addendum).
 - Repair sensitivity recipes at a repair gap of +20 and −20 (`tests/fixtures/repair_sensitivity/`); fixtures, not golden files.
+- The storm stage and `swm storm` (Work Order 6, Parts A–B; decision 0012). Each scenario has its own track and peak wind, drawn within the severity's CWA class band. The wind field is built in order:
+  - the modified Rankine profile;
+  - sea to land;
+  - the Taiwan wind-code surface factors;
+  - the mountain lee;
+  - a Wendland-kernel random variation.
+  Flood depth is the flood stage less the height above the nearest drainage. Every node records its wind and flood depth per scenario.
+- `swm storm --scenario N` writes a preview of one scenario (optional `preview` extra).
+- Each storm scenario draws its closest approach to the island (0–40 km), its radius of maximum wind (20–60 km) and its rainfall (±75 mm of its rung). Power plants and transmission substations stand on 2 m platforms. The lee is measured against the terrain's smooth spine line, now recorded with the terrain; a flat island has none. Wooded land takes the town factor. Refineries and import terminals get flood thresholds (decision 0012, addendum).
+- The storm hazard rules of structure v0.7 §4.3b, each with the new registry field `theta_role: dynamics`.
 
 ### Changed
 
+- Storm severity now means the peak 10-minute wind at sea, 17.2 + 0.53 × severity m/s, with rainfall on the WRA ladder (decision 0012). The storm's correlation length defaults to 10 km. The pilot storm runs at severity 50.
 - Repair rates default to a gap of 0 and the Hazus spread; the recipe's repair heterogeneity is now an optional override (decision 0011, addendum).
 - The recipe schema is version 2: `unobserved.depots` is renamed `unobserved.crew_base`. Version 1 recipes are migrated on loading (decision 0011). The pilot sets `crew_base: 1`.
 - CI runs on pushes to `main` and on pull requests only (Work Order 1).
@@ -116,5 +127,6 @@ All notable changes to this project are recorded here. Each phase closes with a 
 - The `two_way` switch, replaced by `two_way_pct` (Work Order 4, A3).
 - The unused Work Order 1 stream `unobserved/requirements` (decision 0010).
 - The unused Work Order 1 streams `unobserved/reserves` and `unobserved/failure_mode`, superseded by `reserves/<layer>` and `failure_mode/<layer>`.
+- The unused Work Order 1 stream `shared_causes/storm_corridor/field`, superseded by each scenario's `track` and `variation` streams (decision 0012).
 - The unused Work Order 1 streams `unobserved/repair_rates` and `unobserved/crews_and_depots`, superseded by `repair/<layer>` and an undrawn crew-base siting (decision 0011).
 - The four unused Work Order 1 streams `couplings/edges`, `couplings/supplier_not_nearest`, `couplings/feed_configuration` and `couplings/two_way` (decision 0008).

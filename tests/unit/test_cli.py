@@ -328,9 +328,33 @@ def test_export_and_preview_say_how_to_install_what_they_need(
     assert main(["export-gis", str(pilot_path), "-o", str(tmp_path)]) == 1
     assert main(["preview-world", str(pilot_path), "-o", str(tmp_path / "w.png")]) == 1
     assert main(["preview-couplings", str(pilot_path), "-o", str(tmp_path / "c.png")]) == 1
+    assert main(["storm", str(pilot_path), "-o", str(tmp_path), "--scenario", "0"]) == 1
     err = capsys.readouterr().err
     assert "uv sync --extra export" in err
     assert "uv sync --extra preview" in err
+
+
+def test_storm_writes_statistics_facilities_hashes_and_a_preview(
+    pilot_path: Path, tmp_path: Path
+) -> None:
+    pytest.importorskip("matplotlib")
+    assert main(["storm", str(pilot_path), "-o", str(tmp_path), "--scenario", "0"]) == 0
+    stats = (tmp_path / "storm_stats.yaml").read_text(encoding="utf-8")
+    assert stats.startswith("modeling_rules:\n  registry_version:")
+    assert "\nseverity: 50\nstorm_class: moderate\n" in stats
+    facilities = (tmp_path / "storm_facilities.yaml").read_text(encoding="utf-8")
+    assert facilities.startswith("facilities:\n- node_id: SWM-POW-0001\n")
+    hashes = (tmp_path / "storm_sha256.txt").read_text(encoding="utf-8").splitlines()
+    assert len(hashes) == 1 + 3 * 8
+    image = tmp_path / "storm_scenario_0.png"
+    assert image.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+
+
+def test_storm_refuses_a_scenario_the_recipe_does_not_draw(
+    pilot_path: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["storm", str(pilot_path), "-o", str(tmp_path), "--scenario", "8"]) == 1
+    assert "--scenario 8: the recipe draws scenarios 0 to 7" in capsys.readouterr().err
 
 
 def test_preview_terrain_writes_a_png(pilot_path: Path, tmp_path: Path) -> None:

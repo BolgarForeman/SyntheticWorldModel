@@ -52,6 +52,7 @@ shared_causes:
   hazards:
     storm_corridor:
       switched_on: true
+      severity: 50                  # Pilot_Spec v0.6: a moderate typhoon, about 44 m/s at sea
   scenarios: 8
 
 unobserved:

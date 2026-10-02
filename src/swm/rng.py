@@ -6,7 +6,7 @@ from typing import TypedDict
 
 import numpy as np
 
-from swm.recipe.schema import DEFAULT_COUPLINGS, Hazard, Layer, Source
+from swm.recipe.schema import DEFAULT_COUPLINGS, MAX_SCENARIOS, Hazard, Layer, Source
 
 STABLE_ID_BYTES = 8
 """Bytes of the SHA-256 digest kept by ``stable_id`` (Work Order 1, item 1)."""
@@ -48,7 +48,9 @@ def _registry() -> dict[str, str]:
         paths[f"repair/{layer}"] = f"Repair rates of {layer} nodes, one draw per node."
     paths |= _coupling_paths()
     for hazard in Hazard:
-        paths[f"shared_causes/{hazard}/field"] = f"Latent {hazard} field with distance decay."
+        if hazard != Hazard.STORM_CORRIDOR:
+            paths[f"shared_causes/{hazard}/field"] = f"Latent {hazard} field with distance decay."
+    paths |= _storm_paths()
     for source in Source:
         paths[f"errors/{source}"] = f"Error induction on the {source} source."
     return paths
@@ -115,6 +117,16 @@ def _coupling_paths() -> dict[str, str]:
         paths[f"couplings/two_way/{pair_label(supplier, consumer)}"] = (
             f"Which node pairs of {supplier} and {consumer} depend on each other."
         )
+    return paths
+
+
+def _storm_paths() -> dict[str, str]:
+    """Each scenario's own storm streams, so a scenario count never moves another scenario."""
+    paths = {}
+    for index in range(MAX_SCENARIOS):
+        base = f"shared_causes/{Hazard.STORM_CORRIDOR}/{index}"
+        paths[f"{base}/track"] = f"Storm track and peak wind of scenario {index}."
+        paths[f"{base}/variation"] = f"Random variation of the wind field in scenario {index}."
     return paths
 
 

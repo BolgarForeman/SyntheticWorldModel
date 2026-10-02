@@ -7548,6 +7548,496 @@ rules:
     date: '2026-09-30'
     decision: '0011'
   history: []
+- id: storm.severity_anchor
+  title: Peak 10-minute wind at sea by severity
+  stage: storm
+  value: {at_severity_0_m_per_s: 17.2, per_severity_m_per_s: 0.53}
+  units: m/s
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: TW
+  sources:
+  - {citation: 'Hazards ruling sheet v0.1, H3', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
+    quote: null, verified: null}
+  reasoning: V_max = 17.2 + 0.53 x severity, so the CWA classes fall at severity 1-29, 29-64 and 64-100,
+    topping out near 70 m/s. Severity 0 means no storm. The CWA classes are S; the linear map between
+    them is judgment.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-30'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
+- id: storm.cwa_classes
+  title: Typhoon classes by peak 10-minute wind (CWA)
+  stage: storm
+  value:
+    mild: [17.2, 32.6]
+    moderate: [32.7, 50.9]
+    strong: [51.0, 70.2]
+  units: m/s
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: S
+  jurisdiction: TW
+  sources:
+  - {citation: 'Jian et al. 2022, TAO 33:26 (the CWB typhoon database)', url: docs/design/evidence/Hazards_Evidence_v0_1.md,
+    quote: 'A moderate typhoon has winds of 32.7-50.9 m s-1, while a strong typhoon has wind speeds of
+      51.0 m s-1 or greater.', verified: true}
+  - {citation: 'Hazards ruling sheet v0.1, H3', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
+    quote: null, verified: null}
+  reasoning: Each scenario draws its peak wind within the class band of the severity's anchor. The strong
+    band is open above; its top here is the anchor at severity 100 (70.2 m/s, J).
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-30'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
+- id: storm.rainfall_mm
+  title: 24-hour rainfall by severity
+  stage: storm
+  value:
+  - {up_to_severity: 33, rain_mm: 300}
+  - {up_to_severity: 66, rain_mm: 450}
+  - {up_to_severity: 100, rain_mm: 600}
+  units: mm
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: L
+  jurisdiction: TW
+  sources:
+  - {citation: Water Resources Agency flood-map rainfall ladder (300 / 450 / 600 mm in 24 h), url: docs/design/evidence/Hazards_Evidence_v0_1.md,
+    quote: null, verified: null}
+  - {citation: 'Hazards ruling sheet v0.1, H3', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
+    quote: null, verified: null}
+  reasoning: Severity sets the 24-hour rainfall on the WRA flood-map ladder.
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-30'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
+- id: storm.rainfall_spread_mm
+  title: Rainfall drawn around the severity's rung
+  stage: storm
+  value: 75.0
+  units: mm
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
+  reasoning: 'Each scenario draws its 24-hour rainfall within 75 mm either side of its severity''s rung
+    (moderate: 375-525 mm), so the flood varies by scenario.'
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
+- id: storm.flood_stage_m
+  title: Flood stage by rainfall
+  stage: storm
+  value: {zero_at_rain_mm: 150.0, rain_mm_per_m: 150.0}
+  units: m
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
+  - {citation: 'Hazards ruling sheet v0.1, H4', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
+    quote: null, verified: null}
+  reasoning: 'Flood stage = (rainfall - 150 mm) / 150 mm, in m: 300 mm gives 1 m, 450 mm 2 m and 600 mm
+    3 m, as the ruled ladder did, now continuous in the drawn rainfall. Flood depth = stage - height above
+    the nearest drainage. The next source is the NCDR flood map handbook.'
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0012'
+  history:
+  - value:
+    - {rain_mm: 300, stage_m: 1.0}
+    - {rain_mm: 450, stage_m: 2.0}
+    - {rain_mm: 600, stage_m: 3.0}
+    units: m
+    date: '2026-10-02'
+    decision: '0012'
+  theta_role: dynamics
+- id: storm.profile_exponent
+  title: Modified Rankine decay exponent
+  stage: storm
+  value: 0.5
+  units: ratio
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: L
+  jurisdiction: international
+  sources:
+  - {citation: 'Geoscience Australia TCRM, wind/windmodels.py, RankineWindProfile', url: 'https://github.com/GeoscienceAustralia/tcrm/blob/master/wind/windmodels.py',
+    quote: 'The literature indicates 0.4 < alpha < 0.6 (e.g. see Holland, 1980)', verified: true}
+  reasoning: Beyond the radius of maximum wind V = V_max x sqrt(R_max / r); inside it the wind rises linearly
+    to the peak. Exponent 0.5 needs only sqrt.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-30'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
+- id: storm.radius_max_wind_km
+  title: 'Radius of maximum wind: range drawn per scenario'
+  stage: storm
+  value: [20.0, 60.0]
+  units: km
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: US
+  sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
+  - {citation: 'Willoughby & Rahn 2004, Monthly Weather Review 132', url: 'https://faculty.fiu.edu/~willough/PUBS/HEW&RAHN_04.pdf',
+    quote: geometric mean radius of maximum wind for the complete sample is 47.5 km, verified: null}
+  reasoning: Each scenario draws its radius of maximum wind between 20 and 60 km. The literature's geometric
+    mean is 47.5 km (Willoughby & Rahn 2004), larger than the pilot island; the range lets scenarios differ
+    in how much of the island sits inside the radius.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0012'
+  history:
+  - value: 47.5
+    units: km
+    date: '2026-10-02'
+    decision: '0012'
+  theta_role: dynamics
+- id: storm.closest_approach_km
+  title: Track's closest approach to the island's centre
+  stage: storm
+  value: [0.0, 40.0]
+  units: km
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
+  reasoning: Each scenario draws how far its straight track passes from the island's centre, so some tracks
+    cross the island and some pass offshore.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
+- id: storm.sea_to_land
+  title: Sea-to-land wind reduction
+  stage: storm
+  value: {land_factor: 0.83, transition_km: 1.0}
+  units: ratio
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: L
+  jurisdiction: US
+  sources:
+  - {citation: 'Vickery, Powell et al. 2009, JAMC 48', url: 'https://www.aoml.noaa.gov/hrd/Powell/Vickery_Powell_Diraj_2009.pdf',
+    quote: the maximum reduction in the mean wind speed ... using the ESDU model is about 17%, verified: true}
+  reasoning: Land keeps 0.83 of the sea wind, most of the drop within 1 km of the coast.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-30'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
+- id: storm.surface_factors
+  title: Local surface factor by terrain class (Taiwan wind code)
+  stage: storm
+  value: {city_core: 0.476, town: 0.662, wooded: 0.662, open: 1.0}
+  units: ratio
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: S
+  jurisdiction: TW
+  sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
+  - {citation: '建築物耐風設計規範 (Taiwan building wind code), Table 2.2 and §2.6; ratios of (10/zg)^alpha to
+      class C, recomputed in the evidence review', url: docs/design/evidence/Hazards_Evidence_v0_1.md,
+    quote: null, verified: true}
+  - {citation: 'Hazards ruling sheet v0.1, H2', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
+    quote: null, verified: null}
+  reasoning: 'Terrain class A (city core: the largest city) 0.476, B (town, or wooded land) 0.662, C (open,
+    wetland, bare ground or coast) 1.0 of the open-ground wind at 10 m. Taiwan''s wind code and ASCE 7
+    both class wooded ground with suburbs. The factors are S; their use in a hazard field is judgment.'
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0012'
+  history:
+  - value: {city_core: 0.476, town: 0.662, open: 1.0}
+    units: ratio
+    date: '2026-10-02'
+    decision: '0012'
+  theta_role: dynamics
+- id: storm.lee_factor
+  title: Mountain lee factor
+  stage: storm
+  value: 0.6
+  units: ratio
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: TW
+  sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
+  - {citation: 'Brand & Blelloch 1974, as quoted in Wu & Kuo 1999 (typhoons weaken by over 40% crossing
+      the Central Mountain Range)', url: docs/design/evidence/Hazards_Evidence_v0_1.md, quote: null, verified: null}
+  - {citation: 'Hazards ruling sheet v0.1, H2', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
+    quote: null, verified: null}
+  reasoning: A place is in the lee when the smooth spine line (decision 0005) lies between it and the
+    nearest point of the track; it keeps 0.6 of the wind. A flat island (mountainous 0) has no lee. Whether
+    the >40% weakening is wind or pressure is unconfirmed.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
+- id: storm.variation
+  title: Random variation of the wind field
+  stage: storm
+  value: {spread: 0.1, kernel: 'Wendland (1 - t)^4 (1 + 4t), valid in 2-D'}
+  units: ratio
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Bevilacqua, Faouzi, Furrer & Porcu 2019, Annals of Statistics 47(2)', url: 'https://arxiv.org/pdf/1607.06921',
+    quote: null, verified: true}
+  - {citation: 'Hazards ruling sheet v0.1, H2', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
+    quote: null, verified: null}
+  reasoning: The wind is multiplied by (1 + spread x Z), Z a smooth unit-variance field. The correlation
+    length is the recipe's storm correlation_km (default 10 km); no published length was found.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-30'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
+- id: storm.gust_factors
+  title: 10-minute to 3-second gust factor (WMO)
+  stage: storm
+  value: {inland: 1.75, coast: 1.3}
+  units: ratio
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: L
+  jurisdiction: international
+  sources:
+  - {citation: 'WMO/TD-1555, gust factors G(3 s, 10 min)', url: docs/design/evidence/Hazards_Evidence_v0_1.md,
+    quote: null, verified: null}
+  - {citation: 'Hazards ruling sheet v0.1, H2', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
+    quote: null, verified: null}
+  reasoning: 'Used only at the line fragility (PR 6b): winds are stored at 10-minute averaging.'
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-30'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
+- id: storm.flood_functional_depth_m
+  title: Hazus functional flood depth by class
+  stage: storm
+  value: {generation: 1.2, transmission_substation: 1.2, distribution_substation: 1.2, treatment: 1.2,
+    pumping: 1.2, exchange: 1.2, data_centre: 1.2, cable_landing: 1.2, mast: 1.2, tank_farm: 0.0, depot: 0.0,
+    tertiary: 0.15, regional: 0.15, clinic: 0.15, blood_bank: 0.15, storage: 7.3, refinery: 1.2, import_terminal: 1.2}
+  units: m
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: L
+  jurisdiction: US
+  sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
+  - {citation: 'FEMA, Hazus 6.1 Inventory Technical Manual: functional depths 4 ft, 0 ft, 0.5 ft and 24
+      ft', url: docs/design/evidence/Hazards_Evidence_v0_1.md, quote: null, verified: null}
+  - {citation: 'Hazards ruling sheet v0.1, H4', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
+    quote: null, verified: null}
+  reasoning: 'A facility floods out at its functional depth: 4 ft for substations, plants, treatment and
+    pumping; any water for tank farms and depots; 0.5 ft from grade for hospitals, clinics and blood banks;
+    24 ft for on-ground storage tanks. Telecom facilities borrow the substation value (J), since Hazus
+    maps them without a damage rule. Refineries take Hazus''s 4 ft; import terminals 1.2 m on raised quays
+    (J). Power plants and transmission substations measure theirs from a 2 m platform (storm.power_platform_m).'
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0012'
+  history:
+  - value: {generation: 1.2, transmission_substation: 1.2, distribution_substation: 1.2, treatment: 1.2,
+      pumping: 1.2, exchange: 1.2, data_centre: 1.2, cable_landing: 1.2, mast: 1.2, tank_farm: 0.0, depot: 0.0,
+      tertiary: 0.15, regional: 0.15, clinic: 0.15, blood_bank: 0.15, storage: 7.3}
+    units: m
+    date: '2026-10-02'
+    decision: '0012'
+  theta_role: dynamics
+- id: storm.power_platform_m
+  title: Platform height of power plants and transmission substations
+  stage: storm
+  value: {generation: 2.0, transmission_substation: 2.0}
+  units: m
+  applies_to: {layer: power, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
+  reasoning: Real plants are built above the design flood; Hazus assumes slab on grade. The 1.2 m functional
+    depth is measured from the platform, so these flood out at 3.2 m above grade. No node moves.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
+- id: storm.flood_not_damaged
+  title: Classes not flood-damaged in Phase 1
+  stage: storm
+  value: [reservoir, seaport, airport, freight_yard, bridge, road_junction, rail_node]
+  units: null
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
+  - {citation: 'Hazards ruling sheet v0.1, H4', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
+    quote: null, verified: null}
+  reasoning: Reservoirs, ports, airports, freight yards, bridges, road junctions and rail nodes are not
+    flood-damaged in Phase 1.
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0012'
+  history:
+  - value: [reservoir, seaport, airport]
+    units: null
+    date: '2026-10-02'
+    decision: '0012'
+  theta_role: dynamics
+- id: storm.flood_damage_states_m
+  title: Damage state by flood depth over the threshold
+  stage: storm
+  value: {slight: 0.0, moderate: 0.5, extensive: 1.5, complete: 3.0}
+  units: m
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Hazards ruling sheet v0.1, H4', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
+    quote: null, verified: null}
+  reasoning: 'Depth over the functional threshold above which each state begins: up to 0.5 m slight, above
+    0.5 m moderate, above 1.5 m extensive, above 3 m complete.'
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-30'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
+- id: storm.line_fragility_anchor
+  title: Overhead line failure anchor
+  stage: storm
+  value: {gust_m_per_s: 45.0, failures_per_km: 0.05}
+  units: null
+  applies_to: {layer: power, node_class: null, condition: null}
+  grade: J
+  jurisdiction: US
+  sources:
+  - {citation: 'Serrano-Fontova et al. 2023, IEEE Access 11: new wood poles fail 0.02-0.12 at a 100 mph
+      gust, old 0.1-0.9', url: docs/design/evidence/Hazards_Evidence_v0_1.md, quote: null, verified: null}
+  - {citation: 'Hazards ruling sheet v0.1, H5', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
+    quote: null, verified: null}
+  reasoning: The stored gust table (PR 6b) is centred on 0.05 failures per km at a 45 m/s 3-second gust;
+    the per-km conversion is judgment.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-30'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
+- id: storm.tower_collapse_gust_km_per_h
+  title: Transmission tower collapse gust
+  stage: storm
+  value: 285.0
+  units: km/h
+  applies_to: {layer: power, node_class: null, condition: null}
+  grade: L
+  jurisdiction: international
+  sources:
+  - {citation: 'Cyclone Fani and Quanta 2009 tower curves (collapse median about 285 km/h, beta about
+      0.10)', url: docs/design/evidence/Hazards_Evidence_v0_1.md, quote: null, verified: null}
+  - {citation: 'Hazards ruling sheet v0.1, H5', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
+    quote: null, verified: null}
+  reasoning: Towers collapse only near 285 km/h 3-second gusts, so they do not fail at pilot severity.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-30'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
+- id: storm.line_crew_work_h
+  title: Crew work to repair a failed overhead line
+  stage: storm
+  value: 6.0
+  units: h
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: TW
+  sources:
+  - {citation: Taipower's typical restoration within 1-3 days of large typhoons, url: docs/design/evidence/Hazards_Evidence_v0_1.md,
+    quote: null, verified: null}
+  - {citation: 'Hazards ruling sheet v0.1, H5', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
+    quote: null, verified: null}
+  reasoning: A failed line takes 6 h of crew work with no lead time, plus road travel from the crew base.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-09-30'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
 - id: strength.supply_days
   title: Days of its own stock a supplier delivers in a day's turnover
   stage: strength

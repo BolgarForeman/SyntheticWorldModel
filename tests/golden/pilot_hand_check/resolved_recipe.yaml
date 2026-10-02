@@ -2,7 +2,7 @@ recipe_version: 2
 root_seed: 91577
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: 9b38a9c16a89a38e56d9c938aa4a9e1957fee4eefea859eb8236d1266fab3861
+  registry_sha256: 1093b79cf8d9a0121c3c148901a5ee24a13c000de74003428810dd54629d53cb
   overrides: {}
 terrain:
   map_type: spine_island
@@ -109,8 +109,8 @@ shared_causes:
   hazards:
     storm_corridor:
       switched_on: true
-      correlation_km: 40
-      severity: 60
+      correlation_km: 10
+      severity: 50
     seismic_zone:
       switched_on: false
       correlation_km: 60

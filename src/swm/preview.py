@@ -23,6 +23,8 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
+    from swm.stages.storm import StormResult
+
 COVER_COLOURS = {
     CoverClass.SEA: (0.72, 0.83, 0.89),
     CoverClass.OPEN: (0.84, 0.82, 0.62),
@@ -492,4 +494,119 @@ def _caption(result: TerrainResult) -> str:
         f"islands {stats.island_count}   cities {stats.city_count}   "
         f"cell {result.grid.cell_size_m:.1f} m, grid {result.grid.cells} x {result.grid.cells}\n"
         f"cover: {shares}"
+    )
+
+
+def storm_preview_png(
+    terrain: TerrainResult,
+    layers: LayersResult,
+    storm: "StormResult",
+    scenario: int,
+    title: str,
+) -> bytes:
+    """Render one storm scenario: the wind field, the track, flooded land and every facility.
+
+    Wind is the 10-minute speed in m/s. Flooded land cells are hatched blue, the lee of the
+    spine is outlined, and each node is coloured by layer and shaped by class, with its wind.
+
+    Parameters
+    ----------
+    terrain : TerrainResult
+        The terrain stage's output.
+    layers : LayersResult
+        The layers stage's output.
+    storm : StormResult
+        The storm stage's output.
+    scenario : int
+        Which scenario to draw.
+    title : str
+        Title printed above the map.
+
+    Returns
+    -------
+    bytes
+        A PNG image.
+
+    Spec: Work Order 6, C1.
+    """
+    from matplotlib.figure import Figure
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+
+    field = storm.scenarios[scenario]
+    side_km = terrain.grid.cells * terrain.grid.cell_size_m / 1000
+    figure = Figure(figsize=(12, 10.5))
+    axes = figure.add_subplot()
+    image = axes.imshow(
+        field.wind_m_per_s, extent=(0, side_km, 0, side_km), cmap="viridis",
+        interpolation="nearest", vmin=0.0,
+    )  # fmt: skip
+    figure.colorbar(image, ax=axes, shrink=0.7, label="10-minute wind (m/s)")
+    extent = (0, side_km, side_km, 0)
+    axes.contour(terrain.land.astype(float), levels=[0.5], colors="white", linewidths=1.0,
+                 extent=extent)  # fmt: skip
+    if field.lee.any():
+        axes.contour(field.lee.astype(float), levels=[0.5], colors="orange", linewidths=0.8,
+                     linestyles="--", extent=extent)  # fmt: skip
+    flooded = np.asarray(field.flood_depth_m) > 0.0
+    overlay = np.zeros((*flooded.shape, 4))
+    overlay[flooded] = (0.0, 0.75, 1.0, 0.9)
+    axes.imshow(overlay, extent=(0, side_km, 0, side_km), interpolation="nearest")
+    if field.track is not None:
+        (x, y), (east, south) = field.track.point_km, field.track.direction
+        reach = 2 * side_km
+        axes.plot([x - reach * east, x + reach * east],
+                  [side_km - (y - reach * south), side_km - (y + reach * south)],
+                  color="red", linewidth=1.6)  # fmt: skip
+        axes.annotate(
+            "", xy=(x + 2 * east, side_km - (y + 2 * south)), xytext=(x, side_km - y),
+            arrowprops={"arrowstyle": "-|>", "color": "red", "linewidth": 1.6,
+                        "mutation_scale": 22},
+        )  # fmt: skip
+    west_m, south_m = domain_origin_m(terrain.grid)
+    for node in layers.nodes:
+        x_km, y_km = (node.x_m - west_m) / 1000, (node.y_m - south_m) / 1000
+        axes.plot(
+            x_km, y_km, marker=CLASS_MARKERS.get(node.node_class, "o"), markersize=8,
+            markerfacecolor=LAYER_COLOURS[node.layer], markeredgecolor="black", linestyle="",
+        )  # fmt: skip
+        wind = float(field.wind_m_per_s[node.row, node.column])
+        axes.text(x_km + 0.3, y_km + 0.3, f"{node.node_id[4:]} {wind:.0f}", fontsize=6,
+                  bbox=LABEL_BACKGROUND)  # fmt: skip
+    west, east, south, north = _land_window(terrain, side_km)
+    axes.set_xlim(west, east)
+    axes.set_ylim(south, north)
+    axes.set_xlabel("km east of the domain origin")
+    axes.set_ylabel("km north of the domain origin")
+    axes.set_title(title)
+    legend = [
+        Line2D([], [], color="red", linewidth=1.6, label="track (direction of travel)"),
+        Line2D([], [], color="orange", linestyle="--", label="lee of the spine"),
+        Patch(facecolor=(0.0, 0.75, 1.0), label="flooded land (depth > 0)"),
+        *[Line2D([], [], color=LAYER_COLOURS[layer], linewidth=2, label=layer.value)
+          for layer in Layer],
+    ]  # fmt: skip
+    axes.legend(handles=legend, loc="upper left", bbox_to_anchor=(1.25, 1.0), fontsize=8)
+    figure.text(0.02, 0.02, _storm_caption(storm, scenario), fontsize=8, family="monospace",
+                va="bottom")  # fmt: skip
+    figure.subplots_adjust(bottom=0.16, right=0.72)
+    return _png(figure)
+
+
+def _storm_caption(storm: "StormResult", scenario: int) -> str:
+    field = storm.scenarios[scenario]
+    head = (
+        f"severity {storm.severity} ({storm.storm_class or 'no storm'}), anchor "
+        f"{storm.anchor_m_per_s:.1f} m/s at sea; rain {field.rain_mm:.0f} mm, flood stage "
+        f"{field.flood_stage_m:.2f} m"
+    )
+    track = field.track
+    if track is None:
+        return head
+    return (
+        f"{head}\npeak wind at sea {track.peak_wind_m_per_s:.1f} m/s; closest approach "
+        f"{track.closest_approach_km:.1f} km; radius of maximum wind "
+        f"{track.radius_max_wind_km:.1f} km, with {field.inside_radius_share:.0%} of the land "
+        f"inside it\nlee cells {int(np.count_nonzero(field.lee))}; node labels give the wind "
+        f"at the node (m/s)"
     )
