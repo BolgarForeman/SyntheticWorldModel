@@ -7995,11 +7995,12 @@ rules:
       gust, old 0.1-0.9', url: docs/design/evidence/Hazards_Evidence_v0_1.md, quote: null, verified: null}
   - {citation: 'Hazards ruling sheet v0.1, H5', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
     quote: null, verified: null}
-  reasoning: The pole curve's median is calibrated so the pilot (severity 50) loses about 10% of its overhead
-    line length on average across its scenarios, and the severity-70 copy about 30%. The targets sit below
-    observed outage shares (about a third of Taipower customers in Soudelor 2015, a strong typhoon) because
-    many outages are trips cleared without a crew. The earlier anchor, 0.05 failures per km at a 45 m/s
-    gust, is in history.
+  reasoning: 'The pole curve''s median is calibrated so the pilot (severity 50) loses about 10% of its
+    overhead line length on average across its scenarios, and the severity-70 copy about 30%. The targets
+    sit below observed outage shares (about a third of Taipower customers in Soudelor 2015, a strong typhoon)
+    because many outages are trips cleared without a crew. The earlier anchor, 0.05 failures per km at
+    a 45 m/s gust, is in history. Achieved with beta 0.4 and median 159.9394: 6.1% at severity 50 and
+    33.8% at severity 70, both within 5 points (ruled 2026-10-02).'
   status: placeholder
   open_decision: realism ranges
   ruling:
@@ -8038,8 +8039,8 @@ rules:
   title: 'Overhead line on poles: failure chance per km by 3-second gust (calibrated)'
   stage: storm
   value:
-    median_m_per_s: 121.7185
-    beta: 0.3
+    median_m_per_s: 159.9394
+    beta: 0.4
     gust_m_per_s: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
       16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0,
       32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0, 41.0, 42.0, 43.0, 44.0, 45.0, 46.0, 47.0,
@@ -8048,39 +8049,41 @@ rules:
       80.0, 81.0, 82.0, 83.0, 84.0, 85.0, 86.0, 87.0, 88.0, 89.0, 90.0, 91.0, 92.0, 93.0, 94.0, 95.0,
       96.0, 97.0, 98.0, 99.0, 100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0, 109.0, 110.0,
       111.0, 112.0, 113.0, 114.0, 115.0, 116.0, 117.0, 118.0, 119.0, 120.0]
-    failures_per_km: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0, 1.0e-09, 2.0e-09, 6.0e-09, 1.4e-08, 3.1e-08, 6.6e-08, 1.33e-07, 2.59e-07, 4.83e-07,
-      8.7e-07, 1.518e-06, 2.569e-06, 4.229e-06, 6.786e-06, 1.0633e-05, 1.6297e-05, 2.4469e-05, 3.604e-05,
-      5.2139e-05, 7.417e-05, 0.00010386, 0.000143295, 0.000194967, 0.000261813, 0.000347254, 0.000455228,
-      0.000590219, 0.000757283, 0.000962064, 0.001210802, 0.001510335, 0.001868089, 0.002292067, 0.002790817,
-      0.003373403, 0.004049362, 0.00482865, 0.005721589, 0.006738801, 0.00789114, 0.009189615, 0.010645318,
-      0.012269337, 0.014072682, 0.016066198, 0.018260487, 0.020665826, 0.023292093, 0.026148694, 0.029244492,
-      0.032587742, 0.036186037, 0.040046251, 0.044174492, 0.048576065, 0.053255439, 0.058216218, 0.063461121,
-      0.068991973, 0.074809694, 0.080914305, 0.087304927, 0.093979799, 0.100936292, 0.108170933, 0.11567943,
-      0.123456706, 0.131496931, 0.139793564, 0.148339388, 0.157126559, 0.166146647, 0.175390688, 0.184849224,
-      0.194512357, 0.204369798, 0.214410913, 0.224624772, 0.235000197, 0.245525812, 0.256190081, 0.266981362,
-      0.277887942, 0.288898084, 0.30000006, 0.311182194, 0.322432895, 0.333740691, 0.345094258, 0.356482451,
-      0.367894331, 0.379319188, 0.390746561, 0.402166265, 0.413568402, 0.424943381, 0.436281931, 0.44757511,
-      0.458814321, 0.469991315, 0.481098199]
+    failures_per_km: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0e-09, 2.0e-09,
+      4.0e-09, 1.0e-08, 2.4e-08, 5.0e-08, 1.01e-07, 1.93e-07, 3.54e-07, 6.23e-07, 1.059e-06, 1.744e-06,
+      2.79e-06, 4.346e-06, 6.609e-06, 9.829e-06, 1.4322e-05, 2.0478e-05, 2.8774e-05, 3.9781e-05, 5.4176e-05,
+      7.2753e-05, 9.643e-05, 0.000126259, 0.000163432, 0.00020929, 0.000265324, 0.000333181, 0.000414668,
+      0.000511748, 0.000626542, 0.000761326, 0.000918528, 0.001100719, 0.00131061, 0.001551042, 0.001824974,
+      0.002135479, 0.002485723, 0.002878961, 0.003318521, 0.003807787, 0.00435019, 0.004949188, 0.005608259,
+      0.006330876, 0.007120503, 0.007980572, 0.008914474, 0.009925543, 0.011017043, 0.012192157, 0.013453973,
+      0.014805471, 0.016249518, 0.017788852, 0.019426075, 0.021163647, 0.023003876, 0.02494891, 0.027000737,
+      0.029161172, 0.031431861, 0.033814271, 0.036309693, 0.038919234, 0.041643824, 0.044484208, 0.047440952,
+      0.05051444, 0.053704879, 0.057012298, 0.060436555, 0.063977335, 0.067634157, 0.071406378, 0.075293196,
+      0.079293656, 0.083406654, 0.087630945, 0.091965144, 0.096407737, 0.100957081, 0.105611416, 0.110368867,
+      0.115227454, 0.120185093, 0.125239607, 0.13038873, 0.135630116, 0.140961339, 0.146379908, 0.151883264,
+      0.157468795, 0.163133833, 0.168875667, 0.174691544, 0.180578678, 0.186534253, 0.192555429, 0.198639345,
+      0.204783129, 0.210983898, 0.217238763, 0.223544835, 0.229899231, 0.236299072]
   units: null
   applies_to: {layer: null, node_class: null, condition: null}
   grade: J
   jurisdiction: US
   sources:
+  - {citation: 'PR 6b follow-up answers (decision 0012, second addendum)', url: docs/work_orders/WO-06b-fixes-answers.md,
+    quote: null, verified: null}
   - {citation: tools/calibrate_line_curve.py and tools/build_fragility_tables.py, url: null, quote: null,
     verified: null}
   - {citation: 'PR 6b answers (decision 0012, second addendum)', url: docs/work_orders/WO-06b-answers.md,
     quote: null, verified: null}
   reasoning: 'A lognormal against the local 3-second gust, per km of pole line, tabulated offline on whole
-    m/s. Declared calibration (J): beta stays 0.3 as a placeholder shape, and the median 121.7185 m/s
-    is set so the pilot loses about 10% of its overhead line length at severity 50 and about 30% at severity
-    70, averaged over each recipe''s scenarios (storm.line_fragility_anchor). Achieved: severity 50: 10.4%
-    of line length (target 10%); severity 70: 49.4% (target 30%). One median cannot meet both within 5
-    points at beta 0.3 (best single median 136.45 m/s misses by 6.1 points); the median is fitted to the
-    pilot (decision 0012, second addendum). beta 0.4 with median 159.9 m/s would meet both (6.1% and 33.8%),
-    not applied.. Each km of line fails at its own gust; a line is down if any kilometre fails.'
-  status: placeholder
-  open_decision: line fragility
+    m/s. Declared calibration (J, ruled): beta 0.4, and the median 159.9394, a calibration parameter rather
+    than a physical gust, is the best single median for both targets in storm.line_fragility_anchor. Achieved:
+    the pilot (severity 50) loses 6.1% of its overhead line length on average across its scenarios, the
+    severity-70 copy 33.8%. At beta 0.3 no single median met both within 5 points: the pilot fit (median
+    121.7185: 10.4% and 49.4%, the previous value, in history), the severity-70 fit (143.07: 3.9% and
+    30.5%) and the best single (136.45: 3.9% and 35.6%). Each km of line fails at its own gust; a line
+    is down if any kilometre fails.'
+  status: ruled
+  open_decision: null
   ruling:
     by: the author (Foreman)
     date: '2026-10-02'
@@ -8112,6 +8115,34 @@ rules:
         0.867653629, 0.874427849, 0.880894974, 0.887065402, 0.892949504, 0.898557586, 0.90389986, 0.908986411,
         0.913827171, 0.9184319, 0.922810165, 0.926971322, 0.930924506, 0.934678616, 0.938242309, 0.941623991,
         0.944831812, 0.947873662]
+    units: null
+    date: '2026-10-02'
+    decision: '0012'
+  - value:
+      median_m_per_s: 121.7185
+      beta: 0.3
+      gust_m_per_s: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+        16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0,
+        32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0, 41.0, 42.0, 43.0, 44.0, 45.0, 46.0, 47.0,
+        48.0, 49.0, 50.0, 51.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0, 58.0, 59.0, 60.0, 61.0, 62.0, 63.0,
+        64.0, 65.0, 66.0, 67.0, 68.0, 69.0, 70.0, 71.0, 72.0, 73.0, 74.0, 75.0, 76.0, 77.0, 78.0, 79.0,
+        80.0, 81.0, 82.0, 83.0, 84.0, 85.0, 86.0, 87.0, 88.0, 89.0, 90.0, 91.0, 92.0, 93.0, 94.0, 95.0,
+        96.0, 97.0, 98.0, 99.0, 100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0, 109.0,
+        110.0, 111.0, 112.0, 113.0, 114.0, 115.0, 116.0, 117.0, 118.0, 119.0, 120.0]
+      failures_per_km: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 1.0e-09, 2.0e-09, 6.0e-09, 1.4e-08, 3.1e-08, 6.6e-08, 1.33e-07, 2.59e-07,
+        4.83e-07, 8.7e-07, 1.518e-06, 2.569e-06, 4.229e-06, 6.786e-06, 1.0633e-05, 1.6297e-05, 2.4469e-05,
+        3.604e-05, 5.2139e-05, 7.417e-05, 0.00010386, 0.000143295, 0.000194967, 0.000261813, 0.000347254,
+        0.000455228, 0.000590219, 0.000757283, 0.000962064, 0.001210802, 0.001510335, 0.001868089, 0.002292067,
+        0.002790817, 0.003373403, 0.004049362, 0.00482865, 0.005721589, 0.006738801, 0.00789114, 0.009189615,
+        0.010645318, 0.012269337, 0.014072682, 0.016066198, 0.018260487, 0.020665826, 0.023292093, 0.026148694,
+        0.029244492, 0.032587742, 0.036186037, 0.040046251, 0.044174492, 0.048576065, 0.053255439, 0.058216218,
+        0.063461121, 0.068991973, 0.074809694, 0.080914305, 0.087304927, 0.093979799, 0.100936292, 0.108170933,
+        0.11567943, 0.123456706, 0.131496931, 0.139793564, 0.148339388, 0.157126559, 0.166146647, 0.175390688,
+        0.184849224, 0.194512357, 0.204369798, 0.214410913, 0.224624772, 0.235000197, 0.245525812, 0.256190081,
+        0.266981362, 0.277887942, 0.288898084, 0.30000006, 0.311182194, 0.322432895, 0.333740691, 0.345094258,
+        0.356482451, 0.367894331, 0.379319188, 0.390746561, 0.402166265, 0.413568402, 0.424943381, 0.436281931,
+        0.44757511, 0.458814321, 0.469991315, 0.481098199]
     units: null
     date: '2026-10-02'
     decision: '0012'
@@ -8179,10 +8210,32 @@ rules:
     quote: null, verified: null}
   - {citation: 'Hazards ruling sheet v0.1, H5', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
     quote: null, verified: null}
-  reasoning: 'Crew work is 6 h per failure point (each failed kilometre of a pole line, or a towered line''s
-    collapse), no lead time, plus road travel from the crew base to the line''s midpoint; a line with
-    three failed kilometres needs 18 h. In Phase 1 one line is one job for one crew. Tower repair times
-    are open: a collapse counts as one point for now.'
+  reasoning: Crew work is 6 h per failure point (each failed kilometre of a pole line, or a towered line's
+    collapse), no lead time, plus road travel from the crew base to the line's midpoint; a line with three
+    failed kilometres needs 18 h. In Phase 1 one line is one job for one crew. A towered line's collapse
+    is one point with its own crew work (storm.tower_crew_work_h).
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
+- id: storm.tower_crew_work_h
+  title: Crew work to restore a collapsed transmission tower
+  stage: storm
+  value: 72.0
+  units: h
+  applies_to: {layer: power, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'PR 6b follow-up answers (decision 0012, second addendum)', url: docs/work_orders/WO-06b-fixes-answers.md,
+    quote: null, verified: null}
+  reasoning: A towered line that collapses is one failure point needing 72 h of crew work, no lead time,
+    plus road travel from the crew base. Emergency tower restoration takes days; permanent rebuilds after
+    Faxai took weeks.
   status: placeholder
   open_decision: realism ranges
   ruling:

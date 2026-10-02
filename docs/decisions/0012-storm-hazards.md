@@ -143,3 +143,14 @@ Every changed registry value keeps its old value in history, citing this decisio
 6. **Repair per failure point.** Crew work is 6 h × the line's failure points, with no lead time, plus road travel to the line's midpoint. One line is one job for one crew in Phase 1. A towered line's collapse counts as one failure point for now; tower repair times are open.
 
 The coder's other PR 6b choices stand as marked.
+
+### Follow-up rulings (2026-10-02)
+
+- **Source:** `docs/work_orders/WO-06b-fixes-answers.md`; decided by the design side, confirmed by the author (Foreman).
+
+1. **The pole curve's spread is ruled at 0.4 (J)**, with the median the calibration tool returns for it: 159.9394 m/s. That median is a calibration parameter, not a physical gust.
+   - It gives the pilot (severity 50) 6.1% and the severity-70 copy 33.8% of overhead line length down on average, both within 5 points of their targets.
+   - The β 0.3 pilot fit (median 121.7185) moves into the table's history; the other β 0.3 fits are recorded in its reasoning.
+2. **A collapsed tower needs 72 h of crew work**, no lead time, plus travel (placeholder, J; `storm.tower_crew_work_h`). Emergency tower restoration takes days, and permanent rebuilds after Faxai took weeks. A collapse remains one failure point.
+3. **A scenario with no damage is acceptable.** With the ruled curve the pilot has three: scenarios 1, 5 and 6.
+4. **The towered-line stop limit applies at pilot severity only.** At severity 70 the counts are reported, and the design side logs the scenario where all 5 towered lines collapse (scenario 0) as an open item for the realism checks.

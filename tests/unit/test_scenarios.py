@@ -103,7 +103,11 @@ def test_the_line_curve_is_the_declared_calibration_and_keeps_the_old_anchor() -
     spec.loader.exec_module(builder)
     table = RULES.value("storm.line_fragility_table")
     assert table["median_m_per_s"] == builder.LINE_MEDIAN
-    assert table["beta"] == 0.3
+    assert table["beta"] == 0.4
+    rule = RULES.rule("storm.line_fragility_table")
+    assert rule.status == "ruled"
+    assert rule.history[-1].value["median_m_per_s"] == 121.7185
+    assert rule.history[-1].value["beta"] == 0.3
     targets = RULES.rule("storm.line_fragility_anchor")
     assert targets.value == {"severity_50_length_share": 0.10, "severity_70_length_share": 0.30}
     assert targets.history[-1].value == {"gust_m_per_s": 45.0, "failures_per_km": 0.05}
@@ -237,6 +241,7 @@ def test_each_kilometre_fails_at_its_own_gust_and_each_failure_is_a_point() -> N
                 )
                 assert outcome.failed == failed
                 assert outcome.failure_points == int(failed)
+                assert outcome.crew_work_h == 72.0 * int(failed)
                 continue
             points = []
             for piece in reader.pieces(line):
@@ -372,7 +377,9 @@ def test_each_overhead_line_has_6_h_of_crew_work_and_travel_to_its_midpoint() ->
     lines = overhead_lines(requirements.layers, couplings)
     assert [r.line_id for r in repair.lines] == [line.line_id for line in lines]
     for record in repair.lines:
-        assert (record.crew_work_h_per_failure_point, record.lead_time_h) == (6.0, 0.0)
+        line = next(line for line in lines if line.line_id == record.line_id)
+        expected = 72.0 if line.structure == Structure.TOWER else 6.0
+        assert (record.crew_work_h_per_failure_point, record.lead_time_h) == (expected, 0.0)
         assert record.travel_h is not None
         assert record.travel_h > 0.0
 

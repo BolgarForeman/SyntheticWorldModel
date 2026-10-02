@@ -34,7 +34,12 @@ from swm.stages.couplings import CouplingsResult
 from swm.stages.crews import ELIGIBLE_CLASS, CrewBase, CrewsResult, RoadNetwork
 from swm.stages.layers import LayersResult, Node
 from swm.stages.requirements import RequirementsResult
-from swm.stages.scenarios import OverheadLine, midpoint_cell, overhead_lines
+from swm.stages.scenarios import (
+    OverheadLine,
+    crew_work_per_point_h,
+    midpoint_cell,
+    overhead_lines,
+)
 from swm.stages.terrain import TerrainResult
 
 HOURS_PER_DAY = 24.0
@@ -213,9 +218,9 @@ def _line_repairs(
     nearest: Callable[[str, tuple[int, int]], Travel | None],
 ) -> list[LineRepair]:
     """Crew work per failure point, no lead time, and travel from the nearest base (§4.3b)."""
-    work_h = rules.number("storm.line_crew_work_h")
     repairs = []
     for line in lines:
+        work_h = crew_work_per_point_h(line, rules)
         # CHOICE: a crew travels to the line's midpoint, which stands for its length until
         # the damage says where along it the line came down.
         trip = nearest(line.line_id, midpoint_cell(line, terrain.grid))
@@ -508,7 +513,9 @@ def _line_summary(lines: tuple[LineRepair, ...]) -> dict[str, object]:
     travel = [line.travel_h for line in lines if line.travel_h is not None]
     return {
         "lines": len(lines),
-        "crew_work_h_per_failure_point": lines[0].crew_work_h_per_failure_point if lines else None,
+        "crew_work_h_per_failure_point": sorted(
+            {line.crew_work_h_per_failure_point for line in lines}
+        ),
         "mean_travel_h": _mean(travel),
         "longest_travel_h": round(max(travel), 3) if travel else None,
     }

@@ -252,12 +252,13 @@ def build_scenarios(
     lines = overhead_lines(layers, couplings)
     reader = _LineReader(terrain, rules)
     pieces = [reader.pieces(line) for line in lines]
-    work_h = rules.number("storm.line_crew_work_h")
     damaged = []
     for scenario, stream in zip(storm.scenarios, streams, strict=True):
         gust = reader.gust(scenario.wind_m_per_s).ravel()
         outcomes = [
-            _line_outcome(line, line_pieces, gust, reader, work_h, stream)
+            _line_outcome(
+                line, line_pieces, gust, reader, crew_work_per_point_h(line, rules), stream
+            )
             for line, line_pieces in zip(lines, pieces, strict=True)
         ]
         facilities = _flooded(scenario.flood_depth_m, layers, rules, cap)
@@ -369,6 +370,28 @@ def _line_outcome(
             points_km.append((piece.start_km + piece.end_km) / 2)
     return LineOutcome(line.line_id, peak, 1.0 - survive, bool(points_km), len(points_km),
                        tuple(points_km), work_h * len(points_km))  # fmt: skip
+
+
+def crew_work_per_point_h(line: OverheadLine, rules: Registry) -> float:
+    """Return the crew work per failure point of a line: a pole-line km or a tower collapse.
+
+    Parameters
+    ----------
+    line : OverheadLine
+        The line.
+    rules : Registry
+        The modeling rules in force.
+
+    Returns
+    -------
+    float
+        Hours of crew work for each failure point (6 h on poles, 72 h for a collapsed tower).
+
+    Spec: structure v0.7 §4.3b (overhead lines: repair); decision 0012, second addendum.
+    """
+    if line.structure == Structure.TOWER:
+        return rules.number("storm.tower_crew_work_h")
+    return rules.number("storm.line_crew_work_h")
 
 
 def _length_m(a: tuple[float, float], b: tuple[float, float]) -> float:

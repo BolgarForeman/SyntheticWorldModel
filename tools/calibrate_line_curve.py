@@ -1,7 +1,7 @@
 """Calibrate the median of the pole-line fragility curve (structure v0.7 §4.3b).
 
 Offline only. A declared calibration (decision 0012, second addendum): with the curve's beta held
-at its placeholder, find the median gust at which the pilot (severity 50) loses about 10% of its
+at its ruled value, find the median gust at which the pilot (severity 50) loses about 10% of its
 overhead line length and the severity-70 copy about 30%, each averaged over the recipe's
 scenarios. Line length lost is the length of every line that is down (any kilometre failed, or
 its towers collapsed), over the length of all overhead lines.
@@ -36,8 +36,8 @@ TOLERANCE = 0.05
 """Both recipes must land within 5 percentage points of their targets."""
 SEARCH_STEPS = 200
 """Medians tried between the two single-target medians."""
-BETAS = tuple(round(0.30 + 0.05 * i, 2) for i in range(35))
-"""Spreads scanned, for the report only, when beta 0.3 cannot meet both targets."""
+BETAS = tuple(round(tables.LINE_BETA + 0.05 * i, 2) for i in range(35))
+"""Spreads scanned, for the report only, when the ruled beta cannot meet both targets."""
 
 
 def prepared(path: Path) -> dict[str, Any]:

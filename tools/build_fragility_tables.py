@@ -6,7 +6,7 @@ Offline only: this script uses log and the error function, which the generator i
 
 Both are lognormal fragilities against the 3-second gust, P(g) = Phi(ln(g / median) / beta),
 tabulated on whole metres per second and interpolated linearly at runtime:
-- overhead lines on poles: the chance of failing per km of line, with the placeholder beta of
+- overhead lines on poles: the chance of failing per km of line, with the ruled beta of
   ``LINE_BETA`` and the median ``LINE_MEDIAN`` found by ``tools/calibrate_line_curve.py``
   (a declared calibration, decision 0012 second addendum);
 - transmission towers: the chance a towered line collapses, median 285 km/h, beta 0.10
@@ -22,10 +22,11 @@ import math
 GUSTS = tuple(range(0, 121))
 """Knots: 3-second gust in m/s, 0 to 120 in steps of 1."""
 
-LINE_MEDIAN = 121.7185
-"""Median gust of the pole-line curve (m/s), calibrated to the pilot's 10% length share."""
-LINE_BETA = 0.3
-"""Lognormal dispersion of the pole-line curve: placeholder (open decision: line fragility)."""
+LINE_MEDIAN = 159.9394
+"""Median of the pole-line curve (m/s): a calibration parameter, not a physical gust. The
+best single median for both targets at beta 0.4 (``tools/calibrate_line_curve.py``)."""
+LINE_BETA = 0.4
+"""Lognormal dispersion of the pole-line curve: ruled 0.4 (J), decision 0012 second addendum."""
 
 TOWER_MEDIAN_KM_PER_H = 285.0
 TOWER_BETA = 0.10
