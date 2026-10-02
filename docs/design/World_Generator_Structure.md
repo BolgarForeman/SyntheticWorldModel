@@ -257,27 +257,28 @@ Ruled by the author, 2026-09-30 (decision 0012). Evidence: `evidence/Hazards_Evi
 - **Facilities** fail by flood only. None fails from wind in Phase 1.
 - **Not damaged in Phase 1:** buried water mains, roads and bridges. Roads stay open; road blockage and bridge scour come later (declared restriction).
 
-**The wind field.** A typhoon moves on a straight track across the island. Wind is a 10-minute sustained speed in m/s, as Taiwan's Central Weather Administration (CWA) reports it. At each place it is built in order:
+**The wind field.** A typhoon moves on a straight track that passes over or near the island: each scenario draws its closest approach to the island's centre between 0 and 40 km offshore, and its radius of maximum wind between 20 and 60 km (geometric mean in the literature 47.5 km, Willoughby & Rahn 2004) · J for both ranges (2026-10-02, PR 6a answers). Each place takes the peak wind over the storm's passage. Wind is a 10-minute sustained speed in m/s, as Taiwan's Central Weather Administration (CWA) reports it. At each place it is built in order:
 1. **Profile.** Modified Rankine: inside the radius of maximum wind, speed rises linearly to the peak; beyond it, V = V_max × sqrt(R_max ÷ r). Exponent 0.5, literature range 0.4–0.6 (Geoscience Australia TCRM) · L.
 2. **Sea to land.** Land keeps 0.83 of the sea wind, most of the drop within 1 km of the coast (Vickery et al. 2009) · L (US).
-3. **Local surface.** Taiwan building wind code terrain classes: 0.476 of open-ground wind in a city core, 0.662 in a town, 1.0 in the open or on the coast · S (TW) for the factors, J for their use in a hazard field.
-4. **Mountain lee.** Places in the lee of the spine keep 0.6 · J, bounded by the >40% weakening of typhoons crossing the Central Mountain Range (Brand & Blelloch, as quoted in Wu & Kuo 1999; whether wind or pressure is unconfirmed).
+3. **Local surface.** Taiwan building wind code terrain classes: 0.476 of open-ground wind in a city core (the largest city), 0.662 in a town or wooded land, 1.0 in the open, on wetland or bare ground, or on the coast · S (TW) for the factors, J for their use in a hazard field.
+4. **Mountain lee.** Places in the lee of the spine keep 0.6. The lee is measured against the smooth spine line (decision 0005), not the crest cells: a place is in the lee when the spine line lies between it and the nearest point of the track. A flat island (mountainous 0) has no lee. Factor 0.6 · J, bounded by the >40% weakening of typhoons crossing the Central Mountain Range (Brand & Blelloch, as quoted in Wu & Kuo 1999; whether wind or pressure is unconfirmed).
 5. **Random variation.** A smooth random field from a Wendland kernel, (1 − t)⁴(1 + 4t), valid in 2-D (Bevilacqua et al. 2019), with normal values built from uniform draws. Correlation length 10 km, spread 10% · J (placeholders).
 
 For line fragility the 10-minute wind converts to a 3-second gust: ×1.75 inland, ×1.30 at the coast (WMO) · L.
 
-**Severity.** 0 means no storm. Otherwise the peak 10-minute wind at sea is V_max = 17.2 + 0.53 × severity m/s, so mild typhoons (17.2–32.6 m/s) fall at 1–29, moderate (32.7–50.9) at 29–64 and strong (≥ 51) at 64–100, topping out near 70 m/s. The CWA classes are S (TW); the linear map is J. Severity also sets 24-hour rainfall on the Water Resources Agency flood-map ladder: 300 mm up to 33, 450 mm up to 66, 600 mm above. **Pilot: severity 50**, a moderate typhoon near 44 m/s at sea, with 450 mm.
+**Severity.** 0 means no storm. Otherwise the peak 10-minute wind at sea is V_max = 17.2 + 0.53 × severity m/s, so mild typhoons (17.2–32.6 m/s) fall at 1–29, moderate (32.7–50.9) at 29–64 and strong (≥ 51) at 64–100, topping out near 70 m/s. The CWA classes are S (TW); the linear map is J. Severity also sets 24-hour rainfall on the Water Resources Agency flood-map ladder: 300 mm up to 33, 450 mm up to 66, 600 mm above. Each scenario draws its rainfall within ±75 mm of its rung (moderate: 375–525 mm), and the flood stage follows linearly at 1 m per 150 mm above 150 mm · J (2026-10-02). **Pilot: severity 50**, a moderate typhoon near 44 m/s at sea, with 450 mm.
 
 **Flood.**
 - Flood depth at a facility = the scenario's flood stage − the site's height above the nearest drainage, the standard single flood index (Nobre 2011) · L.
 - Flood stage: 1 m at 300 mm, 2 m at 450 mm, 3 m at 600 mm · J (placeholders; next source: the NCDR flood map handbook).
 - A facility floods out at its Hazus functional depth (Hazus 6.1 Inventory Technical Manual) · L (US):
-  - substations, power plants, water treatment and pumping: 1.2 m (4 ft);
+  - substations, power plants, water treatment and pumping, and refineries: 1.2 m (4 ft), measured from the platform for power plants and transmission substations, which stand on platforms raised 2 m above grade (real plants are built above the design flood; Hazus assumes slab on grade) · J for the platform (2026-10-02);
+  - import terminals: 1.2 m (raised quays) · J;
   - tank farms and depots: any water;
   - hospitals, clinics and blood banks: 0.15 m (0.5 ft), measured from grade;
   - telecom facilities: 1.2 m, borrowing the substation value (Hazus maps them without a damage rule) · J;
   - water storage: on-ground tanks 7.3 m (24 ft);
-  - reservoirs, ports and airports: not flood-damaged in Phase 1.
+  - reservoirs, ports, airports, freight yards, bridges, road junctions and rail nodes: not flood-damaged in Phase 1.
 - Damage state by depth over the threshold: up to 0.5 m slight; above 0.5 m moderate; above 1.5 m extensive; above 3 m complete · J. The pilot caps facility damage at moderate (§4.4a).
 
 **Overhead lines.** A line's chance of failing in a scenario comes from a stored table indexed by 3-second gust, per km of line, centred on 0.05 per km at a 45 m/s gust. Anchor: wood distribution poles fail with probability 0.02–0.12 at a 100 mph gust when new and 0.1–0.9 when old · L (US); the per-km conversion is J. Transmission towers collapse only near 285 km/h gusts (Cyclone Fani curves) · L and do not fail at pilot severity. A failed line is repaired by crew work of 6 h with no lead time, travelling from the crew base · J, anchored on Taipower's typical restoration within 1–3 days of large typhoons.
@@ -609,7 +610,7 @@ The UA Research Security export ask carried over from an earlier problem set and
 
 ## Changes from v0.6
 
-All ruled by the author, 2026-09-30 (decision 0012, and the decision 0011 addendum for repair):
+All ruled by the author, 2026-09-30 (decision 0012, and the decision 0011 addendum for repair), with the PR 6a answers of 2026-10-02 folded into §4.3b (track offset and radius drawn per scenario; lee against the smooth spine line; wooded land as town; rainfall drawn per scenario; 2 m platforms for power plants and transmission substations; thresholds for refineries and import terminals):
 
 - New §4.3b, the storm: overhead lines fail by wind and facilities by flood; a modified Rankine wind field with sea-to-land, Taiwan wind-code, mountain-lee and random-variation factors; flood depth from height above drainage; equally weighted scenarios; protection as immunity, for facilities and overhead lines.
 - Severity re-anchored to Taiwan's typhoon classes (peak wind and rainfall), replacing "100 = every exposed element in the hazard core fails" (§4.3, §4.3b). Pilot severity 50.
