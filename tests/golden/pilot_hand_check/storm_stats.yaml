@@ -1,146 +1,185 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: b3a89db5ae61dde7abb906983fb62f06fd97cbce6bd7c67ffdc8db0a96193c8c
+  registry_sha256: 1093b79cf8d9a0121c3c148901a5ee24a13c000de74003428810dd54629d53cb
   overrides: {}
 severity: 50
 storm_class: moderate
 anchor_m_per_s: 43.7
-rain_mm: 450.0
-flood_stage_m: 2.0
+rain_rung_mm: 450.0
 scenarios:
 - index: 0
   track_point_km:
-  - 9.913
-  - 11.642
+  - 14.421
+  - 32.761
   heading:
-  - 0.802708
-  - 0.596373
+  - 0.984055
+  - 0.177867
   peak_wind_m_per_s: 46.68
+  closest_approach_km: 16.228
+  radius_max_wind_km: 46.799
   land_inside_radius_share: 1.0
-  lee_land_cells: 10031
+  lee_land_cells: 10958
+  rain_mm: 420.188
+  flood_stage_m: 1.801
   facility_wind_m_per_s:
     least: 9.932
-    mean: 24.084
+    mean: 19.918
     most: 41.727
-  flooded_facilities:
+  wet_facilities:
   - SWM-POW-0001
   - SWM-TRN-0004
+  flooded_out_facilities: []
 - index: 1
   track_point_km:
-  - 17.896
-  - 11.509
+  - 13.936
+  - 17.41
   heading:
-  - 0.869657
-  - 0.493657
+  - 0.18039
+  - 0.983595
   peak_wind_m_per_s: 39.848
+  closest_approach_km: 3.427
+  radius_max_wind_km: 45.409
   land_inside_radius_share: 1.0
-  lee_land_cells: 10175
+  lee_land_cells: 10075
+  rain_mm: 414.293
+  flood_stage_m: 1.762
   facility_wind_m_per_s:
-    least: 13.315
-    mean: 23.178
-    most: 40.195
-  flooded_facilities:
+    least: 8.482
+    mean: 19.355
+    most: 37.925
+  wet_facilities:
   - SWM-POW-0001
   - SWM-TRN-0004
+  flooded_out_facilities: []
 - index: 2
   track_point_km:
-  - 32.133
-  - 25.613
+  - 18.876
+  - -0.386
   heading:
-  - 0.442792
-  - -0.896625
+  - -0.995853
+  - -0.090976
   peak_wind_m_per_s: 42.973
+  closest_approach_km: 17.249
+  radius_max_wind_km: 45.889
   land_inside_radius_share: 1.0
-  lee_land_cells: 8903
+  lee_land_cells: 10778
+  rain_mm: 397.744
+  flood_stage_m: 1.652
   facility_wind_m_per_s:
     least: 13.633
-    mean: 23.725
+    mean: 21.911
     most: 37.743
-  flooded_facilities:
+  wet_facilities:
   - SWM-POW-0001
   - SWM-TRN-0004
+  flooded_out_facilities: []
 - index: 3
   track_point_km:
-  - 14.437
-  - 10.179
+  - 51.655
+  - 35.769
   heading:
-  - -0.453302
-  - 0.891357
+  - 0.483591
+  - -0.875294
   peak_wind_m_per_s: 44.297
-  land_inside_radius_share: 1.0
-  lee_land_cells: 6862
+  closest_approach_km: 39.241
+  radius_max_wind_km: 36.682
+  land_inside_radius_share: 0.421307
+  lee_land_cells: 8370
+  rain_mm: 475.015
+  flood_stage_m: 2.167
   facility_wind_m_per_s:
     least: 13.172
-    mean: 27.698
-    most: 46.807
-  flooded_facilities:
+    mean: 21.593
+    most: 44.523
+  wet_facilities:
   - SWM-POW-0001
   - SWM-TRN-0004
+  flooded_out_facilities: []
 - index: 4
   track_point_km:
-  - 30.536
-  - 23.351
+  - 34.269
+  - 6.282
   heading:
-  - 0.962636
-  - -0.270798
+  - -0.52671
+  - -0.850045
   peak_wind_m_per_s: 45.646
+  closest_approach_km: 19.954
+  radius_max_wind_km: 55.313
   land_inside_radius_share: 1.0
-  lee_land_cells: 8979
+  lee_land_cells: 10970
+  rain_mm: 403.13
+  flood_stage_m: 1.688
   facility_wind_m_per_s:
-    least: 11.013
-    mean: 21.874
-    most: 37.096
-  flooded_facilities:
+    least: 14.506
+    mean: 25.542
+    most: 51.834
+  wet_facilities:
   - SWM-POW-0001
   - SWM-TRN-0004
+  flooded_out_facilities: []
 - index: 5
   track_point_km:
-  - 25.613
-  - 18.162
+  - 6.415
+  - 2.94
   heading:
-  - 0.66848
-  - -0.74373
+  - -0.786076
+  - 0.618129
   peak_wind_m_per_s: 42.97
+  closest_approach_km: 17.621
+  radius_max_wind_km: 49.399
   land_inside_radius_share: 1.0
-  lee_land_cells: 5493
+  lee_land_cells: 4069
+  rain_mm: 497.123
+  flood_stage_m: 2.314
   facility_wind_m_per_s:
-    least: 16.211
-    mean: 26.058
-    most: 43.008
-  flooded_facilities:
+    least: 16.483
+    mean: 24.016
+    most: 38.429
+  wet_facilities:
   - SWM-POW-0001
   - SWM-TRN-0004
+  flooded_out_facilities: []
 - index: 6
   track_point_km:
-  - 12.574
-  - 17.896
+  - -3.717
+  - 44.64
   heading:
-  - 0.97999
-  - 0.199046
+  - 0.798104
+  - 0.60252
   peak_wind_m_per_s: 42.802
-  land_inside_radius_share: 1.0
-  lee_land_cells: 9631
+  closest_approach_km: 34.893
+  radius_max_wind_km: 43.851
+  land_inside_radius_share: 0.996415
+  lee_land_cells: 11014
+  rain_mm: 380.964
+  flood_stage_m: 1.54
   facility_wind_m_per_s:
-    least: 14.746
-    mean: 22.386
-    most: 35.086
-  flooded_facilities:
+    least: 8.848
+    mean: 18.642
+    most: 38.521
+  wet_facilities:
   - SWM-POW-0001
   - SWM-TRN-0004
+  flooded_out_facilities: []
 - index: 7
   track_point_km:
-  - 29.871
-  - 24.15
+  - 35.104
+  - -7.739
   heading:
-  - 0.175748
-  - 0.984435
+  - -0.809425
+  - -0.587224
   peak_wind_m_per_s: 46.986
-  land_inside_radius_share: 1.0
-  lee_land_cells: 10316
+  closest_approach_km: 30.306
+  radius_max_wind_km: 43.435
+  land_inside_radius_share: 0.996415
+  lee_land_cells: 10939
+  rain_mm: 404.752
+  flood_stage_m: 1.698
   facility_wind_m_per_s:
     least: 15.953
-    mean: 29.303
+    mean: 26.29
     most: 50.035
-  flooded_facilities:
+  wet_facilities:
   - SWM-POW-0001
   - SWM-TRN-0004
+  flooded_out_facilities: []

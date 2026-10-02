@@ -228,6 +228,9 @@ class TerrainResult:
     urban_id: NDArray[np.int16]
     cities: tuple[City, ...]
     statistics: TerrainStatistics
+    spine_km: tuple[tuple[float, float], ...] = ()
+    """The smooth spine line (decision 0005), as (km east, km south) of the domain corner.
+    Not hashed: it is the line the elevation was built from, recorded for the storm's lee."""
 
 
 def terrain_streams(root_seed: int, terrain_seed: int) -> TerrainStreams:
@@ -278,7 +281,7 @@ def build_terrain(terrain: Terrain, streams: TerrainStreams) -> TerrainResult:
         MAX_ELEVATION_AT_100_M - BASE_RELIEF_M
     )
 
-    field, spine_elevation = _spine_island(character.coastline_complexity, streams, mappings)
+    field, spine_elevation, spine = _spine_island(character.coastline_complexity, streams, mappings)
     land = _single_landmass(field > 0, mappings.border_cells)
     elevation_m = np.where(land, max_elevation_m * spine_elevation, 0.0)
     land, elevation_m = _add_outlying_islands(
@@ -318,7 +321,14 @@ def build_terrain(terrain: Terrain, streams: TerrainStreams) -> TerrainResult:
         urban_id=_frozen(urban_id),
         cities=cities,
         statistics=statistics,
+        spine_km=_spine_km(spine, cell_size_m),
     )
+
+
+def _spine_km(spine: NDArray[np.float64], cell_size_m: float) -> tuple[tuple[float, float], ...]:
+    """Spine points (row, column fractions of the domain) as (km east, km south)."""
+    side_km = GRID_CELLS * cell_size_m / 1000
+    return tuple((float(u) * side_km, float(v) * side_km) for v, u in spine)
 
 
 def statistics_record(result: TerrainResult) -> dict[str, object]:
@@ -389,8 +399,11 @@ def array_hashes(result: TerrainResult) -> list[tuple[str, str]]:
 
 def _spine_island(
     coastline_complexity: int, streams: TerrainStreams, mappings: TerrainMappings
-) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
-    """Return the land field (land where positive) and the unit ridge profile (0-1)."""
+) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+    """Return the land field (land where positive), the unit ridge profile (0-1) and the spine.
+
+    The spine is the polyline of (row, column) points as fractions of the domain side.
+    """
     spine = _spine_polyline(streams.elevation, mappings)
     distance, along = _distance_to_polyline(spine)
     taper = mappings.end_half_width_share + (1 - mappings.end_half_width_share) * 4 * along * (
@@ -418,7 +431,7 @@ def _spine_island(
     ridge = shape * shape
     relief_scale = shape * np.sqrt(shape)
     profile = (1 - mappings.relief_share) * ridge + mappings.relief_share * relief_scale * relief
-    return field, profile
+    return field, profile, spine
 
 
 def _middle_half_width(spine: NDArray[np.float64], mappings: TerrainMappings) -> float:

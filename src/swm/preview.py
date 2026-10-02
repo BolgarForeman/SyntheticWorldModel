@@ -597,13 +597,16 @@ def _storm_caption(storm: "StormResult", scenario: int) -> str:
     field = storm.scenarios[scenario]
     head = (
         f"severity {storm.severity} ({storm.storm_class or 'no storm'}), anchor "
-        f"{storm.anchor_m_per_s:.1f} m/s at sea, rain {storm.rain_mm:g} mm, flood stage "
-        f"{storm.flood_stage_m:g} m"
+        f"{storm.anchor_m_per_s:.1f} m/s at sea; rain {field.rain_mm:.0f} mm, flood stage "
+        f"{field.flood_stage_m:.2f} m"
     )
-    if field.track is None:
+    track = field.track
+    if track is None:
         return head
     return (
-        f"{head}\npeak wind at sea {field.track.peak_wind_m_per_s:.1f} m/s; land inside the "
-        f"radius of maximum wind {field.inside_radius_share:.0%}; lee cells "
-        f"{int(np.count_nonzero(field.lee))}; node labels give the wind at the node (m/s)"
+        f"{head}\npeak wind at sea {track.peak_wind_m_per_s:.1f} m/s; closest approach "
+        f"{track.closest_approach_km:.1f} km; radius of maximum wind "
+        f"{track.radius_max_wind_km:.1f} km, with {field.inside_radius_share:.0%} of the land "
+        f"inside it\nlee cells {int(np.count_nonzero(field.lee))}; node labels give the wind "
+        f"at the node (m/s)"
     )

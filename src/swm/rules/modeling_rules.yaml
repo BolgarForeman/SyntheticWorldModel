@@ -7622,29 +7622,57 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+- id: storm.rainfall_spread_mm
+  title: Rainfall drawn around the severity's rung
+  stage: storm
+  value: 75.0
+  units: mm
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
+  reasoning: 'Each scenario draws its 24-hour rainfall within 75 mm either side of its severity''s rung
+    (moderate: 375-525 mm), so the flood varies by scenario.'
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0012'
+  history: []
+  theta_role: dynamics
 - id: storm.flood_stage_m
   title: Flood stage by rainfall
   stage: storm
-  value:
-  - {rain_mm: 300, stage_m: 1.0}
-  - {rain_mm: 450, stage_m: 2.0}
-  - {rain_mm: 600, stage_m: 3.0}
+  value: {zero_at_rain_mm: 150.0, rain_mm_per_m: 150.0}
   units: m
   applies_to: {layer: null, node_class: null, condition: null}
   grade: J
   jurisdiction: null
   sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
   - {citation: 'Hazards ruling sheet v0.1, H4', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
     quote: null, verified: null}
-  reasoning: Flood depth = stage - height above the nearest drainage. No Taiwan depth source was read;
-    the next is the NCDR flood map handbook.
+  reasoning: 'Flood stage = (rainfall - 150 mm) / 150 mm, in m: 300 mm gives 1 m, 450 mm 2 m and 600 mm
+    3 m, as the ruled ladder did, now continuous in the drawn rainfall. Flood depth = stage - height above
+    the nearest drainage. The next source is the NCDR flood map handbook.'
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-30'
+    date: '2026-10-02'
     decision: '0012'
-  history: []
+  history:
+  - value:
+    - {rain_mm: 300, stage_m: 1.0}
+    - {rain_mm: 450, stage_m: 2.0}
+    - {rain_mm: 600, stage_m: 3.0}
+    units: m
+    date: '2026-10-02'
+    decision: '0012'
   theta_role: dynamics
 - id: storm.profile_exponent
   title: Modified Rankine decay exponent
@@ -7668,23 +7696,51 @@ rules:
   history: []
   theta_role: dynamics
 - id: storm.radius_max_wind_km
-  title: Radius of maximum wind
+  title: 'Radius of maximum wind: range drawn per scenario'
   stage: storm
-  value: 47.5
+  value: [20.0, 60.0]
   units: km
   applies_to: {layer: null, node_class: null, condition: null}
-  grade: L
+  grade: J
   jurisdiction: US
   sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
   - {citation: 'Willoughby & Rahn 2004, Monthly Weather Review 132', url: 'https://faculty.fiu.edu/~willough/PUBS/HEW&RAHN_04.pdf',
     quote: geometric mean radius of maximum wind for the complete sample is 47.5 km, verified: null}
-  reasoning: A geometric mean over Atlantic and eastern Pacific hurricanes, larger than the pilot island,
-    so a track across the pilot puts all of it inside the radius.
+  reasoning: Each scenario draws its radius of maximum wind between 20 and 60 km. The literature's geometric
+    mean is 47.5 km (Willoughby & Rahn 2004), larger than the pilot island; the range lets scenarios differ
+    in how much of the island sits inside the radius.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-30'
+    date: '2026-10-02'
+    decision: '0012'
+  history:
+  - value: 47.5
+    units: km
+    date: '2026-10-02'
+    decision: '0012'
+  theta_role: dynamics
+- id: storm.closest_approach_km
+  title: Track's closest approach to the island's centre
+  stage: storm
+  value: [0.0, 40.0]
+  units: km
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
+  reasoning: Each scenario draws how far its straight track passes from the island's centre, so some tracks
+    cross the island and some pass offshore.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
     decision: '0012'
   history: []
   theta_role: dynamics
@@ -7711,26 +7767,33 @@ rules:
 - id: storm.surface_factors
   title: Local surface factor by terrain class (Taiwan wind code)
   stage: storm
-  value: {city_core: 0.476, town: 0.662, open: 1.0}
+  value: {city_core: 0.476, town: 0.662, wooded: 0.662, open: 1.0}
   units: ratio
   applies_to: {layer: null, node_class: null, condition: null}
   grade: S
   jurisdiction: TW
   sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
   - {citation: '建築物耐風設計規範 (Taiwan building wind code), Table 2.2 and §2.6; ratios of (10/zg)^alpha to
       class C, recomputed in the evidence review', url: docs/design/evidence/Hazards_Evidence_v0_1.md,
     quote: null, verified: true}
   - {citation: 'Hazards ruling sheet v0.1, H2', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
     quote: null, verified: null}
-  reasoning: Terrain class A (city core) 0.476, B (town) 0.662, C (open or coast) 1.0 of the open-ground
-    wind at 10 m. The factors are S; their use in a hazard field is judgment.
+  reasoning: 'Terrain class A (city core: the largest city) 0.476, B (town, or wooded land) 0.662, C (open,
+    wetland, bare ground or coast) 1.0 of the open-ground wind at 10 m. Taiwan''s wind code and ASCE 7
+    both class wooded ground with suburbs. The factors are S; their use in a hazard field is judgment.'
   status: ruled
   open_decision: null
   ruling:
     by: the author (Foreman)
-    date: '2026-09-30'
+    date: '2026-10-02'
     decision: '0012'
-  history: []
+  history:
+  - value: {city_core: 0.476, town: 0.662, open: 1.0}
+    units: ratio
+    date: '2026-10-02'
+    decision: '0012'
   theta_role: dynamics
 - id: storm.lee_factor
   title: Mountain lee factor
@@ -7741,17 +7804,20 @@ rules:
   grade: J
   jurisdiction: TW
   sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
   - {citation: 'Brand & Blelloch 1974, as quoted in Wu & Kuo 1999 (typhoons weaken by over 40% crossing
       the Central Mountain Range)', url: docs/design/evidence/Hazards_Evidence_v0_1.md, quote: null, verified: null}
   - {citation: 'Hazards ruling sheet v0.1, H2', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
     quote: null, verified: null}
-  reasoning: Places in the lee of the spine keep 0.6 of the wind. Whether the 40% weakening is wind or
-    pressure is unconfirmed.
+  reasoning: A place is in the lee when the smooth spine line (decision 0005) lies between it and the
+    nearest point of the track; it keeps 0.6 of the wind. A flat island (mountainous 0) has no lee. Whether
+    the >40% weakening is wind or pressure is unconfirmed.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-30'
+    date: '2026-10-02'
     decision: '0012'
   history: []
   theta_role: dynamics
@@ -7805,12 +7871,14 @@ rules:
   stage: storm
   value: {generation: 1.2, transmission_substation: 1.2, distribution_substation: 1.2, treatment: 1.2,
     pumping: 1.2, exchange: 1.2, data_centre: 1.2, cable_landing: 1.2, mast: 1.2, tank_farm: 0.0, depot: 0.0,
-    tertiary: 0.15, regional: 0.15, clinic: 0.15, blood_bank: 0.15, storage: 7.3}
+    tertiary: 0.15, regional: 0.15, clinic: 0.15, blood_bank: 0.15, storage: 7.3, refinery: 1.2, import_terminal: 1.2}
   units: m
   applies_to: {layer: null, node_class: null, condition: null}
   grade: L
   jurisdiction: US
   sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
   - {citation: 'FEMA, Hazus 6.1 Inventory Technical Manual: functional depths 4 ft, 0 ft, 0.5 ft and 24
       ft', url: docs/design/evidence/Hazards_Evidence_v0_1.md, quote: null, verified: null}
   - {citation: 'Hazards ruling sheet v0.1, H4', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
@@ -7818,34 +7886,69 @@ rules:
   reasoning: 'A facility floods out at its functional depth: 4 ft for substations, plants, treatment and
     pumping; any water for tank farms and depots; 0.5 ft from grade for hospitals, clinics and blood banks;
     24 ft for on-ground storage tanks. Telecom facilities borrow the substation value (J), since Hazus
-    maps them without a damage rule.'
+    maps them without a damage rule. Refineries take Hazus''s 4 ft; import terminals 1.2 m on raised quays
+    (J). Power plants and transmission substations measure theirs from a 2 m platform (storm.power_platform_m).'
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-30'
+    date: '2026-10-02'
+    decision: '0012'
+  history:
+  - value: {generation: 1.2, transmission_substation: 1.2, distribution_substation: 1.2, treatment: 1.2,
+      pumping: 1.2, exchange: 1.2, data_centre: 1.2, cable_landing: 1.2, mast: 1.2, tank_farm: 0.0, depot: 0.0,
+      tertiary: 0.15, regional: 0.15, clinic: 0.15, blood_bank: 0.15, storage: 7.3}
+    units: m
+    date: '2026-10-02'
+    decision: '0012'
+  theta_role: dynamics
+- id: storm.power_platform_m
+  title: Platform height of power plants and transmission substations
+  stage: storm
+  value: {generation: 2.0, transmission_substation: 2.0}
+  units: m
+  applies_to: {layer: power, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
+  reasoning: Real plants are built above the design flood; Hazus assumes slab on grade. The 1.2 m functional
+    depth is measured from the platform, so these flood out at 3.2 m above grade. No node moves.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
     decision: '0012'
   history: []
   theta_role: dynamics
 - id: storm.flood_not_damaged
   title: Classes not flood-damaged in Phase 1
   stage: storm
-  value: [reservoir, seaport, airport]
+  value: [reservoir, seaport, airport, freight_yard, bridge, road_junction, rail_node]
   units: null
   applies_to: {layer: null, node_class: null, condition: null}
   grade: J
   jurisdiction: null
   sources:
+  - {citation: 'PR 6a answers (decision 0012, addendum)', url: docs/work_orders/WO-06a-answers.md, quote: null,
+    verified: null}
   - {citation: 'Hazards ruling sheet v0.1, H4', url: docs/design/evidence/Hazards_Ruling_Sheet_v0_1.md,
     quote: null, verified: null}
-  reasoning: Reservoirs, ports and airports are not flood-damaged in Phase 1.
+  reasoning: Reservoirs, ports, airports, freight yards, bridges, road junctions and rail nodes are not
+    flood-damaged in Phase 1.
   status: ruled
   open_decision: null
   ruling:
     by: the author (Foreman)
-    date: '2026-09-30'
+    date: '2026-10-02'
     decision: '0012'
-  history: []
+  history:
+  - value: [reservoir, seaport, airport]
+    units: null
+    date: '2026-10-02'
+    decision: '0012'
   theta_role: dynamics
 - id: storm.flood_damage_states_m
   title: Damage state by flood depth over the threshold

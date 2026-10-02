@@ -392,14 +392,16 @@ def _storm_command(resolution: Resolution, arguments: argparse.Namespace) -> Non
     shared = recipe.shared_causes
     terrain = _terrain(resolution)
     layers = _drawn_layers(resolution, terrain)
+    rules = _rules(resolution)
     result = build_storm(
         shared.hazards.storm_corridor,
         shared.scenarios,
+        recipe.terrain.character.mountainous,
         terrain,
-        _rules(resolution),
+        rules,
         storm_streams(recipe.root_seed, shared.scenarios),
     )
-    exposure = storm_stage.facility_exposure(result, layers)
+    exposure = storm_stage.facility_exposure(result, layers, rules)
     out_dir = Path(arguments.out_dir)
     write_canonical_yaml(
         _stamped(storm_stage.statistics_record(result, exposure), resolution),

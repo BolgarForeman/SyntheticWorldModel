@@ -72,3 +72,36 @@ Also decided without a ruling, as technical matters:
 - **PR 6a** builds the wind field, the severity anchor, the flood field and the storm preview.
 - **PR 6b** builds the fragility tables, the scenario damage draws, overhead-line repair and the checks.
 - Every §4.3b number is a rule in the registry, with `theta_role: dynamics`.
+
+## Addendum: answers to PR 6a (#12)
+
+- **Date:** 2026-10-02
+- **Decided by:** the design side, confirmed by the author (Foreman)
+- **Source:** `docs/work_orders/WO-06a-answers.md`
+- **Spec:** structure v0.7 §4.3b, updated on the branch to match
+
+Every changed registry value keeps its old value in history, citing this decision.
+
+The design review of the first pilot preview found three problems:
+- the lee came out in stripes;
+- every scenario hit the whole island at full strength, so the 8 scenarios barely differed;
+- the only power plant flooded in every scenario.
+
+1. **Scenario variety.** The profile stays "peak over the passage". Each scenario now draws two more values (J, placeholders):
+   - its closest approach to the island's centre, 0–40 km, so some tracks pass offshore;
+   - its radius of maximum wind, 20–60 km.
+2. **Flood varies by scenario.**
+   - Each scenario draws its 24-hour rainfall within ±75 mm of its rung (moderate: 375–525 mm).
+   - Flood stage = (rain − 150 mm) ÷ 150 mm, in m (J).
+   - Power plants and transmission substations stand on 2 m platforms, so their 1.2 m threshold is reached at 3.2 m above grade (J, placeholder). Real plants are built above the design flood; Hazus assumes slab on grade. No node moves.
+3. **The lee** is measured against the smooth spine line of decision 0005: a place is in the lee when the spine line lies between it and the nearest point of the track. A flat island (mountainous 0) has no lee. The terrain now records its spine line for this; the line is not hashed, so the terrain goldens are unchanged.
+4. **Wooded land** takes the town factor, 0.662: Taiwan's wind code and ASCE 7 both class wooded ground with suburbs. Wetland and bare ground stay open (1.0).
+5. **Flood thresholds:**
+   - refineries: 1.2 m (Hazus 4 ft);
+   - import terminals: 1.2 m, on raised quays (J);
+   - freight yards, bridges, road junctions and rail nodes: not flood-damaged in Phase 1.
+6. **The city core** is the largest city, as built; to be revisited at real scale (Phase 5).
+
+The coder's PR 6a choices and the deviation stand as marked, including:
+- pits floored at height 0;
+- per-facility records reading node positions from the layers.

@@ -75,6 +75,7 @@ All notable changes to this project are recorded here. Each phase closes with a 
   - a Wendland-kernel random variation.
   Flood depth is the flood stage less the height above the nearest drainage. Every node records its wind and flood depth per scenario.
 - `swm storm --scenario N` writes a preview of one scenario (optional `preview` extra).
+- Each storm scenario draws its closest approach to the island (0–40 km), its radius of maximum wind (20–60 km) and its rainfall (±75 mm of its rung). Power plants and transmission substations stand on 2 m platforms. The lee is measured against the terrain's smooth spine line, now recorded with the terrain; a flat island has none. Wooded land takes the town factor. Refineries and import terminals get flood thresholds (decision 0012, addendum).
 - The storm hazard rules of structure v0.7 §4.3b, each with the new registry field `theta_role: dynamics`.
 
 ### Changed

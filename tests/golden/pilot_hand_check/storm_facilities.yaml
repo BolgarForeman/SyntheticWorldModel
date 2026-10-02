@@ -2,33 +2,44 @@ facilities:
 - node_id: SWM-POW-0001
   class: generation
   height_above_drainage_m: 0.1
+  flood_threshold_m: 3.2
   wind_m_per_s:
-  - 20.312
-  - 17.888
+  - 12.187
+  - 10.733
   - 20.856
   - 17.65
-  - 14.469
+  - 24.114
   - 19.325
-  - 18.603
+  - 11.162
   - 22.687
   flood_depth_m:
-  - 1.9
-  - 1.9
-  - 1.9
-  - 1.9
-  - 1.9
-  - 1.9
-  - 1.9
-  - 1.9
+  - 1.701
+  - 1.662
+  - 1.552
+  - 2.067
+  - 1.588
+  - 2.214
+  - 1.44
+  - 1.598
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-POW-0002
   class: transmission_substation
   height_above_drainage_m: 653.1
+  flood_threshold_m: 3.2
   wind_m_per_s:
   - 41.727
-  - 17.93
+  - 29.883
   - 18.855
-  - 31.939
-  - 37.096
+  - 18.217
+  - 22.257
   - 18.234
   - 34.401
   - 24.513
@@ -41,17 +52,27 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-POW-0003
   class: distribution_substation
   height_above_drainage_m: 26.1
+  flood_threshold_m: 1.2
   wind_m_per_s:
-  - 38.195
-  - 30.963
+  - 22.917
+  - 18.578
   - 34.137
   - 28.728
-  - 22.61
+  - 37.683
   - 35.697
-  - 34.376
+  - 20.626
   - 50.035
   flood_depth_m:
   - 0.0
@@ -62,15 +83,25 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-POW-0004
   class: distribution_substation
   height_above_drainage_m: 100.0
+  flood_threshold_m: 1.2
   wind_m_per_s:
   - 26.138
-  - 13.433
+  - 22.388
   - 13.856
-  - 27.434
-  - 24.176
+  - 14.803
+  - 14.506
   - 21.389
   - 24.137
   - 16.24
@@ -83,17 +114,27 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-TEL-0001
   class: exchange
   height_above_drainage_m: 3.1
+  flood_threshold_m: 1.2
   wind_m_per_s:
   - 13.067
-  - 15.802
+  - 9.481
   - 20.573
-  - 19.763
-  - 13.385
+  - 19.733
+  - 22.308
   - 18.496
-  - 20.728
+  - 12.437
   - 20.676
   flood_depth_m:
   - 0.0
@@ -104,17 +145,27 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-TEL-0002
   class: mast
   height_above_drainage_m: 2258.5
+  flood_threshold_m: 1.2
   wind_m_per_s:
   - 20.953
   - 35.552
   - 34.365
-  - 37.138
-  - 19.908
+  - 29.61
+  - 33.181
   - 33.461
-  - 23.113
+  - 38.521
   - 42.198
   flood_depth_m:
   - 0.0
@@ -125,18 +176,28 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-TEL-0003
   class: mast
   height_above_drainage_m: 507.3
+  flood_threshold_m: 1.2
   wind_m_per_s:
-  - 22.387
-  - 29.93
-  - 31.85
-  - 33.938
-  - 23.54
-  - 36.679
-  - 22.805
-  - 43.042
+  - 14.82
+  - 19.814
+  - 21.085
+  - 18.792
+  - 25.973
+  - 24.282
+  - 15.097
+  - 28.494
   flood_depth_m:
   - 0.0
   - 0.0
@@ -146,15 +207,25 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-TEL-0004
   class: mast
   height_above_drainage_m: 802.4
+  flood_threshold_m: 1.2
   wind_m_per_s:
-  - 23.057
-  - 20.15
+  - 38.428
+  - 33.584
   - 23.466
-  - 38.35
-  - 35.561
+  - 20.279
+  - 21.337
   - 32.699
   - 35.086
   - 23.725
@@ -167,18 +238,28 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-WAT-0001
   class: reservoir
   height_above_drainage_m: 201.9
+  flood_threshold_m: null
   wind_m_per_s:
-  - 25.018
-  - 33.345
-  - 33.724
-  - 40.973
-  - 24.546
-  - 34.87
-  - 21.473
-  - 41.136
+  - 16.562
+  - 22.075
+  - 22.325
+  - 24.502
+  - 27.082
+  - 23.084
+  - 14.215
+  - 27.232
   flood_depth_m:
   - 0.0
   - 0.0
@@ -188,18 +269,28 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-WAT-0002
   class: treatment
   height_above_drainage_m: 158.8
+  flood_threshold_m: 1.2
   wind_m_per_s:
-  - 22.553
-  - 34.343
-  - 34.434
-  - 43.282
-  - 24.77
-  - 35.328
-  - 20.946
-  - 44.022
+  - 14.93
+  - 22.735
+  - 22.796
+  - 25.973
+  - 27.33
+  - 23.387
+  - 13.866
+  - 29.143
   flood_depth_m:
   - 0.0
   - 0.0
@@ -209,15 +300,25 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-WAT-0003
   class: pumping
   height_above_drainage_m: 95.0
+  flood_threshold_m: 1.2
   wind_m_per_s:
   - 24.572
-  - 34.533
+  - 20.72
   - 33.116
-  - 36.714
-  - 25.323
+  - 35.271
+  - 42.205
   - 32.227
   - 19.982
   - 34.708
@@ -230,18 +331,28 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-WAT-0004
   class: storage
   height_above_drainage_m: 598.7
+  flood_threshold_m: 7.3
   wind_m_per_s:
-  - 36.631
-  - 29.824
-  - 29.861
-  - 18.617
-  - 21.735
-  - 27.067
-  - 19.503
-  - 37.628
+  - 14.55
+  - 11.846
+  - 19.768
+  - 20.068
+  - 23.98
+  - 17.919
+  - 12.911
+  - 24.91
   flood_depth_m:
   - 0.0
   - 0.0
@@ -251,15 +362,25 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-TRN-0001
   class: seaport
   height_above_drainage_m: 7.6
+  flood_threshold_m: null
   wind_m_per_s:
   - 27.643
   - 37.925
   - 37.743
-  - 46.807
-  - 31.1
+  - 44.523
+  - 51.834
   - 38.429
   - 25.284
   - 47.477
@@ -272,17 +393,27 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-TRN-0002
   class: airport
   height_above_drainage_m: 9.0
+  flood_threshold_m: null
   wind_m_per_s:
   - 11.9
-  - 15.083
+  - 9.05
   - 19.377
   - 18.94
-  - 12.785
+  - 21.309
   - 17.773
-  - 19.421
+  - 11.653
   - 19.644
   flood_depth_m:
   - 0.0
@@ -293,16 +424,26 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-TRN-0003
   class: freight_yard
   height_above_drainage_m: 106.4
+  flood_threshold_m: null
   wind_m_per_s:
   - 25.405
-  - 31.006
-  - 19.006
-  - 19.638
-  - 23.357
-  - 16.211
+  - 18.604
+  - 31.676
+  - 31.046
+  - 38.928
+  - 27.019
   - 19.27
   - 39.292
   flood_depth_m:
@@ -314,38 +455,58 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-TRN-0004
   class: bridge
   height_above_drainage_m: 0.0
+  flood_threshold_m: null
   wind_m_per_s:
   - 25.768
-  - 13.315
+  - 22.192
   - 13.633
-  - 27.335
-  - 25.2
+  - 14.733
+  - 15.12
   - 21.938
   - 24.222
   - 15.953
   flood_depth_m:
-  - 2.0
-  - 2.0
-  - 2.0
-  - 2.0
-  - 2.0
-  - 2.0
-  - 2.0
-  - 2.0
+  - 1.801
+  - 1.762
+  - 1.652
+  - 2.167
+  - 1.688
+  - 2.314
+  - 1.54
+  - 1.698
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-FUE-0001
   class: import_terminal
   height_above_drainage_m: 3.2
+  flood_threshold_m: 1.2
   wind_m_per_s:
-  - 20.708
-  - 17.982
+  - 12.425
+  - 10.789
   - 21.032
   - 17.412
-  - 14.569
+  - 24.281
   - 19.297
-  - 18.688
+  - 11.213
   - 23.075
   flood_depth_m:
   - 0.0
@@ -356,17 +517,27 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-FUE-0002
   class: tank_farm
   height_above_drainage_m: 353.4
+  flood_threshold_m: 0.0
   wind_m_per_s:
-  - 20.106
-  - 14.971
+  - 12.063
+  - 8.982
   - 16.366
   - 13.172
-  - 11.928
+  - 19.88
   - 16.483
-  - 15.383
+  - 9.23
   - 20.999
   flood_depth_m:
   - 0.0
@@ -377,17 +548,27 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-FUE-0003
   class: depot
   height_above_drainage_m: 123.8
+  flood_threshold_m: 0.0
   wind_m_per_s:
   - 9.932
-  - 14.825
+  - 8.895
   - 15.943
   - 16.366
-  - 11.71
+  - 19.516
   - 17.815
-  - 14.962
+  - 8.977
   - 18.746
   flood_depth_m:
   - 0.0
@@ -398,15 +579,25 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-FUE-0004
   class: depot
   height_above_drainage_m: 30.2
+  flood_threshold_m: 0.0
   wind_m_per_s:
   - 27.312
-  - 13.595
+  - 22.658
   - 14.179
-  - 28.562
-  - 30.144
+  - 15.293
+  - 18.086
   - 25.525
   - 25.543
   - 16.186
@@ -419,17 +610,27 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-HLT-0001
   class: tertiary
   height_above_drainage_m: 18.4
+  flood_threshold_m: 0.15
   wind_m_per_s:
   - 10.249
-  - 15.269
+  - 9.161
   - 15.485
-  - 17.335
-  - 11.572
+  - 17.179
+  - 19.287
   - 19.152
-  - 14.746
+  - 8.848
   - 18.082
   flood_depth_m:
   - 0.0
@@ -440,15 +641,25 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-HLT-0002
   class: regional
   height_above_drainage_m: 20.3
+  flood_threshold_m: 0.15
   wind_m_per_s:
   - 28.619
-  - 14.272
+  - 23.787
   - 14.818
-  - 29.185
-  - 31.106
+  - 15.597
+  - 18.664
   - 26.37
   - 26.661
   - 16.56
@@ -461,18 +672,28 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-HLT-0003
   class: clinic
   height_above_drainage_m: 644.5
+  flood_threshold_m: 0.15
   wind_m_per_s:
-  - 37.394
-  - 40.195
-  - 36.41
-  - 35.893
-  - 23.377
-  - 43.008
-  - 21.173
-  - 48.146
+  - 14.853
+  - 26.609
+  - 24.104
+  - 21.098
+  - 25.792
+  - 28.471
+  - 14.017
+  - 31.872
   flood_depth_m:
   - 0.0
   - 0.0
@@ -482,17 +703,27 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
 - node_id: SWM-HLT-0004
   class: blood_bank
   height_above_drainage_m: 100.6
+  flood_threshold_m: 0.15
   wind_m_per_s:
-  - 18.357
-  - 14.137
+  - 11.014
+  - 8.482
   - 16.319
-  - 19.574
-  - 11.013
+  - 19.258
+  - 18.356
   - 17.919
-  - 16.754
+  - 10.052
   - 18.502
   flood_depth_m:
   - 0.0
@@ -503,3 +734,12 @@ facilities:
   - 0.0
   - 0.0
   - 0.0
+  floods_out:
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
+  - false
