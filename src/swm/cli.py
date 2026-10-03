@@ -180,7 +180,12 @@ def _layers_command(resolution: Resolution, arguments: argparse.Namespace) -> No
     result = _layers(resolution, terrain)
     out_dir = Path(arguments.out_dir)
     nodes = canonical_yaml({"nodes": layers_stage.node_table(result)})
-    links = canonical_yaml({"links": layers_stage.link_table(result)})
+    links = canonical_yaml(
+        {
+            "links": layers_stage.link_table(result),
+            "power_lines": layers_stage.power_line_table(result),
+        }
+    )
     write_canonical_yaml(
         _stamped(layers_stage.statistics_record(result), resolution), out_dir / LAYERS_STATS_FILE
     )
@@ -435,7 +440,9 @@ def _storm_command(resolution: Resolution, arguments: argparse.Namespace) -> Non
             "the preview needs matplotlib; install it with: uv sync --extra preview"
         ) from error
     title = f"{Path(arguments.recipe).name}: storm scenario {arguments.scenario}"
-    png = storm_preview_png(terrain, layers, result, arguments.scenario, title)
+    couplings = _couplings(resolution, terrain, _requirements(resolution, terrain))
+    feeds = [edge.route for edge in couplings.edges if edge.route]
+    png = storm_preview_png(terrain, layers, result, arguments.scenario, title, feeds)
     write_binary(png, out_dir / f"storm_scenario_{arguments.scenario}.png")
 
 

@@ -180,18 +180,12 @@ def test_overhead_lines_are_power_and_telecom_links_and_substation_feeds() -> No
         in (NodeClass.DISTRIBUTION_SUBSTATION, NodeClass.TRANSMISSION_SUBSTATION)
     }
     assert {line.line_id for line in result.lines} == links | feeds
+    routes = {e.edge_id: e.route for e in couplings.edges}
     for line in result.lines:
-        ends = {classes[line.from_id], classes[line.to_id]}
-        if line.kind == LineKind.POWER_LINK:
-            towers = ends <= {NodeClass.GENERATION, NodeClass.TRANSMISSION_SUBSTATION} or ends == {
-                NodeClass.TRANSMISSION_SUBSTATION,
-                NodeClass.DISTRIBUTION_SUBSTATION,
-            }
-        elif line.kind == LineKind.POWER_FEED:
-            towers = classes[line.from_id] == NodeClass.TRANSMISSION_SUBSTATION
-        else:
-            towers = False
-        assert (line.structure == Structure.TOWER) == towers
+        # Every mapped power line is on towers; feeds and telecom links on poles (§4.2).
+        assert (line.structure == Structure.TOWER) == (line.kind == LineKind.POWER_LINK)
+        if line.kind == LineKind.POWER_FEED:
+            assert line.points == routes[line.line_id]
 
 
 def test_a_point_falls_in_the_cell_of_its_node() -> None:
@@ -205,8 +199,8 @@ def test_a_line_reads_its_peak_gust_along_its_length() -> None:
     reader = stage._LineReader(terrain, RULES)
     nodes = {n.node_id: n for n in requirements.layers.nodes}
     for scenario, damage in zip(storm.scenarios[:2], result.scenarios[:2], strict=True):
-        gust = scenario.wind_m_per_s * reader.factor
         for line, outcome in zip(result.lines, damage.lines, strict=True):
+            gust = scenario.wind_m_per_s * reader.factor * reader.ridge[line.structure]
             cells = reader.cells(line)
             for end in (line.from_id, line.to_id):
                 assert nodes[end].row * 256 + nodes[end].column in cells
@@ -281,10 +275,10 @@ def test_a_flooded_facility_is_damaged_at_its_state_held_to_the_cap() -> None:
     assert stage._flooded(depth, layers, RULES, DamageState.COMPLETE) == []
 
 
-def test_the_pilot_loses_about_a_tenth_of_its_line_length_and_no_facility() -> None:
+def test_the_pilot_damages_no_facility() -> None:
+    # With routed lines and the ridge factor the pilot's line-length share leaves its 10%
+    # window; it is reported, not tuned (Work Order 6c, C3).
     result: ScenariosResult = pipeline()[-1]
-    stats = stage.statistics_record(result)
-    assert abs(float(stats["mean_line_length_share_down"]) - 0.10) <= 0.05  # type: ignore[arg-type]
     for scenario in result.scenarios:
         assert scenario.facilities == ()
 
@@ -388,7 +382,8 @@ def test_a_lines_midpoint_lies_on_it() -> None:
     _, terrain, _, _, _, result = pipeline()
     reader = stage._LineReader(terrain, RULES)
     for line in result.lines:
-        row, column = stage.midpoint_cell(line, terrain.grid)
+        midpoints = [km.midpoint for km in stage.kilometres(line)]
+        row, column = stage.cell_of(*midpoints[len(midpoints) // 2], terrain.grid)
         crossed = reader.cells(line)
         # The path is rasterised at half-cell steps, so the true midpoint lies within a cell.
         nearest = np.min(np.maximum(np.abs(crossed // 256 - row), np.abs(crossed % 256 - column)))

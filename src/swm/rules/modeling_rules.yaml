@@ -754,6 +754,87 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+- id: layers.power_lines.route_cost
+  title: 'Power line route: cost weights'
+  stage: layers
+  value: {slope_weight: 10.0, height_weight: 1.0, river_crossing_km: 0.5}
+  units: null
+  applies_to: {layer: power, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
+  reasoning: 'A mapped power line follows the least-cost path over the terrain: each step costs its length
+    x (1 + slope weight x slope + height weight x elevation / peak), plus 0.5 km for each river crossing;
+    the sea cannot be crossed. Starting weights, not tuned.'
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0013'
+  history: []
+- id: layers.power_lines.voltage_kv
+  title: Power line voltage class
+  stage: layers
+  value: {from_plant: 161, between_transmission_substations: 161, to_distribution_substation: 69}
+  units: kV
+  applies_to: {layer: power, node_class: null, condition: null}
+  grade: J
+  jurisdiction: TW
+  sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
+  reasoning: 161 kV for lines leaving a plant and between transmission substations; 69 kV for lines to
+    a distribution substation unless a plant feeds it (161 kV).
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0013'
+  history: []
+- id: layers.power_lines.circuits
+  title: Circuits per mapped power line
+  stage: layers
+  value: 1
+  units: circuits
+  applies_to: {layer: power, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
+  reasoning: §4.2 records circuits on each mapped line but gives no count; one circuit until a source
+    or ruling sets it.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0013'
+  history: []
+- id: layers.power_lines.tower_spacing_m
+  title: Tower spacing along a mapped power line
+  stage: layers
+  value: 350.0
+  units: m
+  applies_to: {layer: power, node_class: null, condition: null}
+  grade: J
+  jurisdiction: TW
+  sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
+  reasoning: Typical 161 kV spans run 300-400 m. Towers stand at both ends and every 350 m along the route;
+    emission (Work Order 8) maps them as OpenStreetMap power=tower nodes.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0013'
+  history: []
 - id: layers.siting.midpoint_pull_share
   title: Scale of the pull toward the middle of the line a node lies between
   stage: layers
@@ -1869,6 +1950,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: null
     rule: null
   units: null
@@ -1876,17 +1958,37 @@ rules:
   grade: L
   jurisdiction: null
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→telecom: S-FCC07 (never in force), S-CPUC, S-DOE; review F9', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: exchange takes electricity from distribution_substation (core), as §4.3a states. The row
-    is a placeholder until the realism ranges are measured.
+    is a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: exchange
+      condition:
+        all_of: []
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: null
+      rule: null
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.mast
   title: power → mast
   stage: dependencies
@@ -1901,6 +2003,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: null
     rule: null
   units: null
@@ -1908,17 +2011,37 @@ rules:
   grade: L
   jurisdiction: null
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→telecom: S-GAO, S-CPUC D.20-07-011', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: mast takes electricity from distribution_substation (core), as §4.3a states. The row is a
-    placeholder until the realism ranges are measured.
+    placeholder until the realism ranges are measured. Any substation can supply any power consumer, since
+    every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to a transmission
+    substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: mast
+      condition:
+        all_of: []
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: null
+      rule: null
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.cable_landing
   title: power → cable_landing
   stage: dependencies
@@ -1933,6 +2056,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: null
     rule: null
   units: null
@@ -1940,17 +2064,37 @@ rules:
   grade: J
   jurisdiction: null
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→telecom: S-NECPFE (mechanism only)', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: cable_landing takes electricity from distribution_substation (core), as §4.3a states. The
-    row is a placeholder until the realism ranges are measured.
+    row is a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: cable_landing
+      condition:
+        all_of: []
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: null
+      rule: null
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.data_centre
   title: power → data_centre
   stage: dependencies
@@ -1965,6 +2109,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: transmission_substation
     rule: rule 4
   units: null
@@ -1972,17 +2117,37 @@ rules:
   grade: L
   jurisdiction: null
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→telecom: S-NERC, S-UPTIME', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: data_centre takes electricity from distribution_substation (core), as §4.3a states. The row
-    is a placeholder until the realism ranges are measured.
+    is a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: data_centre
+      condition:
+        all_of: []
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: transmission_substation
+      rule: rule 4
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.treatment
   title: power → treatment
   stage: dependencies
@@ -1997,6 +2162,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: transmission_substation
     rule: rule 4
   units: null
@@ -2004,17 +2170,37 @@ rules:
   grade: S
   jurisdiction: US
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→water: S-10SS §2.6, S-EPAPWR, S-AWWA', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: treatment takes electricity from distribution_substation (core), as §4.3a states. The row
-    is a placeholder until the realism ranges are measured.
+    is a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: treatment
+      condition:
+        all_of: []
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: transmission_substation
+      rule: rule 4
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.pumping
   title: power → pumping
   stage: dependencies
@@ -2029,6 +2215,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: null
     rule: null
   units: null
@@ -2036,17 +2223,37 @@ rules:
   grade: S
   jurisdiction: US
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→water: S-10SS §6.3.4-6.3.5, S-EPAPWR', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: pumping takes electricity from distribution_substation (core), as §4.3a states. The row is
-    a placeholder until the realism ranges are measured.
+    a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: pumping
+      condition:
+        all_of: []
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: null
+      rule: null
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.reservoir
   title: power → reservoir
   stage: dependencies
@@ -2123,6 +2330,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: transmission_substation
     rule: rule 4
   units: null
@@ -2130,17 +2338,37 @@ rules:
   grade: L
   jurisdiction: null
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→transport: S-EPRIPORT', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: seaport takes electricity from distribution_substation (core), as §4.3a states. The row is
-    a placeholder until the realism ranges are measured.
+    a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: seaport
+      condition:
+        all_of: []
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: transmission_substation
+      rule: rule 4
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.airport
   title: power → airport
   stage: dependencies
@@ -2155,6 +2383,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: null
     rule: null
   units: null
@@ -2162,17 +2391,37 @@ rules:
   grade: S
   jurisdiction: US
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→transport: S-FAA30J §9.4, S-FAA6950; review F8', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: airport takes electricity from distribution_substation (core), as §4.3a states. The row is
-    a placeholder until the realism ranges are measured.
+    a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: airport
+      condition:
+        all_of: []
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: null
+      rule: null
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.freight_yard
   title: power → freight_yard
   stage: dependencies
@@ -2187,6 +2436,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: null
     rule: null
   units: null
@@ -2194,17 +2444,37 @@ rules:
   grade: J
   jurisdiction: null
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→transport: judgment, no source', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: freight_yard takes electricity from distribution_substation (optional), as §4.3a states.
-    The row is a placeholder until the realism ranges are measured.
+    The row is a placeholder until the realism ranges are measured. Any substation can supply any power
+    consumer, since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or
+    more to a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: freight_yard
+      condition:
+        all_of: []
+        any_of: []
+      dependency: optional
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: null
+      rule: null
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.bridge
   title: power → bridge
   stage: dependencies
@@ -2311,6 +2581,7 @@ rules:
     dependency_type: physical_flow
     role: primary_supply
     suppliers:
+    - {node_class: distribution_substation, product: null, when: null}
     - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: null
     rule: null
@@ -2319,17 +2590,37 @@ rules:
   grade: L
   jurisdiction: null
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→fuel: S-NPC66 (1966; modern source still needed)', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: refinery takes electricity from transmission_substation (core), as §4.3a states. The row
-    is a placeholder until the realism ranges are measured.
+    is a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: refinery
+      condition:
+        all_of: []
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: transmission_substation, product: null, when: null}
+      large_load_supplier: null
+      rule: null
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.tank_farm
   title: power → tank_farm
   stage: dependencies
@@ -2344,6 +2635,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: null
     rule: null
   units: null
@@ -2351,17 +2643,37 @@ rules:
   grade: L
   jurisdiction: null
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→fuel: S-NPC66, S-FL526; review F9', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: tank_farm takes electricity from distribution_substation (core), as §4.3a states. The row
-    is a placeholder until the realism ranges are measured.
+    is a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: tank_farm
+      condition:
+        all_of: []
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: null
+      rule: null
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.depot
   title: power → depot
   stage: dependencies
@@ -2376,6 +2688,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: null
     rule: null
   units: null
@@ -2383,17 +2696,37 @@ rules:
   grade: L
   jurisdiction: null
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→fuel: S-NPC66, S-FL526', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: depot takes electricity from distribution_substation (core), as §4.3a states. The row is
-    a placeholder until the realism ranges are measured.
+    a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: depot
+      condition:
+        all_of: []
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: null
+      rule: null
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.import_terminal.product_oil_coal
   title: power → import_terminal where product=oil|coal
   stage: dependencies
@@ -2410,6 +2743,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: null
     rule: null
   units: null
@@ -2417,17 +2751,39 @@ rules:
   grade: L
   jurisdiction: null
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→fuel: S-LNG, S-NPC66 (oil); ruling R5 (coal)', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: import_terminal takes electricity from distribution_substation (core), as §4.3a states. The
-    row is a placeholder until the realism ranges are measured.
+    row is a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: import_terminal
+      condition:
+        all_of:
+        - - product
+          - [oil, coal]
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: null
+      rule: null
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.import_terminal.product_lng
   title: power → import_terminal where product=lng
   stage: dependencies
@@ -2443,6 +2799,7 @@ rules:
     dependency_type: physical_flow
     role: primary_supply
     suppliers:
+    - {node_class: distribution_substation, product: null, when: null}
     - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: null
     rule: null
@@ -2451,17 +2808,39 @@ rules:
   grade: L
   jurisdiction: null
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→fuel: S-LNG (LNG send-out and seawater pumps)', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: import_terminal takes electricity from transmission_substation (core), as §4.3a states. The
-    row is a placeholder until the realism ranges are measured.
+    row is a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: import_terminal
+      condition:
+        all_of:
+        - - product
+          - [lng]
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: transmission_substation, product: null, when: null}
+      large_load_supplier: null
+      rule: null
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.tertiary
   title: power → tertiary
   stage: dependencies
@@ -2476,6 +2855,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: null
     rule: rule 5
   units: null
@@ -2483,17 +2863,37 @@ rules:
   grade: S
   jurisdiction: US
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→healthcare: S-CMS, S-NFPA, S-TW-HOSP; ruling R4, review F4', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: tertiary takes electricity from distribution_substation (core), as §4.3a states. The row
-    is a placeholder until the realism ranges are measured.
+    is a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: tertiary
+      condition:
+        all_of: []
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: null
+      rule: rule 5
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.regional
   title: power → regional
   stage: dependencies
@@ -2508,6 +2908,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: null
     rule: null
   units: null
@@ -2515,17 +2916,37 @@ rules:
   grade: S
   jurisdiction: US
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→healthcare: S-CMS, S-NFPA', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: regional takes electricity from distribution_substation (core), as §4.3a states. The row
-    is a placeholder until the realism ranges are measured.
+    is a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: regional
+      condition:
+        all_of: []
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: null
+      rule: null
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.clinic
   title: power → clinic
   stage: dependencies
@@ -2540,6 +2961,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: null
     rule: null
   units: null
@@ -2547,17 +2969,37 @@ rules:
   grade: L
   jurisdiction: null
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→healthcare: S-DOE', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: clinic takes electricity from distribution_substation (core), as §4.3a states. The row is
-    a placeholder until the realism ranges are measured.
+    a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: clinic
+      condition:
+        all_of: []
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: null
+      rule: null
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.power.blood_bank
   title: power → blood_bank
   stage: dependencies
@@ -2572,6 +3014,7 @@ rules:
     role: primary_supply
     suppliers:
     - {node_class: distribution_substation, product: null, when: null}
+    - {node_class: transmission_substation, product: null, when: null}
     large_load_supplier: null
     rule: null
   units: null
@@ -2579,17 +3022,37 @@ rules:
   grade: L
   jurisdiction: null
   sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
   - {citation: 'lane_power power→healthcare: S-ACHC', url: docs/design/evidence/Dependency_Table_Evidence_v0_1.md,
     quote: null, verified: null}
   reasoning: blood_bank takes electricity from distribution_substation (core), as §4.3a states. The row
-    is a placeholder until the realism ranges are measured.
+    is a placeholder until the realism ranges are measured. Any substation can supply any power consumer,
+    since every substation can step down (decision 0013); rule 4 still sends loads of 5 MW or more to
+    a transmission substation.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
-    date: '2026-09-29'
-    decision: '0007'
-  history: []
+    date: '2026-10-02'
+    decision: '0013'
+  history:
+  - value:
+      supplier_layer: power
+      consumer_class: blood_bank
+      condition:
+        all_of: []
+        any_of: []
+      dependency: core
+      dependency_type: physical_flow
+      role: primary_supply
+      suppliers:
+      - {node_class: distribution_substation, product: null, when: null}
+      large_load_supplier: null
+      rule: null
+    units: null
+    date: '2026-10-02'
+    decision: '0013'
 - id: dependencies.table.telecom.generation
   title: telecom → generation
   stage: dependencies
@@ -7548,6 +8011,26 @@ rules:
     date: '2026-09-30'
     decision: '0011'
   history: []
+- id: crews.offroad_speed_kmh
+  title: Crew speed off road to a failure point
+  stage: crews
+  value: 2.0
+  units: km/h
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
+  reasoning: A crew drives to the road point nearest a line failure, then walks and carries the rest of
+    the way at 2 km/h.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0013'
+  history: []
 - id: storm.severity_anchor
   title: Peak 10-minute wind at sea by severity
   stage: storm
@@ -7874,6 +8357,81 @@ rules:
     units: ratio
     date: '2026-10-02'
     decision: '0012'
+  theta_role: dynamics
+- id: storm.topographic_factor
+  title: 'Ridge and hill speed-up: Taiwan wind code topographic factor'
+  stage: storm
+  value:
+    formula: Kzt = (1 + K1 K2 K3)^2; wind speed x sqrt(Kzt) = x (1 + K1 K2 K3)
+    k1_table:
+      h_over_lh: [0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
+      ridge_ab: [0.26, 0.33, 0.39, 0.46, 0.52, 0.59, 0.65]
+      escarpment_ab: [0.15, 0.19, 0.23, 0.26, 0.33, 0.34, 0.38]
+      hill_ab: [0.19, 0.24, 0.29, 0.33, 0.38, 0.43, 0.48]
+      ridge_c: [0.29, 0.36, 0.43, 0.51, 0.58, 0.65, 0.72]
+      escarpment_c: [0.17, 0.21, 0.26, 0.3, 0.34, 0.38, 0.43]
+      hill_c: [0.21, 0.26, 0.32, 0.37, 0.42, 0.47, 0.53]
+    mu:
+      ridge: [1.5, 1.5]
+      escarpment: [1.5, 4.0]
+      hill: [1.5, 1.5]
+    k3_table:
+      z_over_lh: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.5, 2.0]
+      ridge: [1.0, 0.74, 0.55, 0.41, 0.3, 0.22, 0.17, 0.12, 0.09, 0.07, 0.05, 0.01, 0.0]
+      escarpment: [1.0, 0.78, 0.61, 0.47, 0.37, 0.29, 0.22, 0.17, 0.14, 0.11, 0.08, 0.02, 0.0]
+      hill: [1.0, 0.67, 0.45, 0.3, 0.2, 0.14, 0.09, 0.06, 0.04, 0.03, 0.02, 0.0, 0.0]
+    h_over_lh_min: 0.2
+    h_over_lh_cap: 0.5
+    upwind_km: 3.22
+    min_height_m: {c: 4.5, ab: 18.0}
+  units: null
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: S
+  jurisdiction: TW
+  sources:
+  - {citation: '建築物耐風設計規範及解說 §2.6, Formula 2.8', url: 'https://windexpert.ce.tku.edu.tw/newcode/Dfiles/New_wind_code.pdf',
+    quote: K zt = (1 + K1K2K3)^2 ... (2.8) 式中，K1、K2 與 K3 分別依表 2.3(a)、2.3(b)與 2.3(c)決定。, verified: true}
+  - {citation: '建築物耐風設計規範及解說 §2.6, conditions', url: 'https://windexpert.ce.tku.edu.tw/newcode/Dfiles/New_wind_code.pdf',
+    quote: 若此獨立山丘、山脊或懸崖高度 H 較上風側 3.22 公里內地形高度超過兩倍以上，且 H 大於 4.5 公尺（地況 C）或 18 公尺（地況 A 或 B），且此獨立山丘、山脊或懸崖在上風側
+      100H 或 3.22 公里（兩者取小值）內沒有類似高度之障礙物，且 H/Lh ≧ 0.2, verified: true}
+  - {citation: '建築物耐風設計規範及解說 Tables 2.3(a)-(c) (K1, K2, K3); commentary C2.9 K2 = (1 - |x| / (mu Lh)),
+      C2.10 K3 = exp(-gamma z / Lh)', url: 'https://windexpert.ce.tku.edu.tw/newcode/Dfiles/New_wind_code.pdf',
+    quote: 表 2.3(a) 計算 Kzt 所用之 K1 值 ... 0.20 0.26 0.15 0.19 0.29 0.17 0.21, verified: true}
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
+  reasoning: On the upper half of an isolated hill, ridge or escarpment the wind speeds up. Kzt multiplies
+    wind pressure, so the wind speed takes sqrt(Kzt) = 1 + K1 K2 K3. K1 comes from Table 2.3(a) by the
+    feature's H/Lh (capped at 0.5) and terrain class; K2 decays with distance x from the crest, 1 - |x|
+    / (mu Lh), as Table 2.3(b) tabulates; K3 decays with height z above ground, from Table 2.3(c) (it
+    needs exp otherwise). Above H/Lh 0.5, K2 and K3 use Lh = 2H. Applied only where the code's conditions
+    hold. The factor is S; its use on power lines is J.
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0013'
+  history: []
+  theta_role: dynamics
+- id: storm.line_heights_m
+  title: Line height for the topographic factor
+  stage: storm
+  value: {tower: 30.0, pole: 10.0}
+  units: m
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Work Order 6c and structure v0.8 (decision 0013), url: docs/work_orders/WO-06c.md, quote: null,
+    verified: null}
+  reasoning: 'Height above ground z in K3: 30 m on towers, 10 m on poles.'
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-02'
+    decision: '0013'
+  history: []
   theta_role: dynamics
 - id: storm.flood_functional_depth_m
   title: Hazus functional flood depth by class

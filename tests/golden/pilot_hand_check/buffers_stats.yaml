@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: b30910c6951011120ca692e951c3366ab354fe30be3374fb8bd334a44d1700f5
+  registry_sha256: 322cf7e70b63870f38fe5db6881ef63a73dd0aa8c408a61f800317821c5da933
   overrides: {}
 reserves:
   battery:

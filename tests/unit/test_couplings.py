@@ -74,8 +74,10 @@ def test_pilot_total_edge_count_is_links_plus_switched_on_coupling_edges(
     pilot: CouplingsResult,
 ) -> None:
     assert pilot.intra_layer_links == 23
-    assert pilot.switched_on_edges == 27
-    assert pilot.total_edges == 50  # within the pilot range 40-50 (decision 0007)
+    assert pilot.switched_on_edges == 28
+    # 51 is one over the pilot range of 40-50 (decision 0007) since rule 4 widened (decision
+    # 0013); raised with the design side, not tuned.
+    assert pilot.total_edges == 51
 
 
 def test_pilot_builds_its_seven_couplings_and_hides_the_other_fourteen(
@@ -377,18 +379,19 @@ def test_two_way_0_never_leaves_a_core_dependency_without_a_supplier(
                 assert d.edge_ids, d.dependency_id
 
 
-def test_the_pilot_keeps_the_substation_exchange_loop(pilot: CouplingsResult) -> None:
-    (control,) = [
+def test_the_pilot_supplies_its_substations_telecom_without_a_mutual_pair(
+    pilot: CouplingsResult,
+) -> None:
+    # Since any substation can supply any consumer (decision 0013), each substation's telecom
+    # control finds a supplier that makes no mutual pair, so none has to be kept.
+    controls = [
         d
         for d in pilot.dependencies
-        if d.consumer_id == "SWM-POW-0003" and d.supplier_layer == Layer.TELECOM
+        if d.consumer_id.startswith("SWM-POW") and d.supplier_layer == Layer.TELECOM
     ]
-    assert control.edge_ids
-    assert any(note.startswith("mutual pair kept") for note in control.notes)
-    power_telecom = next(s for s in pilot.pairs if (s.supplier, s.consumer) ==
-                         (Layer.POWER, Layer.TELECOM))  # fmt: skip
-    assert power_telecom.mutual_pairs == 1
-    assert "1 kept so a core dependency keeps a supplier" in " ".join(power_telecom.notes)
+    assert all(d.edge_ids for d in controls)
+    assert not any(note.startswith("mutual pair kept") for d in controls for note in d.notes)
+    assert sum(s.mutual_pairs for s in pilot.pairs) == 0
 
 
 def test_two_way_100_builds_every_allowed_mutual_pair(rich: World) -> None:
@@ -545,10 +548,14 @@ def test_rule_4_threshold_is_inclusive() -> None:
     row = resolve_row(Layer.POWER, NodeClass.CLINIC, {"standby_fuel": "diesel"})
     world = rich_world()
     clinic = next(n for n in world[2].nodes if n.node_class == NodeClass.CLINIC)
-    for peak, expected in ((5.0, NodeClass.TRANSMISSION_SUBSTATION),
-                           (4.999999, NodeClass.DISTRIBUTION_SUBSTATION)):  # fmt: skip
-        loads = stage._LargeLoads({clinic.node_id: peak}, 5.0, 50)
-        assert loads.suppliers(row, clinic) == (SupplierOption(expected),)
+    large = stage._LargeLoads({clinic.node_id: 5.0}, 5.0, 50)
+    assert large.suppliers(row, clinic) == (SupplierOption(NodeClass.TRANSMISSION_SUBSTATION),)
+    small = stage._LargeLoads({clinic.node_id: 4.999999}, 5.0, 50)
+    # Below the threshold either class can supply it (decision 0013).
+    assert {o.node_class for o in small.suppliers(row, clinic)} == {
+        NodeClass.DISTRIBUTION_SUBSTATION,
+        NodeClass.TRANSMISSION_SUBSTATION,
+    }
 
 
 # --- States (E2) ----------------------------------------------------------------------------
@@ -701,6 +708,8 @@ def test_emission_and_error_code_cannot_reach_the_couplings_output() -> None:
         "swm.stages.repair",
         "swm.stages.storm",
         "swm.stages.scenarios",
+        "swm.stages.roads",
+        "swm.stages.topography",
         "swm.recipe.dependencies",
     }
     for folder in ("emit", "errors"):

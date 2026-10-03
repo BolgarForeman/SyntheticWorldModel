@@ -5,6 +5,7 @@ so world-building arithmetic stays exact. Latitude and longitude come from one q
 projection transform. Spec: structure v0.4 §3 (synthetic centroid) and §4.1a.
 """
 
+import math
 from functools import cache
 
 from pyproj import Transformer
@@ -81,6 +82,30 @@ def cell_centre_m(row: int, column: int, grid: Grid) -> tuple[float, float]:
         west_m + (column + 0.5) * grid.cell_size_m,
         south_m + (grid.cells - row - 0.5) * grid.cell_size_m,
     )
+
+
+def cell_of(x_m: float, y_m: float, grid: Grid) -> tuple[int, int]:
+    """Return the (row, column) of the grid cell holding a point; row 0 is the northern edge.
+
+    Parameters
+    ----------
+    x_m, y_m : float
+        EPSG:32710 easting and northing, in m.
+    grid : Grid
+        The terrain grid.
+
+    Returns
+    -------
+    tuple of int
+        The cell, held inside the grid.
+
+    Spec: structure v0.4 §4.1a (coordinates).
+    """
+    west_m, south_m = domain_origin_m(grid)
+    cells = grid.cells
+    column = math.floor((x_m - west_m) / grid.cell_size_m)
+    row = cells - 1 - math.floor((y_m - south_m) / grid.cell_size_m)
+    return min(max(row, 0), cells - 1), min(max(column, 0), cells - 1)
 
 
 def to_lonlat(easting_m: float, northing_m: float) -> tuple[float, float]:

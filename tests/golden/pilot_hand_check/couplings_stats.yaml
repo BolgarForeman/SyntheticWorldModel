@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: b30910c6951011120ca692e951c3366ab354fe30be3374fb8bd334a44d1700f5
+  registry_sha256: 322cf7e70b63870f38fe5db6881ef63a73dd0aa8c408a61f800317821c5da933
   overrides: {}
 pairs:
   power-telecom:
@@ -19,13 +19,13 @@ pairs:
       two_full: 0.25
       two_half: 0.25
     non_nearest_share: 0.5
-    hub: SWM-POW-0003
-    hub_share: 0.75
+    hub: SWM-POW-0002
+    hub_share: 0.5
     mutual_pairs_allowed: 2
-    mutual_pairs: 1
+    mutual_pairs: 0
     notes:
     - concentration puts 2 first feeds off the nearest supplier, above the 1 supplier_not_nearest asks for; concentration wins
-    - 'two-way with telecom-power: 2 allowed mutual pairs, 0 wanted, 1 built (1 kept so a core dependency keeps a supplier)'
+    - 'two-way with telecom-power: 2 allowed mutual pairs, 0 wanted, 0 built'
   power-water:
     switched_on: true
     dependencies: 2
@@ -42,8 +42,8 @@ pairs:
       two_full: 0.5
       two_half: 0.0
     non_nearest_share: 0.5
-    hub: SWM-POW-0003
-    hub_share: 1.0
+    hub: SWM-POW-0002
+    hub_share: 0.5
     mutual_pairs_allowed: 0
     mutual_pairs: 0
     notes:
@@ -65,7 +65,7 @@ pairs:
       two_half: 0.0
     non_nearest_share: 0.5
     hub: SWM-POW-0002
-    hub_share: 0.5
+    hub_share: 1.0
     mutual_pairs_allowed: 0
     mutual_pairs: 0
     notes: []
@@ -86,7 +86,7 @@ pairs:
       two_half: 0.25
     non_nearest_share: 0.25
     hub: SWM-POW-0002
-    hub_share: 0.25
+    hub_share: 0.5
     mutual_pairs_allowed: 0
     mutual_pairs: 0
     notes:
@@ -107,8 +107,8 @@ pairs:
       two_full: 0.333
       two_half: 0.0
     non_nearest_share: 0.25
-    hub: SWM-POW-0004
-    hub_share: 0.75
+    hub: SWM-POW-0002
+    hub_share: 0.5
     mutual_pairs_allowed: 0
     mutual_pairs: 0
     notes: []
@@ -116,24 +116,24 @@ pairs:
     switched_on: true
     dependencies: 4
     absent: 0
-    edges: 5
+    edges: 6
     feed_counts:
-      single: 3
-      two_full: 0
+      single: 2
+      two_full: 1
       two_half: 1
       any_reachable: 0
       none: 0
     feed_shares:
-      single: 0.75
-      two_full: 0.0
+      single: 0.5
+      two_full: 0.25
       two_half: 0.25
-    non_nearest_share: 0.25
+    non_nearest_share: 0.5
     hub: SWM-TEL-0003
-    hub_share: 0.0
+    hub_share: 0.25
     mutual_pairs_allowed: 2
-    mutual_pairs: 1
+    mutual_pairs: 0
     notes:
-    - 'two-way with power-telecom: 2 allowed mutual pairs, 0 wanted, 1 built (1 kept so a core dependency keeps a supplier)'
+    - 'two-way with power-telecom: 2 allowed mutual pairs, 0 wanted, 0 built'
   telecom-water:
     switched_on: false
     dependencies: 2
@@ -460,7 +460,7 @@ pairs:
     mutual_pairs: 0
     notes: []
 totals:
-  coupling_edges: 72
-  switched_on_coupling_edges: 27
+  coupling_edges: 73
+  switched_on_coupling_edges: 28
   intra_layer_links: 23
-  total_edges: 50
+  total_edges: 51

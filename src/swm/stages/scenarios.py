@@ -28,14 +28,16 @@ import numpy as np
 from numpy.typing import NDArray
 
 from swm import rng
-from swm.coordinates import domain_origin_m
+from swm.coordinates import cell_of
 from swm.recipe.dependencies import Role
 from swm.recipe.schema import DamageState, Hazard, Layer, NodeClass
 from swm.rules.registry import Registry
 from swm.stages.couplings import CouplingsResult
 from swm.stages.layers import LayersResult, Link, _segment_cells
+from swm.stages.roads import sub_polyline
 from swm.stages.storm import StormResult, _coast_distance_km, flood_threshold_m
-from swm.stages.terrain import GRID_CELLS, Grid, TerrainResult
+from swm.stages.terrain import TerrainResult
+from swm.stages.topography import speed_factor
 
 M_PER_KM = 1000.0
 
@@ -44,7 +46,6 @@ LENGTH_STEPS_PER_KM = 1024
 ROOT_HALVINGS = 10
 """Square roots giving (1 - p)^(1/1024): 2^10 = LENGTH_STEPS_PER_KM."""
 
-TOWER_ENDS = frozenset({NodeClass.GENERATION, NodeClass.TRANSMISSION_SUBSTATION})
 SUBSTATIONS = frozenset({NodeClass.DISTRIBUTION_SUBSTATION, NodeClass.TRANSMISSION_SUBSTATION})
 
 
@@ -188,13 +189,8 @@ def overhead_lines(layers: LayersResult, couplings: CouplingsResult) -> tuple[Ov
     lines = []
     for link in layers.links:
         if link.layer == Layer.POWER:
-            # CHOICE: a power link between generation and transmission substations, or from a
-            # transmission to a distribution substation, is carried on towers (the second
-            # ruled J, decision 0012 second addendum); other links are pole lines.
-            ends = {classes[link.from_id], classes[link.to_id]}
-            towers = ends <= TOWER_ENDS or ends == SUBSTATIONS
-            structure = Structure.TOWER if towers else Structure.POLE
-            lines.append(_link_line(link, LineKind.POWER_LINK, structure))
+            # Every mapped power line runs on towers along its terrain route (§4.2).
+            lines.append(_link_line(link, LineKind.POWER_LINK, Structure.TOWER))
         elif link.layer == Layer.TELECOM:
             lines.append(_link_line(link, LineKind.TELECOM_LINK, Structure.POLE))
     for edge in couplings.edges:
@@ -203,13 +199,12 @@ def overhead_lines(layers: LayersResult, couplings: CouplingsResult) -> tuple[Ov
         supplier = classes[edge.supplier_id]
         if supplier not in SUBSTATIONS:
             continue
-        # CHOICE: a feed has no drawn route, so it runs straight from substation to consumer;
-        # a transmission substation's feeds (rule 4's large loads) are carried on towers.
-        towers = supplier == NodeClass.TRANSMISSION_SUBSTATION
-        structure = Structure.TOWER if towers else Structure.POLE
-        lines.append(OverheadLine(edge.edge_id, LineKind.POWER_FEED, structure,
-                                  edge.supplier_id, edge.consumer_id, edge.points,
-                                  edge.length_km))  # fmt: skip
+        # Feeds run on poles along their road route (§4.2; Work Order 6c, B1).
+        route = edge.route or edge.points
+        length_km = edge.route_km if edge.route_km is not None else edge.length_km
+        lines.append(OverheadLine(edge.edge_id, LineKind.POWER_FEED, Structure.POLE,
+                                  edge.supplier_id, edge.consumer_id, route,
+                                  length_km))  # fmt: skip
     return tuple(lines)
 
 
@@ -254,10 +249,15 @@ def build_scenarios(
     pieces = [reader.pieces(line) for line in lines]
     damaged = []
     for scenario, stream in zip(storm.scenarios, streams, strict=True):
-        gust = reader.gust(scenario.wind_m_per_s).ravel()
+        gusts = {s: reader.gust(scenario.wind_m_per_s, s).ravel() for s in Structure}
         outcomes = [
             _line_outcome(
-                line, line_pieces, gust, reader, crew_work_per_point_h(line, rules), stream
+                line,
+                line_pieces,
+                gusts[line.structure],
+                reader,
+                crew_work_per_point_h(line, rules),
+                stream,
             )
             for line, line_pieces in zip(lines, pieces, strict=True)
         ]
@@ -293,10 +293,18 @@ class _LineReader:
         tower = rules.value("storm.tower_fragility_table")
         self.line_table = (tuple(line["gust_m_per_s"]), tuple(line["failures_per_km"]))
         self.tower_table = (tuple(tower["gust_m_per_s"]), tuple(tower["collapse"]))
+        heights = rules.value("storm.line_heights_m")
+        # The ridge and hill speed-up at each structure's height (§4.3b; Work Order 6c, C2).
+        self.ridge = {
+            structure: speed_factor(terrain, rules, float(heights[structure.value]))
+            for structure in Structure
+        }
 
-    def gust(self, wind_m_per_s: NDArray[np.float64]) -> NDArray[np.float64]:
-        """Return the 3-second gust at each cell from the 10-minute wind."""
-        gust: NDArray[np.float64] = wind_m_per_s * self.factor
+    def gust(
+        self, wind_m_per_s: NDArray[np.float64], structure: Structure = Structure.POLE
+    ) -> NDArray[np.float64]:
+        """Return the 3-second gust at each cell, at a structure's height, with ridge speed-up."""
+        gust: NDArray[np.float64] = wind_m_per_s * self.factor * self.ridge[structure]
         return gust
 
     def cells(self, line: OverheadLine) -> NDArray[np.int64]:
@@ -312,15 +320,9 @@ class _LineReader:
 
     def pieces(self, line: OverheadLine) -> list["_Piece"]:
         """Split the line into whole kilometres along its route; the last piece is the rest."""
-        steps = [_length_m(a, b) for a, b in pairwise(line.points)]
-        total_m = math.fsum(steps)
-        count = max(1, math.ceil(total_m / M_PER_KM - 1e-9))
-        pieces = []
-        for k in range(count):
-            start_m, end_m = k * M_PER_KM, min((k + 1) * M_PER_KM, total_m)
-            points = _sub_polyline(line.points, steps, start_m, end_m)
-            pieces.append(_Piece(start_m / M_PER_KM, end_m / M_PER_KM, self._cells_of(points)))
-        return pieces
+        return [
+            _Piece(km.start_km, km.end_km, self._cells_of(km.points)) for km in kilometres(line)
+        ]
 
     def piece_probability(self, gust: float, length_km: float) -> float:
         """Return a pole-line piece's chance of failing at its local gust: 1 - (1 - p)^length."""
@@ -399,76 +401,49 @@ def _length_m(a: tuple[float, float], b: tuple[float, float]) -> float:
     return math.sqrt(dx * dx + dy * dy)
 
 
-def _sub_polyline(
-    points: Sequence[tuple[float, float]], steps: Sequence[float], start_m: float, end_m: float
-) -> list[tuple[float, float]]:
-    """Return the part of a polyline between two distances along it, in metres."""
-    result: list[tuple[float, float]] = []
-    walked = 0.0
-    for (a, b), step in zip(pairwise(points), steps, strict=True):
-        low, high = max(start_m, walked), min(end_m, walked + step)
-        if high >= low and step > 0.0:
-            for at in (low, high):
-                share = (at - walked) / step
-                point = (a[0] + share * (b[0] - a[0]), a[1] + share * (b[1] - a[1]))
-                if not result or result[-1] != point:
-                    result.append(point)
-        walked += step
-    return result or [points[0]]
+@dataclass(frozen=True)
+class Kilometre:
+    """One kilometre of a line along its route (the last may be shorter)."""
+
+    index: int
+    start_km: float
+    end_km: float
+    points: tuple[tuple[float, float], ...]
+    """Its stretch of the route, EPSG:32710 metres."""
+
+    @property
+    def midpoint(self) -> tuple[float, float]:
+        """The point halfway along this kilometre."""
+        steps = [_length_m(a, b) for a, b in pairwise(self.points)]
+        half = math.fsum(steps) / 2
+        middle = sub_polyline(self.points, steps, half, half)
+        return middle[0]
 
 
-def cell_of(x_m: float, y_m: float, grid: Grid) -> tuple[int, int]:
-    """Return the (row, column) of the grid cell holding a point; row 0 is the northern edge.
-
-    Parameters
-    ----------
-    x_m, y_m : float
-        EPSG:32710 easting and northing, in m.
-    grid : Grid
-        The terrain grid.
-
-    Returns
-    -------
-    tuple of int
-        The cell, held inside the grid.
-
-    Spec: structure v0.4 §4.1a (coordinates).
-    """
-    west_m, south_m = domain_origin_m(grid)
-    column = math.floor((x_m - west_m) / grid.cell_size_m)
-    row = GRID_CELLS - 1 - math.floor((y_m - south_m) / grid.cell_size_m)
-    return min(max(row, 0), GRID_CELLS - 1), min(max(column, 0), GRID_CELLS - 1)
-
-
-def midpoint_cell(line: OverheadLine, grid: Grid) -> tuple[int, int]:
-    """Return the cell at half the line's length along its polyline.
+def kilometres(line: OverheadLine) -> list[Kilometre]:
+    """Split a line into whole kilometres along its route, the last piece being the rest.
 
     Parameters
     ----------
     line : OverheadLine
         The line.
-    grid : Grid
-        The terrain grid.
 
     Returns
     -------
-    tuple of int
-        (row, column) of the line's midpoint.
+    list of Kilometre
+        Each kilometre's span along the line and its stretch of the route.
 
-    Spec: Work Order 6, E1 (travel to a failed line).
+    Spec: structure v0.8 §4.3b (lines by the kilometre); Work Order 6c, C1 and D1.
     """
-    steps = [
-        math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay))
-        for (ax, ay), (bx, by) in pairwise(line.points)
-    ]
-    remaining = math.fsum(steps) / 2
-    for ((ax, ay), (bx, by)), step in zip(pairwise(line.points), steps, strict=True):
-        if remaining <= step and step > 0.0:
-            share = remaining / step
-            return cell_of(ax + share * (bx - ax), ay + share * (by - ay), grid)
-        remaining -= step
-    x_m, y_m = line.points[-1]
-    return cell_of(x_m, y_m, grid)
+    steps = [_length_m(a, b) for a, b in pairwise(line.points)]
+    total_m = math.fsum(steps)
+    count = max(1, math.ceil(total_m / M_PER_KM - 1e-9))
+    pieces = []
+    for k in range(count):
+        start_m, end_m = k * M_PER_KM, min((k + 1) * M_PER_KM, total_m)
+        points = tuple(sub_polyline(line.points, steps, start_m, end_m))
+        pieces.append(Kilometre(k, start_m / M_PER_KM, end_m / M_PER_KM, points))
+    return pieces
 
 
 def _interpolate(table: tuple[Sequence[float], Sequence[float]], x: float) -> float:

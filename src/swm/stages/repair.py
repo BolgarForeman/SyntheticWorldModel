@@ -22,6 +22,7 @@ Spec: structure v0.6 §4.4 and §4.4a (repair); Work Order 5, Part G; decision 0
 import math
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from itertools import pairwise
 
 import numpy as np
 
@@ -34,10 +35,12 @@ from swm.stages.couplings import CouplingsResult
 from swm.stages.crews import ELIGIBLE_CLASS, CrewBase, CrewsResult, RoadNetwork
 from swm.stages.layers import LayersResult, Node
 from swm.stages.requirements import RequirementsResult
+from swm.stages.roads import RoadMap, sub_polyline
 from swm.stages.scenarios import (
+    Kilometre,
     OverheadLine,
     crew_work_per_point_h,
-    midpoint_cell,
+    kilometres,
     overhead_lines,
 )
 from swm.stages.terrain import TerrainResult
@@ -100,8 +103,26 @@ class LineRepair:
     lead_time_h: float
     base_id: str | None
     travel_h: float | None
-    """From the nearest crew base to the line's midpoint; None if no route reaches it."""
+    """From the nearest crew base to the line's midpoint, by road then off road; None if no
+    road on its landmass reaches it."""
     by_sea: bool
+
+
+@dataclass(frozen=True)
+class FailurePointTravel:
+    """How a crew reaches one kilometre of a line, should it fail there (§4.3b, repair)."""
+
+    line_id: str
+    kilometre: int
+    start_km: float
+    end_km: float
+    base_id: str | None
+    road_km: float | None
+    """From the crew base to the road point nearest the kilometre's midpoint."""
+    offroad_km: float | None
+    """From that road point to the line, walked and carried."""
+    travel_h: float | None
+    """None when no road on the line's landmass reaches it from any base."""
 
 
 @dataclass(frozen=True)
@@ -114,6 +135,8 @@ class RepairResult:
     unrepairable: tuple[str, ...]
     """Nodes that cannot be repaired inside the window."""
     lines: tuple[LineRepair, ...]
+    failure_points: tuple[FailurePointTravel, ...]
+    """Travel to every kilometre of every overhead line (Work Order 6c, D1)."""
     notes: tuple[str, ...]
 
 
@@ -200,37 +223,85 @@ def build_repair(
         travels.append(trip)
     permanent, unrepairable = _permanent(levers, layers, rules, streams, notes)
     emergency = _emergency(crews, layers, requirements, couplings, rules, travel, notes)
-    lines = _line_repairs(overhead_lines(layers, couplings), terrain, rules, nearest)
+    mapped = overhead_lines(layers, couplings)
+    reach = _RoadReach(crews.bases, RoadMap(terrain, layers), rules)
+    lines = _line_repairs(mapped, rules, reach)
+    points = [reach.to_kilometre(line, km) for line in mapped for km in kilometres(line)]
     return RepairResult(
         tuple(travels),
         tuple(permanent),
         tuple(emergency),
         tuple(unrepairable),
         tuple(lines),
+        tuple(points),
         tuple(sorted(notes)),
     )
 
 
+class _RoadReach:
+    """Crew travel to a point near a line: by road to the nearest road point, then off road."""
+
+    def __init__(self, bases: tuple[CrewBase, ...], roads: RoadMap, rules: Registry) -> None:
+        self.bases = bases
+        self.roads = roads
+        self.road_kmh = rules.number("crews.road_speed_kmh")
+        self.offroad_kmh = rules.number("crews.offroad_speed_kmh")
+
+    def to_point(self, point: tuple[float, float]) -> tuple[str, float, float, float] | None:
+        """Return (base id, road km, off-road km, hours) from the nearest base, or None."""
+        foot = self.roads.nearest(point)
+        if foot is None:
+            return None
+        best = None
+        for base in self.bases:
+            road_m = self.roads.distance_from(base.access_node_id, foot)
+            if road_m is None:
+                continue
+            road_km = base.access_km + road_m / 1000
+            offroad_km = foot.offroad_m / 1000
+            hours = road_km / self.road_kmh + offroad_km / self.offroad_kmh
+            if best is None or (hours, base.base_id) < (best[3], best[0]):
+                best = (base.base_id, road_km, offroad_km, hours)
+        return best
+
+    def to_kilometre(self, line: OverheadLine, km: Kilometre) -> FailurePointTravel:
+        trip = self.to_point(km.midpoint)
+        if trip is None:
+            return FailurePointTravel(
+                line.line_id, km.index, km.start_km, km.end_km, None, None, None, None
+            )
+        base_id, road_km, offroad_km, hours = trip
+        return FailurePointTravel(
+            line.line_id, km.index, km.start_km, km.end_km, base_id, road_km, offroad_km, hours
+        )
+
+
 def _line_repairs(
-    lines: tuple[OverheadLine, ...],
-    terrain: TerrainResult,
-    rules: Registry,
-    nearest: Callable[[str, tuple[int, int]], Travel | None],
+    lines: tuple[OverheadLine, ...], rules: Registry, reach: _RoadReach
 ) -> list[LineRepair]:
-    """Crew work per failure point, no lead time, and travel from the nearest base (§4.3b)."""
+    """Crew work per failure point, no lead time, and travel to the line's midpoint (§4.3b).
+
+    A towered line's collapse is placed at its midpoint; a pole line's failure points take
+    their own kilometre's travel (``failure_points``).
+    """
     repairs = []
     for line in lines:
         work_h = crew_work_per_point_h(line, rules)
-        # CHOICE: a crew travels to the line's midpoint, which stands for its length until
-        # the damage says where along it the line came down.
-        trip = nearest(line.line_id, midpoint_cell(line, terrain.grid))
+        trip = reach.to_point(_midpoint(line))
         if trip is None:
             repairs.append(LineRepair(line.line_id, work_h, 0.0, None, None, False))
             continue
-        repairs.append(
-            LineRepair(line.line_id, work_h, 0.0, trip.base_id, trip.travel_h, trip.by_sea)
-        )
+        repairs.append(LineRepair(line.line_id, work_h, 0.0, trip[0], trip[3], False))
     return repairs
+
+
+def _midpoint(line: OverheadLine) -> tuple[float, float]:
+    steps = [
+        math.sqrt((b[0] - a[0]) * (b[0] - a[0]) + (b[1] - a[1]) * (b[1] - a[1]))
+        for a, b in pairwise(line.points)
+    ]
+    half = math.fsum(steps) / 2
+    return sub_polyline(line.points, steps, half, half)[0]
 
 
 def _travel(
@@ -440,6 +511,7 @@ def repair_tables(result: RepairResult) -> dict[str, list[dict[str, object]]]:
         "emergency_repair": [plain(e) for e in result.emergency],
         "unrepairable": [{"node_id": node_id} for node_id in result.unrepairable],
         "line_repair": [plain(line) for line in result.lines],
+        "failure_point_travel": [plain(point) for point in result.failure_points],
     }
 
 

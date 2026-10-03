@@ -12,7 +12,7 @@ Spec: structure v0.4 §4.1a, §4.2 and §5; Work Order 3, Part B.
 import heapq
 import math
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field, fields, replace
 from itertools import combinations, pairwise
 from typing import Any
 
@@ -42,6 +42,7 @@ from swm.stages.terrain import (
     _dilate,
     _label_land,
 )
+from swm.stages.terrain_routes import least_cost_route, route_cost, turning_points
 
 # CHOICE: layers are sited in this order, so later rules can refer to earlier nodes (the
 # seaport's city, the generation plants, the reservoirs).
@@ -359,6 +360,29 @@ class Link:
 
 
 @dataclass(frozen=True)
+class PowerLine:
+    """A mapped power line, as OpenStreetMap maps power=line (structure v0.8 §4.2).
+
+    Its route and length are those of the power link with the same id.
+    """
+
+    link_id: str
+    from_id: str
+    to_id: str
+    voltage_kv: int
+    circuits: int
+    structure: str
+    straight_km: float
+    route_km: float
+    ridge_crossing: bool
+    """The route crosses the spine line (decision 0005)."""
+    routed: bool
+    """False for a line whose ends are on different landmasses: it runs straight, as a cable."""
+    tower_points: tuple[tuple[float, float], ...]
+    """EPSG:32710 metres: both ends and every tower spacing along the route."""
+
+
+@dataclass(frozen=True)
 class LayerStatistics:
     """Realised statistics of one layer."""
 
@@ -380,6 +404,8 @@ class LayersResult:
     links: tuple[Link, ...]
     states: dict[Layer, LayerState]
     statistics: tuple[LayerStatistics, ...]
+    power_lines: tuple[PowerLine, ...] = ()
+    """The power links as mapped lines (§4.2)."""
 
 
 @dataclass(frozen=True)
@@ -492,6 +518,7 @@ def build_layers(
     subtypes = _draw_subtypes(siter, streams.subtype)
     nodes: list[Node] = []
     links: list[Link] = []
+    power_lines: list[PowerLine] = []
     statistics: list[LayerStatistics] = []
     for layer in Layer:
         settings = layers.get(layer)
@@ -501,12 +528,14 @@ def build_layers(
         layer_nodes = _make_nodes(layer, siter, ground, stream, subtypes[layer])
         builder = _LinkBuilder(layer, layer_nodes, siter, ground, settings.links_per_node)
         layer_links = builder.build()
+        if layer == Layer.POWER:
+            layer_links, power_lines = _map_power_lines(layer_links, layer_nodes, ground, rules)
         notes = siter.notes.get(layer, []) + builder.notes
         nodes.extend(layer_nodes)
         links.extend(layer_links)
         statistics.append(_statistics(layer, settings, layer_nodes, layer_links, notes))
     states = {layer: layers.get(layer).state for layer in Layer}
-    return LayersResult(tuple(nodes), tuple(links), states, tuple(statistics))
+    return LayersResult(tuple(nodes), tuple(links), states, tuple(statistics), tuple(power_lines))
 
 
 def node_table(result: LayersResult) -> list[dict[str, object]]:
@@ -571,6 +600,40 @@ def link_table(result: LayersResult) -> list[dict[str, object]]:
             "points_m": [[round(x, 2), round(y, 2)] for x, y in link.points],
         }
         for link in result.links
+    ]
+
+
+def power_line_table(result: LayersResult) -> list[dict[str, object]]:
+    """Return the mapped power lines as plain data in a fixed key order, for canonical output.
+
+    Parameters
+    ----------
+    result : LayersResult
+        The layers stage's output.
+
+    Returns
+    -------
+    list of dict
+        One row per mapped line, tower points rounded to the centimetre.
+
+    Spec: structure v0.8 §4.2; Work Order 6c, A1-A5.
+    """
+    return [
+        {
+            "id": line.link_id,
+            "from": line.from_id,
+            "to": line.to_id,
+            "voltage_kv": line.voltage_kv,
+            "circuits": line.circuits,
+            "structure": line.structure,
+            "straight_km": round(line.straight_km, 3),
+            "route_km": round(line.route_km, 3),
+            "ridge_crossing": line.ridge_crossing,
+            "routed": line.routed,
+            "towers": len(line.tower_points),
+            "tower_points_m": [[round(x, 2), round(y, 2)] for x, y in line.tower_points],
+        }
+        for line in result.power_lines
     ]
 
 
@@ -1572,6 +1635,119 @@ def _slope_m_per_m(elevation_dm: NDArray[np.int32], cell_size_m: float) -> NDArr
     gx = (elevation[1:-1, 2:] - elevation[1:-1, :-2]) / (2 * cell_size_m)
     gy = (elevation[2:, 1:-1] - elevation[:-2, 1:-1]) / (2 * cell_size_m)
     return np.sqrt(gx * gx + gy * gy)
+
+
+# --- Mapped power lines (§4.2) ------------------------------------------------------------
+
+
+def _map_power_lines(
+    links: list[Link], nodes: list[Node], ground: _Ground, rules: Registry
+) -> tuple[list[Link], list[PowerLine]]:
+    """Route each power link over the terrain and record it as a mapped line."""
+    terrain = ground.terrain
+    cost = route_cost(terrain, rules)
+    by_id = {node.node_id: node for node in nodes}
+    labels, _ = _label_land(np.asarray(terrain.land))
+    routed_links, lines = [], []
+    for link in links:
+        a, b = by_id[link.from_id], by_id[link.to_id]
+        start, end = a.row * GRID_CELLS + a.column, b.row * GRID_CELLS + b.column
+        cells = None
+        if labels[a.row, a.column] == labels[b.row, b.column]:
+            cells = least_cost_route(cost, start, end)
+        # CHOICE: a line whose ends are on different landmasses runs straight, as a cable.
+        vertices = turning_points(cells) if cells else [(a.row, a.column), (b.row, b.column)]
+        points = tuple(cell_centre_m(r, c, terrain.grid) for r, c in vertices)
+        crossed = cells if cells else _polyline_cells(vertices)
+        routed = replace(
+            link,
+            points=points,
+            length_km=round(_polyline_length_m(points) / 1000, 3),
+            river_crossings=_river_crossings(ground, list(crossed)),
+            crosses_sea=any(not terrain.land.flat[c] for c in crossed),
+        )
+        routed_links.append(routed)
+        lines.append(_power_line(routed, a, b, vertices, terrain, rules, cells is not None))
+    return routed_links, lines
+
+
+def _power_line(
+    link: Link,
+    a: Node,
+    b: Node,
+    vertices: list[tuple[int, int]],
+    terrain: TerrainResult,
+    rules: Registry,
+    routed: bool,
+) -> PowerLine:
+    straight_m = _polyline_length_m([(a.x_m, a.y_m), (b.x_m, b.y_m)])
+    route_m = _polyline_length_m(link.points)
+    spacing = rules.number("layers.power_lines.tower_spacing_m")
+    return PowerLine(
+        link_id=link.link_id,
+        from_id=link.from_id,
+        to_id=link.to_id,
+        voltage_kv=_voltage_kv(a.node_class, b.node_class, rules),
+        circuits=int(rules.number("layers.power_lines.circuits")),
+        structure="tower",
+        straight_km=straight_m / 1000,
+        route_km=route_m / 1000,
+        ridge_crossing=_crosses_spine(vertices, terrain),
+        routed=routed,
+        tower_points=_points_along(link.points, spacing),
+    )
+
+
+def _voltage_kv(first: NodeClass, second: NodeClass, rules: Registry) -> int:
+    voltage = rules.value("layers.power_lines.voltage_kv")
+    ends = {first, second}
+    if NodeClass.GENERATION in ends:
+        return int(voltage["from_plant"])
+    # CHOICE: a line between two distribution substations is a line to a distribution
+    # substation not fed from a plant, so 69 kV.
+    if NodeClass.DISTRIBUTION_SUBSTATION in ends:
+        return int(voltage["to_distribution_substation"])
+    return int(voltage["between_transmission_substations"])
+
+
+def _points_along(
+    points: Sequence[tuple[float, float]], spacing_m: float
+) -> tuple[tuple[float, float], ...]:
+    """Points every ``spacing_m`` along a polyline from its start, and its end."""
+    steps = [
+        math.sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0))
+        for (x0, y0), (x1, y1) in pairwise(points)
+    ]
+    total = math.fsum(steps)
+    marks: list[tuple[float, float]] = []
+    walked, index, target = 0.0, 0, 0.0
+    while target < total and index < len(steps):
+        if steps[index] > 0.0 and target <= walked + steps[index]:
+            share = (target - walked) / steps[index]
+            (x0, y0), (x1, y1) = points[index], points[index + 1]
+            marks.append((x0 + share * (x1 - x0), y0 + share * (y1 - y0)))
+            target += spacing_m
+        else:
+            walked += steps[index]
+            index += 1
+    marks.append(points[-1])
+    return tuple(marks)
+
+
+def _crosses_spine(vertices: list[tuple[int, int]], terrain: TerrainResult) -> bool:
+    """Whether the route crosses the spine line (decision 0005), in the terrain's km frame."""
+    cell_km = terrain.grid.cell_size_m / 1000
+    route = [((c + 0.5) * cell_km, (r + 0.5) * cell_km) for r, c in vertices]
+    spine = terrain.spine_km
+    for (ax, ay), (bx, by) in pairwise(route):
+        for (cx, cy), (dx, dy) in pairwise(spine):
+            side_a = (dx - cx) * (ay - cy) - (dy - cy) * (ax - cx)
+            side_b = (dx - cx) * (by - cy) - (dy - cy) * (bx - cx)
+            side_c = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax)
+            side_d = (bx - ax) * (dy - ay) - (by - ay) * (dx - ax)
+            if side_a * side_b < 0.0 and side_c * side_d < 0.0:
+                return True
+    return False
 
 
 # --- Roads ----------------------------------------------------------------------------------
