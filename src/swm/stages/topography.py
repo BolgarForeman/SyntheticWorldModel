@@ -7,15 +7,17 @@ speed takes 1 + K1 K2 K3 (structure v0.8 §4.3b):
 - K2 = 1 - |x| / (mu Lh), the decay with distance x from the crest (Table 2.3(b));
 - K3 from Table 2.3(c), the decay with height z above the ground (it needs exp otherwise).
 
-How H, Lh and x are read off the grid is this module's (CHOICE, stated in each function): the
-code assumes the wind blows up the steepest slope, so every cell takes the worst of the eight
-grid directions. Along each, the crest is the highest ground within 3.22 km either side, H its
-height above the lowest ground upwind of it, and Lh the distance upwind from the crest to where
-the ground is half that height. The factor applies only where the code's conditions hold.
+The factor is read along each of the eight grid directions the wind can travel. A storm reads
+the direction its own wind blows (structure v0.8 §4.3b, corrected by the PR 14 answers); the
+worst of the eight is the code's design envelope, which a tower designed for its site is built
+to. How H, Lh and x are read off the grid is this module's (CHOICE, stated in each function):
+along each direction the crest is the highest ground within 3.22 km either side, H its height
+above the lowest ground upwind of it, and Lh the distance upwind from the crest to where the
+ground is half that height. The factor applies only where the code's conditions hold.
 
 Only +, -, x, / and sqrt; the stored tables are interpolated linearly.
 
-Spec: structure v0.8 §4.3b (routes and ridges); Work Order 6c, C2.
+Spec: structure v0.8 §4.3b (routes and ridges); Work Order 6c, C2; PR 14 answers 1-2.
 """
 
 import math
@@ -47,8 +49,10 @@ class _Feature:
     """The code's conditions hold."""
 
 
-def speed_factor(terrain: TerrainResult, rules: Registry, height_m: float) -> NDArray[np.float64]:
-    """Return 1 + K1 K2 K3 at each cell for a structure of the given height (1 off features).
+def directional_factors(
+    terrain: TerrainResult, rules: Registry, height_m: float
+) -> NDArray[np.float64]:
+    """Return 1 + K1 K2 K3 at each cell for each of the eight wind directions (1 off features).
 
     Parameters
     ----------
@@ -62,9 +66,10 @@ def speed_factor(terrain: TerrainResult, rules: Registry, height_m: float) -> ND
     Returns
     -------
     numpy.ndarray
-        The factor on wind speed, sqrt(Kzt), the worst over the eight grid directions.
+        The factor on wind speed, sqrt(Kzt), shaped (8, rows, columns): index d is the wind
+        travelling along ``D8_OFFSETS[d]`` (row, column) on the grid.
 
-    Spec: structure v0.8 §4.3b; Work Order 6c, C2.
+    Spec: structure v0.8 §4.3b; PR 14 answer 1.
     """
     table = rules.value("storm.topographic_factor")
     elevation = np.asarray(terrain.elevation_dm) / 10.0
@@ -74,11 +79,61 @@ def speed_factor(terrain: TerrainResult, rules: Registry, height_m: float) -> ND
     # land are class A or B, all other ground class C.
     rough = (np.asarray(terrain.urban_id) >= 0) | (cover == CoverClass.FOREST)
     cell_km = terrain.grid.cell_size_m / M_PER_KM
-    best = np.ones(elevation.shape)
-    for dr, dc in D8_OFFSETS:
-        feature = _feature(elevation, rough, cell_km, (dr, dc), table)
+    factors = []
+    for direction in D8_OFFSETS:
+        feature = _feature(elevation, rough, cell_km, direction, table)
         factor = _factor(feature, rough, table, height_m)
-        best = np.maximum(best, np.where(land & feature.applies, factor, 1.0))
+        factors.append(np.where(land & feature.applies, factor, 1.0))
+    return np.stack(factors)
+
+
+def speed_factor(terrain: TerrainResult, rules: Registry, height_m: float) -> NDArray[np.float64]:
+    """Return the worst-direction 1 + K1 K2 K3 at each cell: the code's design envelope.
+
+    Parameters
+    ----------
+    terrain : TerrainResult
+        The ground: elevation, land, land cover and cell size.
+    rules : Registry
+        The modeling rules in force (``storm.topographic_factor``).
+    height_m : float
+        The height above ground the wind is read at (z), in m.
+
+    Returns
+    -------
+    numpy.ndarray
+        The factor on wind speed, sqrt(Kzt), the worst over the eight grid directions: what
+        the code requires a structure at the cell to be designed for.
+
+    Spec: structure v0.8 §4.3b; Work Order 6c, C2; PR 14 answer 2.
+    """
+    worst: NDArray[np.float64] = directional_factors(terrain, rules, height_m).max(axis=0)
+    return worst
+
+
+def wind_direction(travel: tuple[float, float]) -> int:
+    """Return the grid direction nearest a wind's direction of travel.
+
+    Parameters
+    ----------
+    travel : tuple of float
+        The wind's direction of travel as (south, east) components, any length.
+
+    Returns
+    -------
+    int
+        The index into ``D8_OFFSETS`` whose unit vector has the largest dot product with the
+        travel; ties go to the lowest index.
+
+    Spec: structure v0.8 §4.3b (the storm's own direction); PR 14 answer 1.
+    """
+    south, east = travel
+    best, best_dot = 0, -math.inf
+    for index, (dr, dc) in enumerate(D8_OFFSETS):
+        length = math.sqrt(dr * dr + dc * dc)
+        dot = (dr * south + dc * east) / length
+        if dot > best_dot:
+            best, best_dot = index, dot
     return best
 
 
@@ -132,9 +187,10 @@ def _feature(
     half_length = np.maximum(span, 1) * step_km
     downwind = index > crest_k[None]
     falls_back = (downwind & (profile <= half[None])).any(axis=0)
-    # The code's isolation conditions: within 3.22 km upwind nothing beyond the feature's own
-    # foot rises above half its height.
-    beyond_foot = index < nearest_below[None]
+    # The code's isolation condition: nothing beyond the feature's own foot rises above half
+    # its height within the code's reach upwind of the crest, min(100H, 3.22 km).
+    reach_steps = np.minimum(100.0 * height / M_PER_KM, upwind_km) / step_km
+    beyond_foot = (index < nearest_below[None]) & (crest_k[None] - index <= reach_steps[None])
     isolated = ~(beyond_foot & (profile > half[None])).any(axis=0)
     ratio = height / (half_length * M_PER_KM)
     minimum = table["min_height_m"]

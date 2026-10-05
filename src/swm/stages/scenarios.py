@@ -35,9 +35,15 @@ from swm.rules.registry import Registry
 from swm.stages.couplings import CouplingsResult
 from swm.stages.layers import LayersResult, Link, _segment_cells
 from swm.stages.roads import sub_polyline
-from swm.stages.storm import StormResult, _coast_distance_km, flood_threshold_m
+from swm.stages.storm import (
+    StormResult,
+    StormScenario,
+    _coast_distance_km,
+    flood_threshold_m,
+    signed_distance_km,
+)
 from swm.stages.terrain import TerrainResult
-from swm.stages.topography import speed_factor
+from swm.stages.topography import directional_factors, wind_direction
 
 M_PER_KM = 1000.0
 
@@ -97,7 +103,8 @@ class LineOutcome:
 
     line_id: str
     peak_gust_m_per_s: float
-    """The highest 3-second gust anywhere along the line."""
+    """The highest 3-second gust anywhere along the line, as read against its fragility curve
+    (over the site's design factor for a tower designed for its site)."""
     failure_probability: float
     """The chance that the line is down: any kilometre failing, or its towers collapsing."""
     failed: bool
@@ -249,7 +256,7 @@ def build_scenarios(
     pieces = [reader.pieces(line) for line in lines]
     damaged = []
     for scenario, stream in zip(storm.scenarios, streams, strict=True):
-        gusts = {s: reader.gust(scenario.wind_m_per_s, s).ravel() for s in Structure}
+        gusts = {s: reader.gust(scenario, s).ravel() for s in Structure}
         outcomes = [
             _line_outcome(
                 line,
@@ -294,17 +301,53 @@ class _LineReader:
         self.line_table = (tuple(line["gust_m_per_s"]), tuple(line["failures_per_km"]))
         self.tower_table = (tuple(tower["gust_m_per_s"]), tuple(tower["collapse"]))
         heights = rules.value("storm.line_heights_m")
-        # The ridge and hill speed-up at each structure's height (§4.3b; Work Order 6c, C2).
-        self.ridge = {
-            structure: speed_factor(terrain, rules, float(heights[structure.value]))
+        # The ridge and hill speed-up at each structure's height, for each of the eight wind
+        # directions (§4.3b; Work Order 6c, C2; PR 14 answer 1).
+        self.directional = {
+            structure: directional_factors(terrain, rules, float(heights[structure.value]))
+            for structure in Structure
+        }
+        self.sense = _rotation_sense(str(rules.value("storm.rotation")))
+        # A tower designed for its site is built to the code's worst-direction factor there,
+        # so it reads its gust divided by that factor (PR 14 answer 2).
+        designed = bool(rules.value("storm.towers_designed_for_site"))
+        self.design = {
+            structure: self.directional[structure].max(axis=0)
+            if designed and structure == Structure.TOWER
+            else np.ones(land.shape)
             for structure in Structure
         }
 
-    def gust(
-        self, wind_m_per_s: NDArray[np.float64], structure: Structure = Structure.POLE
-    ) -> NDArray[np.float64]:
-        """Return the 3-second gust at each cell, at a structure's height, with ridge speed-up."""
-        gust: NDArray[np.float64] = wind_m_per_s * self.factor * self.ridge[structure]
+    def ridge(self, scenario: StormScenario, structure: Structure) -> NDArray[np.float64]:
+        """Return each cell's ridge factor for the direction the scenario's wind blows there.
+
+        To the right of the track a counterclockwise storm's wind travels along the track, to
+        the left against it; within the radius of maximum wind a place meets the eyewall from
+        both sides and takes the worse of the two (§4.3b, PR 14 answer 1).
+        """
+        factors = self.directional[structure]
+        track = scenario.track
+        if track is None:
+            return np.ones(factors.shape[1:])
+        east, south = track.direction
+        # CHOICE: the wind's inflow angle across the isobars is neglected: it travels parallel
+        # to the track (PR 14 answer 1).
+        along = factors[wind_direction((self.sense * south, self.sense * east))]
+        against = factors[wind_direction((-self.sense * south, -self.sense * east))]
+        offset = signed_distance_km(track, self.grid.cell_size_m)
+        eyewall = np.abs(offset) <= track.radius_max_wind_km
+        one_side = np.where(offset > 0.0, along, against)
+        ridge: NDArray[np.float64] = np.where(eyewall, np.maximum(along, against), one_side)
+        return ridge
+
+    def gust(self, scenario: StormScenario, structure: Structure) -> NDArray[np.float64]:
+        """Return the 3-second gust each structure is read at, against its fragility curve.
+
+        The 10-minute wind times the gust factor and the ridge factor at the structure's
+        height, over the factor a tower designed for its site is built to (1 otherwise).
+        """
+        speed_up = self.ridge(scenario, structure) / self.design[structure]
+        gust: NDArray[np.float64] = scenario.wind_m_per_s * self.factor * speed_up
         return gust
 
     def cells(self, line: OverheadLine) -> NDArray[np.int64]:
@@ -334,6 +377,14 @@ class _LineReader:
         # CHOICE: a towered line collapses once per line at its peak gust; §4.3b gives no
         # towers-per-km.
         return _interpolate(self.tower_table, gust)
+
+
+def _rotation_sense(rotation: str) -> float:
+    """Return +1 if the wind right of the track travels with it (counterclockwise), else -1."""
+    senses = {"counterclockwise": 1.0, "clockwise": -1.0}
+    if rotation not in senses:
+        raise ValueError(f"storm.rotation must be one of {sorted(senses)}, not {rotation!r}")
+    return senses[rotation]
 
 
 @dataclass(frozen=True)

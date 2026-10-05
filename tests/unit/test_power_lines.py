@@ -1,5 +1,6 @@
 import functools
 import math
+from dataclasses import replace
 from itertools import pairwise
 from typing import Any
 
@@ -19,7 +20,9 @@ from swm.stages import layers as layers_stage
 from swm.stages import topography
 from swm.stages.layers import build_layers, layers_streams
 from swm.stages.roads import RoadMap
-from swm.stages.terrain import GRID_CELLS
+from swm.stages.scenarios import Structure, _LineReader
+from swm.stages.storm import StormScenario, Track
+from swm.stages.terrain import D8_OFFSETS, GRID_CELLS
 from swm.stages.terrain_routes import RouteCost, least_cost_route, route_cost
 
 RULES = load_registry()
@@ -288,6 +291,99 @@ def test_the_pilot_ridge_factor_is_one_at_sea_and_above_one_somewhere_on_land() 
     assert (factor[~land] == 1.0).all()
     assert (factor[land] > 1.0).any()
     assert factor.max() <= 1.0 + 0.72 + 1e-9
+
+
+def test_the_isolation_check_reaches_100h_or_3_22_km_upwind_whichever_is_less() -> None:
+    # A 20 m ridge one cell wide: the code's reach upwind of its crest is 100H = 2 km.
+    def crest_applies(bump_cells_upwind: int) -> bool:
+        ground = np.zeros(GRID_CELLS)
+        ground[128] = 20.0
+        ground[128 - bump_cells_upwind] = 15.0
+        elevation = ground[None, :] * np.ones((GRID_CELLS, 1))
+        rough = np.zeros((GRID_CELLS, GRID_CELLS), bool)
+        table = RULES.value("storm.topographic_factor")
+        return bool(topography._feature(elevation, rough, 0.1, (0, 1), table).applies[100, 128])
+
+    assert crest_applies(25)  # 2.5 km upwind: beyond 100H, so the ridge stands isolated
+    assert not crest_applies(15)  # 1.5 km upwind: a feature of similar height within reach
+
+
+@pytest.mark.parametrize("index", range(8))
+def test_each_grid_direction_snaps_to_itself(index: int) -> None:
+    dr, dc = D8_OFFSETS[index]
+    assert topography.wind_direction((3.0 * dr, 3.0 * dc)) == index
+
+
+def test_a_wind_direction_snaps_to_the_largest_dot_product() -> None:
+    # Travelling east and a little south: nearer east (0, 1) than south-east (1, 1).
+    assert D8_OFFSETS[topography.wind_direction((0.3, 1.0))] == (0, 1)
+    assert D8_OFFSETS[topography.wind_direction((0.5, 1.0))] == (1, 1)
+    # Equal dot products go to the lowest index: south ties south-west and south-east
+    # against a travel of (1, 0) only by exact match, so tie all eight with a zero vector.
+    assert topography.wind_direction((0.0, 0.0)) == 0
+
+
+def numbered_reader(rules: Any = RULES) -> _LineReader:
+    """The pilot's line reader with each direction's factor set to its index plus one."""
+    terrain = pilot_world()[1]
+    reader = _LineReader(terrain, rules)
+    shape = np.asarray(terrain.land).shape
+    numbered = np.stack([np.full(shape, d + 1.0) for d in range(8)])
+    reader.directional = {s: numbered for s in Structure}
+    return reader
+
+
+def eastbound(cell_km: float) -> StormScenario:
+    """A storm travelling east along row 128's centre, radius of maximum wind 2 km."""
+    track = Track((12.8, 128.5 * cell_km), (1.0, 0.0), 50.0, 0.0, 2.0)
+    zeros = np.zeros((GRID_CELLS, GRID_CELLS))
+    return StormScenario(0, track, 0.0, 0.0, zeros + 40.0, zeros, zeros > 0, 0.0)
+
+
+def test_right_of_the_track_reads_along_it_left_against_and_the_eyewall_the_worse() -> None:
+    reader = numbered_reader()
+    cell_km = pilot_world()[1].grid.cell_size_m / 1000.0
+    ridge = reader.ridge(eastbound(cell_km), Structure.POLE)
+    east, west = D8_OFFSETS.index((0, 1)) + 1.0, D8_OFFSETS.index((0, -1)) + 1.0
+    rows = int(2.0 / cell_km)
+    # Rows increase southward, so south of an eastbound track is its right.
+    assert (ridge[128 + rows + 2] == east).all()
+    assert (ridge[128 - rows - 2] == west).all()
+    assert (ridge[128] == max(east, west)).all()
+
+
+def test_a_clockwise_storm_reads_the_opposite_directions_outside_the_eyewall() -> None:
+    reader = numbered_reader(RULES.with_overrides({"storm.rotation": "clockwise"}))
+    cell_km = pilot_world()[1].grid.cell_size_m / 1000.0
+    ridge = reader.ridge(eastbound(cell_km), Structure.POLE)
+    rows = int(2.0 / cell_km)
+    assert (ridge[128 + rows + 2] == D8_OFFSETS.index((0, -1)) + 1.0).all()
+    with pytest.raises(ValueError, match=r"storm.rotation"):
+        _LineReader(pilot_world()[1], RULES.with_overrides({"storm.rotation": "sideways"}))
+
+
+def test_a_calm_scenario_reads_no_ridge_factor() -> None:
+    reader = numbered_reader()
+    calm = replace(eastbound(0.1), track=None)
+    assert (reader.ridge(calm, Structure.TOWER) == 1.0).all()
+
+
+def test_a_tower_designed_for_its_site_reads_its_gust_over_the_worst_direction_factor() -> None:
+    terrain = pilot_world()[1]
+    scenario = eastbound(terrain.grid.cell_size_m / 1000.0)
+    assert RULES.value("storm.towers_designed_for_site") is False
+    plain = _LineReader(terrain, RULES)
+    designed = _LineReader(terrain, RULES.with_overrides({"storm.towers_designed_for_site": True}))
+    worst = topography.speed_factor(terrain, RULES, 30.0)
+    flat = scenario.wind_m_per_s * plain.factor
+    tower = Structure.TOWER
+    assert np.allclose(plain.gust(scenario, tower), flat * plain.ridge(scenario, tower))
+    expected = flat * designed.ridge(scenario, tower) / worst
+    assert np.allclose(designed.gust(scenario, tower), expected)
+    assert (designed.gust(scenario, tower) <= flat + 1e-9).all()
+    # Poles are never designed for their site.
+    pole = Structure.POLE
+    assert np.array_equal(designed.gust(scenario, pole), plain.gust(scenario, pole))
 
 
 # --- Storm and crews (C1, D1) ---------------------------------------------------------------

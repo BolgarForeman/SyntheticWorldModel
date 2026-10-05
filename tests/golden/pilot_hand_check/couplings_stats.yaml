@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: 322cf7e70b63870f38fe5db6881ef63a73dd0aa8c408a61f800317821c5da933
+  registry_sha256: 64550be6d8778e6e3d0a611f1a887367bd0334b325a7974dd71ec2a5287acc92
   overrides: {}
 pairs:
   power-telecom:

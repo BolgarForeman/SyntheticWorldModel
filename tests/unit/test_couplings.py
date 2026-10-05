@@ -75,9 +75,9 @@ def test_pilot_total_edge_count_is_links_plus_switched_on_coupling_edges(
 ) -> None:
     assert pilot.intra_layer_links == 23
     assert pilot.switched_on_edges == 28
-    # 51 is one over the pilot range of 40-50 (decision 0007) since rule 4 widened (decision
-    # 0013); raised with the design side, not tuned.
-    assert pilot.total_edges == 51
+    # The pilot's range is 40-55, widened from 40-50 when rule 4 added a feed (decision 0013
+    # addendum, PR 14 answer 4).
+    assert 40 <= pilot.total_edges <= 55
 
 
 def test_pilot_builds_its_seven_couplings_and_hides_the_other_fourteen(

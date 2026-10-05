@@ -106,12 +106,16 @@ def test_the_line_curve_is_the_declared_calibration_and_keeps_the_old_anchor() -
     assert table["beta"] == 0.4
     rule = RULES.rule("storm.line_fragility_table")
     assert rule.status == "ruled"
-    assert rule.history[-1].value["median_m_per_s"] == 121.7185
-    assert rule.history[-1].value["beta"] == 0.3
+    # Recalibrated for routed lines and the directional ridge factor (PR 14 answers).
+    assert rule.history[-1].value["median_m_per_s"] == 159.9394
+    assert rule.history[-1].value["beta"] == 0.4
+    assert rule.history[-1].decision == "0013"
+    assert rule.history[-2].value["median_m_per_s"] == 121.7185
+    assert rule.history[-2].value["beta"] == 0.3
     targets = RULES.rule("storm.line_fragility_anchor")
     assert targets.value == {"severity_50_length_share": 0.10, "severity_70_length_share": 0.30}
     assert targets.history[-1].value == {"gust_m_per_s": 45.0, "failures_per_km": 0.05}
-    assert RULES.rule("storm.line_fragility_table").history[-1].decision == "0012"
+    assert RULES.rule("storm.line_fragility_table").history[-2].decision == "0012"
 
 
 def test_towers_hardly_fail_below_210_km_per_h_and_half_fail_at_285() -> None:
@@ -200,7 +204,7 @@ def test_a_line_reads_its_peak_gust_along_its_length() -> None:
     nodes = {n.node_id: n for n in requirements.layers.nodes}
     for scenario, damage in zip(storm.scenarios[:2], result.scenarios[:2], strict=True):
         for line, outcome in zip(result.lines, damage.lines, strict=True):
-            gust = scenario.wind_m_per_s * reader.factor * reader.ridge[line.structure]
+            gust = reader.gust(scenario, line.structure)
             cells = reader.cells(line)
             for end in (line.from_id, line.to_id):
                 assert nodes[end].row * 256 + nodes[end].column in cells
@@ -227,7 +231,7 @@ def test_each_kilometre_fails_at_its_own_gust_and_each_failure_is_a_point() -> N
     reader = stage._LineReader(terrain, RULES)
     streams = scenarios_streams(resolution.recipe.root_seed, 8)
     for field, scenario, stream in zip(storm.scenarios, result.scenarios, streams, strict=True):
-        gust = reader.gust(field.wind_m_per_s).ravel()
+        gust = reader.gust(field, Structure.POLE).ravel()
         for line, outcome in zip(result.lines, scenario.lines, strict=True):
             if line.structure == Structure.TOWER:
                 failed = float(stream.random()) < reader.tower_probability(
