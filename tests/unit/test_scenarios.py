@@ -106,16 +106,18 @@ def test_the_line_curve_is_the_declared_calibration_and_keeps_the_old_anchor() -
     assert table["beta"] == 0.4
     rule = RULES.rule("storm.line_fragility_table")
     assert rule.status == "ruled"
-    # Recalibrated for routed lines and the directional ridge factor (PR 14 answers).
-    assert rule.history[-1].value["median_m_per_s"] == 159.9394
-    assert rule.history[-1].value["beta"] == 0.4
-    assert rule.history[-1].decision == "0013"
-    assert rule.history[-2].value["median_m_per_s"] == 121.7185
-    assert rule.history[-2].value["beta"] == 0.3
+    # Recalibrated for routed lines and the directional ridge factor (PR 14 answers), then
+    # for its ceiling and towers designed for their site (PR 14 second answers).
+    assert [h.value["median_m_per_s"] for h in rule.history[-3:]] == [
+        121.7185,
+        159.9394,
+        201.7763,
+    ]
+    assert [h.decision for h in rule.history[-3:]] == ["0012", "0013", "0013"]
+    assert rule.history[-3].value["beta"] == 0.3
     targets = RULES.rule("storm.line_fragility_anchor")
     assert targets.value == {"severity_50_length_share": 0.10, "severity_70_length_share": 0.30}
     assert targets.history[-1].value == {"gust_m_per_s": 45.0, "failures_per_km": 0.05}
-    assert RULES.rule("storm.line_fragility_table").history[-2].decision == "0012"
 
 
 def test_towers_hardly_fail_below_210_km_per_h_and_half_fail_at_285() -> None:

@@ -45,8 +45,12 @@ class _Feature:
     offset_km: NDArray[np.float64]
     """x: the cell's distance downwind of the crest (negative upwind)."""
     escarpment: NDArray[np.bool_]
+    stands_out: NDArray[np.bool_]
+    """Condition (a): H is more than twice the terrain's height within 3.22 km upwind."""
+    unobstructed: NDArray[np.bool_]
+    """Condition (b): nothing of similar height lies within min(100H, 3.22 km) upwind."""
     applies: NDArray[np.bool_]
-    """The code's conditions hold."""
+    """All the code's conditions hold."""
 
 
 def directional_factors(
@@ -187,20 +191,27 @@ def _feature(
     half_length = np.maximum(span, 1) * step_km
     downwind = index > crest_k[None]
     falls_back = (downwind & (profile <= half[None])).any(axis=0)
-    # The code's isolation condition: nothing beyond the feature's own foot rises above half
-    # its height within the code's reach upwind of the crest, min(100H, 3.22 km).
+    # The code's two isolation conditions, tested separately (PR 14 second answers, 4), on the
+    # ground beyond the feature's own foot, measured upwind from the crest.
+    beyond_foot = index < nearest_below[None]
+    upwind_steps = crest_k[None] - index
+    # CHOICE: the terrain's height and an obstacle's height are both read above the feature's
+    # base, so either rises "to similar height" or "to half of H" at the same level. Under this
+    # reading (b) fails only where (a) also fails; the question is in the PR 14 report.
+    risen = profile > half[None]
+    stands_out = ~(beyond_foot & (upwind_steps <= upwind_km / step_km) & risen).any(axis=0)
     reach_steps = np.minimum(100.0 * height / M_PER_KM, upwind_km) / step_km
-    beyond_foot = (index < nearest_below[None]) & (crest_k[None] - index <= reach_steps[None])
-    isolated = ~(beyond_foot & (profile > half[None])).any(axis=0)
+    unobstructed = ~(beyond_foot & (upwind_steps <= reach_steps[None]) & risen).any(axis=0)
     ratio = height / (half_length * M_PER_KM)
     minimum = table["min_height_m"]
     tall = np.where(rough, height > float(minimum["ab"]), height > float(minimum["c"]))
     # The code's factor is for the upper half of a hill or ridge, or near an escarpment's top
     # (上半部 ... 近頂端處): the cell's own ground must stand at half the height or more.
     upper_half = elevation >= half
-    applies = found & isolated & tall & upper_half & (ratio >= float(table["h_over_lh_min"]))
+    steep = ratio >= float(table["h_over_lh_min"])
+    applies = found & stands_out & unobstructed & tall & upper_half & steep
     offset = (-crest_k * step_km).astype(np.float64)
-    return _Feature(height, half_length, offset, ~falls_back, applies)
+    return _Feature(height, half_length, offset, ~falls_back, stands_out, unobstructed, applies)
 
 
 def _factor(

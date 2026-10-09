@@ -60,3 +60,24 @@ Reading the ridge factor for the worst of eight directions everywhere is the cod
 9. **The pilot needs no mutual pair.** Its `two_way_pct` is 0, and the hand trace needs no loop. The generic tests of the "keep a mutual pair" rule stay.
 
 The mast-to-mast and reservoir-to-reservoir links found by the A2 audit are generator bugs. They become Part 0 of Work Order 7.
+
+## Second addendum: second answers to PR 14 (2026-10-09)
+
+- **Decided by:** the author (Foreman)
+- **Source:** `docs/work_orders/WO-06c-answers-2.md`; structure v0.8 §4.3b as updated on the branch
+
+Reading the storm's own direction cut the ridge factor's coverage, but a crest is sped up from either side, so the pilot's peak gust rose to 135.7 m/s, about 40% above Taiwan's highest measured gust.
+
+1. **Ceiling on the speed-up.** The factor on the wind is min(1 + K1K2K3, ceiling), for every structure. The code still decides where the speed-up applies and its shape; the observed record decides how much.
+   - **Rule:** `storm.ridge_factor_ceiling` (J; new registry status `calibrated`).
+   - **Calibration:** set by `tools/calibrate_ridge_ceiling.py` so that the pilot's highest 3-second gust at pole height, over its 8 scenarios, equals 95.2 m/s. That is Taiwan's highest measured gust: Lanyu, Typhoon Koinu, 2023, a moderate typhoon (CNA; Newtalk). The previous Lanyu peak was 89.8 m/s, in Typhoon Alex, 1984.
+   - **Value:** 1.169085, stored to 2 decimals as **1.17**, which gives 95.27 m/s.
+   - **Towers:** the tower design factor does not take the ceiling.
+2. **Towers designed for their site:** `storm.towers_designed_for_site` is ruled **true**; false moves to its history.
+3. **Recalibration.** The pole-line median is recalibrated at a spread of 0.4 with the ceiling and the tower setting in place. It is **163.6914 m/s**: pilot 7.8%, severity 70 32.1%, both within 5 points. 201.7763 moves to history.
+4. **Two isolation tests.** The code's two isolation conditions are tested separately:
+   - (a) the feature stands more than twice the terrain within 3.22 km upwind;
+   - (b) nothing of similar height lies within min(100H, 3.22 km) upwind.
+
+   Both must hold, with H/Lh ≥ 0.2, the minimum height and the upper half.
+5. **Spec text.** The design side updates §4.3b's achieved shares after the report. No spec edits on the coding side.

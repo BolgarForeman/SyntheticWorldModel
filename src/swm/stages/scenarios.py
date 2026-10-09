@@ -308,6 +308,9 @@ class _LineReader:
             for structure in Structure
         }
         self.sense = _rotation_sense(str(rules.value("storm.rotation")))
+        # The factor on the wind is held to the ceiling calibrated on Taiwan's gust record
+        # (PR 14 second answers, 1); the tower design factor below is the code's, uncapped.
+        self.ceiling = rules.number("storm.ridge_factor_ceiling")
         # A tower designed for its site is built to the code's worst-direction factor there,
         # so it reads its gust divided by that factor (PR 14 answer 2).
         designed = bool(rules.value("storm.towers_designed_for_site"))
@@ -323,7 +326,8 @@ class _LineReader:
 
         To the right of the track a counterclockwise storm's wind travels along the track, to
         the left against it; within the radius of maximum wind a place meets the eyewall from
-        both sides and takes the worse of the two (§4.3b, PR 14 answer 1).
+        both sides and takes the worse of the two (§4.3b, PR 14 answer 1). The factor is held
+        to ``storm.ridge_factor_ceiling`` (PR 14 second answers, 1).
         """
         factors = self.directional[structure]
         track = scenario.track
@@ -337,7 +341,8 @@ class _LineReader:
         offset = signed_distance_km(track, self.grid.cell_size_m)
         eyewall = np.abs(offset) <= track.radius_max_wind_km
         one_side = np.where(offset > 0.0, along, against)
-        ridge: NDArray[np.float64] = np.where(eyewall, np.maximum(along, against), one_side)
+        worse = np.where(eyewall, np.maximum(along, against), one_side)
+        ridge: NDArray[np.float64] = np.minimum(worse, self.ceiling)
         return ridge
 
     def gust(self, scenario: StormScenario, structure: Structure) -> NDArray[np.float64]:

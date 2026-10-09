@@ -218,6 +218,8 @@ def _factor(ratio: float, x_over_lh: float, z_over_lh: float, escarpment: bool =
         half_length_km=_one(half_length_km),
         offset_km=_one(x_over_lh * half_length_km),
         escarpment=np.array([escarpment]),
+        stands_out=np.array([True]),
+        unobstructed=np.array([True]),
         applies=np.array([True]),
     )
     table = RULES.value("storm.topographic_factor")
@@ -293,19 +295,39 @@ def test_the_pilot_ridge_factor_is_one_at_sea_and_above_one_somewhere_on_land() 
     assert factor.max() <= 1.0 + 0.72 + 1e-9
 
 
-def test_the_isolation_check_reaches_100h_or_3_22_km_upwind_whichever_is_less() -> None:
-    # A 20 m ridge one cell wide: the code's reach upwind of its crest is 100H = 2 km.
-    def crest_applies(bump_cells_upwind: int) -> bool:
-        ground = np.zeros(GRID_CELLS)
-        ground[128] = 20.0
-        ground[128 - bump_cells_upwind] = 15.0
-        elevation = ground[None, :] * np.ones((GRID_CELLS, 1))
-        rough = np.zeros((GRID_CELLS, GRID_CELLS), bool)
-        table = RULES.value("storm.topographic_factor")
-        return bool(topography._feature(elevation, rough, 0.1, (0, 1), table).applies[100, 128])
+def ridge_with_upwind_bump(bump_cells_upwind: int, bump_m: float = 15.0) -> Any:
+    """A 20 m ridge one cell wide with a bump upwind (cells of 0.1 km); 100H is 2 km."""
+    ground = np.zeros(GRID_CELLS)
+    ground[128] = 20.0
+    ground[128 - bump_cells_upwind] = bump_m
+    elevation = ground[None, :] * np.ones((GRID_CELLS, 1))
+    rough = np.zeros((GRID_CELLS, GRID_CELLS), bool)
+    table = RULES.value("storm.topographic_factor")
+    feature = topography._feature(elevation, rough, 0.1, (0, 1), table)
+    return (bool(feature.stands_out[100, 128]), bool(feature.unobstructed[100, 128]),
+            bool(feature.applies[100, 128]))  # fmt: skip
 
-    assert crest_applies(25)  # 2.5 km upwind: beyond 100H, so the ridge stands isolated
-    assert not crest_applies(15)  # 1.5 km upwind: a feature of similar height within reach
+
+def test_an_isolated_ridge_passes_both_isolation_tests() -> None:
+    # 3.5 km upwind is beyond both reaches.
+    assert ridge_with_upwind_bump(35) == (True, True, True)
+
+
+def test_condition_a_fails_alone_beyond_100h_but_within_3_22_km() -> None:
+    # 2.5 km upwind: beyond 100H, so nothing of similar height lies within (b)'s reach, but the
+    # ridge does not stand more than twice the terrain within 3.22 km (a).
+    assert ridge_with_upwind_bump(25) == (False, True, False)
+
+
+def test_condition_b_fails_only_where_condition_a_also_fails() -> None:
+    # 1.5 km upwind: within both reaches. Both heights are read above the feature's base, so a
+    # feature of similar height within min(100H, 3.22 km) also breaks (a); (b) cannot fail
+    # alone under this reading (PR 14 second answers, question raised in the report).
+    assert ridge_with_upwind_bump(15) == (False, False, False)
+    for cells in range(1, 34):
+        for bump_m in (5.0, 10.5, 19.0):
+            stands_out, unobstructed, _ = ridge_with_upwind_bump(cells, bump_m)
+            assert unobstructed or not stands_out
 
 
 @pytest.mark.parametrize("index", range(8))
@@ -323,10 +345,15 @@ def test_a_wind_direction_snaps_to_the_largest_dot_product() -> None:
     assert topography.wind_direction((0.0, 0.0)) == 0
 
 
+NO_CEILING = {"storm.ridge_factor_ceiling": 100.0}
+"""Lifts the ridge factor's ceiling, so a test can read the numbered directions."""
+
+
 def numbered_reader(rules: Any = RULES) -> _LineReader:
     """The pilot's line reader with each direction's factor set to its index plus one."""
     terrain = pilot_world()[1]
     reader = _LineReader(terrain, rules)
+    reader.ceiling = 100.0
     shape = np.asarray(terrain.land).shape
     numbered = np.stack([np.full(shape, d + 1.0) for d in range(8)])
     reader.directional = {s: numbered for s in Structure}
@@ -371,9 +398,9 @@ def test_a_calm_scenario_reads_no_ridge_factor() -> None:
 def test_a_tower_designed_for_its_site_reads_its_gust_over_the_worst_direction_factor() -> None:
     terrain = pilot_world()[1]
     scenario = eastbound(terrain.grid.cell_size_m / 1000.0)
-    assert RULES.value("storm.towers_designed_for_site") is False
-    plain = _LineReader(terrain, RULES)
-    designed = _LineReader(terrain, RULES.with_overrides({"storm.towers_designed_for_site": True}))
+    assert RULES.value("storm.towers_designed_for_site") is True
+    plain = _LineReader(terrain, RULES.with_overrides({"storm.towers_designed_for_site": False}))
+    designed = _LineReader(terrain, RULES)
     worst = topography.speed_factor(terrain, RULES, 30.0)
     flat = scenario.wind_m_per_s * plain.factor
     tower = Structure.TOWER
@@ -384,6 +411,27 @@ def test_a_tower_designed_for_its_site_reads_its_gust_over_the_worst_direction_f
     # Poles are never designed for their site.
     pole = Structure.POLE
     assert np.array_equal(designed.gust(scenario, pole), plain.gust(scenario, pole))
+
+
+def test_the_ridge_factor_on_the_wind_is_held_to_the_ceiling() -> None:
+    terrain = pilot_world()[1]
+    scenario = eastbound(terrain.grid.cell_size_m / 1000.0)
+    ceiling = RULES.number("storm.ridge_factor_ceiling")
+    assert RULES.rule("storm.ridge_factor_ceiling").status == "calibrated"
+    capped = _LineReader(terrain, RULES)
+    uncapped = _LineReader(terrain, RULES.with_overrides(NO_CEILING))
+    for structure in Structure:
+        free = uncapped.ridge(scenario, structure)
+        assert (free > ceiling).any()
+        assert np.array_equal(capped.ridge(scenario, structure), np.minimum(free, ceiling))
+
+
+def test_the_tower_design_factor_does_not_take_the_ceiling() -> None:
+    terrain = pilot_world()[1]
+    reader = _LineReader(terrain, RULES)
+    worst = topography.speed_factor(terrain, RULES, 30.0)
+    assert np.array_equal(reader.design[Structure.TOWER], worst)
+    assert worst.max() > RULES.number("storm.ridge_factor_ceiling")
 
 
 # --- Storm and crews (C1, D1) ---------------------------------------------------------------

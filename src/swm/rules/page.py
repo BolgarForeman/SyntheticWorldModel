@@ -124,10 +124,10 @@ def rules_page_html(registry: Registry) -> bytes:
     )  # fmt: skip
     statuses = "".join(
         f'<label><input type="checkbox" value="status-{s}" checked> {s}</label>'
-        for s in ("ruled", "placeholder", "open")
+        for s in ("ruled", "calibrated", "placeholder", "open")
     )
     counts = {s: sum(1 for r in registry.rules if r.status.value == s) for s in
-              ("ruled", "placeholder", "open")}  # fmt: skip
+              ("ruled", "calibrated", "placeholder", "open")}  # fmt: skip
     page = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -143,8 +143,8 @@ def rules_page_html(registry: Registry) -> bytes:
 Rules change only by a reviewed edit to the registry; a recipe may override any rule
 for a sensitivity run, and its overrides are stamped on the world.</p>
 <p>Registry version {html.escape(registry.version)} · SHA-256 {registry.sha256} ·
-{len(registry.rules)} rules: {counts["ruled"]} ruled, {counts["placeholder"]} placeholder,
-{counts["open"]} open</p>
+{len(registry.rules)} rules: {counts["ruled"]} ruled, {counts["calibrated"]} calibrated,
+{counts["placeholder"]} placeholder, {counts["open"]} open</p>
 </header>
 <div class="filters">
 <fieldset><legend>Grade</legend>{grades}</fieldset>
