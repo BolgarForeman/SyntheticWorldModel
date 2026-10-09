@@ -420,9 +420,40 @@ def _calm(index: int, terrain: TerrainResult) -> StormScenario:
 
 def _signed_distance_km(track: Track, ground: _Ground) -> NDArray[np.float64]:
     """Distance from each cell centre to the track line, positive to the right of travel."""
+    return _offset_km(track, ground.x_km, ground.y_km)
+
+
+def signed_distance_km(track: Track, cell_size_m: float) -> NDArray[np.float64]:
+    """Return each cell's distance from the track line, positive to the right of travel.
+
+    Parameters
+    ----------
+    track : Track
+        The scenario's straight track.
+    cell_size_m : float
+        The terrain grid's cell size, in m.
+
+    Returns
+    -------
+    numpy.ndarray
+        Signed distance in km, one per cell (row 0 the northern edge).
+
+    Spec: structure v0.7 §4.3b (the wind field); PR 14 answer 1.
+    """
+    cell_km = cell_size_m / M_PER_KM
+    centres = (np.arange(GRID_CELLS) + 0.5) * cell_km
+    x_km = np.ones((GRID_CELLS, 1)) * centres[None, :]
+    y_km = centres[:, None] * np.ones((1, GRID_CELLS))
+    return _offset_km(track, x_km, y_km)
+
+
+def _offset_km(
+    track: Track, x_km: NDArray[np.float64], y_km: NDArray[np.float64]
+) -> NDArray[np.float64]:
     east, south = track.direction
     px, py = track.point_km
-    return (ground.x_km - px) * (-south) + (ground.y_km - py) * east
+    offset: NDArray[np.float64] = (x_km - px) * (-south) + (y_km - py) * east
+    return offset
 
 
 def _profile(

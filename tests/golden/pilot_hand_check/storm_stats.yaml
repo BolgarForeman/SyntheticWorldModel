@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: b30910c6951011120ca692e951c3366ab354fe30be3374fb8bd334a44d1700f5
+  registry_sha256: e28d76d001519c9379a02c03db2cc4452b7f9a664b86bb2bf677a80a13613643
   overrides: {}
 severity: 50
 storm_class: moderate

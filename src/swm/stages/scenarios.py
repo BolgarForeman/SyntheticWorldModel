@@ -28,14 +28,22 @@ import numpy as np
 from numpy.typing import NDArray
 
 from swm import rng
-from swm.coordinates import domain_origin_m
+from swm.coordinates import cell_of
 from swm.recipe.dependencies import Role
 from swm.recipe.schema import DamageState, Hazard, Layer, NodeClass
 from swm.rules.registry import Registry
 from swm.stages.couplings import CouplingsResult
 from swm.stages.layers import LayersResult, Link, _segment_cells
-from swm.stages.storm import StormResult, _coast_distance_km, flood_threshold_m
-from swm.stages.terrain import GRID_CELLS, Grid, TerrainResult
+from swm.stages.roads import sub_polyline
+from swm.stages.storm import (
+    StormResult,
+    StormScenario,
+    _coast_distance_km,
+    flood_threshold_m,
+    signed_distance_km,
+)
+from swm.stages.terrain import TerrainResult
+from swm.stages.topography import directional_factors, wind_direction
 
 M_PER_KM = 1000.0
 
@@ -44,7 +52,6 @@ LENGTH_STEPS_PER_KM = 1024
 ROOT_HALVINGS = 10
 """Square roots giving (1 - p)^(1/1024): 2^10 = LENGTH_STEPS_PER_KM."""
 
-TOWER_ENDS = frozenset({NodeClass.GENERATION, NodeClass.TRANSMISSION_SUBSTATION})
 SUBSTATIONS = frozenset({NodeClass.DISTRIBUTION_SUBSTATION, NodeClass.TRANSMISSION_SUBSTATION})
 
 
@@ -96,7 +103,8 @@ class LineOutcome:
 
     line_id: str
     peak_gust_m_per_s: float
-    """The highest 3-second gust anywhere along the line."""
+    """The highest 3-second gust anywhere along the line, as read against its fragility curve
+    (over the site's design factor for a tower designed for its site)."""
     failure_probability: float
     """The chance that the line is down: any kilometre failing, or its towers collapsing."""
     failed: bool
@@ -188,13 +196,8 @@ def overhead_lines(layers: LayersResult, couplings: CouplingsResult) -> tuple[Ov
     lines = []
     for link in layers.links:
         if link.layer == Layer.POWER:
-            # CHOICE: a power link between generation and transmission substations, or from a
-            # transmission to a distribution substation, is carried on towers (the second
-            # ruled J, decision 0012 second addendum); other links are pole lines.
-            ends = {classes[link.from_id], classes[link.to_id]}
-            towers = ends <= TOWER_ENDS or ends == SUBSTATIONS
-            structure = Structure.TOWER if towers else Structure.POLE
-            lines.append(_link_line(link, LineKind.POWER_LINK, structure))
+            # Every mapped power line runs on towers along its terrain route (§4.2).
+            lines.append(_link_line(link, LineKind.POWER_LINK, Structure.TOWER))
         elif link.layer == Layer.TELECOM:
             lines.append(_link_line(link, LineKind.TELECOM_LINK, Structure.POLE))
     for edge in couplings.edges:
@@ -203,13 +206,12 @@ def overhead_lines(layers: LayersResult, couplings: CouplingsResult) -> tuple[Ov
         supplier = classes[edge.supplier_id]
         if supplier not in SUBSTATIONS:
             continue
-        # CHOICE: a feed has no drawn route, so it runs straight from substation to consumer;
-        # a transmission substation's feeds (rule 4's large loads) are carried on towers.
-        towers = supplier == NodeClass.TRANSMISSION_SUBSTATION
-        structure = Structure.TOWER if towers else Structure.POLE
-        lines.append(OverheadLine(edge.edge_id, LineKind.POWER_FEED, structure,
-                                  edge.supplier_id, edge.consumer_id, edge.points,
-                                  edge.length_km))  # fmt: skip
+        # Feeds run on poles along their road route (§4.2; Work Order 6c, B1).
+        route = edge.route or edge.points
+        length_km = edge.route_km if edge.route_km is not None else edge.length_km
+        lines.append(OverheadLine(edge.edge_id, LineKind.POWER_FEED, Structure.POLE,
+                                  edge.supplier_id, edge.consumer_id, route,
+                                  length_km))  # fmt: skip
     return tuple(lines)
 
 
@@ -254,10 +256,15 @@ def build_scenarios(
     pieces = [reader.pieces(line) for line in lines]
     damaged = []
     for scenario, stream in zip(storm.scenarios, streams, strict=True):
-        gust = reader.gust(scenario.wind_m_per_s).ravel()
+        gusts = {s: reader.gust(scenario, s).ravel() for s in Structure}
         outcomes = [
             _line_outcome(
-                line, line_pieces, gust, reader, crew_work_per_point_h(line, rules), stream
+                line,
+                line_pieces,
+                gusts[line.structure],
+                reader,
+                crew_work_per_point_h(line, rules),
+                stream,
             )
             for line, line_pieces in zip(lines, pieces, strict=True)
         ]
@@ -293,10 +300,59 @@ class _LineReader:
         tower = rules.value("storm.tower_fragility_table")
         self.line_table = (tuple(line["gust_m_per_s"]), tuple(line["failures_per_km"]))
         self.tower_table = (tuple(tower["gust_m_per_s"]), tuple(tower["collapse"]))
+        heights = rules.value("storm.line_heights_m")
+        # The ridge and hill speed-up at each structure's height, for each of the eight wind
+        # directions (§4.3b; Work Order 6c, C2; PR 14 answer 1).
+        self.directional = {
+            structure: directional_factors(terrain, rules, float(heights[structure.value]))
+            for structure in Structure
+        }
+        self.sense = _rotation_sense(str(rules.value("storm.rotation")))
+        # The factor on the wind is held to the ceiling calibrated on Taiwan's gust record
+        # (PR 14 second answers, 1); the tower design factor below is the code's, uncapped.
+        self.ceiling = rules.number("storm.ridge_factor_ceiling")
+        # A tower designed for its site is built to the code's worst-direction factor there,
+        # so it reads its gust divided by that factor (PR 14 answer 2).
+        designed = bool(rules.value("storm.towers_designed_for_site"))
+        self.design = {
+            structure: self.directional[structure].max(axis=0)
+            if designed and structure == Structure.TOWER
+            else np.ones(land.shape)
+            for structure in Structure
+        }
 
-    def gust(self, wind_m_per_s: NDArray[np.float64]) -> NDArray[np.float64]:
-        """Return the 3-second gust at each cell from the 10-minute wind."""
-        gust: NDArray[np.float64] = wind_m_per_s * self.factor
+    def ridge(self, scenario: StormScenario, structure: Structure) -> NDArray[np.float64]:
+        """Return each cell's ridge factor for the direction the scenario's wind blows there.
+
+        To the right of the track a counterclockwise storm's wind travels along the track, to
+        the left against it; within the radius of maximum wind a place meets the eyewall from
+        both sides and takes the worse of the two (§4.3b, PR 14 answer 1). The factor is held
+        to ``storm.ridge_factor_ceiling`` (PR 14 second answers, 1).
+        """
+        factors = self.directional[structure]
+        track = scenario.track
+        if track is None:
+            return np.ones(factors.shape[1:])
+        east, south = track.direction
+        # CHOICE: the wind's inflow angle across the isobars is neglected: it travels parallel
+        # to the track (PR 14 answer 1).
+        along = factors[wind_direction((self.sense * south, self.sense * east))]
+        against = factors[wind_direction((-self.sense * south, -self.sense * east))]
+        offset = signed_distance_km(track, self.grid.cell_size_m)
+        eyewall = np.abs(offset) <= track.radius_max_wind_km
+        one_side = np.where(offset > 0.0, along, against)
+        worse = np.where(eyewall, np.maximum(along, against), one_side)
+        ridge: NDArray[np.float64] = np.minimum(worse, self.ceiling)
+        return ridge
+
+    def gust(self, scenario: StormScenario, structure: Structure) -> NDArray[np.float64]:
+        """Return the 3-second gust each structure is read at, against its fragility curve.
+
+        The 10-minute wind times the gust factor and the ridge factor at the structure's
+        height, over the factor a tower designed for its site is built to (1 otherwise).
+        """
+        speed_up = self.ridge(scenario, structure) / self.design[structure]
+        gust: NDArray[np.float64] = scenario.wind_m_per_s * self.factor * speed_up
         return gust
 
     def cells(self, line: OverheadLine) -> NDArray[np.int64]:
@@ -312,15 +368,9 @@ class _LineReader:
 
     def pieces(self, line: OverheadLine) -> list["_Piece"]:
         """Split the line into whole kilometres along its route; the last piece is the rest."""
-        steps = [_length_m(a, b) for a, b in pairwise(line.points)]
-        total_m = math.fsum(steps)
-        count = max(1, math.ceil(total_m / M_PER_KM - 1e-9))
-        pieces = []
-        for k in range(count):
-            start_m, end_m = k * M_PER_KM, min((k + 1) * M_PER_KM, total_m)
-            points = _sub_polyline(line.points, steps, start_m, end_m)
-            pieces.append(_Piece(start_m / M_PER_KM, end_m / M_PER_KM, self._cells_of(points)))
-        return pieces
+        return [
+            _Piece(km.start_km, km.end_km, self._cells_of(km.points)) for km in kilometres(line)
+        ]
 
     def piece_probability(self, gust: float, length_km: float) -> float:
         """Return a pole-line piece's chance of failing at its local gust: 1 - (1 - p)^length."""
@@ -332,6 +382,14 @@ class _LineReader:
         # CHOICE: a towered line collapses once per line at its peak gust; §4.3b gives no
         # towers-per-km.
         return _interpolate(self.tower_table, gust)
+
+
+def _rotation_sense(rotation: str) -> float:
+    """Return +1 if the wind right of the track travels with it (counterclockwise), else -1."""
+    senses = {"counterclockwise": 1.0, "clockwise": -1.0}
+    if rotation not in senses:
+        raise ValueError(f"storm.rotation must be one of {sorted(senses)}, not {rotation!r}")
+    return senses[rotation]
 
 
 @dataclass(frozen=True)
@@ -399,76 +457,49 @@ def _length_m(a: tuple[float, float], b: tuple[float, float]) -> float:
     return math.sqrt(dx * dx + dy * dy)
 
 
-def _sub_polyline(
-    points: Sequence[tuple[float, float]], steps: Sequence[float], start_m: float, end_m: float
-) -> list[tuple[float, float]]:
-    """Return the part of a polyline between two distances along it, in metres."""
-    result: list[tuple[float, float]] = []
-    walked = 0.0
-    for (a, b), step in zip(pairwise(points), steps, strict=True):
-        low, high = max(start_m, walked), min(end_m, walked + step)
-        if high >= low and step > 0.0:
-            for at in (low, high):
-                share = (at - walked) / step
-                point = (a[0] + share * (b[0] - a[0]), a[1] + share * (b[1] - a[1]))
-                if not result or result[-1] != point:
-                    result.append(point)
-        walked += step
-    return result or [points[0]]
+@dataclass(frozen=True)
+class Kilometre:
+    """One kilometre of a line along its route (the last may be shorter)."""
+
+    index: int
+    start_km: float
+    end_km: float
+    points: tuple[tuple[float, float], ...]
+    """Its stretch of the route, EPSG:32710 metres."""
+
+    @property
+    def midpoint(self) -> tuple[float, float]:
+        """The point halfway along this kilometre."""
+        steps = [_length_m(a, b) for a, b in pairwise(self.points)]
+        half = math.fsum(steps) / 2
+        middle = sub_polyline(self.points, steps, half, half)
+        return middle[0]
 
 
-def cell_of(x_m: float, y_m: float, grid: Grid) -> tuple[int, int]:
-    """Return the (row, column) of the grid cell holding a point; row 0 is the northern edge.
-
-    Parameters
-    ----------
-    x_m, y_m : float
-        EPSG:32710 easting and northing, in m.
-    grid : Grid
-        The terrain grid.
-
-    Returns
-    -------
-    tuple of int
-        The cell, held inside the grid.
-
-    Spec: structure v0.4 §4.1a (coordinates).
-    """
-    west_m, south_m = domain_origin_m(grid)
-    column = math.floor((x_m - west_m) / grid.cell_size_m)
-    row = GRID_CELLS - 1 - math.floor((y_m - south_m) / grid.cell_size_m)
-    return min(max(row, 0), GRID_CELLS - 1), min(max(column, 0), GRID_CELLS - 1)
-
-
-def midpoint_cell(line: OverheadLine, grid: Grid) -> tuple[int, int]:
-    """Return the cell at half the line's length along its polyline.
+def kilometres(line: OverheadLine) -> list[Kilometre]:
+    """Split a line into whole kilometres along its route, the last piece being the rest.
 
     Parameters
     ----------
     line : OverheadLine
         The line.
-    grid : Grid
-        The terrain grid.
 
     Returns
     -------
-    tuple of int
-        (row, column) of the line's midpoint.
+    list of Kilometre
+        Each kilometre's span along the line and its stretch of the route.
 
-    Spec: Work Order 6, E1 (travel to a failed line).
+    Spec: structure v0.8 §4.3b (lines by the kilometre); Work Order 6c, C1 and D1.
     """
-    steps = [
-        math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay))
-        for (ax, ay), (bx, by) in pairwise(line.points)
-    ]
-    remaining = math.fsum(steps) / 2
-    for ((ax, ay), (bx, by)), step in zip(pairwise(line.points), steps, strict=True):
-        if remaining <= step and step > 0.0:
-            share = remaining / step
-            return cell_of(ax + share * (bx - ax), ay + share * (by - ay), grid)
-        remaining -= step
-    x_m, y_m = line.points[-1]
-    return cell_of(x_m, y_m, grid)
+    steps = [_length_m(a, b) for a, b in pairwise(line.points)]
+    total_m = math.fsum(steps)
+    count = max(1, math.ceil(total_m / M_PER_KM - 1e-9))
+    pieces = []
+    for k in range(count):
+        start_m, end_m = k * M_PER_KM, min((k + 1) * M_PER_KM, total_m)
+        points = tuple(sub_polyline(line.points, steps, start_m, end_m))
+        pieces.append(Kilometre(k, start_m / M_PER_KM, end_m / M_PER_KM, points))
+    return pieces
 
 
 def _interpolate(table: tuple[Sequence[float], Sequence[float]], x: float) -> float:

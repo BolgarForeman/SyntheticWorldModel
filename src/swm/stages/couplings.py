@@ -39,6 +39,7 @@ from swm.recipe.schema import (
 from swm.rules.registry import Registry
 from swm.stages.layers import LayersResult, Node, _segment_cells
 from swm.stages.requirements import RequirementsResult
+from swm.stages.roads import RoadMap, polyline_length_m
 from swm.stages.terrain import TerrainResult, _dilate, _label_land
 
 Pair = tuple[Layer, Layer]
@@ -114,6 +115,10 @@ class CouplingEdge:
     points: tuple[tuple[float, float], tuple[float, float]]
     length_km: float
     crosses_sea: bool
+    route: tuple[tuple[float, float], ...] = ()
+    """A power feed's route along the roads (EPSG:32710 metres); empty for other edges."""
+    route_km: float | None = None
+    """The route's length; None for edges that are not power feeds."""
 
 
 @dataclass(frozen=True)
@@ -299,11 +304,52 @@ def build_couplings(
         for pair in kept
     ]
     return CouplingsResult(
-        edges=tuple(builder.edges),
+        edges=tuple(_feeds_along_roads(builder.edges, world, RoadMap(terrain, layers))),
         dependencies=tuple(builder.dependencies),
         pairs=tuple(statistics),
         intra_layer_links=len(layers.links),
     )
+
+
+SUBSTATIONS = frozenset({NodeClass.DISTRIBUTION_SUBSTATION, NodeClass.TRANSMISSION_SUBSTATION})
+
+
+def _feeds_along_roads(
+    edges: Sequence[CouplingEdge], world: "_World", roads: RoadMap
+) -> list[CouplingEdge]:
+    """Route each power feed from a substation along the roads (§4.2; Work Order 6c, B1).
+
+    A feed runs from its substation to the nearest road point, along the roads to the road
+    point nearest its consumer, and straight to the consumer. It stays unobserved.
+    """
+    routed = []
+    for edge in edges:
+        supplier = world.by_id[edge.supplier_id]
+        if (
+            edge.supplier_layer != Layer.POWER
+            or edge.role != Role.PRIMARY_SUPPLY
+            or supplier.node_class not in SUBSTATIONS
+        ):
+            routed.append(edge)
+            continue
+        route = _road_route(edge.points[0], edge.points[1], roads)
+        routed.append(
+            replace(edge, route=route, route_km=round(polyline_length_m(route) / 1000, 3))
+        )
+    return routed
+
+
+def _road_route(
+    start: tuple[float, float], end: tuple[float, float], roads: RoadMap
+) -> tuple[tuple[float, float], ...]:
+    first, last = roads.nearest(start), roads.nearest(end)
+    along = None if first is None or last is None else roads.route(first, last)
+    if along is None:
+        # CHOICE: a feed with no road between its ends (on another landmass, or no roads)
+        # runs straight.
+        return (start, end)
+    points = [start, *along[0], end]
+    return tuple(point for i, point in enumerate(points) if i == 0 or point != points[i - 1])
 
 
 def edge_table(result: CouplingsResult) -> list[dict[str, object]]:
@@ -345,6 +391,8 @@ def edge_table(result: CouplingsResult) -> list[dict[str, object]]:
             "length_km": edge.length_km,
             "crosses_sea": edge.crosses_sea,
             "points_m": [[round(x, 2), round(y, 2)] for x, y in edge.points],
+            "route_km": edge.route_km,
+            "route_m": [[round(x, 2), round(y, 2)] for x, y in edge.route],
         }
         for edge in result.edges
     ]
@@ -575,9 +623,9 @@ class _LargeLoads:
     def suppliers(self, row: DependencyRow, consumer: Node) -> tuple[SupplierOption, ...]:
         """Return the row's suppliers, or a transmission substation for a large power consumer."""
         peak = self.peak_mw.get(consumer.node_id)
-        # CHOICE: rule 4 moves a large consumer onto transmission; a smaller one keeps its row's
-        # suppliers, so rows that already name a transmission substation (refinery, LNG
-        # terminal) are not moved down to distribution.
+        # Rule 4 (decision 0013): a large consumer takes a transmission substation; a smaller
+        # one keeps its row's suppliers, which name both classes, since any substation can
+        # step down.
         if row.supplier_layer != Layer.POWER or peak is None or peak < self.threshold_mw:
             return row.suppliers
         return (SupplierOption(NodeClass.TRANSMISSION_SUBSTATION),)

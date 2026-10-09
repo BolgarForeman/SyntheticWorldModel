@@ -139,7 +139,14 @@ def test_transport_rows_list_origins_under_rule_3() -> None:
         (Layer.FUEL, C.GENERATION, {"fuel_kind": "coal"}, Dependency.CORE, [C.IMPORT_TERMINAL]),
         (Layer.FUEL, C.GENERATION, {"fuel_kind": "hydro"}, Dependency.NONE, []),
         (Layer.POWER, C.RESERVOIR, {}, Dependency.NONE, []),
-        (Layer.POWER, C.FREIGHT_YARD, {}, Dependency.OPTIONAL, [C.DISTRIBUTION_SUBSTATION]),
+        # Decision 0013: any substation can supply any power consumer.
+        (
+            Layer.POWER,
+            C.FREIGHT_YARD,
+            {},
+            Dependency.OPTIONAL,
+            [C.DISTRIBUTION_SUBSTATION, C.TRANSMISSION_SUBSTATION],
+        ),
         (Layer.TELECOM, C.STORAGE, {}, Dependency.NONE, []),
         (Layer.TELECOM, C.AIRPORT, {"towered": True}, Dependency.CORE, [C.EXCHANGE]),
         (Layer.WATER, C.BLOOD_BANK, {}, Dependency.OPTIONAL, [C.STORAGE, C.PUMPING]),
@@ -177,4 +184,8 @@ def test_rule_conditions_on_suppliers_are_kept() -> None:
     tertiary = resolve_row(Layer.POWER, C.TERTIARY, {})
     assert tertiary.rule == "rule 5"
     lng_terminal = resolve_row(Layer.POWER, C.IMPORT_TERMINAL, {"product": "lng"})
-    assert [o.node_class for o in lng_terminal.suppliers] == [C.TRANSMISSION_SUBSTATION]
+    # Decision 0013: either class; rule 4 still sends a large load to transmission.
+    assert [o.node_class for o in lng_terminal.suppliers] == [
+        C.DISTRIBUTION_SUBSTATION,
+        C.TRANSMISSION_SUBSTATION,
+    ]

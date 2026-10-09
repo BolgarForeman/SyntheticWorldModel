@@ -267,5 +267,6 @@ def test_the_tables_hold_every_record(exact: Any) -> None:
     tables = stage.repair_tables(exact)
     assert list(tables) == [
         "travel", "permanent_repair", "emergency_repair", "unrepairable", "line_repair",
+        "failure_point_travel",
     ]  # fmt: skip
     assert len(tables["permanent_repair"]) == len(exact.permanent)

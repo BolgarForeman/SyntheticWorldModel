@@ -41,7 +41,7 @@ def test_couplings_writes_statistics_and_hashes_and_prints_the_total(
     stats = (tmp_path / "couplings_stats.yaml").read_text(encoding="utf-8")
     assert stats.startswith("modeling_rules:\n  registry_version:")
     assert "\npairs:\n  power-telecom:\n" in stats
-    assert "  total_edges: 50\n" in stats
+    assert "  total_edges: 51\n" in stats
     table = (tmp_path / "couplings_edges.csv").read_bytes()
     assert b"\r" not in table
     lines = table.decode("utf-8").splitlines()
@@ -49,13 +49,13 @@ def test_couplings_writes_statistics_and_hashes_and_prints_the_total(
         "edge_id,supplier_id,supplier_class,consumer_id,consumer_class,dependency_type,"
         "feed_configuration,role"
     )
-    assert len(lines) == 1 + 27  # every switched-on coupling edge
+    assert len(lines) == 1 + 28  # every switched-on coupling edge
     assert [line.split(",")[0] for line in lines[1:]] == sorted(
         line.split(",")[0] for line in lines[1:]
     )
     hashes = (tmp_path / "couplings_sha256.txt").read_text(encoding="utf-8").splitlines()
     assert [line.split("  ")[1] for line in hashes] == ["edges", "dependencies"]
-    assert "total edges 50: 23 intra-layer links and 27 switched-on" in capsys.readouterr().out
+    assert "total edges 51: 23 intra-layer links and 28 switched-on" in capsys.readouterr().out
 
 
 def test_requirements_writes_statistics_and_a_hash(
@@ -108,6 +108,7 @@ def test_repair_writes_statistics_and_hashes(pilot_path: Path, tmp_path: Path) -
     assert [line.split("  ")[1] for line in hashes] == [
         "crew_bases", "crews", "mobile_units",
         "travel", "permanent_repair", "emergency_repair", "unrepairable", "line_repair",
+        "failure_point_travel",
     ]  # fmt: skip
 
 
@@ -228,7 +229,7 @@ def test_export_gis_writes_a_readable_geopackage_and_geotiffs(
 
     assert main(["export-gis", str(pilot_path), "-o", str(tmp_path)]) == 0
     package = str(tmp_path / "world.gpkg")
-    expected = {"nodes": 24, "links": 23, "couplings": 72}
+    expected = {"nodes": 24, "links": 23, "couplings": 73}
     for layer in ("power", "telecom", "water", "transport", "fuel", "healthcare"):
         expected[f"nodes_{layer}"] = 4
     for layer, count in expected.items():

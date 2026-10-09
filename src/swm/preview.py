@@ -4,6 +4,7 @@ Needs the optional ``preview`` dependencies (matplotlib): ``uv sync --extra prev
 """
 
 import io
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -152,6 +153,14 @@ def world_preview_png(
             LineCollection(paths, colors=[LAYER_COLOURS[layer]], linewidths=1.6, alpha=0.85)
         )
     for edge in couplings.edges if couplings is not None else ():
+        if edge.route:
+            # A power feed runs along the roads (§4.2): drawn light and dashed.
+            axes.plot(
+                [(x - west_m) / 1000 for x, _ in edge.route],
+                [(y - south_m) / 1000 for _, y in edge.route],
+                color=LAYER_COLOURS[Layer.POWER], linewidth=0.7, alpha=0.45, linestyle="--",
+            )  # fmt: skip
+            continue
         (x0, y0), (x1, y1) = edge.points
         axes.plot(
             [(x0 - west_m) / 1000, (x1 - west_m) / 1000],
@@ -159,6 +168,7 @@ def world_preview_png(
             color=LAYER_COLOURS[edge.supplier_layer], linewidth=0.6 if edge.switched_on else 0.4,
             alpha=0.8 if edge.switched_on else 0.3, linestyle="-" if edge.switched_on else ":",
         )  # fmt: skip
+    _draw_towers(axes, layers, west_m, south_m)
     for node in layers.nodes:
         if node.runway is not None:
             (x0, y0), (x1, y1) = node.runway
@@ -201,6 +211,16 @@ def world_preview_png(
     figure.text(0.02, 0.02, caption, fontsize=8, family="monospace", va="bottom")
     figure.subplots_adjust(bottom=0.2, right=0.78)
     return _png(figure)
+
+
+def _draw_towers(axes: "Axes", layers: LayersResult, west_m: float, south_m: float) -> None:
+    """Mark the tower points of every mapped power line."""
+    for line in layers.power_lines:
+        axes.plot(
+            [(x - west_m) / 1000 for x, _ in line.tower_points],
+            [(y - south_m) / 1000 for _, y in line.tower_points],
+            linestyle="", marker=".", markersize=2.5, color="black",
+        )  # fmt: skip
 
 
 def couplings_preview_png(layers: LayersResult, couplings: CouplingsResult, title: str) -> bytes:
@@ -503,6 +523,7 @@ def storm_preview_png(
     storm: "StormResult",
     scenario: int,
     title: str,
+    feed_routes: Sequence[Sequence[tuple[float, float]]] = (),
 ) -> bytes:
     """Render one storm scenario: the wind field, the track, flooded land and every facility.
 
@@ -521,13 +542,15 @@ def storm_preview_png(
         Which scenario to draw.
     title : str
         Title printed above the map.
+    feed_routes : sequence of polylines
+        The power feeds' road routes (EPSG:32710 metres), drawn dashed.
 
     Returns
     -------
     bytes
         A PNG image.
 
-    Spec: Work Order 6, C1.
+    Spec: Work Order 6, C1; Work Order 6c, E2.
     """
     from matplotlib.figure import Figure
     from matplotlib.lines import Line2D
@@ -564,6 +587,20 @@ def storm_preview_png(
                         "mutation_scale": 22},
         )  # fmt: skip
     west_m, south_m = domain_origin_m(terrain.grid)
+    for link in layers.links:
+        if link.layer == Layer.POWER:
+            axes.plot(
+                [(x - west_m) / 1000 for x, _ in link.points],
+                [(y - south_m) / 1000 for _, y in link.points],
+                color="black", linewidth=1.4,
+            )  # fmt: skip
+    for route in feed_routes:
+        axes.plot(
+            [(x - west_m) / 1000 for x, _ in route],
+            [(y - south_m) / 1000 for _, y in route],
+            color="lightgrey", linewidth=0.8, linestyle="--",
+        )  # fmt: skip
+    _draw_towers(axes, layers, west_m, south_m)
     for node in layers.nodes:
         x_km, y_km = (node.x_m - west_m) / 1000, (node.y_m - south_m) / 1000
         axes.plot(
@@ -581,6 +618,8 @@ def storm_preview_png(
     axes.set_title(title)
     legend = [
         Line2D([], [], color="red", linewidth=1.6, label="track (direction of travel)"),
+        Line2D([], [], color="black", linewidth=1.4, label="mapped power line (towers dotted)"),
+        Line2D([], [], color="lightgrey", linewidth=0.8, linestyle="--", label="feed along roads"),
         Line2D([], [], color="orange", linestyle="--", label="lee of the spine"),
         Patch(facecolor=(0.0, 0.75, 1.0), label="flooded land (depth > 0)"),
         *[Line2D([], [], color=LAYER_COLOURS[layer], linewidth=2, label=layer.value)

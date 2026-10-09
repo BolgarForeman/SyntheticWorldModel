@@ -49,6 +49,8 @@ class Status(StrEnum):
     RULED = "ruled"
     PLACEHOLDER = "placeholder"
     OPEN = "open"
+    CALIBRATED = "calibrated"
+    """Set by a declared calibration tool against ruled targets (decision 0013, second addendum)."""
 
 
 class Stage(StrEnum):
