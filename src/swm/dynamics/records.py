@@ -133,7 +133,10 @@ class Run:
 
     def summary(self) -> dict[str, object]:
         """Return the E3 summary: hours out, the node out longest, last repair, most passes."""
-        longest = max(self.hours_out.items(), key=lambda item: (item[1], item[0]), default=None)
+        out = [(hours, node_id) for node_id, hours in self.hours_out.items() if hours > 0.0]
+        # Ties go to the lowest id; a run with no hours out has no node out longest.
+        top = max(out, key=lambda item: (item[0], [-ord(c) for c in item[1]]), default=None)
+        longest = None if top is None else (top[1], top[0])
         repairs = [c.time_h for c in self.completions if c.kind in ("facility", "line")]
         return {
             "hours_out": round(math.fsum(self.hours_out.values()), 6),
