@@ -687,8 +687,13 @@ class _Engine:
                 else self.capacity[stock.stock_id] / self.settings.battery_recharge_h
             )
         elif stock.refill == "main":
-            # CHOICE: water from the main refills a stock at the rate it drains.
-            rate = stock.draw_per_h
+            # Water from the main refills a stock at a fraction of the rate it drains (Work
+            # Order 8, Part 0); relaxed, at once.
+            rate = (
+                room / dt
+                if "reserves.main_refill_rate_fraction" in self.relaxed
+                else self.settings.main_refill_fraction * stock.draw_per_h
+            )
         elif stock.refill == "pumps":
             rate = self._spare_pumping(stock)
         else:

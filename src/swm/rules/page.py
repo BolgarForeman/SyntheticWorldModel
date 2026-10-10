@@ -25,6 +25,7 @@ STAGE_TITLES = {
     Stage.CREWS: "Crews",
     Stage.STORM: "Storm",
     Stage.DYNAMICS: "Dynamics",
+    Stage.EMISSION: "Emission",
     Stage.SIZING: "Sizing",
     Stage.LAYERS: "Layers",
     Stage.DRAWS: "Draws",

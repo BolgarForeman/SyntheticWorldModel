@@ -1,0 +1,443 @@
+"""Emission (Work Order 8): the OpenStreetMap extract and its views, the other sources, the
+names, the recorded headers, the cross-source correspondence and the separation of truth.
+"""
+
+import ast
+import csv
+import functools
+import io
+import json
+import re
+import zipfile
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
+
+import yaml
+
+from swm import rng
+from swm.cli import _built, _observed
+from swm.emit.headers import BEDS, HOSPITAL_LISTS, INSTITUTION_REGISTER, OURAIRPORTS, WRI_GPPD
+from swm.emit.osm_model import FIRST_ID, OSM_SOURCES
+from swm.emit.osm_tags import LINK_TAGS, tag_table
+from swm.emit.sources import EmittedSources, emit_sources
+from swm.manifest.truth import TruthInputs, truth_manifest
+from swm.recipe.io import parse_recipe
+from swm.recipe.resolve import resolve
+from swm.recipe.schema import SOURCE_SCOPES, Layer, NodeClass, Source
+from swm.rng import stream_record
+from swm.rules.registry import load_registry
+from swm.stages.emission import AREA_CLASSES, MINOR_CLASSES, _unnamed, town_name
+
+TESTS = Path(__file__).resolve().parents[1]
+SRC = TESTS.parent / "src" / "swm"
+PILOT = TESTS / "fixtures" / "pilot_hand_check.yaml"
+C = NodeClass
+CENTRE_TOLERANCE_DEG = 1e-5
+"""About a metre: a footprint's corners averaged in degrees, against its true point."""
+
+
+@functools.cache
+def world(recipe_text: str) -> Any:
+    resolution = resolve(parse_recipe(recipe_text))
+    built = _built(resolution)
+    observed = _observed(resolution, built)
+    return SimpleNamespace(resolution=resolution, built=built, observed=observed,
+                           sources=emit_sources(observed))  # fmt: skip
+
+
+def pilot() -> Any:
+    return world(PILOT.read_text(encoding="utf-8"))
+
+
+def nodes_only_pilot() -> Any:
+    recipe = yaml.safe_load(PILOT.read_text(encoding="utf-8"))
+    for layer in ("power", "telecom", "water"):
+        recipe["layers"][layer]["nodes_only"] = True
+    return world(yaml.safe_dump(recipe, sort_keys=False))
+
+
+@functools.cache
+def manifest() -> dict[str, Any]:
+    p = pilot()
+    recipe, b = p.resolution.recipe, p.built
+    streams = stream_record(recipe.root_seed, recipe.terrain.terrain_seed)
+    return truth_manifest(TruthInputs(
+        recipe, b.rules, b.requirements.layers, b.requirements, b.couplings, b.strength,
+        b.buffers, b.crews, b.repair, p.observed, p.sources, streams,
+    ))  # fmt: skip
+
+
+def text(sources: EmittedSources, path: str) -> str:
+    return sources.files[path].decode("utf-8-sig")
+
+
+def rows(sources: EmittedSources, path: str) -> list[list[str]]:
+    return list(csv.reader(io.StringIO(text(sources, path), newline="")))
+
+
+# --- OpenStreetMap (A1-A3) ------------------------------------------------------------------
+
+
+def test_every_feature_is_in_its_sources_scope() -> None:
+    p = pilot()
+    by_id = {n.node_id: n for n in p.observed.nodes}
+    for element in p.sources.osm.elements:
+        if element.kind in ("node", "area") and ":" not in element.element_id:
+            node = by_id[element.element_id]
+            assert node.node_class in SOURCE_SCOPES[OSM_SOURCES[node.layer]].classes
+
+
+def test_every_in_scope_element_appears_in_the_extract() -> None:
+    p = pilot()
+    elements = {e.element_id for e in p.sources.osm.elements}
+    for node in p.observed.nodes:
+        source = OSM_SOURCES[node.layer]
+        if source in p.observed.sources_of(node.layer):
+            assert (node.node_class in SOURCE_SCOPES[source].classes) == (node.node_id in elements)
+    assert {link.link_id for link in p.observed.links} <= elements
+
+
+def test_nodes_only_layers_have_no_ways() -> None:
+    p = nodes_only_pilot()
+    lines = [e for e in p.sources.osm.elements if e.kind == "line"]
+    assert lines
+    for element in lines:
+        assert not element.element_id.startswith(("SWM-POW", "SWM-TEL", "SWM-WAT"))
+    tags = {k for way in p.sources.osm.ways for k, _ in way.tags}
+    assert "power" not in {k for way in p.sources.osm.ways for k, v in way.tags if v == "line"}
+    assert "communication" not in tags
+
+
+def test_outlines_are_closed_and_centred_on_the_true_location() -> None:
+    p = pilot()
+    nodes = {n.osm_id: n for n in p.sources.osm.nodes}
+    ways = {w.osm_id: w for w in p.sources.osm.ways}
+    by_id = {n.node_id: n for n in p.observed.nodes}
+    areas = [e for e in p.sources.osm.elements if e.kind == "area"]
+    assert {by_id[e.element_id].node_class for e in areas if e.element_id in by_id} <= AREA_CLASSES
+    for element in areas:
+        refs = ways[element.way].refs
+        assert refs[0] == refs[-1]
+        assert len(refs) == 5
+        lon = sum(nodes[r].location[0] for r in refs[:-1]) / 4
+        lat = sum(nodes[r].location[1] for r in refs[:-1]) / 4
+        true = by_id[element.element_id.split(":")[0]].location
+        # The rectangle is centred exactly in metres (EPSG:32710); averaged in degrees, the
+        # projection's curvature over a footprint moves the centre by well under a metre.
+        assert abs(lon - true[0]) < CENTRE_TOLERANCE_DEG
+        assert abs(lat - true[1]) < CENTRE_TOLERANCE_DEG
+
+
+def test_each_line_passes_through_its_towers_in_order() -> None:
+    p = pilot()
+    nodes = {n.osm_id: n for n in p.sources.osm.nodes}
+    ways = {w.osm_id: w for w in p.sources.osm.ways}
+    links = {link.link_id: link for link in p.observed.links}
+    towered = [e for e in p.sources.osm.elements if e.towers]
+    assert towered
+    for element in towered:
+        assert ways[element.way].refs[1:-1] == element.towers
+        assert [nodes[t].location for t in element.towers] == list(
+            links[element.element_id].towers[1:-1]
+        )
+        assert all(dict(nodes[t].tags) == {"power": "tower"} for t in element.towers)
+
+
+def test_osm_ids_are_reserved_unique_and_sorted() -> None:
+    osm = pilot().sources.osm
+    for objects in (osm.nodes, osm.ways):
+        ids = [o.osm_id for o in objects]
+        assert ids == sorted(set(ids))
+        assert ids[0] >= FIRST_ID
+    facilities = [e for e in osm.elements if e.kind != "town"]
+    keys = [e.element_id for e in facilities]
+    assert keys == sorted(keys)
+
+
+def test_the_extract_carries_fixed_metadata() -> None:
+    body = text(pilot().sources, "sources/osm/island.osm")
+    assert set(re.findall(r'timestamp="([^"]+)"', body)) == {"2026-01-01T00:00:00Z"}
+    assert set(re.findall(r'version="([^"]+)"', body)) == {"0.6", "1"}
+    assert set(re.findall(r'changeset="([^"]+)"', body)) == {"1"}
+    assert set(re.findall(r'user="([^"]+)"', body)) == {"swm"}
+
+
+def test_the_pbf_blobs_are_stored_raw() -> None:
+    body = pilot().sources.files["sources/osm/island.osm.pbf"]
+    assert b"OSMHeader" in body
+    assert b"OSMData" in body
+    assert b"DenseNodes" in body
+    assert b"zlib_data" not in body
+
+
+def test_ports_are_harbour_areas_with_a_port_piece_inside() -> None:
+    p = pilot()
+    ways = {w.osm_id: dict(w.tags) for w in p.sources.osm.ways}
+    elements = {e.element_id: e for e in p.sources.osm.elements}
+    ports = [n for n in p.observed.nodes if n.node_class == C.SEAPORT]
+    assert ports
+    for port in ports:
+        assert ways[elements[port.node_id].way]["landuse"] == "harbour"
+        assert ways[elements[f"{port.node_id}:cargo"].way]["industrial"] == "port"
+
+
+# --- The two views: Geofabrik and Overpass (answer 2) ---------------------------------------
+
+
+def test_the_geofabrik_set_has_all_eighteen_layers_with_a_fixed_date() -> None:
+    files = pilot().sources.files
+    dbfs = sorted(p for p in files if p.endswith(".dbf"))
+    assert len(dbfs) == 18
+    for path in dbfs:
+        assert files[path][1:4] == bytes((126, 1, 1))
+        stem = path[: -len(".dbf")]
+        assert {f"{stem}{s}" for s in (".shp", ".shx", ".prj", ".cpg")} <= set(files)
+
+
+def test_every_shapefile_and_overpass_record_is_an_extract_object() -> None:
+    p = pilot()
+    nodes = {n.osm_id for n in p.sources.osm.nodes}
+    ways = {w.osm_id for w in p.sources.osm.ways}
+    for record in p.sources.geofabrik:
+        assert record.osm_id in nodes | ways
+    for hit in p.sources.overpass:
+        assert hit.osm_id in (nodes if hit.osm_type == "node" else ways)
+
+
+def test_the_overpass_responses_parse_and_name_their_objects() -> None:
+    files = pilot().sources.files
+    responses = [p for p in files if p.endswith((".geojson", ".json"))]
+    assert len(responses) == 4
+    for path in responses:
+        body = json.loads(files[path])
+        assert {"features", "elements"} & set(body)
+        assert not files[path].endswith(b"\n")
+        assert (path[: path.rindex(".")] + ".overpassql") in files
+
+
+# --- Identifiers (A1, B2) -------------------------------------------------------------------
+
+
+def test_no_icao_or_iata_and_every_country_field_is_reserved() -> None:
+    sources = pilot().sources
+    airports = rows(sources, "sources/ourairports/airports.csv")
+    header = airports[0]
+    for row in airports[1:]:
+        record = dict(zip(header, row, strict=True))
+        assert record["icao_code"] == record["iata_code"] == record["gps_code"] == ""
+        assert record["iso_country"] == "XS"
+        assert record["iso_region"].startswith("XS-")
+        assert re.fullmatch(r"XS-\d{4}", record["ident"])
+    plants = rows(sources, "sources/wri_gppd/global_power_plant_database.csv")
+    for row in plants[1:]:
+        record = dict(zip(plants[0], row, strict=True))
+        assert record["country"] == "XSW"
+        assert re.fullmatch(r"XSW\d{7}", record["gppd_idnr"])
+    for code in sources.register:
+        assert re.fullmatch(r"XS\d{8}", code.code)
+
+
+# --- Names (A4) -----------------------------------------------------------------------------
+
+SCREENED = frozenset((
+    "the", "and", "for", "are", "but", "not", "you", "all", "any", "can", "her", "was", "one",
+    "our", "out", "day", "get", "has", "him", "his", "how", "man", "new", "now", "old", "see",
+    "two", "way", "who", "boy", "did", "its", "let", "put", "say", "she", "too", "use", "bay",
+    "vale", "cove", "head", "point", "london", "paris", "rome", "berlin", "madrid", "tokyo",
+    "delhi", "cairo", "lima", "quito", "oslo", "bern", "dublin", "vienna", "sydney", "perth",
+    "darwin", "hobart", "auckland", "nelson", "wellington", "taipei", "manila", "jakarta",
+    "lagos", "accra", "dakar", "nairobi", "denver", "boston", "dallas", "austin", "chicago",
+    "sale", "dale", "brook", "mere", "hull", "bath", "york", "chester", "lincoln", "durham",
+    "kent", "devon", "cornwall", "wales", "ireland", "china", "india", "japan", "peru",
+    "chile", "malta", "cuba", "iran", "iraq", "oman", "yemen",
+))  # fmt: skip
+"""Common English words and well-known world place names a generated name must not be."""
+
+
+def test_names_are_deterministic_and_screened() -> None:
+    rules = load_registry()
+    syllables = rules.value("emission.names.syllables")
+    share = rules.number("emission.names.place_word_share")
+    names = []
+    for town in range(200):
+        stream = rng.element_stream(0, "emission/names", f"town-{town}")
+        names.append(town_name(syllables, share, stream, set()))
+        again = rng.element_stream(0, "emission/names", f"town-{town}")
+        assert town_name(syllables, share, again, set()) == names[-1]
+    for name in names:
+        assert name.split()[0].lower() not in SCREENED, name
+
+
+def test_the_pilot_towns_are_unique_and_every_name_is_english() -> None:
+    p = pilot()
+    towns = [t.name for t in p.observed.towns]
+    assert len(set(towns)) == len(towns)
+    names = [v for n in p.sources.osm.nodes for k, v in n.tags if k == "name"]
+    names += [v for w in p.sources.osm.ways for k, v in w.tags if k == "name"]
+    assert names
+    assert all(name.isascii() for name in names)
+
+
+def test_the_unnamed_share_is_a_fifth_of_ten_minor_nodes_within_rounding() -> None:
+    nodes = [SimpleNamespace(node_id=f"SWM-TEL-{i:04d}", layer=Layer.TELECOM, node_class=C.MAST)
+             for i in range(1, 11)]  # fmt: skip
+    unnamed = _unnamed(nodes, [Layer.TELECOM], load_registry(), 0)  # type: ignore[arg-type]
+    assert len(unnamed) == 2
+    assert _unnamed(nodes, [Layer.TELECOM], load_registry(), 0) == unnamed  # type: ignore[arg-type]
+
+
+def test_only_minor_classes_go_unnamed_in_the_pilot() -> None:
+    for node in pilot().observed.nodes:
+        if not node.named:
+            assert node.node_class in MINOR_CLASSES
+
+
+# --- Headers (B1, answer 1) -----------------------------------------------------------------
+
+
+def test_every_csv_header_matches_the_recorded_one() -> None:
+    sources = pilot().sources
+    expected = {
+        "sources/wri_gppd/global_power_plant_database.csv": WRI_GPPD,
+        "sources/ourairports/airports.csv": OURAIRPORTS,
+        "sources/facility_register/A21030000I-D02001-018.csv": BEDS,
+        "sources/facility_register/A21030000I-D21001-003.csv": HOSPITAL_LISTS,
+        "sources/facility_register/A21030000I-D21002-005.csv": HOSPITAL_LISTS,
+        "sources/facility_register/A21030000I-D21003-003.csv": HOSPITAL_LISTS,
+    }
+    for path, header in expected.items():
+        assert tuple(rows(sources, path)[0]) == header.columns, path
+
+
+def test_the_register_spreadsheet_header_matches_the_recorded_one() -> None:
+    body = pilot().sources.files["sources/facility_register/medical_institution_register.ods"]
+    with zipfile.ZipFile(io.BytesIO(body)) as archive:
+        assert archive.namelist()[0] == "mimetype"
+        content = archive.read("content.xml").decode("utf-8")
+    first_row = content.split("</table:table-row>")[0]
+    assert tuple(re.findall(r"<text:p>([^<]*)</text:p>", first_row)) == (
+        INSTITUTION_REGISTER.columns
+    )
+
+
+def test_the_csv_idioms_follow_the_real_files() -> None:
+    files = pilot().sources.files
+    wri = files["sources/wri_gppd/global_power_plant_database.csv"]
+    assert not wri.startswith(b"\xef\xbb\xbf")
+    assert b"\r\n" in wri
+    airports = files["sources/ourairports/airports.csv"]
+    assert airports.startswith(b'"id","ident"')
+    assert b"\r" not in airports
+    beds = files["sources/facility_register/A21030000I-D02001-018.csv"]
+    assert beds.startswith(b"\xef\xbb\xbf")
+    assert b"\r\n" in beds
+    lists = files["sources/facility_register/A21030000I-D21001-003.csv"]
+    assert lists.startswith(b"\xef\xbb\xbf")
+    assert b"\r" not in lists
+
+
+def test_the_register_files_join_on_the_institution_code() -> None:
+    sources = pilot().sources
+    hospitals = [n for n in pilot().observed.nodes if n.node_class in (C.TERTIARY, C.REGIONAL)]
+    assert hospitals
+    by_node = {r.node_id: r for r in sources.register}
+    folder = "sources/facility_register/"
+    beds = {row[0] for row in rows(sources, folder + "A21030000I-D02001-018.csv")[1:]}
+    for node in hospitals:
+        record = by_node[node.node_id]
+        assert "medical_institution_register.ods" in record.files
+        assert record.code in beds
+        (listed,) = [f for f in record.files if "D21" in f]
+        assert record.code in {row[0] for row in rows(sources, folder + listed)[1:]}
+
+
+# --- Correspondence (C1) --------------------------------------------------------------------
+
+
+def test_every_record_maps_to_exactly_one_true_element() -> None:
+    p = pilot()
+    owners: dict[tuple[str, int], str] = {}
+    for element in p.sources.osm.elements:
+        objects = [("node", n) for n in (element.node, element.anchor, *element.corners,
+                                         *element.towers) if n is not None]  # fmt: skip
+        if element.way is not None:
+            objects.append(("way", element.way))
+        for key in objects:
+            assert key not in owners, key
+            owners[key] = element.element_id
+    for record in p.sources.geofabrik:
+        assert ("way", record.osm_id) in owners or ("node", record.osm_id) in owners
+    for records in (p.sources.wri, p.sources.airports, p.sources.register):
+        ids = [r.node_id for r in records]
+        assert len(ids) == len(set(ids))
+
+
+def test_every_in_scope_element_is_in_the_manifests_correspondence() -> None:
+    p = pilot()
+    listed = {entry["element"]: entry for entry in manifest()["correspondence"]}
+    for node in p.observed.nodes:
+        for source in p.observed.sources_of(node.layer):
+            if source in OSM_SOURCES.values() or node.node_class not in (
+                SOURCE_SCOPES[source].classes
+            ):
+                continue
+            assert source.value in listed[node.node_id], (node.node_id, source)
+    plants = [n for n in p.observed.nodes if n.node_class == C.GENERATION]
+    assert all(Source.WRI_GPPD.value in listed[n.node_id] for n in plants)
+
+
+def test_the_manifest_declares_a_zero_error_emission() -> None:
+    planted = manifest()["planted_errors"]
+    assert planted == {"status": "zero-error emission (Phase 1)", "errors": []}
+    assert manifest()["theta"]["registry_sha256"] == pilot().built.rules.sha256
+
+
+# --- Separation (E2, C3) --------------------------------------------------------------------
+
+
+def _imports(path: Path) -> set[str]:
+    names: set[str] = set()
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if isinstance(node, ast.Import):
+            names |= {alias.name for alias in node.names}
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            names.add(node.module)
+    return names
+
+
+def test_no_writer_reaches_unobserved_fields_the_dynamics_or_error_induction() -> None:
+    for path in (SRC / "emit").rglob("*.py"):
+        reached = {n for n in _imports(path) if n.startswith("swm.")}
+        assert reached <= {"swm.recipe.schema"} | {
+            n for n in reached if n.startswith("swm.emit")
+        }, path
+
+
+def test_the_emission_stage_never_reaches_the_dynamics_or_error_induction() -> None:
+    for path in (SRC / "stages" / "emission.py", SRC / "manifest" / "truth.py"):
+        assert not {n for n in _imports(path) if n.startswith(("swm.dynamics", "swm.errors"))}
+
+
+def test_no_source_file_carries_a_value_only_the_manifest_holds() -> None:
+    p = pilot()
+    secret = {n.node_id for n in p.built.requirements.layers.nodes}
+    secret |= {link.link_id for link in p.built.requirements.layers.links}
+    secret |= {edge.edge_id for edge in p.built.couplings.edges}
+    secret |= {crew.crew_id for crew in p.built.crews.crews}
+    unobserved_words = {
+        str(v) for n in p.built.requirements.layers.nodes for _, v in n.subtype
+        if isinstance(v, str) and len(v) > 3
+    }  # fmt: skip
+    # A word of the tag vocabulary (such as "pipeline") names an observed class, not a value.
+    vocabulary = {w for row in tag_table() for w in re.findall(r"[A-Za-z_]+", row["tags"])}
+    vocabulary |= {w for tags in LINK_TAGS.values() for kv in tags for w in kv}
+    unobserved_words -= vocabulary
+    assert secret
+    assert unobserved_words
+    for path, body in p.sources.files.items():
+        for token in secret:
+            assert token.encode("utf-8") not in body, (path, token)
+        if path.endswith((".csv", ".osm", ".geojson", ".json", ".overpassql")):
+            words = set(re.findall(r"[A-Za-z_]+", body.decode("utf-8-sig")))
+            assert not unobserved_words & words, (path, unobserved_words & words)

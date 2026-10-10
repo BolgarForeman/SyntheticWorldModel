@@ -9,3 +9,8 @@
 *.pbf binary
 *.gpkg binary
 *.zip binary
+
+# The built pilot's goldens hold real-source idioms (CRLF lines, byte-order marks, shapefiles,
+# spreadsheets): stored byte for byte.
+tests/golden/pilot_build/** binary
+tests/golden/pilot_build/SHA256SUMS text eol=lf

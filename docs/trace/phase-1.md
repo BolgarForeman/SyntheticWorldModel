@@ -36,3 +36,35 @@
 - **Line-loss calibration:** the targets were moved from one realized draw to the expected share. The realized share depended on the draws, which changed when storm damage moved to one stream per element (PR 15 answers; PR 7b answers).
 - **Degradation profiles:** v0.2 said LNG and oil plants ride out a fuel cut on their own stocks. The world holds those stocks upstream, so v0.3 corrects the profile to the world as built.
 - **Delivery timing:** a fuel delivery waits for the depot's settled state within its step.
+
+## Emission (Work Order 8; decision 0015)
+
+**What was built.**
+- **Projection:** the emission stage projects the world onto an observed-only world, which is all the writers ever see.
+- **Writers:** they write the OpenStreetMap extract and its two views (Geofabrik shapefiles and Overpass responses), WRI, OurAirports and the three register file types.
+- **Truth manifest:** it holds:
+  - every record's true element;
+  - the true geometry and every unobserved value;
+  - the hidden items and the declared departures;
+  - θ\* by registry fingerprint, and the seeds.
+- **Commands:** `swm build` writes the whole tree, with a hand-trace pack for scenario 7.
+
+**How it was tested.**
+- **Identity:** the pilot's 115 built files are golden.
+- **OpenStreetMap geometry:** each feature is in its source's scope, outlines are closed and centred, lines pass through their towers in order, ids are reserved, unique and sorted, and nodes-only layers have no ways.
+- **Identifiers and names:** identifiers are reserved, and names are deterministic and screened.
+- **Headers:** they match exactly, and were checked once against the real files through `machine.toml`.
+- **Correspondence:** each record maps to exactly one true element, and every in-scope element is listed.
+- **Separation:** no writer reaches unobserved fields, the dynamics or error induction, and no source file carries a manifest-only id or value.
+- **Hand trace:** the timeline equals reference run 7.
+
+**Departures from the design.** These are the declared departures in the manifest:
+- a 13-character `osm_id` in the shapefiles;
+- 7 decimals in WRI;
+- inferred Overpass queries;
+- an ASCII register file name;
+- uncompressed PBF blobs.
+
+**Figures.**
+- `figures/wo8_pilot_extract_qgis.png`: the pilot's `island.osm.pbf` rendered by QGIS 3.40.14, with its multipolygons, lines and points, and points labelled by name.
+- `figures/wo8_hand_trace_map_scenario_7.png`: the trace pack's `map.pdf` rasterized by GDAL.

@@ -129,8 +129,8 @@ def test_a_limit_without_a_range_or_a_range_without_a_limit_is_refused() -> None
 def test_every_rule_is_classified() -> None:
     counts = classification_counts(RULES)
     assert sum(counts.values()) == len(RULES.rules)
-    assert counts == {"construction": 169, "dynamics": 111, "stopping": 1, "analysis": 0,
-                      "world_content": 82}  # fmt: skip
+    assert counts == {"construction": 169, "dynamics": 112, "stopping": 1, "analysis": 0,
+                      "world_content": 86}  # fmt: skip
     for rule in RULES.rules:
         if rule.theta_role == ThetaRole.WORLD_CONTENT:
             assert rule.theta_domain is None
@@ -159,7 +159,7 @@ def test_the_numberless_choices_have_their_own_entries() -> None:
 
 def test_every_theta_entry_is_complete() -> None:
     entries = theta_list(RULES)
-    assert len(entries) == 284
+    assert len(entries) == 285
     for e in entries:
         assert e.chosen
         assert e.registry_ids or e.theta_id.startswith("theta.")
@@ -181,7 +181,7 @@ def test_swm_rules_theta_is_deterministic_and_keeps_objectives_outside(
         assert f"- {name}:" in objectives
         assert f"\n{name} [" not in body
     sections = [line for line in body.splitlines() if line.startswith("==")]
-    assert sections == ["== dynamics (113) ==", "== stopping (1) ==", "== analysis (1) ==",
+    assert sections == ["== dynamics (114) ==", "== stopping (1) ==", "== analysis (1) ==",
                         "== construction choices (169) =="]  # fmt: skip
 
 

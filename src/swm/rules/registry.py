@@ -70,6 +70,7 @@ class Stage(StrEnum):
     DRAWS = "draws"
     STORM = "storm"
     DYNAMICS = "dynamics"
+    EMISSION = "emission"
 
 
 class ThetaRole(StrEnum):

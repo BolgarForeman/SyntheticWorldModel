@@ -389,3 +389,36 @@ def test_pump_capacity_is_shared_pro_rata_by_demand() -> None:
     assert s2[16] == pytest.approx(240.0)
     assert s1[17] - s1[16] == pytest.approx(2.5)
     assert s2[17] - s2[16] == pytest.approx(7.5)
+
+
+# --- Work Order 8, Part 0: the main refill rate ---------------------------------------------
+
+
+@pytest.mark.parametrize(("fraction", "relaxed", "per_step"),
+                         [(1.0, False, 2.5), (0.5, False, 1.25), (1.0, True, None)])  # fmt: skip
+def test_water_from_the_main_refills_at_the_ruled_fraction_of_its_drain(
+    fraction: float, relaxed: bool, per_step: float | None
+) -> None:
+    node = OneNode(
+        C.TERTIARY, Layer.HEALTHCARE, {"records_hosted": False, "standby_fuel": "diesel"}
+    )
+    node.stock("water", Layer.WATER, 72.0, "reserves.hospital.water_h", "main").needs(Layer.WATER)
+    node.repairs.append(FacilityRepair(supplier_id(Layer.WATER), 0.0, 4.0))
+    world = with_crew(node.world(main_refill_fraction=fraction))
+    damage = Damage((supplier_id(Layer.WATER),), (), ())
+    flag = frozenset({"reserves.main_refill_rate_fraction"}) if relaxed else frozenset()
+    run = simulate(world, RunRequest(damage, relaxed=flag))
+    level = run.level(f"{TARGET}:water")
+    # Down 6 h at 10 m³/h: 60 m³ short when the main returns at hour 6.
+    assert level[24] == pytest.approx(level[0] - 60.0)
+    if per_step is None:
+        assert level[25] == pytest.approx(level[0])
+    else:
+        assert level[25] - level[24] == pytest.approx(per_step)
+
+
+def test_the_main_refill_rule_is_ruled_with_its_range() -> None:
+    rule = RULES.rule("reserves.main_refill_rate_fraction")
+    assert rule.value == 1.0
+    assert rule.range == [0.5, 1.0]
+    assert rule.relaxed == "unlimited"

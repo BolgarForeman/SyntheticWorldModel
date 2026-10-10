@@ -20,6 +20,9 @@ from swm.dynamics.output import crew_rows, run_record, state_rows, stock_rows, t
 from swm.dynamics.records import RunRequest
 from swm.dynamics.travel import RoadLegs
 from swm.dynamics.world import Damage, EngineWorld, StageOutputs, failure_points, world_from_stages
+from swm.emit.observed import ObservedWorld
+from swm.emit.sources import EmittedSources, emit_sources
+from swm.manifest.truth import TruthInputs, truth_manifest
 from swm.recipe.buildability import unbuilt_features
 from swm.recipe.io import (
     canonical_yaml,
@@ -45,13 +48,14 @@ from swm.stages import requirements as requirements_stage
 from swm.stages import scenarios as scenarios_stage
 from swm.stages import storm as storm_stage
 from swm.stages import strength as strength_stage
-from swm.stages.buffers import buffers_streams, build_buffers
+from swm.stages.buffers import BuffersResult, buffers_streams, build_buffers
 from swm.stages.couplings import CouplingsResult, build_couplings, couplings_streams
-from swm.stages.crews import build_crews
+from swm.stages.crews import CrewsResult, build_crews
+from swm.stages.emission import build_observed
 from swm.stages.layers import LayersResult, build_layers, layers_streams
-from swm.stages.repair import build_repair, repair_streams
+from swm.stages.repair import RepairResult, build_repair, repair_streams
 from swm.stages.requirements import RequirementsResult, build_requirements, requirements_streams
-from swm.stages.scenarios import build_scenarios, scenarios_streams
+from swm.stages.scenarios import ScenariosResult, build_scenarios, scenarios_streams
 from swm.stages.storm import StormResult, build_storm, storm_streams
 from swm.stages.strength import StrengthResult, build_strength
 from swm.stages.terrain import (
@@ -63,6 +67,10 @@ from swm.stages.terrain import (
 )
 
 EXIT_OK = 0
+TRACE_SCENARIO = 7
+"""The pilot's restorative-model scenario, the hand trace's default (Pilot Spec v0.7)."""
+TRACE_PACK_DIR = "trace_pack"
+TRUTH_FILE = "truth/manifest.yaml"
 EXIT_FAILED = 1
 TERRAIN_STATS_FILE = "terrain_stats.yaml"
 TERRAIN_HASHES_FILE = "terrain_sha256.txt"
@@ -287,7 +295,10 @@ def _export_gis_command(resolution: Resolution, arguments: argparse.Namespace) -
     layers = requirements.layers
     couplings = _couplings(resolution, terrain, requirements)
     stamp = _rules_stamp(resolution)
-    for path in export_gis(terrain, layers, couplings, Path(arguments.out_dir), stamp):
+    out = Path(arguments.out_dir)
+    rules = _rules(resolution)
+    root = resolution.recipe.root_seed
+    for path in export_gis(terrain, layers, couplings, out, stamp, rules, root):
         sys.stdout.write(f"{path}\n")
 
 
@@ -497,16 +508,23 @@ def _scenarios_command(resolution: Resolution, arguments: argparse.Namespace) ->
 
 
 @dataclass(frozen=True)
-class _Engine:
-    """The engine's world, and each scenario's damage, built from the stages."""
+class _Built:
+    """Every stage of one world, built once."""
 
-    world: EngineWorld
-    damage: tuple[Damage, ...]
-    end_use: tuple[str, ...]
+    rules: Registry
+    terrain: TerrainResult
+    requirements: RequirementsResult
+    couplings: CouplingsResult
+    strength: StrengthResult
+    buffers: BuffersResult
+    crews: CrewsResult
+    repair: RepairResult
+    storm: StormResult
+    scenarios: ScenariosResult
 
 
-def _engine(resolution: Resolution) -> _Engine:
-    """Build every stage the engine reads and assemble the engine's world (Work Order 7, D1)."""
+def _built(resolution: Resolution) -> _Built:
+    """Build every stage of the world, from the terrain to the scenarios."""
     recipe = resolution.recipe
     rules = _rules(resolution)
     terrain = _terrain(resolution)
@@ -531,19 +549,100 @@ def _engine(resolution: Resolution) -> _Engine:
         recipe.shared_causes.facility_damage_cap, storm, terrain, layers, couplings, rules,
         scenarios_streams(recipe.root_seed, recipe.shared_causes.scenarios),
     )  # fmt: skip
-    stages = StageOutputs(layers, requirements, couplings, strength, buffers, crews, repair,
-                          scenarios.lines, terrain.grid)  # fmt: skip
-    world = replace(world_from_stages(stages, rules), legs=RoadLegs.of(terrain, layers))
+    return _Built(rules, terrain, requirements, couplings, strength, buffers, crews, repair,
+                  storm, scenarios)  # fmt: skip
+
+
+@dataclass(frozen=True)
+class _Engine:
+    """The engine's world, and each scenario's damage, built from the stages."""
+
+    world: EngineWorld
+    damage: tuple[Damage, ...]
+    end_use: tuple[str, ...]
+
+
+def _engine(resolution: Resolution, built: _Built | None = None) -> _Engine:
+    """Assemble the engine's world from the stages (Work Order 7, D1)."""
+    b = built or _built(resolution)
+    layers = b.requirements.layers
+    stages = StageOutputs(layers, b.requirements, b.couplings, b.strength, b.buffers, b.crews,
+                          b.repair, b.scenarios.lines, b.terrain.grid)  # fmt: skip
+    world = replace(world_from_stages(stages, b.rules), legs=RoadLegs.of(b.terrain, layers))
     damage = tuple(
         Damage(
             nodes=tuple(sorted(f.node_id for f in scenario.facilities)),
             lines=tuple(sorted(o.line_id for o in scenario.failed_lines)),
-            failure_points=failure_points(scenario.lines, scenarios.lines),
+            failure_points=failure_points(scenario.lines, b.scenarios.lines),
         )
-        for scenario in scenarios.scenarios
+        for scenario in b.scenarios.scenarios
     )
     end_use = tuple(n.node_id for n in world.nodes if n.end_use_weight is not None)
     return _Engine(world, damage, end_use)
+
+
+def _observed(resolution: Resolution, built: _Built) -> ObservedWorld:
+    recipe = resolution.recipe
+    return build_observed(recipe.layers, built.terrain, built.requirements.layers, built.rules,
+                          recipe.root_seed)  # fmt: skip
+
+
+def _emit_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    built = _built(resolution)
+    _write_sources(emit_sources(_observed(resolution, built)), Path(arguments.out_dir))
+
+
+def _write_sources(emitted: EmittedSources, out_dir: Path) -> None:
+    for path, body in emitted.files.items():
+        write_binary(body, out_dir / path)
+
+
+def _trace_pack_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    built = _built(resolution)
+    _write_trace_pack(resolution, built, arguments.scenario, Path(arguments.out_dir))
+
+
+def _write_trace_pack(resolution: Resolution, built: _Built, scenario: int, out_dir: Path) -> None:
+    """Write the hand-trace pack for one scenario (Work Order 8, Part D)."""
+    try:
+        from swm.trace_pack import TraceInputs, trace_pack
+    except ImportError as error:  # pragma: no cover - the preview extra is installed in CI
+        raise CommandError(
+            "the trace pack needs the preview extra: uv sync --extra preview"
+        ) from error
+    engine = _engine(resolution, built)
+    if not 0 <= scenario < len(engine.damage):
+        raise CommandError(f"scenario {scenario} is not among the {len(engine.damage)} drawn")
+    run = simulate(engine.world, RunRequest(engine.damage[scenario], scenario=scenario))
+    pack = trace_pack(TraceInputs(
+        scenario, built.terrain, built.requirements.layers, built.requirements, built.couplings,
+        built.strength, built.buffers, built.crews, built.repair,
+        built.storm.scenarios[scenario], built.scenarios.scenarios[scenario], run,
+    ))  # fmt: skip
+    folder = out_dir / TRACE_PACK_DIR
+    write_binary(pack.map_pdf, folder / "map.pdf")
+    write_binary(pack.tables_pdf, folder / "tables.pdf")
+    for name, rows in pack.tables.items():
+        write_csv(rows, folder / f"{name}.csv")
+
+
+def _build_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    """Write the world's full tree: resolved recipe, sources, truth and trace pack (E1)."""
+    out_dir = Path(arguments.out_dir)
+    built = _built(resolution)
+    write_resolved_recipe(resolution.recipe, out_dir)
+    observed = _observed(resolution, built)
+    emitted = emit_sources(observed)
+    _write_sources(emitted, out_dir)
+    recipe = resolution.recipe
+    streams = stream_record(recipe.root_seed, recipe.terrain.terrain_seed)
+    manifest = truth_manifest(TruthInputs(
+        recipe, built.rules, built.requirements.layers, built.requirements, built.couplings,
+        built.strength, built.buffers, built.crews, built.repair, observed, emitted, streams,
+    ))  # fmt: skip
+    write_canonical_yaml(_stamped(manifest, resolution), out_dir / TRUTH_FILE)
+    _write_trace_pack(resolution, built, arguments.scenario, out_dir)
+    sys.stdout.write(f"{len(emitted.files)} source files, the truth manifest and the trace pack\n")
 
 
 def _request(
@@ -698,6 +797,9 @@ COMMANDS: dict[str, Callable[[Resolution, argparse.Namespace], None]] = {
     "scenarios": _scenarios_command,
     "check": _check_command,
     "simulate": _simulate_command,
+    "emit": _emit_command,
+    "build": _build_command,
+    "trace-pack": _trace_pack_command,
     "preview-couplings": _preview_couplings_command,
     "export-gis": _export_gis_command,
     "preview-world": _preview_world_command,
@@ -777,6 +879,25 @@ def _parser() -> argparse.ArgumentParser:
     simulate_command.add_argument("--node", default=None, help="print one node in full")
     simulate_command.add_argument("-o", "--out-dir", default=None, help="write the run files")
     simulate_command.add_argument("--plot", default=None, help="timeline PNG to write")
+    emit_command = commands.add_parser("emit", help="write the world's source files, sources/")
+    emit_command.add_argument("recipe", help="recipe YAML file")
+    emit_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    build_command = commands.add_parser(
+        "build", help="write the world's full tree: resolved recipe, sources, truth, trace pack"
+    )
+    build_command.add_argument("recipe", help="recipe YAML file")
+    build_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    build_command.add_argument(
+        "--scenario", type=int, default=TRACE_SCENARIO, help="the trace pack's scenario (7)"
+    )
+    pack_command = commands.add_parser(
+        "trace-pack", help="write the printable hand-trace pack for one scenario"
+    )
+    pack_command.add_argument("recipe", help="recipe YAML file")
+    pack_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    pack_command.add_argument(
+        "--scenario", type=int, default=TRACE_SCENARIO, help="the scenario (default 7)"
+    )
     world_check = commands.add_parser(
         "check", help="run the world checks: every consumer supplied before any disruption"
     )

@@ -237,6 +237,7 @@ class Settings:
     crew_bound_lead_h: float
     manual_switching_h: float
     battery_recharge_h: float
+    main_refill_fraction: float
     delivery_lead_h: float
     delivery_interval_h: float
     road_kmh: float
@@ -268,6 +269,7 @@ def settings_from(rules: Registry) -> Settings:
         crew_bound_lead_h=rules.number("repair.crew_bound_lead_h"),
         manual_switching_h=rules.number("repair.manual_switching_h"),
         battery_recharge_h=rules.number("reserves.battery_recharge_h"),
+        main_refill_fraction=rules.number("reserves.main_refill_rate_fraction"),
         delivery_lead_h=rules.number("reserves.fuel_resupply.lead_time_h"),
         # Deliveries come every delivery_h hours, the 24 h a delivery carries (PR 7b answers).
         delivery_interval_h=rules.number("reserves.fuel_resupply.delivery_h"),

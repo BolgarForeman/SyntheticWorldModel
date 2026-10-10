@@ -1,0 +1,84 @@
+{
+  "type": "FeatureCollection",
+  "generator": "overpass-turbo",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+  "timestamp": "2026-01-01T00:00:00Z",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/9000000000001",
+        "amenity": "hospital",
+        "beds": "1964",
+        "healthcare": "hospital",
+        "name": "Coribrook Hospital"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -123.3445137,
+              -48.855688
+            ],
+            [
+              -123.3419927,
+              -48.8556955
+            ],
+            [
+              -123.3419794,
+              -48.8537445
+            ],
+            [
+              -123.3445003,
+              -48.853737
+            ],
+            [
+              -123.3445137,
+              -48.855688
+            ]
+          ]
+        ]
+      },
+      "id": "way/9000000000001"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/9000000000002",
+        "amenity": "hospital",
+        "beds": "407",
+        "healthcare": "hospital",
+        "name": "Selimere Hospital"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -123.5059856,
+              -48.8825414
+            ],
+            [
+              -123.5039355,
+              -48.8825504
+            ],
+            [
+              -123.5039175,
+              -48.8807614
+            ],
+            [
+              -123.5059676,
+              -48.8807524
+            ],
+            [
+              -123.5059856,
+              -48.8825414
+            ]
+          ]
+        ]
+      },
+      "id": "way/9000000000002"
+    }
+  ]
+}

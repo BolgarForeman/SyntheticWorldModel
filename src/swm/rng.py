@@ -49,7 +49,13 @@ def _registry() -> dict[str, str]:
         "reserves/purified_water": "Purified boiler water at generation (Work Order 7, A1).",
         "reserves/makeup_water": "Make-up water at evaporative data centres (Work Order 7, A1).",
         "reserves/backup_power": "Backup power for cargo at seaports (Work Order 7, A1).",
+        "emission/names": "Invented town names: one child stream per town (Work Order 8, A4).",
     }
+    for layer in Layer:
+        paths[f"emission/footprint/{layer}"] = (
+            f"Footprints of {layer} area classes: one child stream per node (Work Order 8, A3)."
+        )
+        paths[f"emission/unnamed/{layer}"] = f"Which minor {layer} elements are unnamed (A4)."
     paths |= _coupling_paths()
     for hazard in Hazard:
         if hazard != Hazard.STORM_CORRIDOR:

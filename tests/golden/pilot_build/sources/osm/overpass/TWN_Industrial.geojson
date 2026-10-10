@@ -1,0 +1,115 @@
+{
+  "type": "FeatureCollection",
+  "generator": "overpass-turbo",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+  "timestamp": "2026-01-01T00:00:00Z",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/9000000000000",
+        "industrial": "oil",
+        "landuse": "industrial",
+        "name": "Coribrook Fuel Terminal"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -123.3088206,
+          -48.8607984
+        ]
+      },
+      "id": "node/9000000000000"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/9000000000171",
+        "industrial": "logistics",
+        "landuse": "industrial",
+        "name": "Coribrook Freight Yard"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -123.3995035,
+          -48.8581259
+        ]
+      },
+      "id": "node/9000000000171"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/9000000000000",
+        "industrial": "oil",
+        "landuse": "industrial",
+        "name": "Coribrook Oil Terminal"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -123.3162569,
+              -48.8740026
+            ],
+            [
+              -123.3124342,
+              -48.874013
+            ],
+            [
+              -123.3124186,
+              -48.8715033
+            ],
+            [
+              -123.3162411,
+              -48.8714929
+            ],
+            [
+              -123.3162569,
+              -48.8740026
+            ]
+          ]
+        ]
+      },
+      "id": "way/9000000000000"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "way/9000000000016",
+        "industrial": "port",
+        "landuse": "industrial"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -123.3715258,
+              -48.8277385
+            ],
+            [
+              -123.3617342,
+              -48.8277697
+            ],
+            [
+              -123.3616741,
+              -48.8193082
+            ],
+            [
+              -123.3714624,
+              -48.819277
+            ],
+            [
+              -123.3715258,
+              -48.8277385
+            ]
+          ]
+        ]
+      },
+      "id": "way/9000000000016"
+    }
+  ]
+}
