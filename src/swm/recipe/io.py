@@ -88,7 +88,26 @@ def parse_recipe(text: str) -> Recipe:
         raise RecipeVersionError(
             "unobserved.depots was renamed unobserved.crew_base in recipe_version 2"
         )
+    if version in (1, 2):
+        data = _migrate_version_2(data)
     return Recipe.model_validate(data)
+
+
+def _migrate_version_2(data: dict[str, Any]) -> dict[str, Any]:
+    """Read a version 2 recipe as version 3, with no relaxed limits and no removed dependencies.
+
+    Version 3 only adds ``modeling_rules.relaxed_limits`` and ``dynamics.removed_dependencies``,
+    so a version 2 recipe that names either is refused rather than silently reread.
+
+    Spec: CLAUDE.md §8; Work Order 7, B2.
+    """
+    added = (("modeling_rules", "relaxed_limits"), ("dynamics", "removed_dependencies"))
+    for section, field in added:
+        if isinstance(data.get(section), dict) and field in data[section]:
+            raise RecipeVersionError(
+                f"{section}.{field} is a recipe_version 3 setting; set recipe_version: 3"
+            )
+    return dict(data, recipe_version=RECIPE_VERSION)
 
 
 def _migrate_version_1(data: dict[str, Any]) -> dict[str, Any]:

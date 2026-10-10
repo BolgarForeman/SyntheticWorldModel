@@ -1,7 +1,9 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: e28d76d001519c9379a02c03db2cc4452b7f9a664b86bb2bf677a80a13613643
+  registry_sha256: fb287040ebad16b9586932c14db723838df2e6e393fc42f63179a88ba75dd190
   overrides: {}
+  relaxed_limits: []
+  removed_dependencies: []
 severity: 50
 storm_class: moderate
 anchor_m_per_s: 43.7

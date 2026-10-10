@@ -73,7 +73,8 @@ def rich() -> World:
 def test_pilot_total_edge_count_is_links_plus_switched_on_coupling_edges(
     pilot: CouplingsResult,
 ) -> None:
-    assert pilot.intra_layer_links == 23
+    # 22 since the mast-to-mast link left the telecom signature (Work Order 7, Part 0).
+    assert pilot.intra_layer_links == 22
     assert pilot.switched_on_edges == 28
     # The pilot's range is 40-55, widened from 40-50 when rule 4 added a feed (decision 0013
     # addendum, PR 14 answer 4).

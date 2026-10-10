@@ -3,9 +3,9 @@ from typing import Any
 import pytest
 
 from buffers_helpers import NO_GAPS, buffers_of
-from couplings_helpers import World, requirements_of, rich_world
+from couplings_helpers import World, couple, requirements_of, rich_world
 from swm import rng
-from swm.recipe.schema import Layer, NodeClass
+from swm.recipe.schema import ContinuousDrawnQuantity, Layer, NodeClass
 from swm.rules.registry import load_registry
 from swm.stages.buffers import buffers_streams
 
@@ -49,6 +49,8 @@ TARGET_HOURS = {
     (C.STORAGE, "distribution_water"): 12.0,
     (C.IMPORT_TERMINAL, "lng"): 11 * 24.0,
     (C.GENERATION, "coal"): 30 * 24.0,
+    (C.GENERATION, "purified_water"): 24.0,
+    (C.DATA_CENTRE, "makeup_water"): 12.0,
 }
 """Structure v0.6 §4.4a, in buffer hours at the expected draw."""
 
@@ -198,7 +200,7 @@ def test_the_tolerance_buffer_takes_the_public_share(exact: Any, rich: World) ->
         if node.node_class == C.GENERATION:
             assert (record.t_h, record.d, record.public_share) == (12.0, 0.95, 0.2)
         if node.node_class in (C.TRANSMISSION_SUBSTATION, C.DISTRIBUTION_SUBSTATION):
-            assert record.slows_switching
+            assert record.manual_switching
             assert record.d == 1.0
         if node.node_class in (C.TERTIARY, C.REGIONAL):
             hosted = dict(node.subtype)["records_hosted"] is True
@@ -301,3 +303,62 @@ def test_every_telecom_dependency_has_a_tolerance_buffer(exact: Any, rich: World
             assert (record.t_h, record.d) == (24.0, 0.8)
         if node.node_class == C.TANK_FARM and subtype["pipeline_connected"] is False:
             assert (record.t_h, record.d) == (12.0, 0.6)
+
+
+# --- Stocks added by Work Order 7 (A1) ------------------------------------------------------
+
+
+def test_the_added_stocks_sit_on_their_classes_and_subtypes_only(exact: Any, rich: World) -> None:
+    by_id = nodes(rich)
+    added = [r for r in exact.reserves if r.kind in ("purified_water", "makeup_water")]
+    assert {r.kind for r in added} == {"purified_water", "makeup_water"}
+    for reserve in added:
+        node = by_id[reserve.node_id]
+        subtype = dict(node.subtype)
+        if reserve.kind == "purified_water":
+            assert node.node_class == C.GENERATION
+            assert subtype["makeup_water"] == "municipal"
+        else:
+            assert node.node_class == C.DATA_CENTRE
+            assert subtype["cooling"] == "evaporative"
+        assert reserve.buffers == Layer.WATER
+    # Seaports keep 0 h of backup power by default, so they hold no stock.
+    assert not [r for r in exact.reserves if r.kind == "backup_power"]
+
+
+def test_own_intake_plants_and_dry_cooled_data_centres_hold_no_added_stock(rich: World) -> None:
+    from dataclasses import replace
+
+    from swm.stages import buffers as stage
+
+    requirements = requirements_of(rich)
+    context = stage._Context(
+        ContinuousDrawnQuantity(), requirements.layers, requirements, couple(rich, {}), RULES
+    )
+    for node in requirements.layers.nodes:
+        subtype = dict(node.subtype)
+        if node.node_class == C.GENERATION and "makeup_water" in subtype:
+            subtype["makeup_water"] = "own_intake"
+        elif node.node_class == C.DATA_CENTRE and "cooling" in subtype:
+            subtype["cooling"] = "dry"
+        else:
+            continue
+        assert stage._added(replace(node, subtype=tuple(sorted(subtype.items()))), context) == []
+
+
+def test_a_seaport_with_backup_hours_holds_backup_power(rich: World) -> None:
+    result = buffers_of(rich, overrides={**NO_GAPS, "reserves.seaport.backup_power_h": 12.0})
+    ports = [r for r in result.reserves if r.kind == "backup_power"]
+    assert ports
+    for reserve in ports:
+        assert nodes(rich)[reserve.node_id].node_class == C.SEAPORT
+        assert reserve.hours == pytest.approx(12.0)
+        assert reserve.buffers == Layer.POWER
+
+
+def test_the_added_stocks_never_move_the_stocks_drawn_before_them(rich: World) -> None:
+    drawn = buffers_of(rich, heterogeneity_pct=40)
+    moved = buffers_of(rich, heterogeneity_pct=40,
+                       overrides={"reserves.generation.purified_water_h": 30.0})  # fmt: skip
+    keep = [r for r in drawn.reserves if r.kind != "purified_water"]
+    assert keep == [r for r in moved.reserves if r.kind != "purified_water"]

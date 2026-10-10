@@ -1,7 +1,9 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: e28d76d001519c9379a02c03db2cc4452b7f9a664b86bb2bf677a80a13613643
+  registry_sha256: fb287040ebad16b9586932c14db723838df2e6e393fc42f63179a88ba75dd190
   overrides: {}
+  relaxed_limits: []
+  removed_dependencies: []
 overhead_lines:
   power_link:
     count: 5
@@ -12,11 +14,11 @@ overhead_lines:
     on_towers: 0
     km: 204.318
   telecom_link:
-    count: 4
+    count: 3
     on_towers: 0
-    km: 54.434
-protectable_elements: 56
-mean_line_length_share_down: 0.077867
+    km: 49.112
+protectable_elements: 55
+mean_line_length_share_down: 0.064813
 scenarios:
 - index: 0
   failed_lines: 4
@@ -25,14 +27,14 @@ scenarios:
     power_link: 1
   failure_points: 4
   towered_lines_down: 1
-  line_km_down: 51.035
-  line_length_share_down: 0.170643
+  line_km_down: 58.019
+  line_length_share_down: 0.19751
   line_crew_work_h: 90.0
   failed_line_ids:
   - SWM-POW-L0005
+  - SWM-CPL-0003
   - SWM-CPL-0004
-  - SWM-CPL-0010
-  - SWM-CPL-0015
+  - SWM-CPL-0020
   damaged_facilities: {}
   damaged_facility_ids: []
   damages_anything: true
@@ -43,7 +45,7 @@ scenarios:
   failure_points: 1
   towered_lines_down: 1
   line_km_down: 6.691
-  line_length_share_down: 0.022372
+  line_length_share_down: 0.022778
   line_crew_work_h: 72.0
   failed_line_ids:
   - SWM-POW-L0003
@@ -63,37 +65,6 @@ scenarios:
   damaged_facility_ids: []
   damages_anything: false
 - index: 3
-  failed_lines: 1
-  failed_lines_by_kind:
-    power_feed: 1
-  failure_points: 1
-  towered_lines_down: 0
-  line_km_down: 8.029
-  line_length_share_down: 0.026846
-  line_crew_work_h: 6.0
-  failed_line_ids:
-  - SWM-CPL-0011
-  damaged_facilities: {}
-  damaged_facility_ids: []
-  damages_anything: true
-- index: 4
-  failed_lines: 3
-  failed_lines_by_kind:
-    power_feed: 2
-    telecom_link: 1
-  failure_points: 4
-  towered_lines_down: 0
-  line_km_down: 31.606
-  line_length_share_down: 0.10568
-  line_crew_work_h: 24.0
-  failed_line_ids:
-  - SWM-TEL-L0003
-  - SWM-CPL-0007
-  - SWM-CPL-0013
-  damaged_facilities: {}
-  damaged_facility_ids: []
-  damages_anything: true
-- index: 5
   failed_lines: 0
   failed_lines_by_kind: {}
   failure_points: 0
@@ -105,41 +76,66 @@ scenarios:
   damaged_facilities: {}
   damaged_facility_ids: []
   damages_anything: false
-- index: 6
-  failed_lines: 3
+- index: 4
+  failed_lines: 1
   failed_lines_by_kind:
-    power_feed: 2
     telecom_link: 1
-  failure_points: 3
+  failure_points: 1
   towered_lines_down: 0
-  line_km_down: 36.587
-  line_length_share_down: 0.122334
-  line_crew_work_h: 18.0
+  line_km_down: 12.552
+  line_length_share_down: 0.04273
+  line_crew_work_h: 6.0
   failed_line_ids:
   - SWM-TEL-L0003
+  damaged_facilities: {}
+  damaged_facility_ids: []
+  damages_anything: true
+- index: 5
+  failed_lines: 1
+  failed_lines_by_kind:
+    power_feed: 1
+  failure_points: 1
+  towered_lines_down: 0
+  line_km_down: 16.006
+  line_length_share_down: 0.054488
+  line_crew_work_h: 6.0
+  failed_line_ids:
   - SWM-CPL-0003
-  - SWM-CPL-0011
+  damaged_facilities: {}
+  damaged_facility_ids: []
+  damages_anything: true
+- index: 6
+  failed_lines: 1
+  failed_lines_by_kind:
+    telecom_link: 1
+  failure_points: 1
+  towered_lines_down: 0
+  line_km_down: 12.552
+  line_length_share_down: 0.04273
+  line_crew_work_h: 6.0
+  failed_line_ids:
+  - SWM-TEL-L0003
   damaged_facilities: {}
   damaged_facility_ids: []
   damages_anything: true
 - index: 7
   failed_lines: 6
   failed_lines_by_kind:
-    power_feed: 2
+    power_feed: 3
     power_link: 2
-    telecom_link: 2
+    telecom_link: 1
   failure_points: 6
   towered_lines_down: 2
-  line_km_down: 52.357
-  line_length_share_down: 0.175064
+  line_km_down: 46.492
+  line_length_share_down: 0.15827
   line_crew_work_h: 168.0
   failed_line_ids:
   - SWM-POW-L0002
   - SWM-POW-L0004
   - SWM-TEL-L0003
-  - SWM-TEL-L0004
-  - SWM-CPL-0008
-  - SWM-CPL-0022
+  - SWM-CPL-0001
+  - SWM-CPL-0015
+  - SWM-CPL-0023
   damaged_facilities: {}
   damaged_facility_ids: []
   damages_anything: true

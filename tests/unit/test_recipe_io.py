@@ -5,6 +5,7 @@ import pytest
 from swm.recipe.io import (
     RecipeFormatError,
     RecipeVersionError,
+    canonical_yaml,
     load_recipe,
     parse_recipe,
     recipe_bytes,
@@ -19,13 +20,13 @@ def resolved(text: str) -> Recipe:
 
 
 def test_unknown_version_names_the_versions_this_code_reads() -> None:
-    with pytest.raises(RecipeVersionError, match=r"recipe_version 3 is not supported.*1, 2"):
-        parse_recipe("recipe_version: 3\n")
+    with pytest.raises(RecipeVersionError, match=r"recipe_version 4 is not supported.*1, 2, 3"):
+        parse_recipe("recipe_version: 4\n")
 
 
 def test_a_version_1_recipe_loads_with_depots_read_as_crew_base() -> None:
     recipe = parse_recipe("recipe_version: 1\nunobserved:\n  crews: 3\n  depots: 4\n")
-    assert recipe.recipe_version == 2
+    assert recipe.recipe_version == 3
     assert (recipe.unobserved.crews, recipe.unobserved.crew_base) == (3, 4)
     assert parse_recipe("recipe_version: 1\n") == parse_recipe("recipe_version: 2\n")
 
@@ -35,6 +36,45 @@ def test_crew_base_under_version_1_or_depots_under_version_2_fail_clearly() -> N
         parse_recipe("recipe_version: 1\nunobserved:\n  crew_base: 1\n")
     with pytest.raises(RecipeVersionError, match=r"depots was renamed unobserved\.crew_base"):
         parse_recipe("recipe_version: 2\nunobserved:\n  depots: 1\n")
+
+
+def test_a_version_2_recipe_loads_with_nothing_relaxed_or_removed() -> None:
+    recipe = parse_recipe("recipe_version: 2\n")
+    assert recipe.recipe_version == 3
+    assert recipe.modeling_rules.relaxed_limits == ()
+    assert recipe.dynamics.removed_dependencies == ()
+    assert recipe == parse_recipe("recipe_version: 3\n")
+
+
+def test_version_3_settings_under_version_2_fail_clearly() -> None:
+    with pytest.raises(RecipeVersionError, match="relaxed_limits is a recipe_version 3 setting"):
+        parse_recipe("recipe_version: 2\nmodeling_rules:\n  relaxed_limits: [crews.pilot]\n")
+    with pytest.raises(RecipeVersionError, match="removed_dependencies is a recipe_version 3"):
+        parse_recipe("recipe_version: 2\ndynamics:\n  removed_dependencies: [SWM-CPL-0001]\n")
+
+
+def test_both_switches_reach_the_resolved_recipe() -> None:
+    text = (
+        "recipe_version: 3\nmodeling_rules:\n  relaxed_limits: [reserves.hospital.water_h]\n"
+        "dynamics:\n  removed_dependencies: [SWM-CPL-0007]\n"
+    )
+    recipe = resolve(parse_recipe(text)).recipe
+    written = canonical_yaml(recipe.model_dump(mode="json")).decode("utf-8")
+    assert "relaxed_limits:\n  - reserves.hospital.water_h" in written
+    assert "removed_dependencies:\n  - SWM-CPL-0007" in written
+
+
+def test_a_removed_dependency_must_be_a_coupling_edge_id_named_once() -> None:
+    with pytest.raises(ValueError, match="SWM-CPL"):
+        parse_recipe("recipe_version: 3\ndynamics:\n  removed_dependencies: [CPL-1]\n")
+    with pytest.raises(ValueError, match="names an edge twice"):
+        parse_recipe(
+            "recipe_version: 3\ndynamics:\n  removed_dependencies: [SWM-CPL-0001, SWM-CPL-0001]\n"
+        )
+
+
+def test_control_dependencies_default_to_the_threshold_form() -> None:
+    assert parse_recipe("recipe_version: 3\n").dynamics.transfer_forms.control == "threshold"
 
 
 def test_missing_version_is_rejected() -> None:

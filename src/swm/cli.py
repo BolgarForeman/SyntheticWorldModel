@@ -11,6 +11,7 @@ import yaml
 
 from swm import __version__
 from swm.checks.calm import calm_world_problems
+from swm.checks.signature import link_signature_problems
 from swm.checks.undisturbed import undisturbed_supply_check
 from swm.recipe.buildability import unbuilt_features
 from swm.recipe.io import (
@@ -27,6 +28,7 @@ from swm.recipe.resolve import Resolution, resolve
 from swm.rng import stream_record
 from swm.rules.page import rules_page_html
 from swm.rules.registry import Registry, load_registry
+from swm.rules.theta import theta_text
 from swm.stages import buffers as buffers_stage
 from swm.stages import couplings as couplings_stage
 from swm.stages import crews as crews_stage
@@ -103,7 +105,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     if arguments.command is None:
         return EXIT_OK
     if arguments.command == "rules":
-        write_binary(rules_page_html(load_registry()), Path(arguments.output))
+        if arguments.theta:
+            # UTF-8 bytes, not the console's code page: the list must read the same everywhere.
+            sys.stdout.flush()
+            sys.stdout.buffer.write(theta_text(load_registry()).encode("utf-8"))
+        else:
+            write_binary(rules_page_html(load_registry()), Path(arguments.output))
         return EXIT_OK
     try:
         resolution = resolve(load_recipe(Path(arguments.recipe)))
@@ -178,6 +185,7 @@ def _preview_terrain_command(resolution: Resolution, arguments: argparse.Namespa
 def _layers_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
     terrain = _terrain(resolution)
     result = _layers(resolution, terrain)
+    _check_signature(result)
     out_dir = Path(arguments.out_dir)
     nodes = canonical_yaml({"nodes": layers_stage.node_table(result)})
     links = canonical_yaml(
@@ -482,7 +490,20 @@ def _scenarios_command(resolution: Resolution, arguments: argparse.Namespace) ->
 
 
 def _check_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
-    _check_supply(_strength(resolution))
+    terrain = _terrain(resolution)
+    requirements = _requirements(resolution, terrain)
+    _check_signature(requirements.layers)
+    couplings = _couplings(resolution, terrain, requirements)
+    rules = _rules(resolution)
+    _check_supply(build_strength(requirements.layers, requirements, couplings, rules))
+
+
+def _check_signature(layers: LayersResult) -> None:
+    """Report the link-signature check; a world with a forbidden link stops the build (0.1)."""
+    problems = link_signature_problems(layers)
+    if problems:
+        raise CommandError("link signature check:\n" + "\n".join(problems))
+    sys.stdout.write("link signature: every link joins classes its layer allows\n")
 
 
 def _check_supply(result: StrengthResult) -> None:
@@ -521,11 +542,18 @@ def _rules(resolution: Resolution) -> Registry:
 
 
 def _rules_stamp(resolution: Resolution) -> dict[str, object]:
+    """Return the θ* record stamped on every world.
+
+    The registry and its overrides, the relaxed limits and the removed dependencies (Work
+    Order 7, B3 and C4).
+    """
     rules = resolution.recipe.modeling_rules
     return {
         "registry_version": rules.registry_version,
         "registry_sha256": rules.registry_sha256,
         "overrides": dict(rules.overrides),
+        "relaxed_limits": list(rules.relaxed_limits),
+        "removed_dependencies": list(resolution.recipe.dynamics.removed_dependencies),
     }
 
 
@@ -632,9 +660,13 @@ def _parser() -> argparse.ArgumentParser:
     requirements_command.add_argument("recipe", help="recipe YAML file")
     requirements_command.add_argument("-o", "--out-dir", required=True, help="output folder")
     rules_command = commands.add_parser(
-        "rules", help="render the modeling rules registry as one HTML page"
+        "rules", help="render the modeling rules registry as one HTML page, or print Theta"
     )
-    rules_command.add_argument("-o", "--output", required=True, help="HTML file to write")
+    rules_output = rules_command.add_mutually_exclusive_group(required=True)
+    rules_output.add_argument("-o", "--output", help="HTML file to write")
+    rules_output.add_argument(
+        "--theta", action="store_true", help="print the Theta List (θ*) and the objectives"
+    )
     couplings_command = commands.add_parser(
         "couplings", help="build the couplings; write their statistics and table hashes"
     )

@@ -253,18 +253,6 @@ links:
     - 4590367.44
   - - 463910.6
     - 4589303.0
-- id: SWM-TEL-L0004
-  layer: telecom
-  from: SWM-TEL-0002
-  to: SWM-TEL-0003
-  length_km: 5.322
-  river_crossings: 2
-  crosses_sea: false
-  points_m:
-  - - 458189.2
-    - 4600612.73
-  - - 462446.98
-    - 4597419.4
 - id: SWM-WAT-L0001
   layer: water
   from: SWM-WAT-0001

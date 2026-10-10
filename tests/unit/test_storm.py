@@ -10,7 +10,7 @@ from couplings_helpers import World
 from repair_helpers import pilot_world
 from swm import rng
 from swm.recipe.schema import HazardSettings, SharedCauses
-from swm.rules.registry import Stage, ThetaRole, load_registry
+from swm.rules.registry import Stage, ThetaRole, ThetaSymbol, load_registry
 from swm.stages import storm as stage
 from swm.stages.storm import StormResult, Track, build_storm, storm_streams
 from swm.stages.terrain import CoverClass
@@ -420,7 +420,7 @@ def test_every_storm_rule_is_a_dynamics_rule_in_the_storm_stage() -> None:
     assert all(r.stage == Stage.STORM for r in storm_rules)
     assert all(r.theta_role == ThetaRole.DYNAMICS for r in storm_rules)
     assert all(r.ruling is not None and r.ruling.decision in ("0012", "0013") for r in storm_rules)
-    assert all(r.theta_role is None for r in RULES.rules if not r.id.startswith("storm."))
+    assert all(r.theta_symbol == ThetaSymbol.CHI for r in storm_rules)
 
 
 def test_changed_storm_rules_keep_their_old_values_in_history() -> None:

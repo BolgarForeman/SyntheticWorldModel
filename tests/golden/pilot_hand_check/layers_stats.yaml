@@ -1,7 +1,9 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: e28d76d001519c9379a02c03db2cc4452b7f9a664b86bb2bf677a80a13613643
+  registry_sha256: fb287040ebad16b9586932c14db723838df2e6e393fc42f63179a88ba75dd190
   overrides: {}
+  relaxed_limits: []
+  removed_dependencies: []
 layers:
   power:
     state: emitted
@@ -23,11 +25,12 @@ layers:
       mast: 3
       data_centre: 0
       cable_landing: 0
-    links: 4
-    mean_links_per_node: 2.0
+    links: 3
+    mean_links_per_node: 1.5
     mean_spacing_km: 7.861
     classes_without_source: []
-    notes: []
+    notes:
+    - 'links per node 1.50 against the recipe''s 2.20: a layer this small cannot hold more links'
   water:
     state: emitted
     nodes: 4

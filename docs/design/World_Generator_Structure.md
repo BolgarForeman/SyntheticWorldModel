@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.8 · 2026-10-02 · companion to the World Generator Interface mockup v0.5 and recipe schema v2 · supersedes v0.7*
+*v0.9 · 2026-10-09 · companion to the World Generator Interface mockup v0.5 and recipe schema v2 · supersedes v0.8*
 
 ## 1. What this is
 
@@ -393,6 +393,9 @@ Grades: S = standard or regulation · L = literature or government report · J =
 | Exchange | battery plus 24 h fuel | L (US) |
 | Data centre | 72 h fuel | L |
 | Cable landing, water treatment | 48 h fuel | J |
+| Generation with municipal make-up water | 24 h of purified (demineralized) boiler water; range 6–48 h. Taiwan's large thermal plants cool with seawater, so the main supplies boiler and process water, not cooling | L (IS 13268:1992 §4.2.3, 16–24 h; India); Taiwan environmental impact statements to replace it |
+| Data centre, evaporative cooling | 12 h of make-up water; range 0–48 h | S (Uptime Institute Tier III minimum; US) |
+| Seaport | backup power for cargo handling 0 h; range 0–48 h (48 h = a highly reinforced port that still works cargo); no power, no cargo | J; dependence on power: TT Club (2026) |
 | Pump station | pre-positioned portable generator at a recipe share of stations, 24 h fuel | L (TW practice) / J |
 | Distribution water storage | 12 h of peak-day demand | L (JP) |
 | LNG at the import terminal | 11 days | S (TW) |
@@ -420,7 +423,7 @@ Battery and generator hours add. Fire-reserve water does not count toward the po
 | Tank farm, pipeline-connected | 1 | 0.5 | S (US) / J |
 | Generation | 12 | 0.95 | L (US) |
 | Import terminal | 12 | 0.8 | J |
-| Transmission and distribution substations | 12 | 1.0; loss slows switching and repair, not supply | L (US) |
+| Transmission and distribution substations | 12 | 1.0; no supply effect. Remote switching is lost: re-energizing waits for a crew to travel there and switch by hand, 1 h on site (0.5–2 h) plus travel (§4.5) | L (US) / J |
 | Pumping | 12 | 0.8 | J |
 | Water treatment | 24 | 0.9 | J |
 | Reservoir | 72 | 0.95 | J |
@@ -466,10 +469,67 @@ The last two rows were added on 2026-09-29 under decision 0010: a non-towered ai
 
 ### 4.5 Dynamics and difficulty
 
+Ruled by the author, 2026-10-02 to 2026-10-09 (decision 0014). The ruling sheet is `evidence/Dynamics_Ruling_Sheet_v0_3.md`; the per-class behaviour is `evidence/Degradation_Profiles_v0_2.md`, and each profile is a test. Every setting below is a registry rule that a recipe overrides by name and the interface will expose; nothing is hard-coded.
+
+**What the dynamics are.** The engine plays a scenario out over time: damaged elements stay off until repaired, shortfalls cascade through the dependencies, stocks drain and refill, and crews work through the repairs. It is the world's true dynamics, θ\*. The answer-key solver (§5), the checks and `swm simulate` call it; the generator records θ\* but never runs the solver. The engine never sees error induction.
+
+**The frame** (Appendix A, Definitions 3.3–3.7; Chapter 4 §4.2):
+- A node's state is its condition × its supply level.
+- **Condition** is 1 or 0 in Phase 1: a damaged element is off from the storm until its repair completes, then fully back (discrete recovery).
+- **Supply level** is the lowest of the node's responses across the commodities it needs (typed weakest link), not their product.
+- An edge delivers κ × g_δ(supplier's state), with the transfer form g_δ set by the dependency type.
+
+**Transfer forms (pilot: calibration tier only).** Physical flow and service: linear. Logistic and control: threshold at θ = 0.5 (J). The step form is held for later worlds.
+
+**Response to a shortfall** (the consumer's failure mode on each commodity, §4.4a), on the received share R:
+- **throttle:** R;
+- **trip:** 1 while R ≥ 0.9, else 0 (the trip point is a placeholder, J);
+- **step to a floor:** hospitals on generator run at the essential fraction, 0.6.
+
+Where a class has a telecom tolerance row, the tolerance acts first: full function for T hours, then d_eff = 1 − κ(1 − d).
+
+**Links and lines.**
+- Links inside power, water, fuel and telecom carry that layer's commodity: physical flow, linear, shared pro rata when the supplier is short.
+- Roads give reachability and crew travel; healthcare referral links carry nothing in Phase 1.
+- A failed line passes nothing until repaired. No power-flow model (declared).
+
+**Stocks.**
+- A stock covers its own commodity's shortfall while it lasts, drawn down at the actual draw (a hospital on generator draws its essential load).
+- A generator that fails to start never covers; one that fails to run stops at its drawn time.
+- **Fuel deliveries** arrive 12 h after the consumer loses power, then every 24 h, while the depot is up and a road links them.
+- **Refill:** batteries recharge from empty to full in 12 h (J); water storage refills from the pumps' spare capacity while still serving demand; purified and make-up water stocks refill from the main once it returns; generator tanks refill only by delivery, every 24 h until full; national LNG, oil and coal stocks do not refill inside the window.
+
+**Repair and crews.**
+- Recovery is all or nothing in Phase 1.
+- **Crew-bound lead time** (mobilize, assess, stage): 2 h (J) plus travel, starting when a crew is assigned and repeating at every job.
+- **Parts lead time:** the rest of the Hazus lead time, max(0, lead time − 2 h). It runs in parallel with no crew; in Phase 1 its clock starts at the end of the storm.
+- **A crew's sequence:** assigned → travel → assess → repair once its parts are in → travel to the next job. Crews move job to job; they do not return to base.
+- **Travel** uses the road network, then off road at 2 km/h to a line's failure point (§4.3b). In Phase 1 one line is one job for one crew.
+- **Default crew order** (the restorative model replaces it): (1) towered lines and transmission substations; (2) distribution substations and feeds to end uses, highest Lifeline weight first; (3) everything else. Ties go to the shortest travel, then the lowest id. Emergency units go to eligible damaged nodes in the same order.
+- **Manual switching:** when a repair should re-energize a substation whose telecom is down, power returns only after a crew travels there and switches by hand: 1 h on site (range 0.5–2 h, J) plus travel as for repairs. The trip uses a crew like any job. It does not apply when the repair is at the substation itself.
+
+**Time.**
+- The storm acts at hour 0; all its damage is applied then.
+- Steps of 15 minutes. Within each step the cascade settles: states are recomputed until they stop changing, up to 100 passes (the convergence parameter γ). A run that hits the cap is reported, never hidden.
+- The horizon comes from the request (default 72 h); the engine has no fixed window.
+- Arithmetic is + − × ÷ and sqrt only, so runs are identical on every platform.
+
+**Ranges and relaxed values** (D11).
+- Every limit carries a default, a range and a **relaxed value**: unlimited for stocks and capacities (fuel, batteries, water, backup power, crews, pump capacity), zero for delays and losses (lead times, travel, switching time, telecom tolerance loss).
+- A recipe relaxes any limit by name: one alone, all but one, or any named mix. Relaxing is stored as a flag, never as a large number.
+- Relaxing a limit is distinct from removing a dependency. An unlimited water stock keeps the plant dependent on the main, but the dependency never bites; removing the coupling deletes it. They are separate switches, and a result says which it used.
+- Relaxing a limit never makes the outcome worse (a test).
+
+**The calm-world check.** With no damage, every node holds state 1, every stock stays full, and no crew, delivery or tolerance clock moves, for the whole horizon. Any deviation fails the build.
+
+**Saved reference runs.** The pilot's 8 scenarios run for 72 h with no actions and the default crew order. Each is saved as golden files, stamped with the horizon and the policy, recording every node state, stock level, crew position and job, and repair completion, plus unweighted hours out per end-use node. `swm simulate --scenario N` prints and plots any run.
+
+**The Theta List.** Every modelling choice is tracked in the tuple under Θ, so a decision maker can be told every choice behind a result. It spans four domains: the constructed world's truth θ\* (every registry rule and every dynamics choice above); the constructed world's error model (Phase 3); the real-world chain (the Chapter 5 pipeline, recorded in the same format in its own repository); and each analysis run's declared θ̂. Each entry carries its framework sub-type (construction, dynamics, analysis, stopping) and symbol, the θ\* value and each run's θ̂ value, its alternatives, its relaxed value, what a flattened run does with it, its sensitivity status and its ruling. The 72 h window is a stopping entry. Objectives (the metric, the acceptability threshold, the service weights) are outside the tuple: they are the questions being answered, recorded with each request. The list is built into the rules registry; `swm rules --theta` prints it, and the dissertation appendix prints from the same source.
+
+**Difficulty and tiers** (unchanged):
 - **Tier:** exact, simulation, or both. The exact tier is restricted to forms that admit a provable optimum, declared as a simplification. Both runs worlds sized to fit both tiers (the overlap band), so the two can be compared directly.
-- **No time window here.** The world's dynamics are defined for any horizon; the window over which an objective is scored belongs to the request (§5).
 - **Difficulty readout:** computed from the world alone (feed mix, concentration, hazard severity, coupling density), never set by hand. There is no installed-redundancy total: redundancy is planted as configuration (§4.3). How the score is measured is open (§10, item 3).
-- **Produces:** the world's declared dynamics composition.
+- **Produces:** the world's declared dynamics composition, θ\*.
 
 ### 4.6 Emission
 
@@ -623,6 +683,16 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.8
+
+All ruled by the author, 2026-10-02 to 2026-10-09 (decision 0014; Dynamics Ruling Sheet v0.3; Degradation Profiles v0.2):
+- §4.5 rewritten: the dynamics engine (state, transfer forms, responses, links, stocks and refill, repair with split lead time and crews moving job to job, manual switching, 15-minute steps with settling, the calm-world check, saved reference runs, the Theta List).
+- Ranges and relaxed values for every limit, with relaxing kept distinct from removing a dependency (§4.5).
+- New stocks: purified boiler water at generation (24 h), make-up water at evaporative data centres (12 h), backup power for cargo at seaports (0 h) (§4.4a).
+- Substation telecom loss costs a manual switching trip instead of slowing repair (§4.4a, §4.5).
+- Storm corrections of 2026-10-03 and 2026-10-09 (PR 14 answers): the ridge factor read in the storm's own direction, capped at 1.17 against Taiwan's 95.2 m/s gust record; towers designed for their site; the pole-line median recalibrated to 163.69 m/s (§4.3b).
+- Later phases, recorded at the author's request: sharing rules when a supplier is short beyond pro rata; recovery forms beyond all or nothing; step and concave degradation forms; partly failed lines and line capacity limits; power flow (Phase 5); the parts clock starting at first assessment; toggleable step size and event-driven timing; damage timed to the storm's passage; timed exogenous events in a scenario; a saved scenario and run library; crane versus roll-on/roll-off seaport terminals; air-cooled data centres.
 
 ## Changes from v0.7
 

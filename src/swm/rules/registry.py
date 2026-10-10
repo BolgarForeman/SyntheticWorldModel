@@ -6,7 +6,7 @@ only by a reviewed edit to that file (Work Order 5, A5). The registry's version 
 are stamped on the resolved recipe and on every world, so each world records which rules
 built it.
 
-Spec: Work Order 5, Part A; decision 0009.
+Spec: Work Order 5, Part A; Work Order 7, Parts B and C; decisions 0009 and 0014.
 """
 
 import functools
@@ -40,6 +40,7 @@ class Jurisdiction(StrEnum):
     TW = "TW"
     JP = "JP"
     US = "US"
+    IN = "IN"
     INTERNATIONAL = "international"
 
 
@@ -68,12 +69,58 @@ class Stage(StrEnum):
     STRENGTH = "strength"
     DRAWS = "draws"
     STORM = "storm"
+    DYNAMICS = "dynamics"
 
 
 class ThetaRole(StrEnum):
-    """The rule's role in the Theta List (draft v0.1): only the dynamics role so far."""
+    """A rule's framework sub-type in the Theta List, or world content (not a Theta entry)."""
 
+    CONSTRUCTION = "construction"
     DYNAMICS = "dynamics"
+    STOPPING = "stopping"
+    ANALYSIS = "analysis"
+    WORLD_CONTENT = "world_content"
+
+
+class ThetaDomain(StrEnum):
+    """The Theta List's four domains (§4.5); Work Order 7 fills the truth domain only."""
+
+    TRUTH = "truth"
+    ERROR_MODEL = "error_model"
+    REAL_WORLD_CHAIN = "real_world_chain"
+    ANALYSIS = "analysis"
+
+
+class ThetaSymbol(StrEnum):
+    """The framework symbol a Theta entry sets (Appendix A), or none."""
+
+    F = "F"
+    G_DELTA = "g_δ"
+    H_PHI = "h_φ"
+    R = "R"
+    GAMMA = "γ"  # noqa: RUF001 - the framework symbol gamma
+    CHI = "χ"
+    NONE = "none"
+
+
+class Relaxed(StrEnum):
+    """A limit's relaxed value (D11): unlimited for stocks and capacities, zero for delays."""
+
+    UNLIMITED = "unlimited"
+    ZERO = "zero"
+
+
+class Flattened(StrEnum):
+    """What a flattened run does with a Theta entry."""
+
+    KEEPS = "keeps"
+    DROPS = "drops"
+    REPLACES = "replaces"
+
+
+SENSITIVITY_PATTERN = r"^(none planned|planned: .+|run: .+)$"
+"""A Theta entry's sensitivity: none planned, planned with the run named, or run with a
+pointer."""
 
 
 class _Strict(BaseModel):
@@ -135,8 +182,33 @@ class Rule(_Strict):
     open_decision: str | None = None
     ruling: Ruling | None = None
     history: tuple[HistoryItem, ...] = ()
-    theta_role: ThetaRole | None = Field(
-        None, description="The rule's Theta List role; the hazard rules are θ*-dynamics."
+    theta_role: ThetaRole = Field(
+        description="The rule's Theta List sub-type, or world_content (not a Theta entry)."
+    )
+    theta_domain: ThetaDomain | None = Field(
+        None, description="The Theta domain; truth for every θ* entry, empty for world content."
+    )
+    theta_symbol: ThetaSymbol | None = Field(
+        None, description="The framework symbol the rule sets; empty for world content."
+    )
+    theta_alternatives: tuple[str, ...] = Field(
+        (), description="Alternatives to the chosen value, for the Theta List."
+    )
+    theta_sensitivity: str = Field(
+        "none planned",
+        pattern=SENSITIVITY_PATTERN,
+        description="None planned, planned with the run named, or run with a pointer.",
+    )
+    range: Any = Field(
+        None,
+        description="A limit's range, low to high in the rule's units ([low, high] for a "
+        "number, the same per key for a table).",
+    )
+    range_open: bool = Field(
+        False, description="No range was ruled; the range given is [default, default]."
+    )
+    relaxed: Relaxed | None = Field(
+        None, description="A limit's relaxed value (D11); empty for rules that are not limits."
     )
 
     @model_validator(mode="after")
@@ -149,12 +221,73 @@ class Rule(_Strict):
             raise ValueError(f"{self.id}: a ruled entry needs at least one source")
         return self
 
+    @model_validator(mode="after")
+    def _theta(self) -> Self:
+        content = self.theta_role == ThetaRole.WORLD_CONTENT
+        if content != (self.theta_domain is None) or content != (self.theta_symbol is None):
+            raise ValueError(
+                f"{self.id}: a Theta entry needs a domain and a symbol; world content has none"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _limit(self) -> Self:
+        if self.relaxed is None:
+            if self.range is not None or self.range_open:
+                raise ValueError(
+                    f"{self.id}: a range belongs to a limit, which has a relaxed value"
+                )
+            return self
+        if self.range is None and not self.range_open:
+            raise ValueError(f"{self.id}: a limit needs a range, or is marked range open")
+        return self
+
+    @property
+    def is_limit(self) -> bool:
+        """Whether the rule is a limit, with a relaxed value (D11)."""
+        return self.relaxed is not None
+
+
+class ThetaEntry(_Strict):
+    """A Theta List entry for a choice that carries no number of its own (C2)."""
+
+    theta_id: str = Field(pattern=RULE_ID_PATTERN)
+    domain: ThetaDomain
+    sub_type: ThetaRole
+    symbol: ThetaSymbol
+    chosen: str = Field(min_length=1, description="The choice, in one plain sentence.")
+    alternatives: tuple[str, ...] = ()
+    registry_ids: tuple[str, ...] = ()
+    relaxed: Relaxed | None = None
+    carried_vs_flattened: Flattened = Flattened.KEEPS
+    sensitivity: str = Field("none planned", pattern=SENSITIVITY_PATTERN)
+    ruling: Ruling
+
+    @model_validator(mode="after")
+    def _a_theta_sub_type(self) -> Self:
+        if self.sub_type == ThetaRole.WORLD_CONTENT:
+            raise ValueError(f"{self.theta_id}: world content is not a Theta entry")
+        return self
+
+
+class Objective(_Strict):
+    """An objective: a question posed of the world, recorded outside Θ (§4.5)."""
+
+    name: str = Field(min_length=1)
+    description: str = Field(min_length=1)
+
 
 class Registry(_Strict):
     """The whole registry: a version and the rules."""
 
     version: str = Field(min_length=1)
     rules: tuple[Rule, ...]
+    theta: tuple[ThetaEntry, ...] = Field(
+        (), description="Theta List entries for choices that carry no number (C2)."
+    )
+    objectives: tuple[Objective, ...] = Field(
+        (), description="The objectives, outside Θ: the questions posed of a world."
+    )
     sha256: str = Field("", description="SHA-256 of the registry file's bytes.")
     overrides: tuple[tuple[str, Any], ...] = Field(
         (), description="Recipe overrides applied to this copy, in id order."
@@ -162,10 +295,14 @@ class Registry(_Strict):
 
     @model_validator(mode="after")
     def _unique_ids(self) -> Self:
-        ids = [rule.id for rule in self.rules]
+        ids = [rule.id for rule in self.rules] + [entry.theta_id for entry in self.theta]
         repeated = sorted({i for i in ids if ids.count(i) > 1})
         if repeated:
-            raise ValueError(f"rule ids repeated: {', '.join(repeated)}")
+            raise ValueError(f"rule and Theta ids repeated: {', '.join(repeated)}")
+        known = set(ids)
+        missing = sorted({i for e in self.theta for i in e.registry_ids if i not in known})
+        if missing:
+            raise ValueError(f"Theta entries name unknown rules: {', '.join(missing)}")
         return self
 
     @functools.cached_property
@@ -268,6 +405,8 @@ class Registry(_Strict):
         return Registry(
             version=self.version,
             rules=rules,
+            theta=self.theta,
+            objectives=self.objectives,
             sha256=self.sha256,
             overrides=tuple(sorted(overrides.items())),
         )

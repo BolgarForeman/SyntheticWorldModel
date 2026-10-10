@@ -45,6 +45,11 @@ def _registry() -> dict[str, str]:
         paths[f"availability/{layer}"] = f"Backup generator availability at {layer} nodes."
         paths[f"failure_mode/{layer}"] = f"Which {layer} failure modes depart from the default."
         paths[f"repair/{layer}"] = f"Repair rates of {layer} nodes, one draw per node."
+    paths |= {
+        "reserves/purified_water": "Purified boiler water at generation (Work Order 7, A1).",
+        "reserves/makeup_water": "Make-up water at evaporative data centres (Work Order 7, A1).",
+        "reserves/backup_power": "Backup power for cargo at seaports (Work Order 7, A1).",
+    }
     paths |= _coupling_paths()
     for hazard in Hazard:
         if hazard != Hazard.STORM_CORRIDOR:

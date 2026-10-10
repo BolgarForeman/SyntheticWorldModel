@@ -87,11 +87,17 @@ def _stamp_rules(rules: ModelingRules) -> ModelingRules:
             f"but this code carries {registry.sha256}"
         )
     registry.with_overrides(rules.overrides)
+    for rule_id in rules.relaxed_limits:
+        if not registry.rule(rule_id).is_limit:
+            raise ValueError(
+                f"modeling_rules.relaxed_limits: {rule_id} is not a limit; it has no relaxed value"
+            )
     return rules.model_copy(
         update={
             "registry_version": registry.version,
             "registry_sha256": registry.sha256,
             "overrides": dict(sorted(rules.overrides.items())),
+            "relaxed_limits": tuple(sorted(rules.relaxed_limits)),
         }
     )
 
