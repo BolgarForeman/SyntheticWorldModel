@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.9 · 2026-10-09 · companion to the World Generator Interface mockup v0.5 and recipe schema v2 · supersedes v0.8*
+*v0.10 · 2026-10-10 · companion to the World Generator Interface mockup v0.5 and recipe schema v3 · supersedes v0.9*
 
 ## 1. What this is
 
@@ -497,7 +497,7 @@ Where a class has a telecom tolerance row, the tolerance acts first: full functi
 - A stock covers its own commodity's shortfall while it lasts, drawn down at the actual draw (a hospital on generator draws its essential load).
 - A generator that fails to start never covers; one that fails to run stops at its drawn time.
 - **Fuel deliveries** arrive 12 h after the consumer loses power, then every 24 h, while the depot is up and a road links them.
-- **Refill:** batteries recharge from empty to full in 12 h (J); water storage refills from the pumps' spare capacity while still serving demand; purified and make-up water stocks refill from the main once it returns, as does hospital water; generator tanks refill only by delivery, every 24 h until full; national LNG, oil and coal stocks do not refill inside the window.
+- **Refill:** batteries recharge from empty to full in 12 h (J); water storage refills from the pumps' spare capacity while still serving demand; purified and make-up water stocks refill from the main once it returns, as does hospital water, at the rate they drained (range half that rate to the same rate; relaxed value instant refill; ruled 2026-10-10); generator tanks refill only by delivery, every 24 h until full; national LNG, oil and coal stocks do not refill inside the window.
 
 **Repair and crews.**
 - Recovery is all or nothing in Phase 1.
@@ -535,10 +535,18 @@ Where a class has a telecom tolerance row, the tolerance acts first: full functi
 
 - **Produces:** one set of files per source switched on, for emitted layers only, in the source's real container, schema and idioms.
   - On node-only layers, links are withheld.
-  - Hidden layers and switched-off couplings are withheld.
+  - Hidden layers and switched-off couplings are withheld. Couplings (edges between layers) and the feeds below the substations are never emitted.
   - Overlapping assets appear in each of their sources.
   - All attributes the real source carries are emitted, scored or not (§4.7).
   - The true correspondence across sources is written to the truth manifest.
+- **How each source is written** (ruled 2026-10-10, decision 0015; `evidence/Emission_Ruling_Sheet_v0_2.md`):
+  - **OpenStreetMap is one extract.** Every switched-on OpenStreetMap source goes into one `.osm.pbf` file for the island, as a Geofabrik extract does, with a plain-text `.osm` copy beside it. Each source's scope decides which features it contributes, and its own error settings apply to those features in Phase 3.
+  - **Outlines where real mapping uses them.** Classes usually mapped as areas (plants, substations, hospitals, water works, reservoirs, ports, airports, tank farms, refineries) are closed outlines with a rectangular footprint sized by class (J); the rest are points. The true location is the outline's centre. Lines on emitted layers are ways: power lines through their tower points, pipelines, mains and communication lines.
+  - **Identifiers from reserved ranges.** Country `XS` / `XSW` ("Synthetic World", ISO 3166 user-assigned); OpenStreetMap ids from 9,000,000,000,000; WRI `XSW0000001…`; OurAirports `XS-0001…` with no ICAO or IATA codes; register codes with an `XS` prefix.
+  - **Names.** Plain, pronounceable invented town names from a fixed syllable list in the registry, in English only (Phase 1); facilities named by town and class in each source's own style; a share of minor elements unnamed (J). A test screens names against common words and well-known places. Leaks are flagged by the identifiers, not the names.
+  - **The facility register carries coordinates** in place of addresses in Phase 1 (declared departure). Synthetic addresses, a gazetteer and the pipeline's geocoder come in Phase 6.
+  - **Scored attributes:** location; class; capacity where the source carries it (MW, voltage); line end points (OpenStreetMap); capacity and primary fuel (WRI); type and scheduled service (OurAirports); register level and beds (register). Everything else, names included, is context.
+- **Printable hand-trace pack:** a one-page map (nodes, lines and towers, links, the seven couplings switched on, the crew base, the storm track and damage) and tables (nodes and stocks, dependencies, the scenario's damage, the reference-run timeline), as a PDF with fixed metadata and as CSV. Scenario 7 by default.
 
 ### 4.7 Error induction
 
@@ -558,14 +566,17 @@ The denominator no longer depends on any model. It is fixed by the world and the
 
 ### 4.8 Truth manifest
 
-- **Produces:**
-  - every planted error, with target, observability, source and mechanism;
+- **Produces** (one YAML file per world, beside the GeoPackage inspection export, in its own folder; the pipeline is never pointed at it):
+  - every planted error, with target, observability, source and mechanism (empty in Phase 1, and stated as a zero-error emission);
   - every unobserved value, with its design target, context factors, heterogeneity and compliance gap;
-  - every hidden layer and hidden coupling;
-  - the cross-source correspondence;
-  - the scored and context attribute lists per layer;
-  - the dynamics composition;
+  - every hidden layer and hidden coupling, and the feeds with their routes;
+  - the cross-source correspondence: every true element's record in each file, by id;
+  - the true geometry: each location, each outline's corners and centre, each line's route and tower points;
+  - the scored and context attribute lists per source;
+  - the declared departures from the real sources;
+  - the dynamics composition, θ\*, by registry fingerprint, with the Theta List;
   - the seeds and spawn tree.
+- A test proves no source file holds anything found only in the manifest.
 
 ### 4.9 Ensembles (later)
 
@@ -683,6 +694,14 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.9
+
+All ruled by the author, 2026-10-10 (decision 0015; Emission Ruling Sheet v0.2):
+- §4.6 specifies how each source is written: one OpenStreetMap extract; outlines where real mapping uses them; reserved identifiers (XS / XSW); plain invented names in English; coordinates in the facility register for Phase 1; scored and context attributes; the printable hand-trace pack.
+- §4.8 adds the true geometry (outlines, routes, towers), the feed routes and the declared departures to the truth manifest.
+- §4.5: water stocks refill from the main at the rate they drained (range half to the same rate; relaxed value instant).
+- Later phases, recorded at the author's request: bilingual names (Chinese and English); synthetic addresses with a gazetteer and the pipeline's geocoder (Phase 6).
 
 ## Changes from v0.8
 
