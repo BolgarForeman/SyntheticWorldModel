@@ -3,8 +3,11 @@
 Offline only. A declared calibration (decision 0012, second addendum): with the curve's beta held
 at its ruled value, find the median gust at which the pilot (severity 50) loses about 10% of its
 overhead line length and the severity-70 copy about 30%, each averaged over the recipe's
-scenarios. Line length lost is the length of every line that is down (any kilometre failed, or
-its towers collapsed), over the length of all overhead lines.
+scenarios. The target is the expected share (PR 7b answers, 1): each line's chance of being
+down, 1 - prod(1 - p_km) over its kilometres from the stored curve at each kilometre's gust (a
+towered line by its own curve), weighted by its length, over the length of all overhead lines.
+It uses no random draw, so it fits the curve and not one set of dice; the realized share (the
+lines that a draw actually brought down) is reported beside it.
 
 For each target the script bisects on the median, rebuilding the stored table from
 ``build_fragility_tables`` so the runtime path is exactly the generator's. It then checks
@@ -13,7 +16,8 @@ does, it reports, without applying it, the smallest beta at which one median wou
 
 Run: ``uv run python tools/calibrate_line_curve.py`` (from the repository root).
 
-Spec: structure v0.7 §4.3b (overhead lines: calibration); Work Order 6, PR 6b answer 2.
+Spec: structure v0.9 §4.3b (overhead lines: calibration); Work Order 6, PR 6b answer 2;
+PR 7b answers, 1.
 """
 
 import math
@@ -55,7 +59,16 @@ def prepared(path: Path) -> dict[str, Any]:
 
 
 def length_share(world: dict[str, Any], median: float, beta: float = tables.LINE_BETA) -> float:
-    """Return the mean share of overhead line length down across the recipe's scenarios."""
+    """Return the expected share of overhead line length down, averaged over the scenarios."""
+    return _shares(world, median, beta)[0]
+
+
+def realized_share(world: dict[str, Any], median: float, beta: float = tables.LINE_BETA) -> float:
+    """Return the share of overhead line length one draw brought down, averaged (for report)."""
+    return _shares(world, median, beta)[1]
+
+
+def _shares(world: dict[str, Any], median: float, beta: float) -> tuple[float, float]:
     gusts = [float(g) for g in tables.GUSTS]
     table = {
         "median_m_per_s": median,
@@ -77,11 +90,16 @@ def length_share(world: dict[str, Any], median: float, beta: float = tables.LINE
     )
     lengths = {line.line_id: line.length_km for line in result.lines}
     total = math.fsum(lengths.values())
-    shares = [
+    expected = [
+        math.fsum(lengths[o.line_id] * o.failure_probability for o in scenario.lines) / total
+        for scenario in result.scenarios
+    ]
+    realized = [
         math.fsum(lengths[line.line_id] for line in scenario.failed_lines) / total
         for scenario in result.scenarios
     ]
-    return math.fsum(shares) / len(shares)
+    count = len(result.scenarios)
+    return math.fsum(expected) / count, math.fsum(realized) / count
 
 
 def bisect(world: dict[str, Any], target: float, beta: float) -> float:
@@ -133,8 +151,10 @@ def main() -> None:
 def _report_best(worlds: dict[str, Any], beta: float) -> float:
     worst, median, shares = best_single(worlds, beta)
     rounded = {n: round(v, 4) for n, v in shares.items()}
+    realized = {n: round(realized_share(w, median, beta), 4) for n, w in worlds.items()}
     within = "within" if worst <= TOLERANCE else "NOT within"
-    _say(f"beta {beta}: best single median {median:.4f}: shares {rounded}")
+    _say(f"beta {beta}: best single median {median:.4f}: expected shares {rounded}")
+    _say(f"    realized shares at that median {realized}")
     _say(f"    worst miss {worst:.4f}, {within} 5 points")
     return worst
 

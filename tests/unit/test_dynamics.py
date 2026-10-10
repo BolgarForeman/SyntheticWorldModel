@@ -330,3 +330,62 @@ def test_an_unknown_transfer_form_is_refused() -> None:
     node = OneNode(C.MAST, Layer.TELECOM).needs(Layer.POWER, form="step")
     with pytest.raises(ValueError, match="step transfer form"):
         cut(node.world(), [supplier_id(Layer.POWER)])
+
+
+# --- PR 7b answers: the three corrections ---------------------------------------------------
+
+
+def with_crew(world: Any) -> Any:
+    return replace(world, crews=(CrewStart("CREW", (0.0, 0.0)),))
+
+
+def test_a_missed_delivery_goes_out_when_the_depot_comes_back() -> None:
+    node = OneNode(C.EXCHANGE, Layer.TELECOM, end_use=False)
+    node.stock("battery", Layer.POWER, 4.0, "reserves.exchange.battery_h", "battery")
+    node.generator(24.0, "reserves.exchange.fuel_h").needs(Layer.POWER).deliveries_from()
+    # The depot is repaired at hour 20 (2 h crew-bound lead, 18 h of work).
+    node.repairs.append(FacilityRepair("DEPOT", 0.0, 18.0))
+    run = cut(with_crew(node.world()), [supplier_id(Layer.POWER), "DEPOT"])
+    assert [d.time_h for d in run.deliveries] == [20.0, 44.0, 68.0]
+    assert set(run.state(TARGET)) == {1.0}
+
+
+def test_hospital_water_refills_from_the_main_once_supply_returns() -> None:
+    node = OneNode(
+        C.TERTIARY, Layer.HEALTHCARE, {"records_hosted": False, "standby_fuel": "diesel"}
+    )
+    node.stock("water", Layer.WATER, 72.0, "reserves.hospital.water_h", "main").needs(Layer.WATER)
+    node.repairs.append(FacilityRepair(supplier_id(Layer.WATER), 0.0, 4.0))
+    run = cut(with_crew(node.world()), [supplier_id(Layer.WATER)])
+    level = run.level(f"{TARGET}:water")
+    full = level[0]
+    # Out for 6 h (2 h lead, 4 h work), then refilled at its draw: 6 h back in 6 h.
+    assert level[24] == pytest.approx(full - 60.0)
+    assert level[25] == pytest.approx(full - 57.5)
+    assert level[48] == pytest.approx(full)
+
+
+def test_pump_capacity_is_shared_pro_rata_by_demand() -> None:
+    world = OneNode(C.STORAGE, Layer.WATER).world()
+    pump = EngineNode("PUMP", Layer.WATER, C.PUMPING, (0.0, 0.0), True, None, None)
+    stores = [EngineNode(s, Layer.WATER, C.STORAGE, (0.0, 0.0), False, "throttle", 5.0)
+              for s in ("S1", "S2")]  # fmt: skip
+    from swm.dynamics.world import Stock
+
+    stocks = (Stock("S1:distribution_water", "S1", "distribution_water", Layer.WATER, 120.0,
+                    10.0, "pumps", "reserves.storage.peak_day_h"),
+              Stock("S2:distribution_water", "S2", "distribution_water", Layer.WATER, 360.0,
+                    30.0, "pumps", "reserves.storage.peak_day_h"))  # fmt: skip
+    links = (IntraLink("L1", "PUMP", "S1", False), IntraLink("L2", "PUMP", "S2", False))
+    world = replace(
+        world, nodes=(pump, *stores), dependencies=(), links=links, stocks=stocks,
+        repairs=(FacilityRepair("PUMP", 0.0, 2.0),), pump_capacity_m3_per_h={"PUMP": 80.0},
+        crews=(CrewStart("CREW", (0.0, 0.0)),),
+    )  # fmt: skip
+    run = simulate(world, RunRequest(Damage(("PUMP",), (), ()), horizon_h=12.0))
+    # Down 4 h; then 80 m³/h shared 1:3 by demand leaves 10 and 30 m³/h spare.
+    s1, s2 = run.level("S1:distribution_water"), run.level("S2:distribution_water")
+    assert s1[16] == pytest.approx(80.0)
+    assert s2[16] == pytest.approx(240.0)
+    assert s1[17] - s1[16] == pytest.approx(2.5)
+    assert s2[17] - s2[16] == pytest.approx(7.5)

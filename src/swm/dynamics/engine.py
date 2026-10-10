@@ -177,8 +177,11 @@ class _Engine:
         for k in range(steps + 1):
             t = k * self.step
             self._complete(t)
-            self._deliver(t)
             used = self._settle_with_switching(t)
+            # A delivery needs the depot's settled state; fuel that arrives refills the tank
+            # in this step, so the cascade settles again.
+            if self._deliver(t):
+                used = max(used, self._settle_with_switching(t))
             passes.append(used)
             if used > self.settings.settling_cap:
                 capped.append(t)
@@ -440,7 +443,8 @@ class _Engine:
             )
         for line_id in sorted(self.down_lines):
             points = sorted((p for p in self.points if p.line_id == line_id), key=lambda p: p.km)
-            # CHOICE: a crew works a line's failure points in order along the line.
+            # A crew works a line's failure points in order along the line (ruled, decision
+            # 0014 second addendum).
             self.jobs[f"repair:{line_id}"] = _Job(
                 f"repair:{line_id}",
                 "line",
@@ -591,17 +595,21 @@ class _Engine:
 
     # --- Deliveries (D5) ------------------------------------------------------------------------
 
-    def _deliver(self, t: float) -> None:
+    def _deliver(self, t: float) -> bool:
+        """Make every delivery due by this step whose depot is up; say whether any came."""
+        made = False
         for resupply in self.world.resupply:
             due = self.due[resupply.edge_id]
             if due is None or due > t + 1e-12:
                 continue
             tank = self.stocks[resupply.stock_id]
             room = self.capacity[tank.stock_id] - self.level[tank.stock_id]
-            if (
-                self._transfer(resupply.transfer_form, self.x[resupply.depot_id]) > 0.0
-                and room > 0.0
-            ):
+            # A delivery the depot cannot make goes out at the first step the depot is up (roads
+            # are not damaged in Phase 1, so a road reaches the consumer); the schedule then
+            # runs every interval from that delivery (PR 7b answers, 2).
+            if self._transfer(resupply.transfer_form, self.x[resupply.depot_id]) <= 0.0:
+                continue
+            if room > 0.0:
                 amount = (
                     room
                     if "reserves.fuel_resupply.delivery_h" in self.relaxed
@@ -609,14 +617,15 @@ class _Engine:
                 )
                 self.level[tank.stock_id] += amount
                 self.deliveries.append(Delivery(resupply.edge_id, resupply.consumer_id, t, amount))
+                made = True
             full = self.level[tank.stock_id] >= self.capacity[tank.stock_id]
-            # CHOICE: a delivery the depot cannot make is missed and tried again an interval
-            # later; deliveries stop once the tank is full and power is back.
+            # Deliveries stop once the tank is full and power is back.
             self.due[resupply.edge_id] = (
                 None
                 if full and self.loss[resupply.edge_id] is None
-                else (due + self.settings.delivery_interval_h)
+                else t + self.settings.delivery_interval_h
             )
+        return made
 
     # --- Advancing one step ---------------------------------------------------------------------
 
@@ -678,7 +687,7 @@ class _Engine:
                 else self.capacity[stock.stock_id] / self.settings.battery_recharge_h
             )
         elif stock.refill == "main":
-            # CHOICE: purified and make-up water refill from the main at the rate they drain.
+            # CHOICE: water from the main refills a stock at the rate it drains.
             rate = stock.draw_per_h
         elif stock.refill == "pumps":
             rate = self._spare_pumping(stock)
@@ -701,10 +710,19 @@ class _Engine:
             capacity = self.world.pump_capacity_m3_per_h.get(upstream)
             if capacity is None:
                 continue
-            fed = sum(1 for link in self.world.links if link.upstream_id == upstream)
-            # CHOICE: a pump's capacity is shared equally among the nodes it feeds.
-            inflow += self.x[upstream] * capacity / fed
+            # A pump's capacity is shared pro rata by the demand of the nodes it feeds (§4.5,
+            # links inside a layer; PR 7b answers, 2).
+            fed = [link.downstream_id for link in self.world.links if link.upstream_id == upstream]
+            total = math.fsum(self._demand(node_id) for node_id in fed)
+            share = self._demand(stock.node_id) / total if total > 0.0 else FULL / len(fed)
+            inflow += self.x[upstream] * capacity * share
         return max(0.0, inflow - stock.draw_per_h)
+
+    def _demand(self, node_id: str) -> float:
+        """Return the water a node fed by pumps draws: its storage's downstream draw (m³/h)."""
+        return math.fsum(
+            s.draw_per_h for s in self.world.stocks if s.node_id == node_id and s.refill == "pumps"
+        )
 
     def _clocks(self, dt: float) -> None:
         for dependency in self.dependencies:

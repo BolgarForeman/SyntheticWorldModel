@@ -93,3 +93,42 @@ Each becomes a selectable setting when built:
    The storm rules carry no symbol.
 5. **Pump capacity** is the registry limit `reserves.pumping.capacity` (relaxed value unlimited, range open). It is each pumping node's `capacity_m3_per_day` attribute, drawn in the layers stage (`layers.attributes.pumping`) and read by the requirements stage. It is not sized to load, and no new number is introduced.
 6. **Overrides outside a ruled range** are allowed. The resolved recipe and every run record a note naming the rule, the value and the range (`modeling_rules.out_of_range`).
+
+## Second addendum: the engine, and answers to the paused PR 7b (2026-10-10)
+
+- **Decided by:** the author (Foreman)
+- **Source:** `docs/work_orders/WO-07b-answers.md`; `docs/design/evidence/Degradation_Profiles_v0_3.md`
+
+1. **Calibrate to the expected line loss.**
+   - **The target:** the line-loss targets apply to the expected share of overhead line length down:
+     - for each scenario and each line, 1 − Π(1 − p_km) over its kilometres from the stored curve at each kilometre's gust, a towered line by its own curve;
+     - weighted by length;
+     - averaged over the scenarios;
+     - with no random draw.
+
+     A realized draw over 8 scenarios and a handful of lines fits the dice, not the curve.
+   - **The result:** `tools/calibrate_line_curve.py` measures it. At β 0.4 the median is 166.6993 m/s (status calibrated; 163.7317 in history):
+
+     | Recipe | Target | Expected | Realized |
+     |---|---|---|---|
+     | Pilot | 10% | 7.28% | 3.75% |
+     | Severity 70 | 30% | 32.70% | 32.72% |
+2. **Nine engine choices ruled as built:**
+   1. Feed groups as in the undisturbed supply check (summed across groups, all edges within a group needed).
+   2. Own-layer supply is rebuilt from the layer's sources at each pass, so a ring of links cannot keep itself supplied.
+   3. Telecom response is R + (1 − R) × the tolerance level.
+   4. A battery covers before the generator.
+   5. Shortfall-share drain; a hospital on its floor draws its full essential load.
+   6. Own-layer response takes the class default and departures, with no draw.
+   7. Failure points are worked in order along the line.
+   8. Repairs take effect at the next step.
+   9. Sea trips are the straight distance at road speed plus mobilisation.
+3. **Three engine corrections:**
+   - **Pump capacity** is shared pro rata by the demand of the nodes it feeds (§4.5, links inside a layer). Storage refills from what remains.
+   - **A missed fuel delivery** goes out at the first step the depot is up and a road reaches the consumer. The schedule then runs every `delivery_h` from that delivery.
+   - **Hospital water** refills from the main once supply returns, like purified and make-up water. Supplies and blood need deliveries and do not refill inside the window.
+4. **Degradation Profiles v0.3:**
+   - LNG and oil plants trip on a fuel cut, because their stocks are held at the terminal and the tank farms; coal plants run on their own 30-day pile.
+   - Pipeline-fed airports trip on a fuel cut; truck-fed airports throttle.
+
+**Still a choice, for review:** water from the main refills a stock at the rate it drains.

@@ -99,8 +99,8 @@ class RoadLegs:
         a, b = self._foot(start.point), self._foot(end.point)
         route = None if a is None or b is None else self.roads.route(a, b)
         if a is None or b is None or route is None:
-            # CHOICE: two sites no road joins are a sea trip: the straight distance at road
-            # speed plus the outlying-island mobilisation delay.
+            # Two sites no road joins are a sea trip (ruled, decision 0014 second addendum): the
+            # straight distance at road speed plus the outlying-island mobilisation delay.
             return Legs(_distance(start.point, end.point) / M_PER_KM, 0.0, True)
         road_m, offroad_m = route[1], 0.0
         for foot, site in ((a, start), (b, end)):

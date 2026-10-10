@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: add8849c34d45e9ea979ef052c1645c60c0f49e9f5c0fe9220d3d8a488e7512c
+  registry_sha256: 5af484e8a4058df34bb94fb2a619022d6a0c6de1edbbffd82f32bc658c2a8c11
   overrides: {}
   relaxed_limits: []
   out_of_range: []
@@ -19,7 +19,7 @@ overhead_lines:
     on_towers: 0
     km: 49.112
 protectable_elements: 55
-mean_line_length_share_down: 0.041201
+mean_line_length_share_down: 0.037498
 scenarios:
 - index: 0
   failed_lines: 2
@@ -78,18 +78,16 @@ scenarios:
   damaged_facility_ids: []
   damages_anything: false
 - index: 4
-  failed_lines: 2
+  failed_lines: 1
   failed_lines_by_kind:
-    power_feed: 1
     telecom_link: 1
-  failure_points: 2
+  failure_points: 1
   towered_lines_down: 0
-  line_km_down: 21.253
-  line_length_share_down: 0.07235
-  line_crew_work_h: 12.0
+  line_km_down: 12.552
+  line_length_share_down: 0.04273
+  line_crew_work_h: 6.0
   failed_line_ids:
   - SWM-TEL-L0003
-  - SWM-CPL-0007
   damaged_facilities: {}
   damaged_facility_ids: []
   damages_anything: true

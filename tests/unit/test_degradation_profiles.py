@@ -1,4 +1,4 @@
-"""Each degradation profile (Degradation Profiles v0.2) as a one-node test (Work Order 7, F2).
+"""Each degradation profile (Degradation Profiles v0.3) as a one-node test (Work Order 7, F2).
 
 Each test isolates the node, cuts one supply at hour 0 by damaging its source, runs 72 h with
 no repair, and compares the node's state with the profile; each limit is also run at its relaxed
@@ -34,6 +34,15 @@ def held(run: object, until: float) -> bool:
 # --- Power ----------------------------------------------------------------------------------
 
 GENERATION = {"fuel_kind": "coal", "makeup_water": "municipal"}
+
+
+@pytest.mark.parametrize("fuel_kind", ["lng", "oil"])
+def test_generation_fuel_cut_trips_an_lng_or_oil_plant(fuel_kind: str) -> None:
+    # Their stocks are held upstream, at the terminal and the tank farms (Profiles v0.3).
+    node = OneNode(C.GENERATION, P, {**GENERATION, "fuel_kind": fuel_kind}, end_use=False)
+    node.needs(F)
+    assert node.dependencies[0].mode == "trip"
+    assert states_from(cut(node.world(), [supplier_id(F)]), 0.0) == {0.0}
 
 
 def test_generation_fuel_cut_the_coal_stock_covers_far_beyond_the_window() -> None:

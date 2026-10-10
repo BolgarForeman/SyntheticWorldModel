@@ -106,20 +106,20 @@ def test_the_line_curve_is_the_declared_calibration_and_keeps_the_old_anchor() -
     assert table["median_m_per_s"] == builder.LINE_MEDIAN
     assert table["beta"] == 0.4
     rule = RULES.rule("storm.line_fragility_table")
-    # Open: after per-element damage streams no single median meets both windows, and the
-    # closest is stored for a ruling (PR 15 answers, 2).
-    assert rule.status == "open"
+    # Calibrated to the expected share of line length down (PR 7b answers, 1).
+    assert rule.status == "calibrated"
     # Recalibrated for routed lines and the directional ridge factor (PR 14 answers), for its
-    # ceiling and towers designed for their site (PR 14 second answers), then for per-element
-    # damage streams (PR 15 answers).
-    assert [h.value["median_m_per_s"] for h in rule.history[-4:]] == [
+    # ceiling and towers designed for their site (PR 14 second answers), for per-element
+    # damage streams (PR 15 answers), then to the expected share (PR 7b answers).
+    assert [h.value["median_m_per_s"] for h in rule.history[-5:]] == [
         121.7185,
         159.9394,
         201.7763,
         163.6914,
+        163.7317,
     ]
-    assert [h.decision for h in rule.history[-4:]] == ["0012", "0013", "0013", "0014"]
-    assert rule.history[-4].value["beta"] == 0.3
+    assert [h.decision for h in rule.history[-5:]] == ["0012", "0013", "0013", "0014", "0014"]
+    assert rule.history[-5].value["beta"] == 0.3
     targets = RULES.rule("storm.line_fragility_anchor")
     assert targets.value == {"severity_50_length_share": 0.10, "severity_70_length_share": 0.30}
     assert targets.history[-1].value == {"gust_m_per_s": 45.0, "failures_per_km": 0.05}

@@ -269,7 +269,7 @@ def settings_from(rules: Registry) -> Settings:
         manual_switching_h=rules.number("repair.manual_switching_h"),
         battery_recharge_h=rules.number("reserves.battery_recharge_h"),
         delivery_lead_h=rules.number("reserves.fuel_resupply.lead_time_h"),
-        # CHOICE: deliveries come every delivery_h hours, the same 24 h a delivery carries.
+        # Deliveries come every delivery_h hours, the 24 h a delivery carries (PR 7b answers).
         delivery_interval_h=rules.number("reserves.fuel_resupply.delivery_h"),
         road_kmh=rules.number("crews.road_speed_kmh"),
         offroad_kmh=rules.number("crews.offroad_speed_kmh"),
@@ -324,9 +324,11 @@ REFILL: Mapping[str, str] = {
     "generator_fuel": "delivery",
     "purified_water": "main",
     "makeup_water": "main",
+    "water": "main",
     "distribution_water": "pumps",
 }
-"""How each stock kind refills (D5); every other kind does not refill inside the window."""
+"""How each stock kind refills (D5; hospital water from the main, PR 7b answers 2); every other
+kind (supplies, blood, the national stocks) does not refill inside the window."""
 
 
 def world_from_stages(stages: StageOutputs, rules: Registry) -> EngineWorld:
@@ -440,8 +442,9 @@ def own_layer_mode(node_class: NodeClass, layer: Layer, rules: Registry) -> str:
 
     Spec: structure v0.9 §4.4a (failure mode) and §4.5 (links); ruling D4.
     """
-    # CHOICE: own-layer supply takes the class default and departures with no heterogeneity
-    # draw; the failure-mode draws exist only for cross-layer dependencies.
+    # Own-layer supply takes the class default and departures with no heterogeneity draw; the
+    # failure-mode draws exist only for cross-layer dependencies (ruled, decision 0014 second
+    # addendum).
     mode = str(rules.value("failure_modes.defaults")["physical_flow"])
     for departure in rules.value("failure_modes.class_departures"):
         if departure["node_class"] != node_class or departure["when"] is not None:

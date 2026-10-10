@@ -1,0 +1,52 @@
+modeling_rules:
+  registry_version: '0.1'
+  registry_sha256: 5af484e8a4058df34bb94fb2a619022d6a0c6de1edbbffd82f32bc658c2a8c11
+  overrides: {}
+  relaxed_limits: []
+  out_of_range: []
+  removed_dependencies: []
+scenario: 0
+horizon_h: 72.0
+step_h: 0.25
+policy: default crew order
+relaxed_limits: []
+removed_dependencies: []
+actions: []
+summary:
+  hours_out: 8.25
+  longest_out: SWM-TEL-0003
+  longest_out_hours: 8.25
+  last_repair_h: 8.75
+  most_passes: 2
+  capped_steps: 0
+hours_out:
+  SWM-FUE-0003: 0.0
+  SWM-FUE-0004: 0.0
+  SWM-HLT-0001: 0.0
+  SWM-HLT-0002: 0.0
+  SWM-HLT-0003: 0.0
+  SWM-HLT-0004: 0.0
+  SWM-POW-0003: 0.0
+  SWM-POW-0004: 0.0
+  SWM-TEL-0002: 0.0
+  SWM-TEL-0003: 8.25
+  SWM-TEL-0004: 0.0
+  SWM-TRN-0001: 0.0
+  SWM-TRN-0002: 0.0
+  SWM-TRN-0003: 0.0
+  SWM-WAT-0004: 0.0
+completions:
+- element: SWM-TEL-L0002
+  kind: line
+  hour: 8.25
+- element: SWM-CPL-0007
+  kind: line
+  hour: 8.75
+deliveries:
+- edge: SWM-CPL-0066
+  consumer: SWM-WAT-0002
+  hour: 12.0
+  amount: 8523.194073
+passes:
+  most: 2
+  capped_steps: []
