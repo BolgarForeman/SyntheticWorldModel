@@ -1,6 +1,6 @@
 # Pilot Spec — The Full Chain on a Hand-Checkable Constructed World
 
-*v0.6 · 2026-09-30 · feeds Ch7 §7.2 and Figures 7.1, 7.2 and 7.4 · aligned with World_Generator_Structure v0.7 and the pilot recipe in the SyntheticWorldModel repository*
+*v0.7 · 2026-10-09 · feeds Ch7 §7.2 and Figures 7.1, 7.2 and 7.4 · aligned with World_Generator_Structure v0.9 and the pilot recipe in the SyntheticWorldModel repository*
 
 ## Purpose
 
@@ -20,7 +20,9 @@ It is a Phase 0 run in the sense of the generator design (§1.7.6). The proposal
 - **Sources.** One small source file per layer in its real container. Power (OpenStreetMap and the WRI plant database) and healthcare (OpenStreetMap and the government facility register) each have two sources that deliberately disagree; the other four layers have one. Fuel and healthcare sources report nodes only.
 - **Crews.** The world has two repair crews.
 - **Disruption.** One storm corridor is drawn as a shared latent field (Structure §4.3b), and element damage is drawn conditionally on it. The storm is a moderate typhoon (severity 50). It cuts overhead power lines and aerial telecom links by wind and floods low-lying facilities; facility damage is slight or moderate only. The run uses 8 equally weighted scenarios so each can be traced; they are an illustrative set, not a probability estimate of real storms.
-- **Dynamics.** Calibration-tier forms only (linear, threshold, discrete recovery), over a short window. This is a declared restriction.
+- **Dynamics.** Structure §4.5. Calibration-tier forms only (linear; threshold at 0.5 for logistic and control; discrete recovery), a declared restriction. A node's state is condition × supply level, and supply level is the lowest response across its commodities. Consumers throttle, trip (below 90% of supply) or step to a floor (hospitals on generator at 0.6). Stocks drain at the actual draw and refill as ruled. Two crews work through the repairs in the default order (towered lines and transmission substations first), moving job to job, with a 2 h crew-bound lead time per job and parts lead time running in parallel. A substation that has lost its telecom link is re-energized only after a crew switches it by hand. Steps of 15 minutes, settled within each step; 72 h window.
+- **Reference runs.** All 8 scenarios run for 72 h with no actions and the default crew order, saved as golden files. They give the "no action" term of the measure and the starting point of the hand trace.
+- **Sensitivity by relaxing limits.** Any limit (a stock, a lead time, the number of crews) can be relaxed to unlimited or zero by name, one at a time or all but one, to show how much the result rests on it. Relaxing a limit is kept distinct from removing a dependency.
 - **Determinism.** One master seed with named substreams. The world holds fixed while the error varies.
 
 ## The doubt, and the two runs
@@ -41,7 +43,7 @@ All four are posed on the same network, dynamics, criticality and ledger. The ob
 |---|---|---|
 | **Defensive (INROP-D)** | Spend a budget of 3–4 on protection actions (defined below) before the storm to minimize expected unserved demand-hours | Brute force over every affordable action set, cross-checked against the MIP |
 | **Offensive (INROP-O)** | Strike k nodes (k = 2, 3), degrading their condition, to maximize unserved demand-hours. The attack is posed on its own, not coupled to the defender | Brute force |
-| **Restorative (INROP-R)** | After one fixed storm scenario, sequence the world's two repair crews across the failed nodes and failed overhead lines to minimize unserved demand-hours during recovery | Brute force over repair orders |
+| **Restorative (INROP-R)** | After one fixed storm scenario (scenario 7, the one with the most towered-line failures), sequence the world's two repair crews across the failed nodes and failed overhead lines to minimize unserved demand-hours during recovery | Brute force over repair orders |
 | **Informative (INROP-I)** | Choose one or two uncertain cross-layer edges to observe before hardening, to maximize the improvement in the defensive decision | Enumeration over the observation choices and their outcomes |
 
 The coupled attacker–defender formulation stays future research. Attack itself is in the family and is exercised here. Attacking a reserve directly, such as draining a tank without damaging the facility, is in scope for the full demonstration and is left out of the pilot only.
@@ -68,9 +70,9 @@ A third action, **add a redundant feed** (a new cross-layer edge with its own κ
 | **2 · Trust architecture, ingestion and pedigree** | Emits one small source file per layer in a real container format. The pipeline ingests them and stamps trust as received. Two layers carry deliberate source disagreement |
 | **3 · Network construction** | Builds the uncertain graph, the layer set and the declared boundary |
 | **4 · Cascade dynamics** | Trip and throttle propagation over the window |
-| **5 · Buffer dynamics** | The planted fuel→power reserve and any reserves the defensive model adds, drawing down |
-| **6 · Recovery dynamics** | Crew-limited repair under a default allocation policy. The restorative model replaces that policy with an optimized one |
-| **7 · Convergence analysis** | Confirms each run settled inside the window |
+| **5 · Buffer dynamics** | The stocks drawn per node (fuel, batteries, water, purified and make-up water) and any reserves the defensive model adds, drawing down and refilling |
+| **6 · Recovery dynamics** | Crew-limited repair under the default crew order, including manual switching trips. The restorative model replaces that order with an optimized one |
+| **7 · Convergence analysis** | Confirms each step settled within 100 passes, and each run inside the window; the calm-world check holds |
 | **8 · Criticality computation** | Counterfactual criticality for all 24 nodes, checkable by hand |
 | **9 · INROP formulation and optimization** | The defensive, offensive and restorative models |
 | **10 · Value of information** | The informative model |
@@ -102,6 +104,15 @@ The measure is distance to the optimum, normalized as (objective of the recommen
 ## Deliberately out of scope
 
 The following are left out: a second model within any class, the coupled attacker–defender formulation, error mechanisms beyond simple parametric noise, the tempo and equity objectives, the simulation tier, layer-level generate-six-hide-one, and full source fidelity beyond one small file per layer.
+
+## Changes from v0.6
+
+Ruled by the author, 2026-10-02 to 2026-10-09 (decision 0014; Structure v0.9):
+- The dynamics are specified (Structure §4.5): state and responses, stocks and refill, crews with a split lead time and job-to-job movement, manual switching after telecom loss, 15-minute steps.
+- The 8 scenarios are run with no actions as saved reference runs.
+- The restorative model uses scenario 7.
+- Limits can be relaxed one at a time for sensitivity, distinct from removing a dependency.
+- The edge range is 40–55 (decision 0013 addendum).
 
 ## Changes from v0.5
 
