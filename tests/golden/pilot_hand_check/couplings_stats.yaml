@@ -1,8 +1,9 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: fb287040ebad16b9586932c14db723838df2e6e393fc42f63179a88ba75dd190
+  registry_sha256: 5af484e8a4058df34bb94fb2a619022d6a0c6de1edbbffd82f32bc658c2a8c11
   overrides: {}
   relaxed_limits: []
+  out_of_range: []
   removed_dependencies: []
 pairs:
   power-telecom:

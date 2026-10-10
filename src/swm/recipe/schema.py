@@ -1287,6 +1287,13 @@ class ModelingRules(_Section):
         "(D11).",
     )
 
+    out_of_range: tuple[str, ...] = Field(
+        (),
+        description="Filled in on resolution: one note per override that sets a limit outside "
+        "its ruled range, naming the rule, the value and the range. Allowed, so sensitivity runs "
+        "can go beyond the range, but always recorded.",
+    )
+
     @model_validator(mode="after")
     def _relaxed_once(self) -> Self:
         if len(set(self.relaxed_limits)) != len(self.relaxed_limits):

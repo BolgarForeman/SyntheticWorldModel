@@ -89,12 +89,16 @@ All notable changes to this project are recorded here. Each phase closes with a 
 - The ridge speed-up on the wind is capped by `storm.ridge_factor_ceiling` (1.17), calibrated with `tools/calibrate_ridge_ceiling.py` so the pilot's highest pole-height gust meets Taiwan's 95.2 m/s record. Towers are designed for their site by default. The pole curve is recalibrated to 163.6914 m/s. The code's two isolation conditions are tested separately. The registry gains the status `calibrated` (decision 0013, second addendum).
 - Dynamics foundations (Work Order 7, PR 7a; decision 0014): three new stocks (purified boiler water at generation on municipal make-up water, make-up water at evaporative data centres, backup power for cargo at seaports, each on its own `reserves/<kind>` stream); the manual switching, battery recharge, crew-bound lead time, parts lead time and engine rules (`dynamics.*`); a range and relaxed value on every limit; the Theta List, printed by `swm rules --theta`.
 - The link-signature world check, run by `swm check` and `swm layers` (Work Order 7, Part 0).
+- The dynamics engine (Work Order 7, PR 7b; decision 0014): `src/swm/dynamics/` plays a storm scenario out over time; `swm simulate` prints, saves and plots runs; `swm check` runs the calm-world run; the pilot's 8 reference runs are golden files (`tests/golden/pilot_reference_runs/`).
+- One storm-damage stream per element, so adding or removing an element moves no other element's draws (PR 15 answers).
 - A severity-70 copy of the pilot (`tests/fixtures/storm_sensitivity/`), a fixture rather than a golden file, so the flood-damage path is exercised.
 - Each storm scenario draws its closest approach to the island (0–40 km), its radius of maximum wind (20–60 km) and its rainfall (±75 mm of its rung). Power plants and transmission substations stand on 2 m platforms. The lee is measured against the terrain's smooth spine line, now recorded with the terrain; a flat island has none. Wooded land takes the town factor. Refineries and import terminals get flood thresholds (decision 0012, addendum).
 - The storm hazard rules of structure v0.7 §4.3b, each with the new registry field `theta_role: dynamics`.
 
 ### Changed
 
+- The pole-line curve is calibrated to the expected share of line length down, not one realized draw: median 166.6993 m/s (pilot 7.28%, severity 70 32.70% expected) (PR 7b answers).
+- The Theta symbols follow Appendix A v1.7; pump capacity is a registry limit; an override outside a ruled range is noted (PR 15 answers).
 - The link builder obeys each layer's signature: no mast-to-mast or reservoir-to-reservoir link is built. The pilot loses SWM-TEL-L0004 (Work Order 7, Part 0).
 - The recipe schema is version 3: `modeling_rules.relaxed_limits` and `dynamics.removed_dependencies`. Version 1 and 2 recipes are migrated on loading. Control dependencies default to the threshold form (decision 0014, D3).
 - The substation tolerance row costs a manual switching trip instead of slowing switching and repair; `Tolerance.slows_switching` is renamed `manual_switching`.

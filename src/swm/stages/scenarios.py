@@ -154,8 +154,20 @@ class ScenariosResult:
     scenarios: tuple[ScenarioDamage, ...]
 
 
-def scenarios_streams(root_seed: int, scenarios: int) -> tuple[np.random.Generator, ...]:
-    """Return each scenario's damage stream.
+@dataclass(frozen=True)
+class DamageStreams:
+    """One scenario's damage streams: a child stream per element, keyed by its stable id."""
+
+    root_seed: int
+    path: str
+
+    def __call__(self, element_id: str) -> np.random.Generator:
+        """Return the element's own damage stream in this scenario."""
+        return rng.element_stream(self.root_seed, self.path, element_id)
+
+
+def scenarios_streams(root_seed: int, scenarios: int) -> tuple[DamageStreams, ...]:
+    """Return each scenario's damage streams.
 
     Parameters
     ----------
@@ -166,13 +178,14 @@ def scenarios_streams(root_seed: int, scenarios: int) -> tuple[np.random.Generat
 
     Returns
     -------
-    tuple of numpy.random.Generator
-        One stream per scenario, keyed by its index, so the scenario count moves no other.
+    tuple of DamageStreams
+        One per scenario, keyed by its index. Within a scenario each element draws from its
+        own child stream, so adding or removing an element moves no other element's draws.
 
-    Spec: Work Order 6, D3.
+    Spec: Work Order 6, D3; PR 15 answers, 2.
     """
     base = f"shared_causes/{Hazard.STORM_CORRIDOR}"
-    return tuple(rng.stream(root_seed, f"{base}/{i}/damage") for i in range(scenarios))
+    return tuple(DamageStreams(root_seed, f"{base}/{i}/damage") for i in range(scenarios))
 
 
 def overhead_lines(layers: LayersResult, couplings: CouplingsResult) -> tuple[OverheadLine, ...]:
@@ -222,7 +235,7 @@ def build_scenarios(
     layers: LayersResult,
     couplings: CouplingsResult,
     rules: Registry,
-    streams: Sequence[np.random.Generator],
+    streams: Sequence[DamageStreams],
 ) -> ScenariosResult:
     """Draw what each scenario damages: overhead lines by wind, facilities by flood.
 
@@ -240,8 +253,8 @@ def build_scenarios(
         The couplings: the power feeds.
     rules : Registry
         The modeling rules in force.
-    streams : sequence of numpy.random.Generator
-        Each scenario's damage stream.
+    streams : sequence of DamageStreams
+        Each scenario's damage streams, one per element.
 
     Returns
     -------
@@ -264,7 +277,7 @@ def build_scenarios(
                 gusts[line.structure],
                 reader,
                 crew_work_per_point_h(line, rules),
-                stream,
+                stream(line.line_id),
             )
             for line, line_pieces in zip(lines, pieces, strict=True)
         ]

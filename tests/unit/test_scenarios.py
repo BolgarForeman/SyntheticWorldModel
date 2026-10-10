@@ -1,6 +1,7 @@
 import functools
 import itertools
 import math
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -105,16 +106,20 @@ def test_the_line_curve_is_the_declared_calibration_and_keeps_the_old_anchor() -
     assert table["median_m_per_s"] == builder.LINE_MEDIAN
     assert table["beta"] == 0.4
     rule = RULES.rule("storm.line_fragility_table")
-    assert rule.status == "ruled"
-    # Recalibrated for routed lines and the directional ridge factor (PR 14 answers), then
-    # for its ceiling and towers designed for their site (PR 14 second answers).
-    assert [h.value["median_m_per_s"] for h in rule.history[-3:]] == [
+    # Calibrated to the expected share of line length down (PR 7b answers, 1).
+    assert rule.status == "calibrated"
+    # Recalibrated for routed lines and the directional ridge factor (PR 14 answers), for its
+    # ceiling and towers designed for their site (PR 14 second answers), for per-element
+    # damage streams (PR 15 answers), then to the expected share (PR 7b answers).
+    assert [h.value["median_m_per_s"] for h in rule.history[-5:]] == [
         121.7185,
         159.9394,
         201.7763,
+        163.6914,
+        163.7317,
     ]
-    assert [h.decision for h in rule.history[-3:]] == ["0012", "0013", "0013"]
-    assert rule.history[-3].value["beta"] == 0.3
+    assert [h.decision for h in rule.history[-5:]] == ["0012", "0013", "0013", "0014", "0014"]
+    assert rule.history[-5].value["beta"] == 0.3
     targets = RULES.rule("storm.line_fragility_anchor")
     assert targets.value == {"severity_50_length_share": 0.10, "severity_70_length_share": 0.30}
     assert targets.history[-1].value == {"gust_m_per_s": 45.0, "failures_per_km": 0.05}
@@ -232,9 +237,10 @@ def test_each_kilometre_fails_at_its_own_gust_and_each_failure_is_a_point() -> N
     resolution, terrain, _, _, storm, result = pipeline()
     reader = stage._LineReader(terrain, RULES)
     streams = scenarios_streams(resolution.recipe.root_seed, 8)
-    for field, scenario, stream in zip(storm.scenarios, result.scenarios, streams, strict=True):
+    for field, scenario, element in zip(storm.scenarios, result.scenarios, streams, strict=True):
         gust = reader.gust(field, Structure.POLE).ravel()
         for line, outcome in zip(result.lines, scenario.lines, strict=True):
+            stream = element(line.line_id)
             if line.structure == Structure.TOWER:
                 failed = float(stream.random()) < reader.tower_probability(
                     outcome.peak_gust_m_per_s
@@ -335,18 +341,38 @@ def test_changing_the_scenario_count_moves_no_earlier_scenario() -> None:
 
 
 def test_the_stage_opens_only_its_own_damage_streams(monkeypatch: pytest.MonkeyPatch) -> None:
-    opened: list[str] = []
-    original = rng.stream
+    opened: list[tuple[str, str]] = []
+    original = rng.element_stream
 
-    def recording(root_seed: int, path: str, *args: Any, **kwargs: Any) -> Any:
-        opened.append(path)
-        return original(root_seed, path, *args, **kwargs)
+    def recording(root_seed: int, path: str, element_id: str) -> Any:
+        opened.append((path, element_id))
+        return original(root_seed, path, element_id)
 
-    monkeypatch.setattr(rng, "stream", recording)
-    scenarios_streams(3, 2)
-    assert opened == [
+    monkeypatch.setattr(rng, "element_stream", recording)
+    streams = scenarios_streams(3, 2)
+    streams[1]("SWM-POW-L0001")
+    assert [s.path for s in streams] == [
         "shared_causes/storm_corridor/0/damage", "shared_causes/storm_corridor/1/damage"
     ]  # fmt: skip
+    assert opened == [("shared_causes/storm_corridor/1/damage", "SWM-POW-L0001")]
+
+
+def test_each_element_draws_from_its_own_stream_so_removing_one_moves_no_other() -> None:
+    resolution, terrain, requirements, couplings, storm, result = pipeline()
+    dropped = result.lines[3].line_id
+    layers = requirements.layers
+    fewer = replace(layers, links=tuple(link for link in layers.links if link.link_id != dropped))
+    again = stage.build_scenarios(
+        resolution.recipe.shared_causes.facility_damage_cap, storm, terrain, fewer, couplings,
+        RULES, scenarios_streams(resolution.recipe.root_seed, 8),
+    )  # fmt: skip
+    for before, after in zip(result.scenarios, again.scenarios, strict=True):
+        kept = [o for o in before.lines if o.line_id != dropped]
+        assert kept == list(after.lines)
+    streams = scenarios_streams(resolution.recipe.root_seed, 1)[0]
+    first = streams("SWM-POW-L0001").random()
+    assert streams("SWM-POW-L0001").random() == first
+    assert streams("SWM-POW-L0002").random() != first
     assert "shared_causes/scenarios" not in rng.STREAM_REGISTRY
     assert "shared_causes/storm_corridor/199/damage" in rng.STREAM_REGISTRY
 

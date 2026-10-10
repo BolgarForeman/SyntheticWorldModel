@@ -68,3 +68,67 @@ Each becomes a selectable setting when built:
 - a saved scenario and run library;
 - crane versus roll-on/roll-off seaport terminals;
 - air-cooled data centres.
+
+## Addendum: answers to PR 15 (2026-10-09)
+
+- **Decided by:** the author (Foreman)
+- **Source:** `docs/work_orders/WO-07a-answers.md`
+
+1. **Sources.** The three new stocks cite verified sources, each read on 2026-10-09:
+   - **Make-up water:** Uptime Institute Journal, "Implications of economizers in Tier Certified data centers".
+   - **Purified boiler water:** IS 13268:1992 §4.2.3, archived copy. It is withdrawn and superseded by the 2023 edition; the 1992 text is the one cited. The rule stays a placeholder until Taiwan's environmental impact statements are read.
+   - **Seaport backup power:** Emerging Risks (29 January 2026), a secondary report of TT Club's guidance.
+2. **One storm-damage stream per element.** Each line's damage draws come from its own child stream, keyed by the scenario and the element's stable id, so adding or removing an element moves no other element's draws (CLAUDE.md §4).
+   - **No median meets both windows.** Re-measured after the change, the pole-line curve at β 0.4 has no single median that puts both recipes within 5 points of their targets. The best single median, 163.7317 m/s, gives the pilot 4.1% (window 5–15%) and severity 70 35.1% (window 25–35%), a worst miss of 5.9 points.
+   - **Closest stored.** As the answers instruct, the closest is stored, with 163.6914 in history, and the rule is open for a ruling. The work stopped there (Work Order 7b not opened).
+3. **Mast-to-mast links.** Work Order 3 B5's allowance is superseded by the ruling of 2026-10-09 (the decision 0013 audit; Work Order 7 Part 0).
+4. **Theta symbols** follow Appendix A v1.7, Definition 2.7:
+   - **F:** the combining function;
+   - **g_δ:** the degradation transfer function: the transfer forms, the failure modes, the trip point, the floor and the telecom tolerance form;
+   - **h_φ:** the reserve dynamics: stocks, refill and resupply;
+   - **R:** recovery;
+   - **γ:** convergence;
+   - **χ:** the performance function, one analysis entry: weighted service-hours at end-use nodes, counted as a fraction when supply is partial.
+
+   The storm rules carry no symbol.
+5. **Pump capacity** is the registry limit `reserves.pumping.capacity` (relaxed value unlimited, range open). It is each pumping node's `capacity_m3_per_day` attribute, drawn in the layers stage (`layers.attributes.pumping`) and read by the requirements stage. It is not sized to load, and no new number is introduced.
+6. **Overrides outside a ruled range** are allowed. The resolved recipe and every run record a note naming the rule, the value and the range (`modeling_rules.out_of_range`).
+
+## Second addendum: the engine, and answers to the paused PR 7b (2026-10-10)
+
+- **Decided by:** the author (Foreman)
+- **Source:** `docs/work_orders/WO-07b-answers.md`; `docs/design/evidence/Degradation_Profiles_v0_3.md`
+
+1. **Calibrate to the expected line loss.**
+   - **The target:** the line-loss targets apply to the expected share of overhead line length down:
+     - for each scenario and each line, 1 − Π(1 − p_km) over its kilometres from the stored curve at each kilometre's gust, a towered line by its own curve;
+     - weighted by length;
+     - averaged over the scenarios;
+     - with no random draw.
+
+     A realized draw over 8 scenarios and a handful of lines fits the dice, not the curve.
+   - **The result:** `tools/calibrate_line_curve.py` measures it. At β 0.4 the median is 166.6993 m/s (status calibrated; 163.7317 in history):
+
+     | Recipe | Target | Expected | Realized |
+     |---|---|---|---|
+     | Pilot | 10% | 7.28% | 3.75% |
+     | Severity 70 | 30% | 32.70% | 32.72% |
+2. **Nine engine choices ruled as built:**
+   1. Feed groups as in the undisturbed supply check (summed across groups, all edges within a group needed).
+   2. Own-layer supply is rebuilt from the layer's sources at each pass, so a ring of links cannot keep itself supplied.
+   3. Telecom response is R + (1 − R) × the tolerance level.
+   4. A battery covers before the generator.
+   5. Shortfall-share drain; a hospital on its floor draws its full essential load.
+   6. Own-layer response takes the class default and departures, with no draw.
+   7. Failure points are worked in order along the line.
+   8. Repairs take effect at the next step.
+   9. Sea trips are the straight distance at road speed plus mobilisation.
+3. **Three engine corrections:**
+   - **Pump capacity** is shared pro rata by the demand of the nodes it feeds (§4.5, links inside a layer). Storage refills from what remains.
+   - **A missed fuel delivery** goes out at the first step the depot is up and a road reaches the consumer. The schedule then runs every `delivery_h` from that delivery.
+   - **Hospital water** refills from the main once supply returns, like purified and make-up water. Supplies and blood need deliveries and do not refill inside the window.
+4. **Degradation Profiles v0.3:**
+   - LNG and oil plants trip on a fuel cut, because their stocks are held at the terminal and the tank farms; coal plants run on their own 30-day pile.
+   - Pipeline-fed airports trip on a fuel cut; truck-fed airports throttle.
+
+**Still a choice, for review:** water from the main refills a stock at the rate it drains.

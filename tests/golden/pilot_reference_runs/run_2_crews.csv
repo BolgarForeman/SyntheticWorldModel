@@ -1,0 +1,4 @@
+crew,job,activity,start_h,end_h
+CRW-0001,repair:SWM-CPL-0009,travel,0.0,0.188553
+CRW-0001,repair:SWM-CPL-0009,assess,0.188553,2.188553
+CRW-0001,repair:SWM-CPL-0009,repair,2.188553,8.188553

@@ -1,7 +1,9 @@
 """Resolution: fill every default, expand the size preset, and collect validation notes."""
 
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Any
 
 from swm.recipe.schema import (
     LAYER_SOURCES,
@@ -21,7 +23,7 @@ from swm.recipe.schema import (
     Terrain,
     Unobserved,
 )
-from swm.rules.registry import load_registry
+from swm.rules.registry import Registry, load_registry
 
 LAYER_ORDER = tuple(Layer)
 SOURCE_ORDER = tuple(Source)
@@ -98,8 +100,29 @@ def _stamp_rules(rules: ModelingRules) -> ModelingRules:
             "registry_sha256": registry.sha256,
             "overrides": dict(sorted(rules.overrides.items())),
             "relaxed_limits": tuple(sorted(rules.relaxed_limits)),
+            "out_of_range": _out_of_range(registry, rules.overrides),
         }
     )
+
+
+def _out_of_range(registry: Registry, overrides: Mapping[str, Any]) -> tuple[str, ...]:
+    """Note every override that sets a limit outside its ruled range (PR 15 answers, 6).
+
+    An open range ([default, default]) was never ruled, so an override outside it is not noted.
+    """
+    notes = []
+    for rule_id, value in sorted(overrides.items()):
+        rule = registry.rule(rule_id)
+        if rule.range is None or rule.range_open:
+            continue
+        pairs = value.items() if isinstance(value, dict) else [("", value)]
+        for key, number in pairs:
+            low, high = rule.range[key] if key else rule.range
+            if not isinstance(number, int | float) or low <= number <= high:
+                continue
+            name = f"{rule_id}.{key}" if key else rule_id
+            notes.append(f"{name} = {number:g} lies outside its ruled range {low:g}-{high:g}")
+    return tuple(notes)
 
 
 def active_sources(layers: Layers) -> tuple[Source, ...]:

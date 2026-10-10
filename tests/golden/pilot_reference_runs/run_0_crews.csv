@@ -1,0 +1,7 @@
+crew,job,activity,start_h,end_h
+CRW-0001,repair:SWM-TEL-L0002,travel,0.0,0.143927
+CRW-0001,repair:SWM-TEL-L0002,assess,0.143927,2.143927
+CRW-0001,repair:SWM-TEL-L0002,repair,2.143927,8.143927
+CRW-0002,repair:SWM-CPL-0007,travel,0.0,0.512001
+CRW-0002,repair:SWM-CPL-0007,assess,0.512001,2.512001
+CRW-0002,repair:SWM-CPL-0007,repair,2.512001,8.512001

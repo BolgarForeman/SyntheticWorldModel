@@ -129,7 +129,7 @@ def test_a_limit_without_a_range_or_a_range_without_a_limit_is_refused() -> None
 def test_every_rule_is_classified() -> None:
     counts = classification_counts(RULES)
     assert sum(counts.values()) == len(RULES.rules)
-    assert counts == {"construction": 169, "dynamics": 110, "stopping": 1, "analysis": 0,
+    assert counts == {"construction": 169, "dynamics": 111, "stopping": 1, "analysis": 0,
                       "world_content": 82}  # fmt: skip
     for rule in RULES.rules:
         if rule.theta_role == ThetaRole.WORLD_CONTENT:
@@ -159,7 +159,7 @@ def test_the_numberless_choices_have_their_own_entries() -> None:
 
 def test_every_theta_entry_is_complete() -> None:
     entries = theta_list(RULES)
-    assert len(entries) == 282
+    assert len(entries) == 284
     for e in entries:
         assert e.chosen
         assert e.registry_ids or e.theta_id.startswith("theta.")
@@ -181,7 +181,7 @@ def test_swm_rules_theta_is_deterministic_and_keeps_objectives_outside(
         assert f"- {name}:" in objectives
         assert f"\n{name} [" not in body
     sections = [line for line in body.splitlines() if line.startswith("==")]
-    assert sections == ["== dynamics (112) ==", "== stopping (1) ==", "== analysis (0) ==",
+    assert sections == ["== dynamics (113) ==", "== stopping (1) ==", "== analysis (1) ==",
                         "== construction choices (169) =="]  # fmt: skip
 
 
@@ -207,3 +207,76 @@ def test_relaxed_limits_are_sorted_in_the_resolved_recipe() -> None:
     )
     resolved = resolve(recipe).recipe
     assert resolved.modeling_rules.relaxed_limits == ("crews.pilot", "repair.manual_switching_h")
+
+
+# --- PR 15 answers --------------------------------------------------------------------------
+
+
+def test_the_symbols_follow_appendix_a() -> None:
+    by_stage: dict[str, set[str]] = {}
+    for rule in RULES.rules:
+        if rule.theta_symbol is not None:
+            by_stage.setdefault(rule.stage.value, set()).add(rule.theta_symbol.value)
+    assert by_stage["failure_modes"] == {"g_δ"}
+    assert by_stage["tolerance"] == {"g_δ"}
+    assert by_stage["storm"] == {"none"}
+    assert by_stage["repair"] == {"R"}
+    assert RULES.rule("reserves.hospital.essential_load_fraction").theta_symbol == "g_δ"
+    assert RULES.rule("dynamics.trip_point").theta_symbol == "g_δ"
+    assert {r.theta_symbol for r in RULES.rules if r.stage.value == "reserves"} == {"h_φ", "g_δ"}
+
+
+def test_performance_is_the_one_analysis_entry() -> None:
+    analysis = [e for e in theta_list(RULES) if e.sub_type == ThetaRole.ANALYSIS]
+    assert [e.theta_id for e in analysis] == ["theta.performance"]
+    assert analysis[0].symbol == "χ"
+    assert "service-hours" in analysis[0].chosen
+
+
+def test_pump_capacity_is_an_unlimited_limit_with_an_open_range() -> None:
+    rule = RULES.rule("reserves.pumping.capacity")
+    assert rule.relaxed == Relaxed.UNLIMITED
+    assert rule.range_open
+    assert rule.range is None
+    assert "capacity_m3_per_day" in rule.value
+
+
+@pytest.mark.parametrize(
+    "rule_id",
+    [
+        "reserves.data_centre.makeup_water_h",
+        "reserves.generation.purified_water_h",
+        "reserves.seaport.backup_power_h",
+    ],
+)
+def test_the_new_stocks_cite_verified_sources(rule_id: str) -> None:
+    first = RULES.rule(rule_id).sources[0]
+    assert first.verified is True
+    assert first.url is not None
+    assert first.url.startswith("https://")
+    assert first.quote
+
+
+def test_an_override_outside_a_ruled_range_is_noted_but_allowed() -> None:
+    recipe = Recipe.model_validate(
+        {
+            "modeling_rules": {
+                "overrides": {"repair.manual_switching_h": 3.0, "reserves.hospital.water_h": 200.0}
+            }
+        }
+    )
+    rules = resolve(recipe).recipe.modeling_rules
+    assert rules.out_of_range == (
+        "repair.manual_switching_h = 3 lies outside its ruled range 0.5-2",
+    )
+    crews = Recipe.model_validate(
+        {"modeling_rules": {"overrides": {"crews.pilot": {"crews": 5, "pools": 1, "crew_bases": 1,
+                                                          "mobile_substations": 1,
+                                                          "mobile_cell_sites": 1}}}}
+    )  # fmt: skip
+    # crews.pilot's range is open (only the crew count was ruled), so nothing is noted.
+    assert resolve(crews).recipe.modeling_rules.out_of_range == ()
+    inside = Recipe.model_validate(
+        {"modeling_rules": {"overrides": {"repair.manual_switching_h": 2.0}}}
+    )
+    assert resolve(inside).recipe.modeling_rules.out_of_range == ()

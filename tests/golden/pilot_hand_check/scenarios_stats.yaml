@@ -1,8 +1,9 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: fb287040ebad16b9586932c14db723838df2e6e393fc42f63179a88ba75dd190
+  registry_sha256: 5af484e8a4058df34bb94fb2a619022d6a0c6de1edbbffd82f32bc658c2a8c11
   overrides: {}
   relaxed_limits: []
+  out_of_range: []
   removed_dependencies: []
 overhead_lines:
   power_link:
@@ -18,52 +19,52 @@ overhead_lines:
     on_towers: 0
     km: 49.112
 protectable_elements: 55
-mean_line_length_share_down: 0.064813
+mean_line_length_share_down: 0.037498
 scenarios:
 - index: 0
-  failed_lines: 4
+  failed_lines: 2
   failed_lines_by_kind:
-    power_feed: 3
-    power_link: 1
-  failure_points: 4
-  towered_lines_down: 1
-  line_km_down: 58.019
-  line_length_share_down: 0.19751
-  line_crew_work_h: 90.0
+    power_feed: 1
+    telecom_link: 1
+  failure_points: 2
+  towered_lines_down: 0
+  line_km_down: 24.351
+  line_length_share_down: 0.082896
+  line_crew_work_h: 12.0
   failed_line_ids:
-  - SWM-POW-L0005
-  - SWM-CPL-0003
-  - SWM-CPL-0004
-  - SWM-CPL-0020
+  - SWM-TEL-L0002
+  - SWM-CPL-0007
   damaged_facilities: {}
   damaged_facility_ids: []
   damages_anything: true
 - index: 1
   failed_lines: 1
   failed_lines_by_kind:
-    power_link: 1
+    power_feed: 1
   failure_points: 1
-  towered_lines_down: 1
-  line_km_down: 6.691
-  line_length_share_down: 0.022778
-  line_crew_work_h: 72.0
+  towered_lines_down: 0
+  line_km_down: 6.377
+  line_length_share_down: 0.021709
+  line_crew_work_h: 6.0
   failed_line_ids:
-  - SWM-POW-L0003
+  - SWM-CPL-0023
   damaged_facilities: {}
   damaged_facility_ids: []
   damages_anything: true
 - index: 2
-  failed_lines: 0
-  failed_lines_by_kind: {}
-  failure_points: 0
+  failed_lines: 1
+  failed_lines_by_kind:
+    power_feed: 1
+  failure_points: 1
   towered_lines_down: 0
-  line_km_down: 0.0
-  line_length_share_down: 0.0
-  line_crew_work_h: 0.0
-  failed_line_ids: []
+  line_km_down: 5.501
+  line_length_share_down: 0.018727
+  line_crew_work_h: 6.0
+  failed_line_ids:
+  - SWM-CPL-0009
   damaged_facilities: {}
   damaged_facility_ids: []
-  damages_anything: false
+  damages_anything: true
 - index: 3
   failed_lines: 0
   failed_lines_by_kind: {}
@@ -91,51 +92,43 @@ scenarios:
   damaged_facility_ids: []
   damages_anything: true
 - index: 5
-  failed_lines: 1
-  failed_lines_by_kind:
-    power_feed: 1
-  failure_points: 1
+  failed_lines: 0
+  failed_lines_by_kind: {}
+  failure_points: 0
   towered_lines_down: 0
-  line_km_down: 16.006
-  line_length_share_down: 0.054488
-  line_crew_work_h: 6.0
-  failed_line_ids:
-  - SWM-CPL-0003
+  line_km_down: 0.0
+  line_length_share_down: 0.0
+  line_crew_work_h: 0.0
+  failed_line_ids: []
   damaged_facilities: {}
   damaged_facility_ids: []
-  damages_anything: true
+  damages_anything: false
 - index: 6
-  failed_lines: 1
-  failed_lines_by_kind:
-    telecom_link: 1
-  failure_points: 1
+  failed_lines: 0
+  failed_lines_by_kind: {}
+  failure_points: 0
   towered_lines_down: 0
-  line_km_down: 12.552
-  line_length_share_down: 0.04273
-  line_crew_work_h: 6.0
-  failed_line_ids:
-  - SWM-TEL-L0003
+  line_km_down: 0.0
+  line_length_share_down: 0.0
+  line_crew_work_h: 0.0
+  failed_line_ids: []
   damaged_facilities: {}
   damaged_facility_ids: []
-  damages_anything: true
+  damages_anything: false
 - index: 7
-  failed_lines: 6
+  failed_lines: 3
   failed_lines_by_kind:
-    power_feed: 3
-    power_link: 2
-    telecom_link: 1
-  failure_points: 6
-  towered_lines_down: 2
-  line_km_down: 46.492
-  line_length_share_down: 0.15827
-  line_crew_work_h: 168.0
+    power_link: 1
+    telecom_link: 2
+  failure_points: 4
+  towered_lines_down: 1
+  line_km_down: 39.341
+  line_length_share_down: 0.133926
+  line_crew_work_h: 90.0
   failed_line_ids:
-  - SWM-POW-L0002
   - SWM-POW-L0004
-  - SWM-TEL-L0003
-  - SWM-CPL-0001
-  - SWM-CPL-0015
-  - SWM-CPL-0023
+  - SWM-TEL-L0001
+  - SWM-TEL-L0002
   damaged_facilities: {}
   damaged_facility_ids: []
   damages_anything: true

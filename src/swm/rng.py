@@ -131,7 +131,10 @@ def _storm_paths() -> dict[str, str]:
         base = f"shared_causes/{Hazard.STORM_CORRIDOR}/{index}"
         paths[f"{base}/track"] = f"Storm track and peak wind of scenario {index}."
         paths[f"{base}/variation"] = f"Random variation of the wind field in scenario {index}."
-        paths[f"{base}/damage"] = f"Overhead-line failures given the field in scenario {index}."
+        paths[f"{base}/damage"] = (
+            f"Overhead-line failures given the field in scenario {index}: one child stream per "
+            "element, keyed by its id."
+        )
     return paths
 
 
@@ -231,6 +234,39 @@ def stream(
         raise ValueError(f"stream path {path!r} is not in the stream registry")
     _check_seed("root_seed", root_seed)
     sequence = np.random.SeedSequence(root_seed, spawn_key=spawn_key(path, terrain_seed))
+    return np.random.Generator(np.random.PCG64(sequence))
+
+
+def element_stream(root_seed: int, path: str, element_id: str) -> np.random.Generator:
+    """Return one element's child stream under a registered path.
+
+    Each element draws from its own stream, keyed by the path and the element's stable id, so
+    adding or removing an element moves no other element's draws (CLAUDE.md §4).
+
+    Parameters
+    ----------
+    root_seed : int
+        The recipe's root seed.
+    path : str
+        A registered stream path, such as ``shared_causes/storm_corridor/0/damage``.
+    element_id : str
+        The element's stable synthetic id, such as ``SWM-POW-L0001``.
+
+    Returns
+    -------
+    numpy.random.Generator
+        A PCG64 generator seeded by ``SeedSequence(root_seed, spawn_key=(*spawn_key(path),
+        stable_id(element_id)))``.
+
+    Spec: CLAUDE.md §4; PR 15 answers, 2.
+    """
+    if path not in STREAM_REGISTRY:
+        raise ValueError(f"stream path {path!r} is not in the stream registry")
+    if not element_id:
+        raise ValueError("an element stream needs an element id")
+    _check_seed("root_seed", root_seed)
+    key = (*spawn_key(path), stable_id(element_id))
+    sequence = np.random.SeedSequence(root_seed, spawn_key=key)
     return np.random.Generator(np.random.PCG64(sequence))
 
 

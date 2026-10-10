@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import sys
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import pydantic
@@ -11,8 +12,14 @@ import yaml
 
 from swm import __version__
 from swm.checks.calm import calm_world_problems
+from swm.checks.dynamics import calm_run_problems
 from swm.checks.signature import link_signature_problems
 from swm.checks.undisturbed import undisturbed_supply_check
+from swm.dynamics.engine import simulate
+from swm.dynamics.output import crew_rows, run_record, state_rows, stock_rows, trajectory_text
+from swm.dynamics.records import RunRequest
+from swm.dynamics.travel import RoadLegs
+from swm.dynamics.world import Damage, EngineWorld, StageOutputs, failure_points, world_from_stages
 from swm.recipe.buildability import unbuilt_features
 from swm.recipe.io import (
     canonical_yaml,
@@ -489,6 +496,105 @@ def _scenarios_command(resolution: Resolution, arguments: argparse.Namespace) ->
         )
 
 
+@dataclass(frozen=True)
+class _Engine:
+    """The engine's world, and each scenario's damage, built from the stages."""
+
+    world: EngineWorld
+    damage: tuple[Damage, ...]
+    end_use: tuple[str, ...]
+
+
+def _engine(resolution: Resolution) -> _Engine:
+    """Build every stage the engine reads and assemble the engine's world (Work Order 7, D1)."""
+    recipe = resolution.recipe
+    rules = _rules(resolution)
+    terrain = _terrain(resolution)
+    requirements = _requirements(resolution, terrain)
+    layers = requirements.layers
+    couplings = _couplings(resolution, terrain, requirements)
+    strength = build_strength(layers, requirements, couplings, rules)
+    buffers = build_buffers(
+        recipe.unobserved.reserves, recipe.unobserved.failure_mode, layers, requirements,
+        couplings, rules, buffers_streams(recipe.root_seed),
+    )  # fmt: skip
+    try:
+        crews = build_crews(recipe.unobserved, terrain, layers)
+    except ValueError as error:
+        raise CommandError(str(error)) from error
+    repair = build_repair(
+        recipe.unobserved.repair_rates, crews, terrain, layers, requirements, couplings, rules,
+        repair_streams(recipe.root_seed),
+    )  # fmt: skip
+    storm = _storm(resolution, terrain)
+    scenarios = build_scenarios(
+        recipe.shared_causes.facility_damage_cap, storm, terrain, layers, couplings, rules,
+        scenarios_streams(recipe.root_seed, recipe.shared_causes.scenarios),
+    )  # fmt: skip
+    stages = StageOutputs(layers, requirements, couplings, strength, buffers, crews, repair,
+                          scenarios.lines, terrain.grid)  # fmt: skip
+    world = replace(world_from_stages(stages, rules), legs=RoadLegs.of(terrain, layers))
+    damage = tuple(
+        Damage(
+            nodes=tuple(sorted(f.node_id for f in scenario.facilities)),
+            lines=tuple(sorted(o.line_id for o in scenario.failed_lines)),
+            failure_points=failure_points(scenario.lines, scenarios.lines),
+        )
+        for scenario in scenarios.scenarios
+    )
+    end_use = tuple(n.node_id for n in world.nodes if n.end_use_weight is not None)
+    return _Engine(world, damage, end_use)
+
+
+def _request(
+    resolution: Resolution, engine: _Engine, scenario: int, arguments: argparse.Namespace
+) -> RunRequest:
+    recipe = resolution.recipe
+    if not 0 <= scenario < len(engine.damage):
+        raise CommandError(f"scenario {scenario} is not among the {len(engine.damage)} drawn")
+    relaxed = set(recipe.modeling_rules.relaxed_limits) | set(arguments.relax or ())
+    registry = _rules(resolution)
+    for rule_id in sorted(relaxed):
+        if not registry.has(rule_id) or not registry.rule(rule_id).is_limit:
+            raise CommandError(f"--relax {rule_id}: not a limit in the registry")
+    return RunRequest(
+        damage=engine.damage[scenario],
+        horizon_h=arguments.horizon,
+        relaxed=frozenset(relaxed),
+        removed=recipe.dynamics.removed_dependencies,
+        scenario=scenario,
+    )
+
+
+def _simulate_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    engine = _engine(resolution)
+    indices = range(len(engine.damage)) if arguments.scenario is None else [arguments.scenario]
+    stamp = _rules_stamp(resolution)
+    for index in indices:
+        try:
+            run = simulate(engine.world, _request(resolution, engine, index, arguments))
+        except ValueError as error:
+            raise CommandError(str(error)) from error
+        if arguments.scenario is not None:
+            sys.stdout.write(trajectory_text(run, engine.end_use, arguments.node))
+        if arguments.out_dir:
+            out_dir = Path(arguments.out_dir)
+            write_canonical_yaml(run_record(run, stamp), out_dir / f"run_{index}.yaml")
+            write_csv(state_rows(run), out_dir / f"run_{index}_states.csv")
+            write_csv(stock_rows(run), out_dir / f"run_{index}_stocks.csv")
+            write_csv(crew_rows(run), out_dir / f"run_{index}_crews.csv")
+        if arguments.plot:
+            from swm.preview import timeline_png
+
+            write_binary(timeline_png(run, engine.end_use), Path(arguments.plot))
+        summary = run.summary()
+        sys.stdout.write(
+            f"scenario {index}: {summary['hours_out']} hours out; longest "
+            f"{summary['longest_out']}; last repair {summary['last_repair_h']} h; most passes "
+            f"{summary['most_passes']}\n"
+        )
+
+
 def _check_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
     terrain = _terrain(resolution)
     requirements = _requirements(resolution, terrain)
@@ -496,6 +602,11 @@ def _check_command(resolution: Resolution, arguments: argparse.Namespace) -> Non
     couplings = _couplings(resolution, terrain, requirements)
     rules = _rules(resolution)
     _check_supply(build_strength(requirements.layers, requirements, couplings, rules))
+    engine = _engine(resolution)
+    problems = calm_run_problems(engine.world)
+    if problems:
+        raise CommandError("calm-world run:\n" + "\n".join(problems))
+    sys.stdout.write("calm-world run: every node holds 1 and nothing moves for the horizon\n")
 
 
 def _check_signature(layers: LayersResult) -> None:
@@ -553,6 +664,7 @@ def _rules_stamp(resolution: Resolution) -> dict[str, object]:
         "registry_sha256": rules.registry_sha256,
         "overrides": dict(rules.overrides),
         "relaxed_limits": list(rules.relaxed_limits),
+        "out_of_range": list(rules.out_of_range),
         "removed_dependencies": list(resolution.recipe.dynamics.removed_dependencies),
     }
 
@@ -585,6 +697,7 @@ COMMANDS: dict[str, Callable[[Resolution, argparse.Namespace], None]] = {
     "storm": _storm_command,
     "scenarios": _scenarios_command,
     "check": _check_command,
+    "simulate": _simulate_command,
     "preview-couplings": _preview_couplings_command,
     "export-gis": _export_gis_command,
     "preview-world": _preview_world_command,
@@ -650,6 +763,20 @@ def _parser() -> argparse.ArgumentParser:
         default=None,
         help="also render this scenario's preview PNG (needs the preview extra)",
     )
+    simulate_command = commands.add_parser(
+        "simulate", help="play storm scenarios out over time; print, save and plot the runs"
+    )
+    simulate_command.add_argument("recipe", help="recipe YAML file")
+    simulate_command.add_argument(
+        "--scenario", type=int, default=None, help="one scenario (default: every scenario)"
+    )
+    simulate_command.add_argument("--horizon", type=float, default=None, help="hours to run")
+    simulate_command.add_argument(
+        "--relax", action="append", help="relax a limit by rule id (repeatable)"
+    )
+    simulate_command.add_argument("--node", default=None, help="print one node in full")
+    simulate_command.add_argument("-o", "--out-dir", default=None, help="write the run files")
+    simulate_command.add_argument("--plot", default=None, help="timeline PNG to write")
     world_check = commands.add_parser(
         "check", help="run the world checks: every consumer supplied before any disruption"
     )
