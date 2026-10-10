@@ -1,0 +1,209 @@
+import copy
+from typing import Any
+
+import pytest
+import yaml
+from pydantic import ValidationError
+
+from swm.cli import main
+from swm.recipe.resolve import resolve
+from swm.recipe.schema import Recipe
+from swm.rules.registry import (
+    Relaxed,
+    ThetaDomain,
+    ThetaRole,
+    load_registry,
+    parse_registry,
+    registry_bytes,
+)
+from swm.rules.theta import classification_counts, theta_list, theta_text
+
+RULES = load_registry()
+
+
+def registry_with_rule(**changes: Any) -> Any:
+    data = yaml.safe_load(registry_bytes().decode("utf-8"))
+    rule = copy.deepcopy(data["rules"][0])
+    rule.update(id="test.rule", **changes)
+    data["rules"].append(rule)
+    return parse_registry(yaml.safe_dump(data, allow_unicode=True).encode("utf-8"))
+
+
+# --- Limits: ranges and relaxed values (B1) -------------------------------------------------
+
+
+def test_every_limit_has_a_range_or_is_marked_range_open() -> None:
+    limits = [rule for rule in RULES.rules if rule.is_limit]
+    assert len(limits) >= 40
+    for rule in limits:
+        assert rule.range is not None or rule.range_open, rule.id
+    assert all(r.range is None and not r.range_open for r in RULES.rules if not r.is_limit)
+
+
+@pytest.mark.parametrize(
+    ("rule_id", "value", "bounds", "relaxed"),
+    [
+        ("reserves.generation.purified_water_h", 24.0, [6.0, 48.0], Relaxed.UNLIMITED),
+        ("reserves.data_centre.makeup_water_h", 12.0, [0.0, 48.0], Relaxed.UNLIMITED),
+        ("reserves.seaport.backup_power_h", 0.0, [0.0, 48.0], Relaxed.UNLIMITED),
+        ("repair.manual_switching_h", 1.0, [0.5, 2.0], Relaxed.ZERO),
+    ],
+)
+def test_the_ruled_ranges(
+    rule_id: str, value: float, bounds: list[float], relaxed: Relaxed
+) -> None:
+    rule = RULES.rule(rule_id)
+    assert rule.value == value
+    assert rule.range == bounds
+    assert not rule.range_open
+    assert rule.relaxed == relaxed
+
+
+@pytest.mark.parametrize(
+    ("rule_id", "value", "relaxed"),
+    [
+        ("reserves.battery_recharge_h", 12.0, Relaxed.ZERO),
+        ("repair.crew_bound_lead_h", 2.0, Relaxed.ZERO),
+        ("reserves.hospital.generator_fuel_h", 72.0, Relaxed.UNLIMITED),
+        ("crews.road_speed_kmh", 40.0, Relaxed.UNLIMITED),
+    ],
+)
+def test_unruled_ranges_are_default_to_default_and_open(
+    rule_id: str, value: float, relaxed: Relaxed
+) -> None:
+    rule = RULES.rule(rule_id)
+    assert rule.value == value
+    assert rule.range == [value, value]
+    assert rule.range_open
+    assert rule.relaxed == relaxed
+
+
+def test_every_shipped_limit_lies_within_its_range() -> None:
+    # A recipe may override a limit outside its range for a sensitivity run; the shipped
+    # default always lies within it.
+    for rule in RULES.rules:
+        if rule.range is None:
+            continue
+        if isinstance(rule.value, dict):
+            for key, (low, high) in rule.range.items():
+                assert low <= rule.value[key] <= high, (rule.id, key)
+        else:
+            low, high = rule.range
+            assert low <= rule.value <= high, rule.id
+
+
+def test_every_tolerance_row_relaxes_to_zero_loss() -> None:
+    rows = [r for r in RULES.rules if r.id.startswith("tolerance.")]
+    assert len(rows) == 17
+    assert all(r.relaxed == Relaxed.ZERO for r in rows)
+
+
+@pytest.mark.parametrize(
+    ("rule_id", "value"),
+    [
+        ("dynamics.trip_point", 0.9),
+        ("dynamics.threshold", 0.5),
+        ("dynamics.step_min", 15.0),
+        ("dynamics.settling_cap_passes", 100.0),
+        ("dynamics.horizon_h", 72.0),
+        ("reserves.hospital.essential_load_fraction", 0.6),
+    ],
+)
+def test_the_dynamics_rules(rule_id: str, value: float) -> None:
+    assert RULES.value(rule_id) == value
+    assert RULES.rule(rule_id).ruling is not None
+
+
+def test_a_limit_without_a_range_or_a_range_without_a_limit_is_refused() -> None:
+    with pytest.raises(ValidationError, match="needs a range"):
+        registry_with_rule(relaxed="zero", theta_role="dynamics", theta_domain="truth",
+                           theta_symbol="R")  # fmt: skip
+    with pytest.raises(ValidationError, match="belongs to a limit"):
+        registry_with_rule(range=[1, 2], theta_role="dynamics", theta_domain="truth",
+                           theta_symbol="R")  # fmt: skip
+
+
+# --- The Theta List (C1-C4) -----------------------------------------------------------------
+
+
+def test_every_rule_is_classified() -> None:
+    counts = classification_counts(RULES)
+    assert sum(counts.values()) == len(RULES.rules)
+    assert counts == {"construction": 169, "dynamics": 110, "stopping": 1, "analysis": 0,
+                      "world_content": 82}  # fmt: skip
+    for rule in RULES.rules:
+        if rule.theta_role == ThetaRole.WORLD_CONTENT:
+            assert rule.theta_domain is None
+        else:
+            assert rule.theta_domain == ThetaDomain.TRUTH
+
+
+def test_a_rule_without_a_theta_role_is_refused() -> None:
+    data = yaml.safe_load(registry_bytes().decode("utf-8"))
+    del data["rules"][0]["theta_role"]
+    with pytest.raises(ValidationError, match="theta_role"):
+        parse_registry(yaml.safe_dump(data, allow_unicode=True).encode("utf-8"))
+
+
+def test_the_numberless_choices_have_their_own_entries() -> None:
+    ids = {e.theta_id for e in theta_list(RULES)}
+    assert {"theta.minimum_rule", "theta.transfer_forms", "theta.recovery_form",
+            "theta.pro_rata_sharing", "theta.crew_order", "theta.time_step_and_settling",
+            "theta.window"} <= ids  # fmt: skip
+    window = next(e for e in theta_list(RULES) if e.theta_id == "theta.window")
+    assert window.sub_type == ThetaRole.STOPPING
+    # A rule a standalone entry covers has no entry of its own.
+    assert "dynamics.crew_order" not in ids
+    assert "dynamics.horizon_h" not in ids
+
+
+def test_every_theta_entry_is_complete() -> None:
+    entries = theta_list(RULES)
+    assert len(entries) == 282
+    for e in entries:
+        assert e.chosen
+        assert e.registry_ids or e.theta_id.startswith("theta.")
+        assert e.sensitivity == "none planned" or e.sensitivity.startswith(("planned: ", "run: "))
+        assert e.domain == ThetaDomain.TRUTH
+
+
+def test_swm_rules_theta_is_deterministic_and_keeps_objectives_outside(
+    capsysbinary: pytest.CaptureFixture[bytes],
+) -> None:
+    assert main(["rules", "--theta"]) == 0
+    first = capsysbinary.readouterr().out
+    assert main(["rules", "--theta"]) == 0
+    assert capsysbinary.readouterr().out == first
+    text = first.decode("utf-8")
+    assert text == theta_text(RULES)
+    body, objectives = text.split("== objectives, outside Θ (3) ==")
+    for name in ("metric", "acceptability threshold", "service weights"):
+        assert f"- {name}:" in objectives
+        assert f"\n{name} [" not in body
+    sections = [line for line in body.splitlines() if line.startswith("==")]
+    assert sections == ["== dynamics (112) ==", "== stopping (1) ==", "== analysis (0) ==",
+                        "== construction choices (169) =="]  # fmt: skip
+
+
+def test_a_relaxed_limit_is_marked_in_the_list() -> None:
+    text = theta_text(RULES, ["repair.manual_switching_h"])
+    marked = [line for line in text.splitlines() if "relaxed in this run" in line]
+    assert len(marked) == 1
+    assert "registry: repair.manual_switching_h" in marked[0]
+
+
+# --- The recipe's relaxed limits (B2-B3) ----------------------------------------------------
+
+
+def test_relaxing_a_rule_that_is_not_a_limit_is_refused() -> None:
+    recipe = Recipe.model_validate({"modeling_rules": {"relaxed_limits": ["dynamics.trip_point"]}})
+    with pytest.raises(ValueError, match="is not a limit"):
+        resolve(recipe)
+
+
+def test_relaxed_limits_are_sorted_in_the_resolved_recipe() -> None:
+    recipe = Recipe.model_validate(
+        {"modeling_rules": {"relaxed_limits": ["repair.manual_switching_h", "crews.pilot"]}}
+    )
+    resolved = resolve(recipe).recipe
+    assert resolved.modeling_rules.relaxed_limits == ("crews.pilot", "repair.manual_switching_h")

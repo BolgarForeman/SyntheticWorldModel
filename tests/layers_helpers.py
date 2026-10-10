@@ -6,7 +6,15 @@ import numpy as np
 
 from swm.recipe.resolve import resolve
 from swm.recipe.schema import Layer, Recipe
-from swm.stages.layers import LayersResult, Link, Node, build_layers, layers_streams
+from swm.stages.layers import (
+    TREE_LAYERS,
+    LayersResult,
+    Link,
+    Node,
+    build_layers,
+    layers_streams,
+    signature_allows,
+)
 from swm.stages.terrain import GRID_CELLS, CoverClass, TerrainResult, build_terrain, terrain_streams
 
 
@@ -48,12 +56,26 @@ def is_connected(nodes: list[Node], links: list[Link]) -> bool:
     return len(seen) == len(nodes)
 
 
-def feasible_links_per_node(recipe_value: float, count: int, tree: bool) -> float:
-    """The recipe value held within what a connected layer of this size can realise."""
+def feasible_links_per_node(recipe_value: float, nodes: list[Node], layer: Layer) -> float:
+    """The recipe value held within what a connected layer of these nodes can realise.
+
+    A tree layer holds n - 1 links; any other layer at most every pair its signature allows
+    (Work Order 7, Part 0).
+    """
+    count = len(nodes)
     if count < 2:
         return 0.0
     least = 2 * (count - 1) / count
-    most = least if tree else float(count - 1)
+    if layer in TREE_LAYERS:
+        return least
+    present = frozenset(node.node_class for node in nodes)
+    pairs = sum(
+        1
+        for i, a in enumerate(nodes)
+        for b in nodes[i + 1 :]
+        if signature_allows(layer, a.node_class, b.node_class, present)
+    )
+    most = max(least, 2 * pairs / count)
     return min(max(recipe_value, least), most)
 
 

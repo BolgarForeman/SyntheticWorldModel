@@ -29,7 +29,6 @@ PILOT_FEATURES = {
     "tier:exact",
     "transfer_form:linear",
     "transfer_form:threshold",
-    "transfer_form:step",
     "error_mechanism:parametric",
     "model:protect_condition_and_add_reserve",
     "model:strike_nodes",

@@ -41,7 +41,7 @@ def test_couplings_writes_statistics_and_hashes_and_prints_the_total(
     stats = (tmp_path / "couplings_stats.yaml").read_text(encoding="utf-8")
     assert stats.startswith("modeling_rules:\n  registry_version:")
     assert "\npairs:\n  power-telecom:\n" in stats
-    assert "  total_edges: 51\n" in stats
+    assert "  total_edges: 50\n" in stats
     table = (tmp_path / "couplings_edges.csv").read_bytes()
     assert b"\r" not in table
     lines = table.decode("utf-8").splitlines()
@@ -55,7 +55,7 @@ def test_couplings_writes_statistics_and_hashes_and_prints_the_total(
     )
     hashes = (tmp_path / "couplings_sha256.txt").read_text(encoding="utf-8").splitlines()
     assert [line.split("  ")[1] for line in hashes] == ["edges", "dependencies"]
-    assert "total edges 51: 23 intra-layer links and 28 switched-on" in capsys.readouterr().out
+    assert "total edges 50: 22 intra-layer links and 28 switched-on" in capsys.readouterr().out
 
 
 def test_requirements_writes_statistics_and_a_hash(
@@ -229,7 +229,7 @@ def test_export_gis_writes_a_readable_geopackage_and_geotiffs(
 
     assert main(["export-gis", str(pilot_path), "-o", str(tmp_path)]) == 0
     package = str(tmp_path / "world.gpkg")
-    expected = {"nodes": 24, "links": 23, "couplings": 73}
+    expected = {"nodes": 24, "links": 22, "couplings": 73}
     for layer in ("power", "telecom", "water", "transport", "fuel", "healthcare"):
         expected[f"nodes_{layer}"] = 4
     for layer, count in expected.items():

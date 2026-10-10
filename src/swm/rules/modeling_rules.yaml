@@ -186,6 +186,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: draws.exponential_table
   title: Exponential quantile table for times to failure
   stage: draws
@@ -212,6 +215,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: draws.lever_meaning
   title: What heterogeneity and the compliance gap mean
   stage: draws
@@ -233,6 +239,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: layers.composition.power
   title: Node classes of the power layer
   stage: layers
@@ -251,6 +260,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.composition.telecom
   title: Node classes of the telecom layer
   stage: layers
@@ -270,6 +280,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.composition.water
   title: Node classes of the water layer
   stage: layers
@@ -289,6 +300,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.composition.transport
   title: Node classes of the transport layer
   stage: layers
@@ -309,6 +321,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.composition.fuel
   title: Node classes of the fuel layer
   stage: layers
@@ -328,6 +341,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.composition.healthcare
   title: Node classes of the healthcare layer
   stage: layers
@@ -347,6 +361,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.near_city_km
   title: Generation, import terminals and freight yards sit within this of their city
   stage: layers
@@ -362,6 +377,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.beside_city_km
   title: Distribution substations sit in or within this of a city
   stage: layers
@@ -377,6 +393,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.storage_beside_city_km
   title: Water storage sits within this of a city's edge, outside it
   stage: layers
@@ -392,6 +409,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.seaport_city_km
   title: Seaports sit on the coast within this of their city
   stage: layers
@@ -407,6 +425,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.shelter_radius_cells
   title: Half-width of the window over which a coast cell's shelter is measured
   stage: layers
@@ -422,6 +441,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.corridor_km
   title: Transmission and pumping sit within this of the line they lie between
   stage: layers
@@ -437,6 +457,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.corridor_middle_share
   title: '...and in the middle share of that line, away from both ends'
   stage: layers
@@ -452,6 +473,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.upland_share
   title: 'Uplands: at or above this share of the island''s highest point'
   stage: layers
@@ -467,6 +489,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.treatment_gap_cells
   title: Treatment sits at least this far downstream of its reservoir
   stage: layers
@@ -482,6 +505,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.tank_farm_km
   title: Tank farms sit within this of their import terminal
   stage: layers
@@ -497,6 +521,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.refinery_km
   title: Refineries sit on the coast within this of an import terminal
   stage: layers
@@ -512,6 +537,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.mast_spacing_km
   title: Masts sit at least this far from other telecom nodes
   stage: layers
@@ -527,6 +553,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.clinic_spacing_km
   title: Clinics sit at least this far from other healthcare nodes
   stage: layers
@@ -542,6 +569,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.runway_km
   title: An airport needs a straight flat run at least this long (decision 0006)
   stage: layers
@@ -557,6 +585,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.runway_grade
   title: '...whose height varies by no more than this share of its length'
   stage: layers
@@ -572,6 +601,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.runway_city_km
   title: '...with its middle within this of a city'
   stage: layers
@@ -587,6 +617,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.flat_slope
   title: 'Flat ground for freight yards: slope at or below this'
   stage: layers
@@ -602,6 +633,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.freight_road_km
   title: Freight yards weigh closeness to the main road on this scale
   stage: layers
@@ -617,6 +649,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.waypoint_candidates
   title: Land waypoints tried, shortest first, before a road falls back to the grid
   stage: layers
@@ -632,6 +665,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.anchor_pull_cells
   title: 'Distance scale of the pull toward a node''s anchor (a city centre or a coast target): weight
     1 ÷ (1 + distance ÷ scale)'
@@ -649,6 +683,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.seaport_city_pull_km
   title: Distance scale of a seaport's pull toward its city
   stage: layers
@@ -664,6 +699,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.airport_fallback_slope_scale
   title: 'Slope scale for an airport placed without a runway: flatter ground weighs more'
   stage: layers
@@ -679,6 +715,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.airport_grade_bonus
   title: Weight floor added to a runway's flatness score, so every qualifying run can be drawn
   stage: layers
@@ -694,6 +731,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.airport_city_pull_cells
   title: Distance scale of a runway's pull toward a city
   stage: layers
@@ -709,6 +747,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.freight_port_pull_cells
   title: Distance scale of a freight yard's pull toward its seaport
   stage: layers
@@ -724,6 +763,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.road_junction_corridor_cells
   title: Road junctions between cities sit within this of the straight line between them
   stage: layers
@@ -739,6 +779,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.road_junction_band
   title: '...and inside this band of the line, away from both cities'
   stage: layers
@@ -754,6 +795,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.power_lines.route_cost
   title: 'Power line route: cost weights'
   stage: layers
@@ -775,6 +817,7 @@ rules:
     date: '2026-10-02'
     decision: '0013'
   history: []
+  theta_role: world_content
 - id: layers.power_lines.voltage_kv
   title: Power line voltage class
   stage: layers
@@ -795,6 +838,7 @@ rules:
     date: '2026-10-02'
     decision: '0013'
   history: []
+  theta_role: world_content
 - id: layers.power_lines.circuits
   title: Circuits per mapped power line
   stage: layers
@@ -815,6 +859,7 @@ rules:
     date: '2026-10-02'
     decision: '0013'
   history: []
+  theta_role: world_content
 - id: layers.power_lines.tower_spacing_m
   title: Tower spacing along a mapped power line
   stage: layers
@@ -835,6 +880,7 @@ rules:
     date: '2026-10-02'
     decision: '0013'
   history: []
+  theta_role: world_content
 - id: layers.siting.midpoint_pull_share
   title: Scale of the pull toward the middle of the line a node lies between
   stage: layers
@@ -850,6 +896,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.corridor_pull_cells
   title: Distance scale of the pull toward the corridor line for transmission and pumping
   stage: layers
@@ -865,6 +912,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.treatment_city_pull_cells
   title: Distance scale of a treatment plant's pull toward the largest city
   stage: layers
@@ -880,6 +928,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.storage_height_scale_m
   title: Height above the city that doubles a storage site's weight
   stage: layers
@@ -895,6 +944,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.storage_height_floor
   title: Weight floor for storage sites no higher than the city
   stage: layers
@@ -910,6 +960,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.storage_relaxed_km
   title: Where no raised site fits, storage goes on the highest land within this of the city
   stage: layers
@@ -925,6 +976,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.tank_farm_pull_cells
   title: Distance scale of a tank farm's pull toward its import terminal
   stage: layers
@@ -940,6 +992,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.mast_urban_bonus
   title: Extra siting weight of urban cells for masts
   stage: layers
@@ -955,6 +1008,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.mast_height_bonus
   title: Extra siting weight per unit of relative height for masts
   stage: layers
@@ -970,6 +1024,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.siting.clinic_town_bonus
   title: Extra siting weight of small-town cells for clinics
   stage: layers
@@ -985,6 +1040,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.generation
   title: Observed attribute range of generation
   stage: layers
@@ -1001,6 +1057,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.transmission_substation
   title: Observed attribute range of transmission_substation
   stage: layers
@@ -1017,6 +1074,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.distribution_substation
   title: Observed attribute range of distribution_substation
   stage: layers
@@ -1033,6 +1091,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.reservoir
   title: Observed attribute range of reservoir
   stage: layers
@@ -1049,6 +1108,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.treatment
   title: Observed attribute range of treatment
   stage: layers
@@ -1065,6 +1125,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.pumping
   title: Observed attribute range of pumping
   stage: layers
@@ -1081,6 +1142,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.storage
   title: Observed attribute range of storage
   stage: layers
@@ -1097,6 +1159,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.freight_yard
   title: Observed attribute range of freight_yard
   stage: layers
@@ -1113,6 +1176,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.bridge
   title: Observed attribute range of bridge
   stage: layers
@@ -1129,6 +1193,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.import_terminal
   title: Observed attribute range of import_terminal
   stage: layers
@@ -1145,6 +1210,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.tank_farm
   title: Observed attribute range of tank_farm
   stage: layers
@@ -1161,6 +1227,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.depot
   title: Observed attribute range of depot
   stage: layers
@@ -1177,6 +1244,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.refinery
   title: Observed attribute range of refinery
   stage: layers
@@ -1193,6 +1261,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.tertiary
   title: Observed attribute range of tertiary
   stage: layers
@@ -1209,6 +1278,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.regional
   title: Observed attribute range of regional
   stage: layers
@@ -1225,6 +1295,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.clinic
   title: Observed attribute range of clinic
   stage: layers
@@ -1241,6 +1312,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.city_size_weight
   title: Weight of the served city's size in a drawn attribute
   stage: layers
@@ -1256,6 +1328,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.draw_weight
   title: Weight of the random draw in a drawn attribute
   stage: layers
@@ -1270,6 +1343,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.bridge_accumulation_scale
   title: Upstream area that makes a bridge full length
   stage: layers
@@ -1285,6 +1359,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.transmission_voltage_kv
   title: 'Taipower''s transmission levels: 69 kV serves small loads'
   stage: layers
@@ -1303,6 +1378,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.distribution_voltage_kv
   title: Taipower's distribution levels
   stage: layers
@@ -1319,6 +1395,7 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: world_content
 - id: layers.attributes.airport_size_class
   title: Airport size class in OurAirports' own values
   stage: layers
@@ -1351,6 +1428,7 @@ rules:
     units: OurAirports size class by served-city share
     date: '2026-09-29'
     decision: '0010'
+  theta_role: world_content
 - id: layers.attributes.seaport_size_class
   title: Seaport harbour size in the World Port Index's values
   stage: layers
@@ -1385,6 +1463,7 @@ rules:
     units: World Port Index harbour size by served-city share
     date: '2026-09-29'
     decision: '0010'
+  theta_role: world_content
 - id: layers.subtypes.thermal_fuel
   title: Fuel kind of thermal plants after the first, which is lng
   stage: layers
@@ -1406,6 +1485,7 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: world_content
 - id: layers.subtypes.makeup_water
   title: Make-up water source of fuel-fired plants
   stage: layers
@@ -1426,6 +1506,7 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: world_content
 - id: layers.subtypes.terminal_product
   title: Product of import terminals beyond those generation needs
   stage: layers
@@ -1447,6 +1528,7 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: world_content
 - id: layers.subtypes.towered
   title: Chance an airport other than the largest is towered
   stage: layers
@@ -1465,6 +1547,7 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: world_content
 - id: layers.subtypes.pipeline_fuel_receipt
   title: Chance an airport other than the largest receives fuel by pipeline
   stage: layers
@@ -1483,6 +1566,7 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: world_content
 - id: layers.subtypes.marine_crude
   title: 'Chance a refinery receives crude by sea (Taiwan: three of four)'
   stage: layers
@@ -1501,6 +1585,7 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: world_content
 - id: layers.subtypes.pipeline_connected
   title: Chance a tank farm is pipeline-connected
   stage: layers
@@ -1519,6 +1604,7 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: world_content
 - id: layers.subtypes.jetty_on_coast
   title: Chance a tank farm on the coast has a jetty; inland tank farms have none
   stage: layers
@@ -1537,6 +1623,7 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: world_content
 - id: layers.subtypes.truck_rack
   title: Chance a tank farm has a truck loading rack
   stage: layers
@@ -1555,6 +1642,7 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: world_content
 - id: layers.subtypes.evaporative_cooling
   title: Chance a data centre cools by evaporation (the Appendix B default)
   stage: layers
@@ -1573,6 +1661,7 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: world_content
 - id: layers.subtypes.records_hosted
   title: Chance a healthcare facility's records are hosted off site
   stage: layers
@@ -1591,6 +1680,7 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: world_content
 - id: layers.subtypes.diesel_standby
   title: Chance a backup consumer has a diesel standby generator
   stage: layers
@@ -1618,6 +1708,7 @@ rules:
     units: null
     date: '2026-09-29'
     decision: '0010'
+  theta_role: world_content
 - id: sizing.power.reserve_margin
   title: Generation capacity over the load it serves
   stage: sizing
@@ -1636,6 +1727,9 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: sizing.power.power_factor
   title: Real over apparent power
   stage: sizing
@@ -1653,6 +1747,9 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: sizing.power.generation_split_floor
   title: Floor of each plant's share weight
   stage: sizing
@@ -1668,6 +1765,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.commodities
   title: The commodity each supplier layer carries
   stage: dependencies
@@ -1686,6 +1786,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.subtype_attributes
   title: The §4.3a subtype attributes and their values
   stage: dependencies
@@ -1743,6 +1846,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.rule_1.statement
   title: Public telecom share
   stage: dependencies
@@ -1762,6 +1868,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.rule_2.statement
   title: Buffer resupply
   stage: dependencies
@@ -1782,6 +1891,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.rule_3.statement
   title: Road reachability
   stage: dependencies
@@ -1802,6 +1914,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.rule_4.statement
   title: Large loads
   stage: dependencies
@@ -1821,6 +1936,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.rule_5.statement
   title: Tertiary second feed
   stage: dependencies
@@ -1840,6 +1958,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.rule_6.statement
   title: Water storage consumes nothing
   stage: dependencies
@@ -1858,6 +1979,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.rule_7.statement
   title: Phase 1 transport nodes
   stage: dependencies
@@ -1877,6 +2001,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.rule_8.statement
   title: Out of scope in Phase 1
   stage: dependencies
@@ -1895,6 +2022,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.rule_4.transmission_threshold_mw
   title: Peak load at which a consumer is supplied from a transmission substation
   stage: dependencies
@@ -1916,6 +2046,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.rule_5.tertiary_second_feed_share
   title: Chance a tertiary hospital takes a second distribution substation
   stage: dependencies
@@ -1936,6 +2069,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.exchange
   title: power → exchange
   stage: dependencies
@@ -1989,6 +2125,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.mast
   title: power → mast
   stage: dependencies
@@ -2042,6 +2181,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.cable_landing
   title: power → cable_landing
   stage: dependencies
@@ -2095,6 +2237,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.data_centre
   title: power → data_centre
   stage: dependencies
@@ -2148,6 +2293,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.treatment
   title: power → treatment
   stage: dependencies
@@ -2201,6 +2349,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.pumping
   title: power → pumping
   stage: dependencies
@@ -2254,6 +2405,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.reservoir
   title: power → reservoir
   stage: dependencies
@@ -2285,6 +2439,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.storage
   title: power → storage
   stage: dependencies
@@ -2316,6 +2473,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.seaport
   title: power → seaport
   stage: dependencies
@@ -2369,6 +2529,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.airport
   title: power → airport
   stage: dependencies
@@ -2422,6 +2585,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.freight_yard
   title: power → freight_yard
   stage: dependencies
@@ -2475,6 +2641,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.bridge
   title: power → bridge
   stage: dependencies
@@ -2506,6 +2675,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.road_junction
   title: power → road_junction
   stage: dependencies
@@ -2537,6 +2709,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.rail_node
   title: power → rail_node
   stage: dependencies
@@ -2568,6 +2743,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.refinery
   title: power → refinery
   stage: dependencies
@@ -2621,6 +2799,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.tank_farm
   title: power → tank_farm
   stage: dependencies
@@ -2674,6 +2855,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.depot
   title: power → depot
   stage: dependencies
@@ -2727,6 +2911,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.import_terminal.product_oil_coal
   title: power → import_terminal where product=oil|coal
   stage: dependencies
@@ -2784,6 +2971,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.import_terminal.product_lng
   title: power → import_terminal where product=lng
   stage: dependencies
@@ -2841,6 +3031,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.tertiary
   title: power → tertiary
   stage: dependencies
@@ -2894,6 +3087,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.regional
   title: power → regional
   stage: dependencies
@@ -2947,6 +3143,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.clinic
   title: power → clinic
   stage: dependencies
@@ -3000,6 +3199,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.power.blood_bank
   title: power → blood_bank
   stage: dependencies
@@ -3053,6 +3255,9 @@ rules:
     units: null
     date: '2026-10-02'
     decision: '0013'
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.generation
   title: telecom → generation
   stage: dependencies
@@ -3086,6 +3291,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.distribution_substation
   title: telecom → distribution_substation
   stage: dependencies
@@ -3119,6 +3327,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.transmission_substation
   title: telecom → transmission_substation
   stage: dependencies
@@ -3152,6 +3363,9 @@ rules:
     date: '2026-09-29'
     decision: '0008'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.treatment
   title: telecom → treatment
   stage: dependencies
@@ -3185,6 +3399,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.pumping
   title: telecom → pumping
   stage: dependencies
@@ -3218,6 +3435,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.reservoir
   title: telecom → reservoir
   stage: dependencies
@@ -3251,6 +3471,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.storage
   title: telecom → storage
   stage: dependencies
@@ -3282,6 +3505,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.airport.towered_true
   title: telecom → airport where towered=True
   stage: dependencies
@@ -3316,6 +3542,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.airport.towered_false
   title: telecom → airport where towered=False
   stage: dependencies
@@ -3351,6 +3580,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.seaport
   title: telecom → seaport
   stage: dependencies
@@ -3385,6 +3617,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.freight_yard
   title: telecom → freight_yard
   stage: dependencies
@@ -3419,6 +3654,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.bridge
   title: telecom → bridge
   stage: dependencies
@@ -3450,6 +3688,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.road_junction
   title: telecom → road_junction
   stage: dependencies
@@ -3481,6 +3722,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.rail_node
   title: telecom → rail_node
   stage: dependencies
@@ -3512,6 +3756,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.refinery
   title: telecom → refinery
   stage: dependencies
@@ -3544,6 +3791,9 @@ rules:
     date: '2026-09-29'
     decision: '0008'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.depot
   title: telecom → depot
   stage: dependencies
@@ -3578,6 +3828,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.tank_farm.pipeline_connected_true
   title: telecom → tank_farm where pipeline_connected=True
   stage: dependencies
@@ -3613,6 +3866,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.tank_farm.pipeline_connected_false
   title: telecom → tank_farm where pipeline_connected=False
   stage: dependencies
@@ -3648,6 +3904,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.import_terminal
   title: telecom → import_terminal
   stage: dependencies
@@ -3681,6 +3940,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.tertiary
   title: telecom → tertiary
   stage: dependencies
@@ -3715,6 +3977,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.regional
   title: telecom → regional
   stage: dependencies
@@ -3749,6 +4014,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.clinic
   title: telecom → clinic
   stage: dependencies
@@ -3783,6 +4051,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.telecom.blood_bank
   title: telecom → blood_bank
   stage: dependencies
@@ -3817,6 +4088,9 @@ rules:
     date: '2026-09-29'
     decision: '0008'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.generation.fuel_kind_lng_oil_coal_makeup_water_municipal
   title: water → generation where fuel_kind=lng|oil|coal,makeup_water=municipal
   stage: dependencies
@@ -3855,6 +4129,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.generation.fuel_kind_lng_oil_coal_makeup_water_own_intake
   title: water → generation where fuel_kind=lng|oil|coal,makeup_water=own_intake
   stage: dependencies
@@ -3890,6 +4167,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.generation.fuel_kind_hydro
   title: water → generation where fuel_kind=hydro
   stage: dependencies
@@ -3923,6 +4203,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.transmission_substation
   title: water → transmission_substation
   stage: dependencies
@@ -3954,6 +4237,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.distribution_substation
   title: water → distribution_substation
   stage: dependencies
@@ -3985,6 +4271,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.exchange
   title: water → exchange
   stage: dependencies
@@ -4016,6 +4305,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.mast
   title: water → mast
   stage: dependencies
@@ -4047,6 +4339,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.cable_landing
   title: water → cable_landing
   stage: dependencies
@@ -4078,6 +4373,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.data_centre.cooling_evaporative
   title: water → data_centre where cooling=evaporative
   stage: dependencies
@@ -4113,6 +4411,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.data_centre.cooling_dry
   title: water → data_centre where cooling=dry
   stage: dependencies
@@ -4147,6 +4448,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.refinery
   title: water → refinery
   stage: dependencies
@@ -4181,6 +4485,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.tank_farm
   title: water → tank_farm
   stage: dependencies
@@ -4214,6 +4521,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.import_terminal
   title: water → import_terminal
   stage: dependencies
@@ -4247,6 +4557,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.depot
   title: water → depot
   stage: dependencies
@@ -4280,6 +4593,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.tertiary
   title: water → tertiary
   stage: dependencies
@@ -4313,6 +4629,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.regional
   title: water → regional
   stage: dependencies
@@ -4346,6 +4665,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.clinic
   title: water → clinic
   stage: dependencies
@@ -4379,6 +4701,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.water.blood_bank
   title: water → blood_bank
   stage: dependencies
@@ -4412,6 +4737,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.transport.import_terminal
   title: transport → import_terminal
   stage: dependencies
@@ -4444,6 +4772,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.transport.refinery.crude_receipt_marine
   title: transport → refinery where crude_receipt=marine
   stage: dependencies
@@ -4478,6 +4809,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.transport.refinery.crude_receipt_pipeline
   title: transport → refinery where crude_receipt=pipeline
   stage: dependencies
@@ -4511,6 +4845,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.transport.tank_farm.has_jetty_true_or_has_truck_rack_true
   title: transport → tank_farm where (has_jetty=True or has_truck_rack=True)
   stage: dependencies
@@ -4548,6 +4885,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.transport.tank_farm.has_jetty_false_has_truck_rack_false
   title: transport → tank_farm where has_jetty=False,has_truck_rack=False
   stage: dependencies
@@ -4584,6 +4924,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.transport.depot
   title: transport → depot
   stage: dependencies
@@ -4617,6 +4960,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.transport.tertiary
   title: transport → tertiary
   stage: dependencies
@@ -4651,6 +4997,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.transport.regional
   title: transport → regional
   stage: dependencies
@@ -4685,6 +5034,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.transport.clinic
   title: transport → clinic
   stage: dependencies
@@ -4717,6 +5069,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.transport.blood_bank
   title: transport → blood_bank
   stage: dependencies
@@ -4750,6 +5105,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.generation.fuel_kind_lng
   title: fuel → generation where fuel_kind=lng
   stage: dependencies
@@ -4784,6 +5142,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.generation.fuel_kind_oil
   title: fuel → generation where fuel_kind=oil
   stage: dependencies
@@ -4819,6 +5180,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.generation.fuel_kind_coal
   title: fuel → generation where fuel_kind=coal
   stage: dependencies
@@ -4853,6 +5217,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.generation.fuel_kind_hydro
   title: fuel → generation where fuel_kind=hydro
   stage: dependencies
@@ -4886,6 +5253,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.transmission_substation
   title: fuel → transmission_substation
   stage: dependencies
@@ -4917,6 +5287,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.distribution_substation
   title: fuel → distribution_substation
   stage: dependencies
@@ -4948,6 +5321,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.exchange
   title: fuel → exchange
   stage: dependencies
@@ -4981,6 +5357,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.data_centre
   title: fuel → data_centre
   stage: dependencies
@@ -5014,6 +5393,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.cable_landing
   title: fuel → cable_landing
   stage: dependencies
@@ -5046,6 +5428,9 @@ rules:
     date: '2026-09-29'
     decision: '0008'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.mast
   title: fuel → mast
   stage: dependencies
@@ -5078,6 +5463,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.treatment
   title: fuel → treatment
   stage: dependencies
@@ -5111,6 +5499,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.pumping
   title: fuel → pumping
   stage: dependencies
@@ -5143,6 +5534,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.reservoir
   title: fuel → reservoir
   stage: dependencies
@@ -5174,6 +5568,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.storage
   title: fuel → storage
   stage: dependencies
@@ -5205,6 +5602,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.seaport
   title: fuel → seaport
   stage: dependencies
@@ -5240,6 +5640,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.airport.fuel_receipt_pipeline
   title: fuel → airport where fuel_receipt=pipeline
   stage: dependencies
@@ -5276,6 +5679,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.airport.fuel_receipt_truck
   title: fuel → airport where fuel_receipt=truck
   stage: dependencies
@@ -5310,6 +5716,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.freight_yard
   title: fuel → freight_yard
   stage: dependencies
@@ -5343,6 +5752,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.bridge
   title: fuel → bridge
   stage: dependencies
@@ -5374,6 +5786,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.road_junction
   title: fuel → road_junction
   stage: dependencies
@@ -5405,6 +5820,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.rail_node
   title: fuel → rail_node
   stage: dependencies
@@ -5436,6 +5854,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.tertiary
   title: fuel → tertiary
   stage: dependencies
@@ -5469,6 +5890,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.regional
   title: fuel → regional
   stage: dependencies
@@ -5502,6 +5926,9 @@ rules:
     date: '2026-09-29'
     decision: '0008'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.clinic
   title: fuel → clinic
   stage: dependencies
@@ -5534,6 +5961,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: dependencies.table.fuel.blood_bank
   title: fuel → blood_bank
   stage: dependencies
@@ -5566,6 +5996,9 @@ rules:
     date: '2026-09-29'
     decision: '0007'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.tertiary_kw_per_bed
   title: Tertiary hospital electricity per bed
   stage: requirements
@@ -5590,6 +6023,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.regional_kw_per_bed
   title: Regional hospital electricity per bed
   stage: requirements
@@ -5613,6 +6049,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.clinic_mw
   title: Clinic electricity
   stage: requirements
@@ -5632,6 +6071,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.blood_bank_mw
   title: Blood bank electricity
   stage: requirements
@@ -5648,6 +6090,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.exchange_mw
   title: Telephone exchange electricity
   stage: requirements
@@ -5664,6 +6109,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.mast_mw
   title: Mast electricity (4G)
   stage: requirements
@@ -5683,6 +6131,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.data_centre_pue
   title: Data centre power usage effectiveness
   stage: requirements
@@ -5702,6 +6153,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.data_centre_it_load_mw
   title: Data centre average IT load
   stage: requirements
@@ -5719,6 +6173,9 @@ rules:
   open_decision: data_centre_size_attribute
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.cable_landing_mw
   title: Cable landing station electricity
   stage: requirements
@@ -5736,6 +6193,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.treatment_kwh_per_m3
   title: Water treatment electricity per cubic metre
   stage: requirements
@@ -5756,6 +6216,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.pumping_head_m
   title: Pumping station head
   stage: requirements
@@ -5773,6 +6236,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.pumping_efficiency
   title: Pump set efficiency
   stage: requirements
@@ -5789,6 +6255,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.gravity_m_per_s2
   title: Gravitational acceleration
   stage: requirements
@@ -5808,6 +6277,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.seaport_kwh_per_box
   title: Seaport electricity per container box handled
   stage: requirements
@@ -5826,6 +6298,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.airport_kwh_per_passenger
   title: Airport electricity per passenger
   stage: requirements
@@ -5843,6 +6318,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.freight_yard_mw
   title: Freight yard electricity
   stage: requirements
@@ -5859,6 +6337,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.refinery_kwh_per_barrel
   title: Refinery purchased electricity per barrel of crude
   stage: requirements
@@ -5880,6 +6361,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.tank_farm_mw
   title: Tank farm electricity
   stage: requirements
@@ -5896,6 +6380,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.depot_mw
   title: Fuel depot electricity
   stage: requirements
@@ -5912,6 +6399,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.import_terminal_lng_mw_per_mtpa
   title: LNG terminal electricity per Mtpa sent out
   stage: requirements
@@ -5931,6 +6421,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.import_terminal_oil_mw
   title: Oil import terminal electricity
   stage: requirements
@@ -5947,6 +6440,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.electricity.import_terminal_coal_mw
   title: Coal import terminal electricity
   stage: requirements
@@ -5963,6 +6459,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.throughput.seaport_teu_per_year
   title: Container throughput by World Port Index harbour size
   stage: requirements
@@ -5980,6 +6479,9 @@ rules:
   open_decision: port_size_throughput
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.throughput.teu_per_box
   title: TEU per container box
   stage: requirements
@@ -5995,6 +6497,9 @@ rules:
   open_decision: port_size_throughput
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.throughput.airport_passengers_per_year
   title: Passengers by airport size class
   stage: requirements
@@ -6014,6 +6519,9 @@ rules:
   open_decision: airport_size_throughput
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.throughput.refinery_barrels_per_day
   title: Refinery crude run
   stage: requirements
@@ -6031,6 +6539,9 @@ rules:
   open_decision: refinery_throughput_attribute
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.throughput.lng_terminal_mtpa
   title: LNG terminal send-out
   stage: requirements
@@ -6048,6 +6559,9 @@ rules:
   open_decision: lng_terminal_throughput_attribute
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.water.tertiary_m3_per_bed_day
   title: Tertiary hospital water per bed
   stage: requirements
@@ -6067,6 +6581,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.water.regional_m3_per_bed_day
   title: Regional hospital water per bed
   stage: requirements
@@ -6086,6 +6603,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.water.clinic_m3_per_day
   title: Clinic water
   stage: requirements
@@ -6102,6 +6622,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.water.blood_bank_m3_per_day
   title: Blood bank water
   stage: requirements
@@ -6118,6 +6641,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.water.data_centre_m3_per_mw_day
   title: Evaporative data centre water per MW of site load
   stage: requirements
@@ -6137,6 +6663,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.water.refinery_m3_per_m3_crude
   title: Refinery water per cubic metre of crude
   stage: requirements
@@ -6156,6 +6685,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.water.generation_municipal_m3_per_day
   title: Make-up water of a fuel-fired plant on municipal supply
   stage: requirements
@@ -6173,6 +6705,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.water.fuel_facility_m3_per_day
   title: Water of a tank farm, import terminal or depot
   stage: requirements
@@ -6187,6 +6722,9 @@ rules:
   open_decision: fuel_facility_water
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.fuel.lng_gj_per_mwh
   title: LNG combined-cycle heat rate
   stage: requirements
@@ -6206,6 +6744,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.fuel.oil_gj_per_mwh
   title: Oil-fired heat rate
   stage: requirements
@@ -6225,6 +6766,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.fuel.coal_gj_per_mwh
   title: Coal-fired heat rate
   stage: requirements
@@ -6244,6 +6788,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.fuel.generation_capacity_factor
   title: Average output over capacity of a thermal plant
   stage: requirements
@@ -6259,6 +6806,9 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.fuel.backup_generator_l_per_h_per_mw
   title: Backup diesel burn at full load
   stage: requirements
@@ -6280,6 +6830,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.fuel.airport_jet_fuel_l_per_passenger
   title: Airport jet fuel per passenger
   stage: requirements
@@ -6303,6 +6856,9 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.fuel.seaport_cargo_diesel_l_per_box
   title: Seaport cargo-handling diesel per box
   stage: requirements
@@ -6326,6 +6882,9 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.fuel.seaport_bunkers_l_per_box
   title: Seaport bunkers per box
   stage: requirements
@@ -6346,6 +6905,9 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.fuel.freight_yard_diesel_l_per_m2_day
   title: Freight yard diesel per square metre
   stage: requirements
@@ -6368,6 +6930,9 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.fuel.jet_fuel_gj_per_m3
   title: Energy in jet fuel
   stage: requirements
@@ -6387,6 +6952,9 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.fuel.diesel_gj_per_m3
   title: Energy in diesel and marine fuel
   stage: requirements
@@ -6406,6 +6974,9 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.peak_factor
   title: Peak load over average requirement
   stage: requirements
@@ -6423,6 +6994,9 @@ rules:
   open_decision: peak_to_average_factor
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.telecom
   title: Telecom requirement
   stage: requirements
@@ -6443,6 +7017,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: requirements.transport
   title: Transport access requirement
   stage: requirements
@@ -6458,6 +7035,9 @@ rules:
   open_decision: transport_requirement
   ruling: null
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: reserves.hospital.generator_fuel_h
   title: Hospital generator fuel
   stage: reserves
@@ -6480,6 +7060,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [72.0, 72.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.hospital.essential_load_fraction
   title: Hospital load on generator power
   stage: reserves
@@ -6500,6 +7086,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.clinic.generator
   title: Clinic backup generator
   stage: reserves
@@ -6519,6 +7108,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.hospital.water_h
   title: Hospital water stock
   stage: reserves
@@ -6539,6 +7131,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [72.0, 72.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.hospital.water_ration_l_per_bed_day
   title: Hospital emergency water ration
   stage: reserves
@@ -6558,6 +7156,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.hospital.supplies_h
   title: Hospital supplies stock
   stage: reserves
@@ -6578,6 +7179,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [72.0, 72.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.blood_bank.generator_fuel_h
   title: Blood bank generator fuel
   stage: reserves
@@ -6597,6 +7204,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [72.0, 72.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.blood_bank.blood_stock_days
   title: Blood stock
   stage: reserves
@@ -6616,6 +7229,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [7.0, 7.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.mast.battery_h
   title: Mast battery
   stage: reserves
@@ -6635,6 +7254,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [4.0, 4.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.mast.designated_battery_h
   title: Designated disaster-response mast battery
   stage: reserves
@@ -6654,6 +7279,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [72.0, 72.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.exchange.fuel_h
   title: Exchange generator fuel
   stage: reserves
@@ -6674,6 +7305,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [24.0, 24.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.exchange.battery_h
   title: Exchange battery
   stage: reserves
@@ -6693,6 +7330,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [4.0, 4.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.data_centre.fuel_h
   title: Data centre generator fuel
   stage: reserves
@@ -6712,6 +7355,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [72.0, 72.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.cable_landing.fuel_h
   title: Cable landing generator fuel
   stage: reserves
@@ -6729,6 +7378,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [48.0, 48.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.treatment.fuel_h
   title: Water treatment generator fuel
   stage: reserves
@@ -6748,6 +7403,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [48.0, 48.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.pumping.portable_generator_fuel_h
   title: Pre-positioned pump-station generator fuel
   stage: reserves
@@ -6768,6 +7429,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [24.0, 24.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.storage.peak_day_h
   title: Distribution water storage
   stage: reserves
@@ -6787,6 +7454,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [12.0, 12.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.lng.days
   title: LNG safety stock at the import terminal
   stage: reserves
@@ -6806,6 +7479,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [11.0, 11.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.oil.industry_days
   title: Oil stock held by industry
   stage: reserves
@@ -6825,6 +7504,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [60.0, 60.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.oil.government_days
   title: Oil stock held by government
   stage: reserves
@@ -6844,6 +7529,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [30.0, 30.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.coal.days
   title: Coal stock at coal plants
   stage: reserves
@@ -6863,6 +7554,137 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [30.0, 30.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
+- id: reserves.generation.purified_water_h
+  title: 'Generation on municipal make-up water: purified boiler water'
+  stage: reserves
+  value: 24.0
+  units: h
+  applies_to: {layer: null, node_class: generation, condition: makeup_water=municipal}
+  grade: L
+  jurisdiction: IN
+  sources:
+  - {citation: 'IS 13268:1992, Demineralization plant: guidelines, §4.2.3 (India; withdrawn, superseded
+      by IS 13268:2023)', url: 'https://www.services.bis.gov.in/php/BIS_2.0/bisconnect/knowyourstandards/Indian_standards/isdetails/NDc5OQ==',
+    quote: 'Normally, in power plants clients prefer to have the storage capacity for 16 to 24 hours.',
+    verified: false}
+  - {citation: Degradation profiles v0.2, url: docs/design/evidence/Degradation_Profiles_v0_2.md, quote: null,
+    verified: null}
+  - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
+    quote: null, verified: null}
+  reasoning: A thermal plant on municipal make-up water keeps a stock of purified (demineralized) boiler
+    water and runs on it when the main is cut, then trips; it refills from the main once the main returns.
+    Taiwan's large thermal plants cool with seawater, so the main supplies boiler and process water, not
+    cooling. India's guideline is the source until Taiwan environmental impact statements replace it.
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+  history: []
+  range: [6.0, 48.0]
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
+  theta_alternatives: [any value in 6–48 h]
+- id: reserves.data_centre.makeup_water_h
+  title: 'Data centre with evaporative cooling: make-up water'
+  stage: reserves
+  value: 12.0
+  units: h
+  applies_to: {layer: null, node_class: data_centre, condition: cooling=evaporative}
+  grade: S
+  jurisdiction: US
+  sources:
+  - {citation: 'Uptime Institute Journal (Tier Standard, Tier III make-up water)', url: null, quote: a
+      Tier III facility requires 12 hours of Concurrently Maintainable makeup water; Many owners have
+      chosen to exceed 12 hours, verified: false}
+  - {citation: Degradation profiles v0.2, url: docs/design/evidence/Degradation_Profiles_v0_2.md, quote: null,
+    verified: null}
+  - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
+    quote: null, verified: null}
+  reasoning: An evaporative data centre keeps make-up water and runs on it when the main is cut, then
+    trips; it refills from the main once the main returns. Air-cooled data centres with no water dependency
+    are a later option.
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+  history: []
+  range: [0.0, 48.0]
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
+  theta_alternatives: [any value in 0–48 h]
+- id: reserves.seaport.backup_power_h
+  title: 'Seaport: backup power for cargo handling'
+  stage: reserves
+  value: 0.0
+  units: h
+  applies_to: {layer: null, node_class: seaport, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'TT Club, Emerging Risks (29 January 2026), as reported by CIR Magazine', url: 'https://cirmagazine.com/cir/c2026013001.php',
+    quote: null, verified: false}
+  - {citation: Degradation profiles v0.2, url: docs/design/evidence/Degradation_Profiles_v0_2.md, quote: null,
+    verified: null}
+  - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
+    quote: null, verified: null}
+  reasoning: With no power a seaport moves no cargo; 0 h of backup power by default, up to 48 h for a
+    highly reinforced port that can still work cargo. Ports depend on power for cranes, pumps, security
+    and digital operations (TT Club). Crane-dependent versus roll-on/roll-off terminals come later.
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+  history: []
+  range: [0.0, 48.0]
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
+  theta_alternatives: [any value in 0–48 h]
+- id: reserves.battery_recharge_h
+  title: Battery recharge, empty to full
+  stage: reserves
+  value: 12.0
+  units: h
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Dynamics ruling sheet v0.3, url: docs/design/evidence/Dynamics_Ruling_Sheet_v0_3.md, quote: null,
+    verified: null}
+  - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
+    quote: null, verified: null}
+  reasoning: A battery recharges from empty to full in 12 h once power returns, so a second outage soon
+    after leaves it short (D5).
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+  history: []
+  range: [12.0, 12.0]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.telecom
   title: Stock against telecom loss
   stage: reserves
@@ -6882,6 +7704,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.battery_and_generator_add
   title: Battery and generator hours add
   stage: reserves
@@ -6901,6 +7726,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.fire_reserve_excluded
   title: Fire-reserve water does not count
   stage: reserves
@@ -6920,6 +7748,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.fuel_resupply.lead_time_h
   title: Fuel resupply lead time
   stage: reserves
@@ -6939,6 +7770,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [12.0, 12.0]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.fuel_resupply.delivery_h
   title: Fuel per delivery
   stage: reserves
@@ -6958,6 +7795,12 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range: [24.0, 24.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.compliance_gap.hospital_backup_pct
   title: 'Compliance gap: hospital backup'
   stage: reserves
@@ -6977,6 +7820,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.compliance_gap.water_facilities_pct
   title: 'Compliance gap: water facilities'
   stage: reserves
@@ -6996,6 +7842,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.compliance_gap.exchange_data_centre_pct
   title: 'Compliance gap: exchanges and data centres'
   stage: reserves
@@ -7015,6 +7864,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.compliance_gap.mast_pct
   title: 'Compliance gap: masts'
   stage: reserves
@@ -7034,6 +7886,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.compliance_gap.national_stocks_pct
   title: 'Compliance gap: national LNG, oil and coal stocks'
   stage: reserves
@@ -7054,6 +7909,9 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.compliance_gap.other_classes
   title: Compliance gap of classes §4.4a lists none for
   stage: reserves
@@ -7073,6 +7931,9 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.generator_availability
   title: Backup generator reliability
   stage: reserves
@@ -7105,6 +7966,9 @@ rules:
     units: probability
     date: '2026-09-29'
     decision: '0010'
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.generator_availability.well_maintained_share
   title: Share of backup generators that are well maintained
   stage: reserves
@@ -7130,6 +7994,9 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: reserves.mast.designated_share
   title: Share of masts that are designated disaster-response sites
   stage: reserves
@@ -7150,6 +8017,9 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.towered_airport
   title: 'Telecom tolerance: airport'
   stage: tolerance
@@ -7172,6 +8042,14 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    t_h: [0.0, 0.0]
+    d: [0.2, 0.2]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.tank_farm_pipeline
   title: 'Telecom tolerance: tank farm'
   stage: tolerance
@@ -7194,6 +8072,14 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    t_h: [1.0, 1.0]
+    d: [0.5, 0.5]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.generation
   title: 'Telecom tolerance: generation'
   stage: tolerance
@@ -7216,6 +8102,14 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    t_h: [12.0, 12.0]
+    d: [0.95, 0.95]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.import_terminal
   title: 'Telecom tolerance: import terminal'
   stage: tolerance
@@ -7238,6 +8132,14 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    t_h: [12.0, 12.0]
+    d: [0.8, 0.8]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.substation
   title: 'Telecom tolerance: transmission substation, distribution substation'
   stage: tolerance
@@ -7251,9 +8153,12 @@ rules:
     quote: null, verified: null}
   - {citation: Ruling T4, url: docs/design/evidence/Design_Targets_Ruling_Sheet_v0_2.md, quote: null,
     verified: null}
-  reasoning: Full function on manual fallback for T hours, then level d; d_eff = 1 − public share × (1
-    − d). Substations staffed by hand for 8 h lost no load; telecom loss slows switching and repair, not
-    supply.
+  - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
+    quote: null, verified: null}
+  reasoning: 'Full function on manual fallback for T hours, then level d; d_eff = 1 − public share × (1
+    − d). Substations staffed by hand for 8 h lost no load; telecom loss does not cut supply. Remote switching
+    is lost: re-energizing waits for a manual switching trip (repair.manual_switching_h), replacing ''slows
+    switching and repair'' (decision 0014).'
   status: ruled
   open_decision: null
   ruling:
@@ -7261,6 +8166,14 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    t_h: [12.0, 12.0]
+    d: [1.0, 1.0]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.pumping
   title: 'Telecom tolerance: pumping'
   stage: tolerance
@@ -7283,6 +8196,14 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    t_h: [12.0, 12.0]
+    d: [0.8, 0.8]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.treatment
   title: 'Telecom tolerance: treatment'
   stage: tolerance
@@ -7305,6 +8226,14 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    t_h: [24.0, 24.0]
+    d: [0.9, 0.9]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.reservoir
   title: 'Telecom tolerance: reservoir'
   stage: tolerance
@@ -7327,6 +8256,14 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    t_h: [72.0, 72.0]
+    d: [0.95, 0.95]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.seaport_freight_yard
   title: 'Telecom tolerance: seaport, freight yard'
   stage: tolerance
@@ -7349,6 +8286,14 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    t_h: [24.0, 24.0]
+    d: [0.5, 0.5]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.depot
   title: 'Telecom tolerance: depot'
   stage: tolerance
@@ -7371,6 +8316,14 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    t_h: [12.0, 12.0]
+    d: [0.6, 0.6]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.refinery
   title: 'Telecom tolerance: refinery'
   stage: tolerance
@@ -7393,6 +8346,14 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    t_h: [72.0, 72.0]
+    d: [0.8, 0.8]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.hospital_records_on_site
   title: 'Telecom tolerance: tertiary, regional'
   stage: tolerance
@@ -7416,6 +8377,14 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    t_h: [24.0, 24.0]
+    d: [0.85, 0.85]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.clinic
   title: 'Telecom tolerance: clinic'
   stage: tolerance
@@ -7438,6 +8407,14 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    t_h: [24.0, 24.0]
+    d: [0.8, 0.8]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.blood_bank
   title: 'Telecom tolerance: blood bank'
   stage: tolerance
@@ -7460,6 +8437,14 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    t_h: [24.0, 24.0]
+    d: [0.7, 0.7]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.hospital_records_hosted
   title: 'Telecom tolerance: hospital with records hosted off site'
   stage: tolerance
@@ -7481,6 +8466,15 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    t_h: [0.5, 0.5]
+    ramp_to_h: [4.0, 4.0]
+    d: [0.65, 0.65]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.airport_not_towered
   title: 'Telecom tolerance: airport, not towered'
   stage: tolerance
@@ -7501,6 +8495,14 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  range:
+    t_h: [24.0, 24.0]
+    d: [0.8, 0.8]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: tolerance.tank_farm_not_connected
   title: 'Telecom tolerance: tank farm, not pipeline-connected'
   stage: tolerance
@@ -7521,6 +8523,14 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  range:
+    t_h: [12.0, 12.0]
+    d: [0.6, 0.6]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: failure_modes.defaults
   title: Default consumer response to a shortfall, by dependency type
   stage: failure_modes
@@ -7543,6 +8553,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: failure_modes.class_departures
   title: Class departures from the default failure mode
   stage: failure_modes
@@ -7580,6 +8593,9 @@ rules:
     units: null
     date: '2026-09-29'
     decision: '0010'
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: failure_modes.heterogeneity_pct
   title: Share of elements departing from the class default
   stage: failure_modes
@@ -7601,6 +8617,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: failure_modes.combining
   title: Combining shortfalls at one consumer
   stage: failure_modes
@@ -7620,6 +8639,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
 - id: repair.hazus_restoration_days
   title: Hazus MR4 restoration mean and standard deviation
   stage: repair
@@ -7758,6 +8780,9 @@ rules:
     date: '2026-09-30'
     decision: '0011'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
 - id: repair.crew_work_h
   title: Crew work hours by damage state
   stage: repair
@@ -7785,6 +8810,9 @@ rules:
     units: h
     date: '2026-09-30'
     decision: '0011'
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
 - id: repair.unrepairable
   title: Classes not repairable within the window
   stage: repair
@@ -7804,6 +8832,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
 - id: repair.no_repair_rows
   title: Classes with no repair rows
   stage: repair
@@ -7824,6 +8855,9 @@ rules:
     date: '2026-09-30'
     decision: '0011'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
 - id: repair.pilot_damage_states
   title: Damage states the pilot storm causes at facilities
   stage: repair
@@ -7844,6 +8878,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
 - id: repair.emergency.mobile_substation
   title: 'Emergency repair: mobile substation'
   stage: repair
@@ -7869,6 +8906,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
 - id: repair.emergency.mobile_cell_site
   title: 'Emergency repair: mobile cell site'
   stage: repair
@@ -7891,6 +8931,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
 - id: repair.emergency.other_classes
   title: No other class has an emergency mode
   stage: repair
@@ -7911,6 +8954,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
 - id: repair.travel
   title: Travel time from the crew base
   stage: repair
@@ -7930,6 +8976,98 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
+- id: repair.manual_switching_h
+  title: Manual switching after substation telecom loss
+  stage: repair
+  value: 1.0
+  units: h on site
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Dynamics ruling sheet v0.3, url: docs/design/evidence/Dynamics_Ruling_Sheet_v0_3.md, quote: null,
+    verified: null}
+  - {citation: Degradation profiles v0.2, url: docs/design/evidence/Degradation_Profiles_v0_2.md, quote: null,
+    verified: null}
+  - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
+    quote: null, verified: null}
+  reasoning: 'When a repair should re-energize a substation whose telecom is down, power returns only
+    after a crew travels there and switches by hand: this long on site, plus travel as for repair crews
+    (road, then off road). The trip uses a crew like any job, at the priority of the repair that triggered
+    it. It does not apply when the repair is at the substation itself. No published figure was found.
+    Replaces ''slows switching and repair''.'
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+  history: []
+  range: [0.5, 2.0]
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
+  theta_alternatives: [any value in 0.5–2 h on site]
+- id: repair.crew_bound_lead_h
+  title: Crew-bound lead time per job
+  stage: repair
+  value: 2.0
+  units: h
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Dynamics ruling sheet v0.3, url: docs/design/evidence/Dynamics_Ruling_Sheet_v0_3.md, quote: null,
+    verified: null}
+  - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
+    quote: null, verified: null}
+  reasoning: 'Mobilize, assess and stage: starts when a crew is assigned and repeats at every job, plus
+    travel (D6).'
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+  history: []
+  range: [2.0, 2.0]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
+- id: repair.parts_lead_time
+  title: Parts lead time (derived)
+  stage: repair
+  value: max(0, Hazus lead time − repair.crew_bound_lead_h)
+  units: null
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Dynamics ruling sheet v0.3, url: docs/design/evidence/Dynamics_Ruling_Sheet_v0_3.md, quote: null,
+    verified: null}
+  - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
+    quote: null, verified: null}
+  reasoning: 'The rest of the Hazus lead time, max(0, lead time − crew-bound lead time). It runs in parallel
+    with no crew; in Phase 1 its clock starts at the end of the storm (D6). Derived: it carries no number
+    of its own.'
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+  history: []
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
 - id: crews.pilot
   title: Pilot crews, bases and emergency pool
   stage: crews
@@ -7951,6 +9089,18 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  range:
+    crews: [1, 3]
+    pools: [1, 1]
+    crew_bases: [1, 1]
+    mobile_substations: [1, 1]
+    mobile_cell_sites: [1, 1]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
+  theta_sensitivity: 'planned: the pilot at 1, 2 and 3 crews (ruling T6)'
 - id: crews.taipower_reference
   title: Taiwan reference for crews and bases
   stage: crews
@@ -7973,6 +9123,9 @@ rules:
     date: '2026-09-29'
     decision: '0009'
   history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
 - id: crews.outlying_island_mobilisation_h
   title: Mobilisation delay to an outlying island
   stage: crews
@@ -7989,6 +9142,12 @@ rules:
   open_decision: realism ranges
   ruling: null
   history: []
+  range: [12.0, 12.0]
+  range_open: true
+  relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
 - id: crews.road_speed_kmh
   title: Road speed of a repair crew
   stage: crews
@@ -8011,6 +9170,12 @@ rules:
     date: '2026-09-30'
     decision: '0011'
   history: []
+  range: [40.0, 40.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
 - id: crews.offroad_speed_kmh
   title: Crew speed off road to a failure point
   stage: crews
@@ -8031,6 +9196,12 @@ rules:
     date: '2026-10-02'
     decision: '0013'
   history: []
+  range: [2.0, 2.0]
+  range_open: true
+  relaxed: unlimited
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
 - id: storm.severity_anchor
   title: Peak 10-minute wind at sea by severity
   stage: storm
@@ -8053,6 +9224,9 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
+  theta_sensitivity: 'run: tests/fixtures/storm_sensitivity/pilot_severity_70.yaml'
 - id: storm.cwa_classes
   title: Typhoon classes by peak 10-minute wind (CWA)
   stage: storm
@@ -8080,6 +9254,8 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.rainfall_mm
   title: 24-hour rainfall by severity
   stage: storm
@@ -8105,6 +9281,8 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.rainfall_spread_mm
   title: Rainfall drawn around the severity's rung
   stage: storm
@@ -8126,6 +9304,8 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.flood_stage_m
   title: Flood stage by rainfall
   stage: storm
@@ -8157,6 +9337,8 @@ rules:
     date: '2026-10-02'
     decision: '0012'
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.profile_exponent
   title: Modified Rankine decay exponent
   stage: storm
@@ -8178,6 +9360,8 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.radius_max_wind_km
   title: 'Radius of maximum wind: range drawn per scenario'
   stage: storm
@@ -8206,6 +9390,8 @@ rules:
     date: '2026-10-02'
     decision: '0012'
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.closest_approach_km
   title: Track's closest approach to the island's centre
   stage: storm
@@ -8227,6 +9413,8 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.sea_to_land
   title: Sea-to-land wind reduction
   stage: storm
@@ -8247,6 +9435,8 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.surface_factors
   title: Local surface factor by terrain class (Taiwan wind code)
   stage: storm
@@ -8278,6 +9468,8 @@ rules:
     date: '2026-10-02'
     decision: '0012'
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.lee_factor
   title: Mountain lee factor
   stage: storm
@@ -8304,6 +9496,8 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.variation
   title: Random variation of the wind field
   stage: storm
@@ -8327,6 +9521,8 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.gust_factors
   title: 10-minute to 3-second gust factor (WMO)
   stage: storm
@@ -8358,6 +9554,8 @@ rules:
     date: '2026-10-02'
     decision: '0012'
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.topographic_factor
   title: 'Ridge and hill speed-up: Taiwan wind code topographic factor'
   stage: storm
@@ -8417,6 +9615,8 @@ rules:
     decision: '0013'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.rotation
   title: Storm rotation (hemisphere)
   stage: storm
@@ -8441,6 +9641,8 @@ rules:
     decision: '0013'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.towers_designed_for_site
   title: Towers designed for their site's ridge speed-up
   stage: storm
@@ -8471,6 +9673,8 @@ rules:
     date: '2026-10-09'
     decision: '0013'
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.ridge_factor_ceiling
   title: Ceiling on the ridge speed-up (calibrated on Taiwan's gust record)
   stage: storm
@@ -8504,6 +9708,8 @@ rules:
     decision: '0013'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.line_heights_m
   title: Line height for the topographic factor
   stage: storm
@@ -8524,6 +9730,8 @@ rules:
     decision: '0013'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.flood_functional_depth_m
   title: Hazus functional flood depth by class
   stage: storm
@@ -8560,6 +9768,8 @@ rules:
     date: '2026-10-02'
     decision: '0012'
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.power_platform_m
   title: Platform height of power plants and transmission substations
   stage: storm
@@ -8581,6 +9791,8 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.flood_not_damaged
   title: Classes not flood-damaged in Phase 1
   stage: storm
@@ -8608,6 +9820,8 @@ rules:
     date: '2026-10-02'
     decision: '0012'
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.flood_damage_states_m
   title: Damage state by flood depth over the threshold
   stage: storm
@@ -8629,6 +9843,8 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.line_fragility_anchor
   title: Overhead line calibration targets
   stage: storm
@@ -8663,6 +9879,8 @@ rules:
     date: '2026-10-02'
     decision: '0012'
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.tower_collapse_gust_km_per_h
   title: Transmission tower collapse gust
   stage: storm
@@ -8685,6 +9903,8 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.line_fragility_table
   title: 'Overhead line on poles: failure chance per km by 3-second gust (calibrated)'
   stage: storm
@@ -8857,6 +10077,8 @@ rules:
     date: '2026-10-09'
     decision: '0013'
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.tower_fragility_table
   title: 'Transmission tower: collapse chance by 3-second gust'
   stage: storm
@@ -8905,6 +10127,8 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.line_crew_work_h
   title: Crew work per failure point of an overhead line
   stage: storm
@@ -8932,6 +10156,8 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
 - id: storm.tower_crew_work_h
   title: Crew work to restore a collapsed transmission tower
   stage: storm
@@ -8954,6 +10180,157 @@ rules:
     decision: '0012'
   history: []
   theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: χ
+- id: dynamics.trip_point
+  title: Trip point
+  stage: dynamics
+  value: 0.9
+  units: ratio of supply received
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Dynamics ruling sheet v0.3, url: docs/design/evidence/Dynamics_Ruling_Sheet_v0_3.md, quote: null,
+    verified: null}
+  - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
+    quote: null, verified: null}
+  reasoning: A consumer that trips runs at 1 while the share it receives is at least this, else 0 (D2).
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+  history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
+- id: dynamics.threshold
+  title: Threshold θ of the logistic and control transfer form
+  stage: dynamics
+  value: 0.5
+  units: ratio of supplier state
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Dynamics ruling sheet v0.3, url: docs/design/evidence/Dynamics_Ruling_Sheet_v0_3.md, quote: null,
+    verified: null}
+  - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
+    quote: null, verified: null}
+  reasoning: Logistic and control dependencies deliver κ while the supplier's state is at least θ, else
+    0 (D3).
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+  history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: g_δ
+- id: dynamics.step_min
+  title: Time step
+  stage: dynamics
+  value: 15.0
+  units: min
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Dynamics ruling sheet v0.3, url: docs/design/evidence/Dynamics_Ruling_Sheet_v0_3.md, quote: null,
+    verified: null}
+  - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
+    quote: null, verified: null}
+  reasoning: The engine advances in 15-minute steps; the storm acts at hour 0 (D7).
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+  history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: γ
+- id: dynamics.settling_cap_passes
+  title: Settling cap per step (γ)
+  stage: dynamics
+  value: 100.0
+  units: passes
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Dynamics ruling sheet v0.3, url: docs/design/evidence/Dynamics_Ruling_Sheet_v0_3.md, quote: null,
+    verified: null}
+  - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
+    quote: null, verified: null}
+  reasoning: Within each step states are recomputed until they stop changing, up to this many passes;
+    a step that hits the cap is reported, never hidden (D7).
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+  history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: γ
+- id: dynamics.horizon_h
+  title: Default horizon
+  stage: dynamics
+  value: 72.0
+  units: h
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Dynamics ruling sheet v0.3, url: docs/design/evidence/Dynamics_Ruling_Sheet_v0_3.md, quote: null,
+    verified: null}
+  - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
+    quote: null, verified: null}
+  reasoning: A run's horizon comes from the request; this is its default. The engine has no fixed window
+    (D7).
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+  history: []
+  theta_role: stopping
+  theta_domain: truth
+  theta_symbol: none
+- id: dynamics.crew_order
+  title: Default crew order
+  stage: dynamics
+  value: [towered lines and transmission substations, 'distribution substations and feeds to end uses,
+      highest Lifeline weight first', everything else]
+  units: null
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: Dynamics ruling sheet v0.3, url: docs/design/evidence/Dynamics_Ruling_Sheet_v0_3.md, quote: null,
+    verified: null}
+  - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
+    quote: null, verified: null}
+  reasoning: Crews take jobs in this order; ties go to the shortest travel, then the lowest id. Emergency
+    units go to eligible damaged nodes in the same order. The restorative model replaces it (D6).
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+  history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
 - id: strength.supply_days
   title: Days of its own stock a supplier delivers in a day's turnover
   stage: strength
@@ -8979,6 +10356,9 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: strength.lng_gj_per_m3
   title: Energy in liquefied natural gas
   stage: strength
@@ -9004,6 +10384,9 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
 - id: strength.coal_gj_per_m3
   title: Energy in stockpiled coal
   stage: strength
@@ -9027,3 +10410,109 @@ rules:
     date: '2026-09-29'
     decision: '0010'
   history: []
+  theta_role: construction
+  theta_domain: truth
+  theta_symbol: none
+theta:
+- theta_id: theta.minimum_rule
+  domain: truth
+  sub_type: dynamics
+  symbol: F
+  chosen: A node's supply level is the lowest of its responses across the commodities it needs (typed
+    weakest link), and its state is its condition times its supply level.
+  alternatives: [the product of the responses]
+  registry_ids: []
+  carried_vs_flattened: keeps
+  sensitivity: none planned
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+- theta_id: theta.transfer_forms
+  domain: truth
+  sub_type: dynamics
+  symbol: g_δ
+  chosen: Physical flow and service edges deliver linearly; logistic and control edges deliver at the
+    threshold θ.
+  alternatives: [the step form, concave forms]
+  registry_ids: [dynamics.threshold]
+  carried_vs_flattened: keeps
+  sensitivity: none planned
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+- theta_id: theta.recovery_form
+  domain: truth
+  sub_type: dynamics
+  symbol: R
+  chosen: 'Recovery is all or nothing: a damaged element is off from the storm until its repair completes,
+    then fully back.'
+  alternatives: [piecewise recovery, gradual recovery]
+  registry_ids: []
+  carried_vs_flattened: keeps
+  sensitivity: none planned
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+- theta_id: theta.pro_rata_sharing
+  domain: truth
+  sub_type: dynamics
+  symbol: g_δ
+  chosen: When a supplier is short, its consumers share what it delivers pro rata.
+  alternatives: [priority lines first, full support until exhausted]
+  registry_ids: []
+  carried_vs_flattened: keeps
+  sensitivity: none planned
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+- theta_id: theta.crew_order
+  domain: truth
+  sub_type: dynamics
+  symbol: R
+  chosen: 'Crews take jobs in the default order: towered lines and transmission substations, then distribution
+    substations and feeds to end uses by Lifeline weight, then everything else; ties go to the shortest
+    travel, then the lowest id.'
+  alternatives: [the restorative model's optimized order]
+  registry_ids: [dynamics.crew_order]
+  carried_vs_flattened: keeps
+  sensitivity: none planned
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+- theta_id: theta.time_step_and_settling
+  domain: truth
+  sub_type: dynamics
+  symbol: γ
+  chosen: Time advances in 15-minute steps, and within each step the cascade is recomputed until it stops
+    changing, up to 100 passes.
+  alternatives: [a different step size, event-driven timing]
+  registry_ids: [dynamics.step_min, dynamics.settling_cap_passes]
+  carried_vs_flattened: keeps
+  sensitivity: none planned
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+- theta_id: theta.window
+  domain: truth
+  sub_type: stopping
+  symbol: none
+  chosen: A run stops at its requested horizon, 72 h by default.
+  alternatives: [any requested horizon]
+  registry_ids: [dynamics.horizon_h]
+  carried_vs_flattened: keeps
+  sensitivity: none planned
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+objectives:
+- {name: metric, description: 'Unserved demand-hours, weighted by service weight.'}
+- {name: acceptability threshold, description: 'The level of service a decision maker accepts, recorded
+    with each request.'}
+- {name: service weights, description: 'Lifeline, Equal or Custom weights over the end-use classes (§4.1).'}

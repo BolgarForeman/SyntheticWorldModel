@@ -27,6 +27,7 @@ VALID_RULE: dict[str, Any] = {
     "sources": [{"citation": "A source"}],
     "reasoning": "Why this value.",
     "status": "ruled",
+    "theta_role": "world_content",
 }
 
 

@@ -68,6 +68,42 @@ LAYER_CODES: Mapping[Layer, str] = {
 TREE_LAYERS = frozenset({Layer.WATER, Layer.FUEL})
 """Layers whose signature is a tree: they stop at n - 1 links (decision 0006)."""
 
+_C = NodeClass
+SIGNATURE_CHAINS: Mapping[Layer, tuple[tuple[tuple[NodeClass, ...], ...], ...]] = {
+    Layer.POWER: (
+        ((_C.GENERATION,), (_C.TRANSMISSION_SUBSTATION,), (_C.DISTRIBUTION_SUBSTATION,)),
+    ),
+    Layer.TELECOM: (((_C.EXCHANGE,), (_C.MAST, _C.DATA_CENTRE, _C.CABLE_LANDING)),),
+    Layer.WATER: (((_C.RESERVOIR,), (_C.TREATMENT,), (_C.PUMPING,), (_C.STORAGE,)),),
+    Layer.FUEL: (((_C.IMPORT_TERMINAL,), (_C.TANK_FARM, _C.REFINERY), (_C.DEPOT,)),),
+    Layer.HEALTHCARE: (
+        ((_C.TERTIARY,), (_C.REGIONAL,), (_C.CLINIC,)),
+        ((_C.TERTIARY,), (_C.BLOOD_BANK,)),
+    ),
+}
+"""Each layer's signature as chains of stages (Work Order 3, B5). A link may join adjacent
+stages, or stages with only empty stages between them in that world, as the chain builder
+links a node to the nearest earlier stage that has nodes."""
+
+SIGNATURE_TIES: Mapping[Layer, tuple[NodeClass, ...]] = {
+    Layer.POWER: (_C.TRANSMISSION_SUBSTATION,),
+    Layer.TELECOM: (_C.EXCHANGE,),
+    Layer.HEALTHCARE: (_C.TERTIARY,),
+}
+"""Classes whose members may link to each other: ties among transmission substations, a mesh
+of exchanges, tertiary hospitals referring to each other (Work Order 3, B5)."""
+
+SIGNATURE_EXTRA_PAIRS: Mapping[Layer, tuple[tuple[NodeClass, NodeClass], ...]] = {
+    # Mapped lines join plants and substations of any class, never plant to plant (§4.2).
+    Layer.POWER: (
+        (_C.GENERATION, _C.DISTRIBUTION_SUBSTATION),
+        (_C.DISTRIBUTION_SUBSTATION, _C.DISTRIBUTION_SUBSTATION),
+    ),
+    # The blood bank links to the hospitals it serves (Work Order 3, B5).
+    Layer.HEALTHCARE: ((_C.BLOOD_BANK, _C.REGIONAL),),
+}
+"""Pairs a signature allows beyond its chains and ties."""
+
 M_PER_KM = 1000.0
 """Metres per kilometre."""
 
@@ -2079,6 +2115,47 @@ def _choose(stream: np.random.Generator, shares: tuple[tuple[str, float], ...]) 
 # --- Links ----------------------------------------------------------------------------------
 
 
+def signature_allows(
+    layer: Layer, a: NodeClass, b: NodeClass, present: frozenset[NodeClass]
+) -> bool:
+    """Return whether a layer's signature lets a link join a node of class a to one of class b.
+
+    Parameters
+    ----------
+    layer : Layer
+        The layer the link belongs to.
+    a, b : NodeClass
+        The classes at the link's two ends, in either order.
+    present : frozenset of NodeClass
+        The classes with nodes in this layer of this world: a chain may skip a stage only
+        where that stage has no nodes.
+
+    Returns
+    -------
+    bool
+        True if the signature allows the pair. Transport is a road network and allows any.
+
+    Spec: structure v0.9 §4.2 (each layer keeping its own structural signature); Work Order 3,
+    B5; Work Order 7, Part 0.
+    """
+    if layer == Layer.TRANSPORT:
+        return True
+    pair = {a, b}
+    if a == b and a in SIGNATURE_TIES.get(layer, ()):
+        return True
+    if any({x, y} == pair for x, y in SIGNATURE_EXTRA_PAIRS.get(layer, ())):
+        return True
+    for chain in SIGNATURE_CHAINS.get(layer, ()):
+        for upper, stage in enumerate(chain):
+            for lower in range(upper):
+                skipped = chain[lower + 1 : upper]
+                if any(cls in present for between in skipped for cls in between):
+                    continue
+                if (a in chain[lower] and b in stage) or (b in chain[lower] and a in stage):
+                    return True
+    return False
+
+
 class _LinkBuilder:
     """Builds one layer's links: its signature first, then nearest-first to the recipe value."""
 
@@ -2097,6 +2174,7 @@ class _LinkBuilder:
         self.links_per_node = links_per_node
         self.pairs: list[tuple[int, int]] = []
         self.notes: list[str] = []
+        self.present = frozenset(node.node_class for node in nodes)
 
     def build(self) -> list[Link]:
         count = len(self.nodes)
@@ -2137,8 +2215,12 @@ class _LinkBuilder:
         others = [j for j in candidates if j != i]
         return min(others, key=lambda j: (self._distance2(i, j), j)) if others else None
 
+    def _allows(self, i: int, j: int) -> bool:
+        a, b = self.nodes[i].node_class, self.nodes[j].node_class
+        return signature_allows(self.layer, a, b, self.present)
+
     def _add(self, i: int | None, j: int | None) -> None:
-        if i is None or j is None or i == j:
+        if i is None or j is None or i == j or not self._allows(i, j):
             return
         if (i, j) in self.pairs or (j, i) in self.pairs:
             return
@@ -2215,12 +2297,17 @@ class _LinkBuilder:
         for i, j in self.pairs:
             parent[root(i)] = root(j)
         candidates = sorted(
-            ((self._distance2(i, j), i, j) for i in range(count) for j in range(i + 1, count)),
+            (self._distance2(i, j), i, j)
+            for i in range(count)
+            for j in range(i + 1, count)
+            if self._allows(i, j)
         )
         for _, i, j in candidates:
             if root(i) != root(j):
                 parent[root(i)] = root(j)
                 self._add(i, j)
+        if len({root(i) for i in range(count)}) > 1:
+            self.notes.append("the layer cannot be joined into one component within its signature")
 
     def _preferred_extras(self, target: int) -> None:
         """Healthcare: the blood bank links to the hospitals it serves before other extras."""
@@ -2234,7 +2321,10 @@ class _LinkBuilder:
     def _nearest_extras(self, target: int) -> None:
         count = len(self.nodes)
         ordered = sorted(
-            (self._distance2(i, j), i, j) for i in range(count) for j in range(i + 1, count)
+            (self._distance2(i, j), i, j)
+            for i in range(count)
+            for j in range(i + 1, count)
+            if self._allows(i, j)
         )
         for _, i, j in ordered:
             if len(self.pairs) >= target:

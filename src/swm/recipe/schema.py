@@ -11,12 +11,17 @@ from typing import Annotated, Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-RECIPE_VERSION: Literal[2] = 2
+RECIPE_VERSION: Literal[3] = 3
 """The recipe schema version this module defines. Version 2 renamed ``unobserved.depots`` to
-``unobserved.crew_base`` (decision 0011)."""
+``unobserved.crew_base`` (decision 0011); version 3 added ``modeling_rules.relaxed_limits`` and
+``dynamics.removed_dependencies`` (decision 0014)."""
 
-SUPPORTED_RECIPE_VERSIONS = (1, 2)
-"""Recipe versions this code reads; version 1 is migrated on loading (``swm.recipe.io``)."""
+SUPPORTED_RECIPE_VERSIONS = (1, 2, 3)
+"""Recipe versions this code reads; versions 1 and 2 are migrated on loading
+(``swm.recipe.io``)."""
+
+COUPLING_EDGE_ID_PATTERN = r"^SWM-CPL-\d{4}$"
+"""A coupling edge id, as the couplings stage numbers them."""
 
 ROOT_SEED_UPPER_BOUND = 2**64 - 1
 
@@ -990,7 +995,11 @@ class TransferForms(_Section):
         TransferForm.LINEAR, description="Physical flow dependencies."
     )
     logistic: TransferForm = Field(TransferForm.THRESHOLD, description="Logistic dependencies.")
-    control: TransferForm = Field(TransferForm.STEP, description="Control dependencies.")
+    control: TransferForm = Field(
+        TransferForm.THRESHOLD,
+        description="Control dependencies: the threshold at θ, as logistic ones (ruling D3). "
+        "The step form is held for later worlds.",
+    )
     service: TransferForm = Field(TransferForm.LINEAR, description="Service dependencies.")
 
 
@@ -1009,6 +1018,19 @@ class Dynamics(_Section):
     transfer_forms: TransferForms = Field(
         default_factory=TransferForms, description="Transfer form per dependency type."
     )
+    removed_dependencies: tuple[Annotated[str, Field(pattern=COUPLING_EDGE_ID_PATTERN)], ...] = (
+        Field(
+            (),
+            description="Coupling edges deleted from the world before a run. Distinct from "
+            "relaxing a limit: the dependency is gone, not merely never biting (D11).",
+        )
+    )
+
+    @model_validator(mode="after")
+    def _removed_once(self) -> Self:
+        if len(set(self.removed_dependencies)) != len(self.removed_dependencies):
+            raise ValueError("dynamics.removed_dependencies names an edge twice")
+        return self
 
 
 # --- Error induction ------------------------------------------------------------------------
@@ -1258,6 +1280,18 @@ class ModelingRules(_Section):
         description="New values for named rules, for sensitivity runs (for example "
         "dependencies.rule_5.tertiary_second_feed_share). Any rule may be overridden.",
     )
+    relaxed_limits: tuple[str, ...] = Field(
+        (),
+        description="Limits set to their relaxed value, by rule id: unlimited for stocks and "
+        "capacities, zero for delays and losses. Stored as a flag, never as a large number "
+        "(D11).",
+    )
+
+    @model_validator(mode="after")
+    def _relaxed_once(self) -> Self:
+        if len(set(self.relaxed_limits)) != len(self.relaxed_limits):
+            raise ValueError("modeling_rules.relaxed_limits names a rule twice")
+        return self
 
 
 class Recipe(_Section):
@@ -1266,7 +1300,7 @@ class Recipe(_Section):
     Spec: structure v0.2 §3 (the recipe is the record) and §4; Work Order 1, item 2.
     """
 
-    recipe_version: Literal[2] = Field(
+    recipe_version: Literal[3] = Field(
         RECIPE_VERSION, description="The recipe schema version the recipe was written for."
     )
     root_seed: int = Field(

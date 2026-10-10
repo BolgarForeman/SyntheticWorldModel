@@ -12,7 +12,7 @@ import html
 import json
 from typing import Any
 
-from swm.rules.registry import Registry, Rule, Source, Stage
+from swm.rules.registry import Registry, Rule, Source, Stage, ThetaRole
 
 STAGE_TITLES = {
     Stage.DEPENDENCIES: "Dependencies",
@@ -24,6 +24,7 @@ STAGE_TITLES = {
     Stage.REPAIR: "Repair",
     Stage.CREWS: "Crews",
     Stage.STORM: "Storm",
+    Stage.DYNAMICS: "Dynamics",
     Stage.SIZING: "Sizing",
     Stage.LAYERS: "Layers",
     Stage.DRAWS: "Draws",
@@ -160,6 +161,19 @@ for a sensitivity run, and its overrides are stamped on the world.</p>
     return page.encode("utf-8")
 
 
+def _limit(rule: Rule) -> str:
+    """Return a limit's range and relaxed value (D11), or nothing for a rule that is not one."""
+    if rule.relaxed is None:
+        return ""
+    if rule.range is None:
+        bounds = "range open (derived)"
+    else:
+        bounds = (
+            "range " + html.escape(_text(rule.range)) + (" (range open)" if rule.range_open else "")
+        )
+    return f"<div class='meta'>Limit: {bounds}; relaxed value {rule.relaxed.value}.</div>"
+
+
 def _card(rule: Rule) -> str:
     grade = rule.grade.value if rule.grade else "none"
     badges = [
@@ -168,8 +182,11 @@ def _card(rule: Rule) -> str:
     ]
     if rule.jurisdiction:
         badges.append(f'<span class="badge plain">{rule.jurisdiction.value}</span>')
-    if rule.theta_role:
-        badges.append(f'<span class="badge plain">θ*-{rule.theta_role.value}</span>')
+    if rule.theta_role == ThetaRole.WORLD_CONTENT:
+        badges.append('<span class="badge plain">world content</span>')
+    else:
+        symbol = rule.theta_symbol.value if rule.theta_symbol else "none"
+        badges.append(f'<span class="badge plain">θ*-{rule.theta_role.value} ({symbol})</span>')
     if rule.open_decision:
         badges.append(
             f'<span class="badge plain">open decision: {html.escape(rule.open_decision)}</span>'
@@ -203,6 +220,7 @@ def _card(rule: Rule) -> str:
 <div class="id">{rule.id}</div>
 <div class="badges">{"".join(badges)}</div>
 {_value(rule)}
+{_limit(rule)}
 <p>{html.escape(rule.reasoning)}</p>
 <div class="meta">{"Applies to " + applies + ". " if applies else ""}{ruling}</div>
 <ul class="sources">{sources}</ul>

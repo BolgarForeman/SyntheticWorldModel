@@ -55,5 +55,5 @@ def test_any_valid_layers_section_keeps_the_invariants(
             assert not any(link.crosses_sea for link in links)
         realised_lpn = 2 * len(links) / count
         wanted = float(str(settings_["links_per_node"]))
-        feasible = feasible_links_per_node(wanted, count, layer in TREE_LAYERS)
+        feasible = feasible_links_per_node(wanted, nodes, layer)
         assert abs(realised_lpn - feasible) <= 0.5 + 1 / count, layer

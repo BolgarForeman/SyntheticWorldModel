@@ -5,8 +5,10 @@ and ``failure_mode/`` streams, the stage draws what buys a consumer time when su
 and how it responds when supply falls short:
 - **stock reserves** (§4.4a): generator fuel at the expected load, batteries, hospital water at
   the emergency ration, supplies, blood stock, distribution storage, and LNG, oil and coal
-  stocks. Each is drawn in hours around its target with the shared draw method; buffer time is
-  the stock over the expected draw;
+  stocks; and, since Work Order 7, purified boiler water at generation on municipal make-up
+  water, make-up water at evaporative data centres and backup power for cargo at seaports.
+  Each is drawn in hours around its target with the shared draw method; buffer time is the
+  stock over the expected draw;
 - **presence of backup** from the subtype attributes, never from the compliance gap;
 - **generator availability**, a separate draw of fail-to-start and time to failure per set;
 - **fuel resupply** on buffer-resupply edges;
@@ -16,7 +18,8 @@ and how it responds when supply falls short:
 
 All are real but unobserved. The dynamics (Work Order 7) uses them; nothing here runs time.
 
-Spec: structure v0.6 §4.4 and §4.4a; Work Order 5, Parts D and F; decision 0009.
+Spec: structure v0.9 §4.4 and §4.4a; Work Order 5, Parts D and F; Work Order 7, Part A;
+decisions 0009 and 0014.
 """
 
 import math
@@ -95,6 +98,10 @@ OIL_HOLDERS = (C.TANK_FARM, C.REFINERY, C.IMPORT_TERMINAL)
 NATIONAL_STOCKS = frozenset({"lng", "oil_industry", "oil_government", "coal"})
 """Statutory stocks, which take the national-stocks gap rather than their class's."""
 
+ADDED_STOCKS = ("purified_water", "makeup_water", "backup_power")
+"""The stocks Work Order 7 added (§4.4a). Each draws from its own ``reserves/<kind>`` stream,
+so the stocks drawn before it keep their values."""
+
 
 @dataclass(frozen=True)
 class Reserve:
@@ -149,8 +156,9 @@ class Tolerance:
     d: float
     public_share: float
     d_eff: float
-    slows_switching: bool
-    """Substations: telecom loss slows switching and repair; it does not cut supply."""
+    manual_switching: bool
+    """Substations: telecom loss costs a manual switching trip before the substation can be
+    re-energized (``repair.manual_switching_h``); it does not cut supply."""
 
 
 @dataclass(frozen=True)
@@ -184,10 +192,15 @@ class BuffersStreams:
     reserves: Mapping[Layer, np.random.Generator]
     availability: Mapping[Layer, np.random.Generator]
     failure_mode: Mapping[Layer, np.random.Generator]
+    added_stocks: Mapping[str, np.random.Generator]
+    """One stream per stock Work Order 7 added, keyed by its kind."""
 
 
 def buffers_streams(root_seed: int) -> BuffersStreams:
-    """Return the ``reserves/``, ``availability/`` and ``failure_mode/`` streams per layer.
+    """Return the reserves, availability and failure-mode streams.
+
+    One ``reserves/``, ``availability/`` and ``failure_mode/`` stream per layer, and one
+    ``reserves/<kind>`` stream per stock Work Order 7 added.
 
     Parameters
     ----------
@@ -199,12 +212,13 @@ def buffers_streams(root_seed: int) -> BuffersStreams:
     BuffersStreams
         The streams.
 
-    Spec: Work Order 5, Parts D and F.
+    Spec: Work Order 5, Parts D and F; Work Order 7, A1.
     """
     return BuffersStreams(
         reserves={layer: rng.stream(root_seed, f"reserves/{layer}") for layer in Layer},
         availability={layer: rng.stream(root_seed, f"availability/{layer}") for layer in Layer},
         failure_mode={layer: rng.stream(root_seed, f"failure_mode/{layer}") for layer in Layer},
+        added_stocks={kind: rng.stream(root_seed, f"reserves/{kind}") for kind in ADDED_STOCKS},
     )
 
 
@@ -246,7 +260,7 @@ def build_buffers(
     """
     context = _Context(reserves, layers, requirements, couplings, rules)
     backups = [_backup(node, context, streams.availability[node.layer]) for node in layers.nodes]
-    stock = _reserves(context, streams.reserves)
+    stock = _reserves(context, streams.reserves) + _added_stocks(context, streams.added_stocks)
     return BuffersResult(
         reserves=tuple(stock),
         backups=tuple(backups),
@@ -375,6 +389,45 @@ def _reserves(context: _Context, streams: Mapping[Layer, np.random.Generator]) -
             days = context.rules.number("reserves.oil.government_days")
             reserves.append(_bulk(node, "oil_government", days, oil_draw * share, context, stream))
     return reserves
+
+
+def _added_stocks(context: _Context, streams: Mapping[str, np.random.Generator]) -> list[Reserve]:
+    """Draw the stocks Work Order 7 added, each node from its kind's own stream (A1)."""
+    reserves: list[Reserve] = []
+    for node in context.layers.nodes:
+        for kind, buffers, target_h, draw, units in _added(node, context):
+            gap = context.gap(node.node_class, kind)
+            hours = context.draw_hours(target_h, gap, float(streams[kind].random()))
+            reserves.append(
+                Reserve(
+                    node.node_id, kind, buffers, hours * draw, units, draw, hours, target_h, gap
+                )
+            )
+    return reserves
+
+
+def _added(node: Node, context: _Context) -> list[tuple[str, Layer, float, float, str]]:
+    """Return the node's Work Order 7 stocks: (kind, layer covered, target h, draw per h, units).
+
+    Generation on municipal make-up water keeps purified boiler water; an evaporative data
+    centre keeps make-up water; a seaport keeps backup power for cargo handling, absent when
+    its target is 0 h (§4.4a).
+    """
+    rules, subtype = context.rules, dict(node.subtype)
+    record = context.requirements.get(node.node_id)
+    water = record.water_m3_per_day if record is not None else None
+    electricity = record.electricity_mw if record is not None else None
+    if node.node_class == C.GENERATION and subtype.get("makeup_water") == "municipal" and water:
+        target = rules.number("reserves.generation.purified_water_h")
+        return [("purified_water", Layer.WATER, target, water / HOURS_PER_DAY, "m3")]
+    if node.node_class == C.DATA_CENTRE and subtype.get("cooling") == "evaporative" and water:
+        target = rules.number("reserves.data_centre.makeup_water_h")
+        return [("makeup_water", Layer.WATER, target, water / HOURS_PER_DAY, "m3")]
+    if node.node_class == C.SEAPORT and electricity:
+        target = rules.number("reserves.seaport.backup_power_h")
+        if target > 0.0:
+            return [("backup_power", Layer.POWER, target, electricity * KWH_PER_MWH, "kWh")]
+    return []
 
 
 def _bulk(
@@ -539,7 +592,7 @@ def _tolerance(context: _Context) -> list[Tolerance]:
                 d=d,
                 public_share=kappa,
                 d_eff=1.0 - kappa * (1.0 - d),
-                slows_switching=rule_id == "tolerance.substation",
+                manual_switching=rule_id == "tolerance.substation",
             )
         )
     return records

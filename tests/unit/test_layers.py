@@ -174,8 +174,8 @@ def test_realised_links_per_node_is_near_the_recipe(pilot: Any) -> None:
     recipe, _, result = pilot
     for stats in result.statistics:
         wanted = recipe.layers.get(stats.layer).links_per_node
-        count = sum(stats.class_counts.values())
-        expected = feasible_links_per_node(wanted, count, stats.layer in TREE_LAYERS)
+        members = [node for node in result.nodes if node.layer == stats.layer]
+        expected = feasible_links_per_node(wanted, members, stats.layer)
         assert abs(stats.mean_links_per_node - expected) <= 0.5, stats.layer
 
 
