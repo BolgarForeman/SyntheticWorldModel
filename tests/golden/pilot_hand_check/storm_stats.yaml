@@ -1,8 +1,9 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: fb287040ebad16b9586932c14db723838df2e6e393fc42f63179a88ba75dd190
+  registry_sha256: add8849c34d45e9ea979ef052c1645c60c0f49e9f5c0fe9220d3d8a488e7512c
   overrides: {}
   relaxed_limits: []
+  out_of_range: []
   removed_dependencies: []
 severity: 50
 storm_class: moderate

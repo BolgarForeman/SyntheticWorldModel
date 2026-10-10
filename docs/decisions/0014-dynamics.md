@@ -68,3 +68,28 @@ Each becomes a selectable setting when built:
 - a saved scenario and run library;
 - crane versus roll-on/roll-off seaport terminals;
 - air-cooled data centres.
+
+## Addendum: answers to PR 15 (2026-10-09)
+
+- **Decided by:** the author (Foreman)
+- **Source:** `docs/work_orders/WO-07a-answers.md`
+
+1. **Sources.** The three new stocks cite verified sources, each read on 2026-10-09:
+   - **Make-up water:** Uptime Institute Journal, "Implications of economizers in Tier Certified data centers".
+   - **Purified boiler water:** IS 13268:1992 §4.2.3, archived copy. It is withdrawn and superseded by the 2023 edition; the 1992 text is the one cited. The rule stays a placeholder until Taiwan's environmental impact statements are read.
+   - **Seaport backup power:** Emerging Risks (29 January 2026), a secondary report of TT Club's guidance.
+2. **One storm-damage stream per element.** Each line's damage draws come from its own child stream, keyed by the scenario and the element's stable id, so adding or removing an element moves no other element's draws (CLAUDE.md §4).
+   - **No median meets both windows.** Re-measured after the change, the pole-line curve at β 0.4 has no single median that puts both recipes within 5 points of their targets. The best single median, 163.7317 m/s, gives the pilot 4.1% (window 5–15%) and severity 70 35.1% (window 25–35%), a worst miss of 5.9 points.
+   - **Closest stored.** As the answers instruct, the closest is stored, with 163.6914 in history, and the rule is open for a ruling. The work stopped there (Work Order 7b not opened).
+3. **Mast-to-mast links.** Work Order 3 B5's allowance is superseded by the ruling of 2026-10-09 (the decision 0013 audit; Work Order 7 Part 0).
+4. **Theta symbols** follow Appendix A v1.7, Definition 2.7:
+   - **F:** the combining function;
+   - **g_δ:** the degradation transfer function: the transfer forms, the failure modes, the trip point, the floor and the telecom tolerance form;
+   - **h_φ:** the reserve dynamics: stocks, refill and resupply;
+   - **R:** recovery;
+   - **γ:** convergence;
+   - **χ:** the performance function, one analysis entry: weighted service-hours at end-use nodes, counted as a fraction when supply is partial.
+
+   The storm rules carry no symbol.
+5. **Pump capacity** is the registry limit `reserves.pumping.capacity` (relaxed value unlimited, range open). It is each pumping node's `capacity_m3_per_day` attribute, drawn in the layers stage (`layers.attributes.pumping`) and read by the requirements stage. It is not sized to load, and no new number is introduced.
+6. **Overrides outside a ruled range** are allowed. The resolved recipe and every run record a note naming the rule, the value and the range (`modeling_rules.out_of_range`).

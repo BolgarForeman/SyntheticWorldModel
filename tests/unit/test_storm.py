@@ -419,8 +419,11 @@ def test_every_storm_rule_is_a_dynamics_rule_in_the_storm_stage() -> None:
     assert len(storm_rules) == 28
     assert all(r.stage == Stage.STORM for r in storm_rules)
     assert all(r.theta_role == ThetaRole.DYNAMICS for r in storm_rules)
-    assert all(r.ruling is not None and r.ruling.decision in ("0012", "0013") for r in storm_rules)
-    assert all(r.theta_symbol == ThetaSymbol.CHI for r in storm_rules)
+    assert all(
+        r.ruling is not None and r.ruling.decision in ("0012", "0013", "0014") for r in storm_rules
+    )
+    # The storm rules carry no symbol; χ is the performance function (PR 15 answers, 4).
+    assert all(r.theta_symbol == ThetaSymbol.NONE for r in storm_rules)
 
 
 def test_changed_storm_rules_keep_their_old_values_in_history() -> None:

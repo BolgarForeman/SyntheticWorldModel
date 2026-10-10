@@ -22,7 +22,7 @@ import math
 GUSTS = tuple(range(0, 121))
 """Knots: 3-second gust in m/s, 0 to 120 in steps of 1."""
 
-LINE_MEDIAN = 163.6914
+LINE_MEDIAN = 163.7317
 """Median of the pole-line curve (m/s): a calibration parameter, not a physical gust. The
 best single median for both targets at beta 0.4 (``tools/calibrate_line_curve.py``)."""
 LINE_BETA = 0.4

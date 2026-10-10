@@ -553,6 +553,7 @@ def _rules_stamp(resolution: Resolution) -> dict[str, object]:
         "registry_sha256": rules.registry_sha256,
         "overrides": dict(rules.overrides),
         "relaxed_limits": list(rules.relaxed_limits),
+        "out_of_range": list(rules.out_of_range),
         "removed_dependencies": list(resolution.recipe.dynamics.removed_dependencies),
     }
 

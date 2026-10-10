@@ -7088,7 +7088,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: reserves.clinic.generator
   title: Clinic backup generator
   stage: reserves
@@ -7569,20 +7569,24 @@ rules:
   grade: L
   jurisdiction: IN
   sources:
-  - {citation: 'IS 13268:1992, Demineralization plant: guidelines, §4.2.3 (India; withdrawn, superseded
-      by IS 13268:2023)', url: 'https://www.services.bis.gov.in/php/BIS_2.0/bisconnect/knowyourstandards/Indian_standards/isdetails/NDc5OQ==',
+  - {citation: 'Bureau of Indian Standards, IS 13268:1992, Demineralization plant: guidelines, §4.2.3
+      (archived copy)', url: 'https://dn790003.ca.archive.org/0/items/gov.in.is.13268.1992/is.13268.1992.html',
     quote: 'Normally, in power plants clients prefer to have the storage capacity for 16 to 24 hours.',
-    verified: false}
+    verified: true}
   - {citation: Degradation profiles v0.2, url: docs/design/evidence/Degradation_Profiles_v0_2.md, quote: null,
     verified: null}
   - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
     quote: null, verified: null}
+  - {citation: PR 15 answers (decision 0014 addendum), url: docs/work_orders/WO-07a-answers.md, quote: null,
+    verified: null}
   reasoning: A thermal plant on municipal make-up water keeps a stock of purified (demineralized) boiler
     water and runs on it when the main is cut, then trips; it refills from the main once the main returns.
     Taiwan's large thermal plants cool with seawater, so the main supplies boiler and process water, not
     cooling. India's guideline is the source until Taiwan environmental impact statements replace it.
-  status: ruled
-  open_decision: null
+    IS 13268:1992 is withdrawn and superseded by the 2023 edition; the 1992 text is the one cited. The
+    rule stays a placeholder until Taiwan's environmental impact statements are read.
+  status: placeholder
+  open_decision: Taiwan environmental impact statements
   ruling:
     by: the author (Foreman)
     date: '2026-10-09'
@@ -7603,13 +7607,16 @@ rules:
   grade: S
   jurisdiction: US
   sources:
-  - {citation: 'Uptime Institute Journal (Tier Standard, Tier III make-up water)', url: null, quote: a
-      Tier III facility requires 12 hours of Concurrently Maintainable makeup water; Many owners have
-      chosen to exceed 12 hours, verified: false}
+  - {citation: 'Uptime Institute Journal, Implications of economizers in Tier Certified data centers',
+    url: 'https://journal.uptimeinstitute.com/implications-of-economizers-in-tier-certified-data-centers/',
+    quote: a Tier III facility requires 12 hours of Concurrently Maintainable makeup water; Many owners
+      have chosen to exceed 12 hours for additional risk avoidance., verified: true}
   - {citation: Degradation profiles v0.2, url: docs/design/evidence/Degradation_Profiles_v0_2.md, quote: null,
     verified: null}
   - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
     quote: null, verified: null}
+  - {citation: PR 15 answers (decision 0014 addendum), url: docs/work_orders/WO-07a-answers.md, quote: null,
+    verified: null}
   reasoning: An evaporative data centre keeps make-up water and runs on it when the main is cut, then
     trips; it refills from the main once the main returns. Air-cooled data centres with no water dependency
     are a later option.
@@ -7635,15 +7642,21 @@ rules:
   grade: J
   jurisdiction: null
   sources:
-  - {citation: 'TT Club, Emerging Risks (29 January 2026), as reported by CIR Magazine', url: 'https://cirmagazine.com/cir/c2026013001.php',
-    quote: null, verified: false}
+  - {citation: 'Emerging Risks, Ports urged to up power outage resilience (29 January 2026), a secondary
+      report of TT Club''s guidance', url: 'https://www.emergingrisks.co.uk/ports-urged-to-up-power-outage-resilience/',
+    quote: 'ports are more dependent than ever on electrical systems for cranes, pumps, security, and
+      digital operations; Establish robust emergency power and fuel plans, including maintained generators
+      and backup batteries.', verified: true}
   - {citation: Degradation profiles v0.2, url: docs/design/evidence/Degradation_Profiles_v0_2.md, quote: null,
     verified: null}
   - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
     quote: null, verified: null}
+  - {citation: PR 15 answers (decision 0014 addendum), url: docs/work_orders/WO-07a-answers.md, quote: null,
+    verified: null}
   reasoning: With no power a seaport moves no cargo; 0 h of backup power by default, up to 48 h for a
     highly reinforced port that can still work cargo. Ports depend on power for cranes, pumps, security
-    and digital operations (TT Club). Crane-dependent versus roll-on/roll-off terminals come later.
+    and digital operations (TT Club). Crane-dependent versus roll-on/roll-off terminals come later. The
+    source is a secondary report of TT Club's guidance.
   status: ruled
   open_decision: null
   ruling:
@@ -7682,6 +7695,33 @@ rules:
   range: [12.0, 12.0]
   range_open: true
   relaxed: zero
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: h_φ
+- id: reserves.pumping.capacity
+  title: 'Pump capacity: the pumps'' maximum delivery'
+  stage: reserves
+  value: each pumping node's capacity_m3_per_day attribute (layers.attributes.pumping)
+  units: null
+  applies_to: {layer: null, node_class: pumping, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: PR 15 answers (decision 0014 addendum), url: docs/work_orders/WO-07a-answers.md, quote: null,
+    verified: null}
+  reasoning: The engine delivers at most a pumping node's capacity; water storage refills from what remains
+    after serving demand. The capacity is the node's capacity_m3_per_day attribute, drawn in the layers
+    stage within layers.attributes.pumping (scaled by the served city) and read by the requirements stage
+    for the pumps' electricity; it is not sized to load. No new number is introduced.
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+  history: []
+  range_open: true
+  relaxed: unlimited
   theta_role: dynamics
   theta_domain: truth
   theta_symbol: h_φ
@@ -8049,7 +8089,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.tank_farm_pipeline
   title: 'Telecom tolerance: tank farm'
   stage: tolerance
@@ -8079,7 +8119,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.generation
   title: 'Telecom tolerance: generation'
   stage: tolerance
@@ -8109,7 +8149,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.import_terminal
   title: 'Telecom tolerance: import terminal'
   stage: tolerance
@@ -8139,7 +8179,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.substation
   title: 'Telecom tolerance: transmission substation, distribution substation'
   stage: tolerance
@@ -8173,7 +8213,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.pumping
   title: 'Telecom tolerance: pumping'
   stage: tolerance
@@ -8203,7 +8243,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.treatment
   title: 'Telecom tolerance: treatment'
   stage: tolerance
@@ -8233,7 +8273,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.reservoir
   title: 'Telecom tolerance: reservoir'
   stage: tolerance
@@ -8263,7 +8303,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.seaport_freight_yard
   title: 'Telecom tolerance: seaport, freight yard'
   stage: tolerance
@@ -8293,7 +8333,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.depot
   title: 'Telecom tolerance: depot'
   stage: tolerance
@@ -8323,7 +8363,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.refinery
   title: 'Telecom tolerance: refinery'
   stage: tolerance
@@ -8353,7 +8393,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.hospital_records_on_site
   title: 'Telecom tolerance: tertiary, regional'
   stage: tolerance
@@ -8384,7 +8424,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.clinic
   title: 'Telecom tolerance: clinic'
   stage: tolerance
@@ -8414,7 +8454,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.blood_bank
   title: 'Telecom tolerance: blood bank'
   stage: tolerance
@@ -8444,7 +8484,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.hospital_records_hosted
   title: 'Telecom tolerance: hospital with records hosted off site'
   stage: tolerance
@@ -8474,7 +8514,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.airport_not_towered
   title: 'Telecom tolerance: airport, not towered'
   stage: tolerance
@@ -8502,7 +8542,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: tolerance.tank_farm_not_connected
   title: 'Telecom tolerance: tank farm, not pipeline-connected'
   stage: tolerance
@@ -8530,7 +8570,7 @@ rules:
   relaxed: zero
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: failure_modes.defaults
   title: Default consumer response to a shortfall, by dependency type
   stage: failure_modes
@@ -8555,7 +8595,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: failure_modes.class_departures
   title: Class departures from the default failure mode
   stage: failure_modes
@@ -8595,7 +8635,7 @@ rules:
     decision: '0010'
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: failure_modes.heterogeneity_pct
   title: Share of elements departing from the class default
   stage: failure_modes
@@ -8619,7 +8659,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: failure_modes.combining
   title: Combining shortfalls at one consumer
   stage: failure_modes
@@ -8641,7 +8681,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: repair.hazus_restoration_days
   title: Hazus MR4 restoration mean and standard deviation
   stage: repair
@@ -9225,7 +9265,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
   theta_sensitivity: 'run: tests/fixtures/storm_sensitivity/pilot_severity_70.yaml'
 - id: storm.cwa_classes
   title: Typhoon classes by peak 10-minute wind (CWA)
@@ -9255,7 +9295,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.rainfall_mm
   title: 24-hour rainfall by severity
   stage: storm
@@ -9282,7 +9322,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.rainfall_spread_mm
   title: Rainfall drawn around the severity's rung
   stage: storm
@@ -9305,7 +9345,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.flood_stage_m
   title: Flood stage by rainfall
   stage: storm
@@ -9338,7 +9378,7 @@ rules:
     decision: '0012'
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.profile_exponent
   title: Modified Rankine decay exponent
   stage: storm
@@ -9361,7 +9401,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.radius_max_wind_km
   title: 'Radius of maximum wind: range drawn per scenario'
   stage: storm
@@ -9391,7 +9431,7 @@ rules:
     decision: '0012'
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.closest_approach_km
   title: Track's closest approach to the island's centre
   stage: storm
@@ -9414,7 +9454,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.sea_to_land
   title: Sea-to-land wind reduction
   stage: storm
@@ -9436,7 +9476,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.surface_factors
   title: Local surface factor by terrain class (Taiwan wind code)
   stage: storm
@@ -9469,7 +9509,7 @@ rules:
     decision: '0012'
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.lee_factor
   title: Mountain lee factor
   stage: storm
@@ -9497,7 +9537,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.variation
   title: Random variation of the wind field
   stage: storm
@@ -9522,7 +9562,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.gust_factors
   title: 10-minute to 3-second gust factor (WMO)
   stage: storm
@@ -9555,7 +9595,7 @@ rules:
     decision: '0012'
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.topographic_factor
   title: 'Ridge and hill speed-up: Taiwan wind code topographic factor'
   stage: storm
@@ -9616,7 +9656,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.rotation
   title: Storm rotation (hemisphere)
   stage: storm
@@ -9642,7 +9682,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.towers_designed_for_site
   title: Towers designed for their site's ridge speed-up
   stage: storm
@@ -9674,7 +9714,7 @@ rules:
     decision: '0013'
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.ridge_factor_ceiling
   title: Ceiling on the ridge speed-up (calibrated on Taiwan's gust record)
   stage: storm
@@ -9709,7 +9749,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.line_heights_m
   title: Line height for the topographic factor
   stage: storm
@@ -9731,7 +9771,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.flood_functional_depth_m
   title: Hazus functional flood depth by class
   stage: storm
@@ -9769,7 +9809,7 @@ rules:
     decision: '0012'
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.power_platform_m
   title: Platform height of power plants and transmission substations
   stage: storm
@@ -9792,7 +9832,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.flood_not_damaged
   title: Classes not flood-damaged in Phase 1
   stage: storm
@@ -9821,7 +9861,7 @@ rules:
     decision: '0012'
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.flood_damage_states_m
   title: Damage state by flood depth over the threshold
   stage: storm
@@ -9844,7 +9884,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.line_fragility_anchor
   title: Overhead line calibration targets
   stage: storm
@@ -9880,7 +9920,7 @@ rules:
     decision: '0012'
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.tower_collapse_gust_km_per_h
   title: Transmission tower collapse gust
   stage: storm
@@ -9904,12 +9944,12 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.line_fragility_table
   title: 'Overhead line on poles: failure chance per km by 3-second gust (calibrated)'
   stage: storm
   value:
-    median_m_per_s: 163.6914
+    median_m_per_s: 163.7317
     beta: 0.4
     gust_m_per_s: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
       16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0,
@@ -9920,19 +9960,19 @@ rules:
       96.0, 97.0, 98.0, 99.0, 100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0, 109.0, 110.0,
       111.0, 112.0, 113.0, 114.0, 115.0, 116.0, 117.0, 118.0, 119.0, 120.0]
     failures_per_km: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0e-09,
-      3.0e-09, 7.0e-09, 1.7e-08, 3.6e-08, 7.4e-08, 1.42e-07, 2.62e-07, 4.64e-07, 7.94e-07, 1.315e-06,
-      2.115e-06, 3.313e-06, 5.063e-06, 7.567e-06, 1.1079e-05, 1.5913e-05, 2.2458e-05, 3.1181e-05, 4.264e-05,
-      5.7491e-05, 7.6497e-05, 0.000100537, 0.000130615, 0.00016786, 0.00021354, 0.000269059, 0.000335965,
-      0.00041595, 0.000510848, 0.000622639, 0.000753444, 0.00090552, 0.001081258, 0.001283175, 0.001513907,
-      0.001776203, 0.00207291, 0.002406969, 0.002781399, 0.003199291, 0.00366379, 0.004178085, 0.004745396,
-      0.005368964, 0.00605203, 0.006797831, 0.007609581, 0.008490461, 0.009443605, 0.01047209, 0.011578923,
-      0.012767028, 0.014039241, 0.015398295, 0.016846813, 0.018387299, 0.02002213, 0.02175355, 0.023583662,
-      0.025514425, 0.027547644, 0.029684972, 0.031927902, 0.034277767, 0.036735735, 0.039302813, 0.041979839,
-      0.044767486, 0.047666264, 0.050676517, 0.053798427, 0.057032016, 0.060377146, 0.063833526, 0.067400711,
-      0.07107811, 0.074864984, 0.078760458, 0.082763517, 0.086873018, 0.091087691, 0.095406145, 0.099826874,
-      0.10434826, 0.108968583, 0.113686021, 0.118498659, 0.123404495, 0.128401443, 0.133487341, 0.138659956,
-      0.143916989, 0.149256079, 0.154674813, 0.160170725, 0.165741309, 0.171384015, 0.177096261, 0.182875437,
-      0.188718905, 0.194624008, 0.200588075, 0.206608421, 0.212682356, 0.218807184]
+      3.0e-09, 7.0e-09, 1.7e-08, 3.6e-08, 7.4e-08, 1.42e-07, 2.61e-07, 4.63e-07, 7.92e-07, 1.311e-06,
+      2.109e-06, 3.303e-06, 5.049e-06, 7.546e-06, 1.1048e-05, 1.587e-05, 2.2399e-05, 3.11e-05, 4.2531e-05,
+      5.7346e-05, 7.6307e-05, 0.000100293, 0.000130302, 0.000167465, 0.000213045, 0.000268445, 0.00033521,
+      0.000415028, 0.000509733, 0.000621301, 0.000751848, 0.00090363, 0.001079034, 0.001280573, 0.001510882,
+      0.001772703, 0.002068883, 0.002402358, 0.002776145, 0.00319333, 0.003657056, 0.00417051, 0.004736909,
+      0.00535949, 0.006041494, 0.006786154, 0.007596682, 0.008476258, 0.009428015, 0.010455027, 0.011560301,
+      0.012746761, 0.014017241, 0.015374474, 0.016821084, 0.018359574, 0.019992323, 0.021721575, 0.023549434,
+      0.02547786, 0.027508659, 0.029643487, 0.031883838, 0.034231047, 0.036686286, 0.039250562, 0.041924716,
+      0.044709426, 0.047605203, 0.050612395, 0.053731187, 0.056961603, 0.060303511, 0.063756622, 0.067320495,
+      0.070994541, 0.074778028, 0.078670081, 0.082669692, 0.08677572, 0.0909869, 0.095301844, 0.099719049,
+      0.104236903, 0.108853688, 0.113567585, 0.118376685, 0.123278988, 0.128272413, 0.1333548, 0.138523919,
+      0.143777475, 0.149113111, 0.154528417, 0.16002093, 0.165588145, 0.171227518, 0.176936468, 0.182712388,
+      0.188552642, 0.194454578, 0.200415524, 0.206432799, 0.212503714, 0.218625577]
   units: null
   applies_to: {layer: null, node_class: null, condition: null}
   grade: J
@@ -9948,20 +9988,23 @@ rules:
     verified: null}
   - {citation: 'PR 14 second answers (decision 0013, second addendum)', url: docs/work_orders/WO-06c-answers-2.md,
     quote: null, verified: null}
+  - {citation: PR 15 answers (decision 0014 addendum), url: docs/work_orders/WO-07a-answers.md, quote: null,
+    verified: null}
   reasoning: 'A lognormal against the local 3-second gust, per km of pole line, tabulated offline on whole
     m/s. Declared calibration (J): beta 0.4, and the median is the best single value tools/calibrate_line_curve.py
     returns so the pilot loses about 10% of its overhead line length at severity 50 and about 30% at severity
     70, averaged over each recipe''s scenarios (storm.line_fragility_anchor), within 5 points of both.
-    Recalibrated for routed lines, the directional ridge factor, its ceiling and towers designed for their
-    site (PR 14 second answers): median 163.6914 m/s; achieved pilot 7.8% (severity 50, target 10%), severity
-    70 32.1% (target 30%), both within 5 points. The previous median, 201.7763 m/s, is in history. Each
-    km of line fails at its own gust; a line is down if any kilometre fails.'
-  status: ruled
-  open_decision: null
+    Recalibrated after each line''s storm-damage draws moved to their own stream (PR 15 answers, 2): at
+    beta 0.4 no single median puts both recipes within 5 points. The closest, 163.7317 m/s, gives the
+    pilot 4.1% (window 5-15%) and severity 70 35.1% (window 25-35%), a worst miss of 5.9 points; it is
+    stored as the answers instruct, and the calibration is open for a ruling. The previous median, 163.6914
+    m/s, is in history. Each km of line fails at its own gust; a line is down if any kilometre fails.'
+  status: open
+  open_decision: line-loss calibration after per-element damage streams
   ruling:
     by: the author (Foreman)
     date: '2026-10-09'
-    decision: '0013'
+    decision: '0014'
   history:
   - value:
       median_m_per_s: 73.708533
@@ -10076,9 +10119,37 @@ rules:
     units: null
     date: '2026-10-09'
     decision: '0013'
+  - value:
+      median_m_per_s: 163.6914
+      beta: 0.4
+      gust_m_per_s: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
+        16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0,
+        32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0, 41.0, 42.0, 43.0, 44.0, 45.0, 46.0, 47.0,
+        48.0, 49.0, 50.0, 51.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0, 58.0, 59.0, 60.0, 61.0, 62.0, 63.0,
+        64.0, 65.0, 66.0, 67.0, 68.0, 69.0, 70.0, 71.0, 72.0, 73.0, 74.0, 75.0, 76.0, 77.0, 78.0, 79.0,
+        80.0, 81.0, 82.0, 83.0, 84.0, 85.0, 86.0, 87.0, 88.0, 89.0, 90.0, 91.0, 92.0, 93.0, 94.0, 95.0,
+        96.0, 97.0, 98.0, 99.0, 100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0, 109.0,
+        110.0, 111.0, 112.0, 113.0, 114.0, 115.0, 116.0, 117.0, 118.0, 119.0, 120.0]
+      failures_per_km: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0e-09,
+        3.0e-09, 7.0e-09, 1.7e-08, 3.6e-08, 7.4e-08, 1.42e-07, 2.62e-07, 4.64e-07, 7.94e-07, 1.315e-06,
+        2.115e-06, 3.313e-06, 5.063e-06, 7.567e-06, 1.1079e-05, 1.5913e-05, 2.2458e-05, 3.1181e-05, 4.264e-05,
+        5.7491e-05, 7.6497e-05, 0.000100537, 0.000130615, 0.00016786, 0.00021354, 0.000269059, 0.000335965,
+        0.00041595, 0.000510848, 0.000622639, 0.000753444, 0.00090552, 0.001081258, 0.001283175, 0.001513907,
+        0.001776203, 0.00207291, 0.002406969, 0.002781399, 0.003199291, 0.00366379, 0.004178085, 0.004745396,
+        0.005368964, 0.00605203, 0.006797831, 0.007609581, 0.008490461, 0.009443605, 0.01047209, 0.011578923,
+        0.012767028, 0.014039241, 0.015398295, 0.016846813, 0.018387299, 0.02002213, 0.02175355, 0.023583662,
+        0.025514425, 0.027547644, 0.029684972, 0.031927902, 0.034277767, 0.036735735, 0.039302813, 0.041979839,
+        0.044767486, 0.047666264, 0.050676517, 0.053798427, 0.057032016, 0.060377146, 0.063833526, 0.067400711,
+        0.07107811, 0.074864984, 0.078760458, 0.082763517, 0.086873018, 0.091087691, 0.095406145, 0.099826874,
+        0.10434826, 0.108968583, 0.113686021, 0.118498659, 0.123404495, 0.128401443, 0.133487341, 0.138659956,
+        0.143916989, 0.149256079, 0.154674813, 0.160170725, 0.165741309, 0.171384015, 0.177096261, 0.182875437,
+        0.188718905, 0.194624008, 0.200588075, 0.206608421, 0.212682356, 0.218807184]
+    units: null
+    date: '2026-10-10'
+    decision: '0014'
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.tower_fragility_table
   title: 'Transmission tower: collapse chance by 3-second gust'
   stage: storm
@@ -10128,7 +10199,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.line_crew_work_h
   title: Crew work per failure point of an overhead line
   stage: storm
@@ -10157,7 +10228,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: storm.tower_crew_work_h
   title: Crew work to restore a collapsed transmission tower
   stage: storm
@@ -10181,7 +10252,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: χ
+  theta_symbol: none
 - id: dynamics.trip_point
   title: Trip point
   stage: dynamics
@@ -10205,7 +10276,7 @@ rules:
   history: []
   theta_role: dynamics
   theta_domain: truth
-  theta_symbol: h_φ
+  theta_symbol: g_δ
 - id: dynamics.threshold
   title: Threshold θ of the logistic and control transfer form
   stage: dynamics
@@ -10505,6 +10576,20 @@ theta:
   chosen: A run stops at its requested horizon, 72 h by default.
   alternatives: [any requested horizon]
   registry_ids: [dynamics.horizon_h]
+  carried_vs_flattened: keeps
+  sensitivity: none planned
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-09'
+    decision: '0014'
+- theta_id: theta.performance
+  domain: truth
+  sub_type: analysis
+  symbol: χ
+  chosen: Performance is weighted service-hours at end-use nodes, counted as a fraction when supply is
+    partial; the service weights are objectives, outside Θ.
+  alternatives: [unweighted service-hours, time to full restoration]
+  registry_ids: []
   carried_vs_flattened: keeps
   sensitivity: none planned
   ruling:
