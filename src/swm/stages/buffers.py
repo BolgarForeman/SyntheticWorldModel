@@ -568,7 +568,7 @@ def _tolerance(context: _Context) -> list[Tolerance]:
         if dependency.supplier_layer != Layer.TELECOM:
             continue
         node = context.nodes[dependency.consumer_id]
-        rule_id = _tolerance_rule(node)
+        rule_id = tolerance_rule(node)
         if rule_id is None:
             context.notes.add(
                 f"{node.node_class}: no telecom tolerance in section 4.4a for this subtype"
@@ -598,7 +598,23 @@ def _tolerance(context: _Context) -> list[Tolerance]:
     return records
 
 
-def _tolerance_rule(node: Node) -> str | None:
+def tolerance_rule(node: Node) -> str | None:
+    """Return the registry id of a node's telecom tolerance row, or None if it has none.
+
+    Hospitals, airports and tank farms take their row by subtype; other classes by class.
+
+    Parameters
+    ----------
+    node : Node
+        The node.
+
+    Returns
+    -------
+    str or None
+        The ``tolerance.*`` rule id.
+
+    Spec: structure v0.9 §4.4a (tolerance buffers).
+    """
     subtype = dict(node.subtype)
     if node.node_class in HOSPITALS:
         hosted = subtype.get("records_hosted") is True

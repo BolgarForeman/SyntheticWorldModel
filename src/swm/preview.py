@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
+    from swm.dynamics.records import Run
     from swm.stages.storm import StormResult
 
 COVER_COLOURS = {
@@ -649,3 +650,62 @@ def _storm_caption(storm: "StormResult", scenario: int) -> str:
         f"inside it\nlee cells {int(np.count_nonzero(field.lee))}; node labels give the wind "
         f"at the node (m/s)"
     )
+
+
+def timeline_png(run: "Run", end_use: Sequence[str]) -> bytes:
+    """Render a run's timeline: each end-use node's state over the hours, and the crews' jobs.
+
+    The upper panel shades each end-use node's row by its state (dark is out); the lower panel
+    draws each crew's travel, assessment, wait for parts and work as bars.
+
+    Parameters
+    ----------
+    run : Run
+        The run.
+    end_use : sequence of str
+        The end-use nodes, in the order to draw.
+
+    Returns
+    -------
+    bytes
+        A PNG image.
+
+    Spec: Work Order 7, E1.
+    """
+    from matplotlib.figure import Figure
+
+    crews = [crew for crew, entries in run.crews if entries]
+    figure = Figure(figsize=(12, 3 + 0.32 * (len(end_use) + len(crews))))
+    states, jobs = figure.subplots(
+        2, 1, sharex=True, gridspec_kw={"height_ratios": [len(end_use), max(1, len(crews))]}
+    )
+    grid = np.array([run.state(node_id)[:-1] for node_id in end_use])
+    states.imshow(
+        grid, aspect="auto", cmap="RdYlGn", vmin=0.0, vmax=1.0, interpolation="nearest",
+        extent=(0.0, run.horizon_h, len(end_use) - 0.5, -0.5),
+    )  # fmt: skip
+    states.set_yticks(range(len(end_use)), [n.replace("SWM-", "") for n in end_use], fontsize=7)
+    states.set_title(
+        f"Scenario {run.request.scenario}: end-use state (green 1, red 0) and crew jobs; "
+        f"{run.summary()['hours_out']} unweighted hours out",
+        fontsize=9,
+    )
+    colours = {"travel": "#bbbbbb", "assess": "#ffbf00", "wait for parts": "#9ecae1",
+               "repair": "#d62728", "switch": "#9467bd"}  # fmt: skip
+    for row, crew_id in enumerate(crews):
+        entries = dict(run.crews)[crew_id]
+        for entry in entries:
+            jobs.barh(row, entry.end_h - entry.start_h, left=entry.start_h, height=0.6,
+                      color=colours[entry.activity], edgecolor="none")  # fmt: skip
+            if entry.activity in ("repair", "switch") and entry.end_h - entry.start_h >= 2.0:
+                label = entry.job_id.split(":", 1)[1].replace("SWM-", "")
+                jobs.text(entry.start_h + 0.2, row, label, fontsize=6, va="center")
+    jobs.set_yticks(range(len(crews)), [c.replace("SWM-", "") for c in crews], fontsize=7)
+    jobs.set_xlim(0.0, run.horizon_h)
+    jobs.set_xlabel("hours after the storm")
+    from matplotlib.patches import Patch
+
+    jobs.legend(handles=[Patch(color=c, label=a) for a, c in colours.items()], fontsize=7,
+                loc="upper left", bbox_to_anchor=(1.01, 1.0))  # fmt: skip
+    figure.subplots_adjust(left=0.12, right=0.86, hspace=0.25)
+    return _png(figure)
