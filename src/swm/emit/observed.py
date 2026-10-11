@@ -5,7 +5,7 @@ asset is, its class, its observed attributes, its name and outline, and the link
 emitted layers. Subtypes, requirements, reserves, couplings, feeds and every other unobserved
 quantity are absent by construction, so no writer can reach them.
 
-Spec: structure v0.10 §4.6 (emission) and §3 (observed versus unobserved); Work Order 8.
+Spec: structure v0.11 §4.6 (emission) and §3 (observed versus unobserved); Work Order 8.
 """
 
 from dataclasses import dataclass
@@ -45,6 +45,28 @@ class ObservedNode:
     """A closed rectangle (first corner repeated) for an area class, else None (E2)."""
     runway: tuple[LonLat, LonLat] | None
     district: str
+    direction: str | None = None
+    """A repeated major facility's direction word from its town centre, else None (§4.6)."""
+    number: int | None = None
+    """Its number when another repeat in its town shares the direction, else None."""
+
+    def name(self, word: str) -> str:
+        """Return the facility's name in a source's style: town, direction, class word, number.
+
+        Parameters
+        ----------
+        word : str
+            The source's word for the class ("Substation", "Medical Centre" …).
+
+        Returns
+        -------
+        str
+            Such as "Selimere Substation" or "Selimere North Substation 2".
+
+        Spec: structure v0.11 §4.6 (names).
+        """
+        parts = [self.town, self.direction, word, None if self.number is None else str(self.number)]
+        return " ".join(part for part in parts if part)
 
     def attribute(self, name: str) -> AttributeValue | None:
         """Return one observed attribute, or None if the asset does not carry it."""

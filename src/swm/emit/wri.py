@@ -6,7 +6,7 @@ point). Country ``XSW`` "Synthetic World"; ``gppd_idnr`` ``XSW0000001`` … in t
 world's ids; formal plant names. Columns the world has no value for stay empty, as the real
 file leaves them.
 
-Spec: structure v0.10 §4.6; Work Order 8, B2 and B5; Emission ruling sheet v0.2, E3 and E4.
+Spec: structure v0.11 §4.6; Work Order 8, B2 and B5; Emission ruling sheet v0.2, E3 and E4.
 """
 
 from dataclasses import dataclass
@@ -19,6 +19,8 @@ from swm.recipe.schema import Layer, NodeClass, Source
 IDIOM = Idiom(line_ending="\r\n", bom=False, quote_text=False)
 FILE = "global_power_plant_database.csv"
 COUNTRY, COUNTRY_LONG = "XSW", "Synthetic World"
+DECIMALS = WRI_GPPD.coordinate_decimals
+"""The real file's precision: every coordinate at 4 decimals, trailing zeros kept (§4.1a)."""
 PRIMARY_FUEL = {"gas": "Gas", "coal": "Coal", "oil": "Oil"}
 """World fuel types as WRI's ``primary_fuel`` values."""
 
@@ -64,11 +66,11 @@ def _row(node: ObservedNode, gppd_idnr: str) -> list[str | float | None]:
         "country": COUNTRY,
         "country_long": COUNTRY_LONG,
         # CHOICE: a formal name in WRI's style, the town and the kind of plant.
-        "name": f"{node.town} Thermal Power Station",
+        "name": node.name("Thermal Power Station"),
         "gppd_idnr": gppd_idnr,
         "capacity_mw": None if capacity is None else f"{float(capacity):.1f}",
-        "latitude": node.location[1],
-        "longitude": node.location[0],
+        "latitude": f"{node.location[1]:.{DECIMALS}f}",
+        "longitude": f"{node.location[0]:.{DECIMALS}f}",
         "primary_fuel": PRIMARY_FUEL.get(str(fuel), None if fuel is None else str(fuel)),
     }
     return [values[column] for column in WRI_GPPD.columns]

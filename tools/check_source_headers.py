@@ -2,14 +2,17 @@
 
 Offline only. Reads ``data_root`` from ``machine.toml`` (gitignored) and compares each header in
 ``swm.emit.headers`` with the first row of the real file it was copied from: a CSV's first line
-(byte-order mark dropped) or, for the institution register, the spreadsheet's first row. Only
-the headers are read and printed; no row of real data is copied anywhere.
+(byte-order mark dropped) or, for the institution register, the spreadsheet's first row. Where
+a header records its coordinate precision, the script also counts the decimal places of every
+coordinate in the file and reports the most common count. Only the headers and the counts are
+printed; no row of real data is copied anywhere.
 
 Run: ``uv run python tools/check_source_headers.py`` (from the repository root).
 
-Spec: Work Order 8, B1 and answer 1; CLAUDE.md §9.
+Spec: Work Order 8, B1 and answer 1; WO-08 PR answers, item 2; CLAUDE.md §9.
 """
 
+import collections
 import csv
 import io
 import sys
@@ -59,6 +62,28 @@ def _ods_first_row(path: Path) -> tuple[str, ...]:
     return ()
 
 
+def decimal_counts(path: Path, columns: tuple[str, ...]) -> collections.Counter[int]:
+    """Count the decimal places of every value in the given columns of a CSV."""
+    counts: collections.Counter[int] = collections.Counter()
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            for column in columns:
+                value = row[column]
+                if value:
+                    counts[len(value.split(".")[1]) if "." in value else 0] += 1
+    return counts
+
+
+def check_decimals(header: RecordedHeader, data_root: Path) -> bool:
+    """Print a header's measured coordinate precision; return whether it is the recorded one."""
+    counts = decimal_counts(data_root / header.real_file, header.coordinate_columns)
+    common = counts.most_common(1)[0][0]
+    status = "MATCH  " if common == header.coordinate_decimals else "DIFFERS"
+    say(f"{status}  decimals {header.real_file}: most common {common} (recorded "
+        f"{header.coordinate_decimals}); counts {dict(sorted(counts.items()))}")  # fmt: skip
+    return common == header.coordinate_decimals
+
+
 def check(header: RecordedHeader, data_root: Path) -> bool:
     """Print one header's result; return whether it matches the real file exactly."""
     path = data_root / header.real_file
@@ -83,6 +108,7 @@ def main() -> int:
     data_root = Path(tomllib.loads(MACHINE.read_text(encoding="utf-8"))["data_root"])
     results = [check(header, data_root) for header in RECORDED]
     results += [check(replace(HOSPITAL_LISTS, real_file=path), data_root) for path in SAME_HEADER]
+    results += [check_decimals(h, data_root) for h in RECORDED if h.coordinate_decimals is not None]
     return 0 if all(results) else 1
 
 

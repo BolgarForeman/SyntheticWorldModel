@@ -8,10 +8,10 @@ stations, storage tanks and blood banks are not in it. Points of a class go in t
 closed ways in its ``_a`` polygon layer.
 
 Schema recorded from the real set on disk: ``OSM/TWN/geofabrik_taiwan-251128-free`` (data as of
-2025-11-28T21:20:48Z). The one departure: ``osm_id`` is C(13), not C(12), because the ruled ids
-start at 9,000,000,000,000 (E3), one digit wider than the real field.
+2025-11-28T21:20:48Z). The ids start at 900,000,000,000 (12 digits), so they fit the real
+C(12) ``osm_id`` field with no departure (E3 as amended, PR 17 answers).
 
-Spec: structure v0.10 §4.6 (corrected); Work Order 8 answers, 2.
+Spec: structure v0.11 §4.6; Work Order 8 answers, 2; WO-08 PR answers, item 1.
 """
 
 from collections.abc import Mapping
@@ -36,8 +36,8 @@ on the ground, no bridge or tunnel: the world carries none of these."""
 PLACE_POPULATION = 0
 """CHOICE: population unknown (0, as Geofabrik writes it when the tag is missing): towns carry
 no observed population."""
-OSM_ID = Field("osm_id", "C", 13)
-"""C(12) in the real set; one wider for the reserved 13-digit ids (declared departure)."""
+OSM_ID = Field("osm_id", "C", 12)
+"""C(12), as in the real set: the reserved ids have 12 digits."""
 BASE = (OSM_ID, Field("code", "N", 4), Field("fclass", "C", 28), Field("name", "C", 100))
 
 LAYERS: Mapping[str, tuple[int, tuple[Field, ...]]] = {

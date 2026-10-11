@@ -58,12 +58,23 @@
 - **Separation:** no writer reaches unobserved fields, the dynamics or error induction, and no source file carries a manifest-only id or value.
 - **Hand trace:** the timeline equals reference run 7.
 
-**Departures from the design.** These are the declared departures in the manifest:
-- a 13-character `osm_id` in the shapefiles;
-- 7 decimals in WRI;
-- inferred Overpass queries;
+**Departures from the design.** These are the declared departures in the manifest (as amended by the PR 17 answers):
+- the register's stand-in coordinates at 6 decimals, a choice;
+- WRI's commissioning year and owner left empty, because the world does not hold them;
+- three Overpass queries inferred from landed tags, query text not saved;
 - an ASCII register file name;
 - uncompressed PBF blobs.
+
+**Rounding is part of the clean emission (PR 17 answers; structure v0.11 §4.1a).** Each source is written at its real file's precision:
+
+| Source | Decimals |
+|---|---|
+| OpenStreetMap | 7 |
+| WRI | 4 |
+| OurAirports | 6, measured as the most common count |
+| Facility register | 6, a choice |
+
+The tests compare each emitted location with the true one within half a unit in that source's last decimal place. The Phase 3 realized-error check must therefore measure planted error against the clean, rounded file, never against the true location.
 
 **Figures.**
 - `figures/wo8_pilot_extract_qgis.png`: the pilot's `island.osm.pbf` rendered by QGIS 3.40.14, with its multipolygons, lines and points, and points labelled by name.

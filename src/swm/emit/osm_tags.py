@@ -5,7 +5,7 @@ feature carries the attributes the real tags carry (scored: class, location, cap
 context: name, operator) and no others. Names follow OpenStreetMap's short style ("Corvan
 Substation"); a minor element left unnamed carries no name tag.
 
-Spec: structure v0.10 §4.6; Work Order 8, A2 and A4; Emission ruling sheet v0.2, E2, E4, E6.
+Spec: structure v0.11 §4.6; Work Order 8, A2 and A4; Emission ruling sheet v0.2, E2, E4, E6.
 """
 
 from collections.abc import Mapping
@@ -135,7 +135,7 @@ def node_tags(node: ObservedNode) -> dict[str, str]:
     tags, word, _ = CLASS_TAGS[node.node_class]
     result = dict(tags)
     if node.named:
-        result["name"] = f"{node.town} {word}"
+        result["name"] = node.name(word)
     result |= _attribute_tags(node)
     return dict(sorted(result.items()))
 

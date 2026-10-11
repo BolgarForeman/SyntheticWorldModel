@@ -13,7 +13,7 @@ Institution codes are register-style with an ``XS`` prefix (``XS00000001`` …),
 three, so the pipeline's join on the code is exercised. Latitude and longitude stand in the
 address column (a declared departure; addresses and a gazetteer come in Phase 6).
 
-Spec: structure v0.10 §4.6 (corrected); Work Order 8, B4 and answer 1; Emission ruling sheet
+Spec: structure v0.11 §4.6 (corrected); Work Order 8, B4 and answer 1; Emission ruling sheet
 v0.2, E3-E6.
 """
 
@@ -47,6 +47,10 @@ FORMAL = {C.TERTIARY: "Medical Centre", C.REGIONAL: "Regional Hospital", C.CLINI
 DEPARTMENTS = {C.TERTIARY: "General Medicine,", C.REGIONAL: "General Medicine,",
                C.CLINIC: "General Medicine,", C.BLOOD_BANK: "Blood Services,"}  # fmt: skip
 """科別, with the real file's trailing comma."""
+DECIMALS = 6
+"""CHOICE: the register's real files carry addresses, not coordinates, so there is no precision to
+measure; its stand-in coordinates take OurAirports' measured 6 decimals (about 0.1 m), the other
+point source the pipeline reads, and close to what a geocoder returns for an address (§4.1a)."""
 STATISTICS_MONTH = "11412"
 """統計年月 in the real form (Republic of China year and month): CHOICE, December 2025."""
 
@@ -104,11 +108,11 @@ def register_files(world: ObservedWorld) -> tuple[dict[str, bytes], tuple[Regist
 
 
 def _name(node: ObservedNode) -> str:
-    return f"{node.town} {FORMAL[node.node_class]}"
+    return node.name(FORMAL[node.node_class])
 
 
 def _coordinates(node: ObservedNode) -> str:
-    return f"{node.location[1]:.7f},{node.location[0]:.7f}"
+    return f"{node.location[1]:.{DECIMALS}f},{node.location[0]:.{DECIMALS}f}"
 
 
 def _institutions(facilities: list[ObservedNode], codes: Mapping[str, str]) -> bytes:

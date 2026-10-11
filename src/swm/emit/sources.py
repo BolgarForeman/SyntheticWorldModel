@@ -4,7 +4,7 @@ One writer per real source format; this module only gathers their files under ``
 keeps each writer's records, from which the truth manifest builds the cross-source
 correspondence. It is given the observed world and nothing else (CLAUDE.md §3).
 
-Spec: structure v0.10 §4.6; Work Order 8, Parts A-B and E1.
+Spec: structure v0.11 §4.6; Work Order 8, Parts A-B and E1.
 """
 
 from dataclasses import dataclass
@@ -54,7 +54,7 @@ def emit_sources(world: ObservedWorld) -> EmittedSources:
     EmittedSources
         The files under ``sources/``, sorted by path, and each writer's records.
 
-    Spec: structure v0.10 §4.6; Work Order 8, E1.
+    Spec: structure v0.11 §4.6; Work Order 8, E1.
     """
     files: dict[str, bytes] = {}
     data = osm_data(world)

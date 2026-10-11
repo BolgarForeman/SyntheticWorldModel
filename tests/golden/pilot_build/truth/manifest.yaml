@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: a86c611b0a00c2963237497e3e488c0abcd17bec056478b9b17396190a68b0b3
+  registry_sha256: cad43993693de8793e435cc87122aca44a788f1fe59a5837f6c73f33545fed8d
   overrides: {}
   relaxed_limits: []
   out_of_range: []
@@ -12,7 +12,7 @@ correspondence:
 - element: SWM-FUE-0001
   openstreetmap:
     kind: node
-    node: 9000000000000
+    node: 900000000000
     geofabrik:
       layer: landuse_a
       fclass: industrial
@@ -22,13 +22,13 @@ correspondence:
 - element: SWM-FUE-0002
   openstreetmap:
     kind: area
-    way: 9000000000000
-    anchor: 9000000000005
+    way: 900000000000
+    anchor: 900000000005
     corners:
-    - 9000000000001
-    - 9000000000002
-    - 9000000000003
-    - 9000000000004
+    - 900000000001
+    - 900000000002
+    - 900000000003
+    - 900000000004
     geofabrik:
       layer: landuse_a
       fclass: industrial
@@ -38,27 +38,27 @@ correspondence:
 - element: SWM-FUE-0003
   openstreetmap:
     kind: node
-    node: 9000000000006
+    node: 900000000006
     geofabrik:
       layer: traffic
       fclass: fuel
 - element: SWM-FUE-0004
   openstreetmap:
     kind: node
-    node: 9000000000007
+    node: 900000000007
     geofabrik:
       layer: traffic
       fclass: fuel
 - element: SWM-HLT-0001
   openstreetmap:
     kind: area
-    way: 9000000000001
-    anchor: 9000000000012
+    way: 900000000001
+    anchor: 900000000012
     corners:
-    - 9000000000008
-    - 9000000000009
-    - 9000000000010
-    - 9000000000011
+    - 900000000008
+    - 900000000009
+    - 900000000010
+    - 900000000011
     geofabrik:
       layer: pois_a
       fclass: hospital
@@ -73,13 +73,13 @@ correspondence:
 - element: SWM-HLT-0002
   openstreetmap:
     kind: area
-    way: 9000000000002
-    anchor: 9000000000017
+    way: 900000000002
+    anchor: 900000000017
     corners:
-    - 9000000000013
-    - 9000000000014
-    - 9000000000015
-    - 9000000000016
+    - 900000000013
+    - 900000000014
+    - 900000000015
+    - 900000000016
     geofabrik:
       layer: pois_a
       fclass: hospital
@@ -94,7 +94,7 @@ correspondence:
 - element: SWM-HLT-0003
   openstreetmap:
     kind: node
-    node: 9000000000018
+    node: 900000000018
     geofabrik:
       layer: roads
       fclass: primary
@@ -105,7 +105,7 @@ correspondence:
 - element: SWM-HLT-0004
   openstreetmap:
     kind: node
-    node: 9000000000019
+    node: 900000000019
     geofabrik:
       layer: roads
       fclass: primary
@@ -116,246 +116,246 @@ correspondence:
 - element: SWM-POW-0001
   openstreetmap:
     kind: area
-    way: 9000000000003
-    anchor: 9000000000024
+    way: 900000000003
+    anchor: 900000000024
     corners:
-    - 9000000000020
-    - 9000000000021
-    - 9000000000022
-    - 9000000000023
+    - 900000000020
+    - 900000000021
+    - 900000000022
+    - 900000000023
   wri_gppd:
     gppd_idnr: XSW0000001
 - element: SWM-POW-0002
   openstreetmap:
     kind: area
-    way: 9000000000004
-    anchor: 9000000000029
+    way: 900000000004
+    anchor: 900000000029
     corners:
-    - 9000000000025
-    - 9000000000026
-    - 9000000000027
-    - 9000000000028
+    - 900000000025
+    - 900000000026
+    - 900000000027
+    - 900000000028
 - element: SWM-POW-0003
   openstreetmap:
     kind: area
-    way: 9000000000005
-    anchor: 9000000000034
+    way: 900000000005
+    anchor: 900000000034
     corners:
-    - 9000000000030
-    - 9000000000031
-    - 9000000000032
-    - 9000000000033
+    - 900000000030
+    - 900000000031
+    - 900000000032
+    - 900000000033
 - element: SWM-POW-0004
   openstreetmap:
     kind: area
-    way: 9000000000006
-    anchor: 9000000000039
+    way: 900000000006
+    anchor: 900000000039
     corners:
-    - 9000000000035
-    - 9000000000036
-    - 9000000000037
-    - 9000000000038
+    - 900000000035
+    - 900000000036
+    - 900000000037
+    - 900000000038
     geofabrik:
       layer: traffic
       fclass: fuel
 - element: SWM-POW-L0001
   openstreetmap:
     kind: line
-    way: 9000000000007
+    way: 900000000007
     towers:
-    - 9000000000040
-    - 9000000000041
-    - 9000000000042
-    - 9000000000043
-    - 9000000000044
-    - 9000000000045
-    - 9000000000046
-    - 9000000000047
-    - 9000000000048
-    - 9000000000049
-    - 9000000000050
-    - 9000000000051
-    - 9000000000052
-    - 9000000000053
-    - 9000000000054
-    - 9000000000055
-    - 9000000000056
-    - 9000000000057
-    - 9000000000058
-    - 9000000000059
-    - 9000000000060
-    - 9000000000061
+    - 900000000040
+    - 900000000041
+    - 900000000042
+    - 900000000043
+    - 900000000044
+    - 900000000045
+    - 900000000046
+    - 900000000047
+    - 900000000048
+    - 900000000049
+    - 900000000050
+    - 900000000051
+    - 900000000052
+    - 900000000053
+    - 900000000054
+    - 900000000055
+    - 900000000056
+    - 900000000057
+    - 900000000058
+    - 900000000059
+    - 900000000060
+    - 900000000061
     geofabrik:
       layer: traffic
       fclass: fuel
 - element: SWM-POW-L0002
   openstreetmap:
     kind: line
-    way: 9000000000008
+    way: 900000000008
     towers:
-    - 9000000000062
-    - 9000000000063
-    - 9000000000064
-    - 9000000000065
-    - 9000000000066
-    - 9000000000067
-    - 9000000000068
-    - 9000000000069
-    - 9000000000070
-    - 9000000000071
-    - 9000000000072
-    - 9000000000073
-    - 9000000000074
-    - 9000000000075
-    - 9000000000076
-    - 9000000000077
-    - 9000000000078
-    - 9000000000079
-    - 9000000000080
-    - 9000000000081
-    - 9000000000082
-    - 9000000000083
-    - 9000000000084
-    - 9000000000085
-    - 9000000000086
+    - 900000000062
+    - 900000000063
+    - 900000000064
+    - 900000000065
+    - 900000000066
+    - 900000000067
+    - 900000000068
+    - 900000000069
+    - 900000000070
+    - 900000000071
+    - 900000000072
+    - 900000000073
+    - 900000000074
+    - 900000000075
+    - 900000000076
+    - 900000000077
+    - 900000000078
+    - 900000000079
+    - 900000000080
+    - 900000000081
+    - 900000000082
+    - 900000000083
+    - 900000000084
+    - 900000000085
+    - 900000000086
 - element: SWM-POW-L0003
   openstreetmap:
     kind: line
-    way: 9000000000009
+    way: 900000000009
     towers:
-    - 9000000000087
-    - 9000000000088
-    - 9000000000089
-    - 9000000000090
-    - 9000000000091
-    - 9000000000092
-    - 9000000000093
-    - 9000000000094
-    - 9000000000095
-    - 9000000000096
-    - 9000000000097
-    - 9000000000098
-    - 9000000000099
-    - 9000000000100
-    - 9000000000101
-    - 9000000000102
-    - 9000000000103
-    - 9000000000104
-    - 9000000000105
+    - 900000000087
+    - 900000000088
+    - 900000000089
+    - 900000000090
+    - 900000000091
+    - 900000000092
+    - 900000000093
+    - 900000000094
+    - 900000000095
+    - 900000000096
+    - 900000000097
+    - 900000000098
+    - 900000000099
+    - 900000000100
+    - 900000000101
+    - 900000000102
+    - 900000000103
+    - 900000000104
+    - 900000000105
 - element: SWM-POW-L0004
   openstreetmap:
     kind: line
-    way: 9000000000010
+    way: 900000000010
     towers:
-    - 9000000000106
-    - 9000000000107
-    - 9000000000108
-    - 9000000000109
-    - 9000000000110
-    - 9000000000111
-    - 9000000000112
+    - 900000000106
+    - 900000000107
+    - 900000000108
+    - 900000000109
+    - 900000000110
+    - 900000000111
+    - 900000000112
 - element: SWM-POW-L0005
   openstreetmap:
     kind: line
-    way: 9000000000011
+    way: 900000000011
     towers:
-    - 9000000000113
-    - 9000000000114
-    - 9000000000115
-    - 9000000000116
-    - 9000000000117
-    - 9000000000118
-    - 9000000000119
-    - 9000000000120
-    - 9000000000121
-    - 9000000000122
-    - 9000000000123
-    - 9000000000124
-    - 9000000000125
-    - 9000000000126
-    - 9000000000127
-    - 9000000000128
-    - 9000000000129
-    - 9000000000130
-    - 9000000000131
-    - 9000000000132
-    - 9000000000133
-    - 9000000000134
-    - 9000000000135
-    - 9000000000136
-    - 9000000000137
-    - 9000000000138
-    - 9000000000139
-    - 9000000000140
-    - 9000000000141
-    - 9000000000142
-    - 9000000000143
-    - 9000000000144
-    - 9000000000145
-    - 9000000000146
-    - 9000000000147
-    - 9000000000148
-    - 9000000000149
-    - 9000000000150
-    - 9000000000151
-    - 9000000000152
+    - 900000000113
+    - 900000000114
+    - 900000000115
+    - 900000000116
+    - 900000000117
+    - 900000000118
+    - 900000000119
+    - 900000000120
+    - 900000000121
+    - 900000000122
+    - 900000000123
+    - 900000000124
+    - 900000000125
+    - 900000000126
+    - 900000000127
+    - 900000000128
+    - 900000000129
+    - 900000000130
+    - 900000000131
+    - 900000000132
+    - 900000000133
+    - 900000000134
+    - 900000000135
+    - 900000000136
+    - 900000000137
+    - 900000000138
+    - 900000000139
+    - 900000000140
+    - 900000000141
+    - 900000000142
+    - 900000000143
+    - 900000000144
+    - 900000000145
+    - 900000000146
+    - 900000000147
+    - 900000000148
+    - 900000000149
+    - 900000000150
+    - 900000000151
+    - 900000000152
 - element: SWM-TEL-0001
   openstreetmap:
     kind: node
-    node: 9000000000153
+    node: 900000000153
     overpass:
     - TWN_Telecom_OSM_Overpass
 - element: SWM-TEL-0002
   openstreetmap:
     kind: node
-    node: 9000000000154
+    node: 900000000154
     overpass:
     - TWN_Telecom_OSM_Overpass
 - element: SWM-TEL-0003
   openstreetmap:
     kind: node
-    node: 9000000000155
+    node: 900000000155
     overpass:
     - TWN_Telecom_OSM_Overpass
 - element: SWM-TEL-0004
   openstreetmap:
     kind: node
-    node: 9000000000156
+    node: 900000000156
     overpass:
     - TWN_Telecom_OSM_Overpass
 - element: SWM-TEL-L0001
   openstreetmap:
     kind: line
-    way: 9000000000012
+    way: 900000000012
 - element: SWM-TEL-L0002
   openstreetmap:
     kind: line
-    way: 9000000000013
+    way: 900000000013
 - element: SWM-TEL-L0003
   openstreetmap:
     kind: line
-    way: 9000000000014
+    way: 900000000014
 - element: SWM-TRN-0001
   openstreetmap:
     kind: area
-    way: 9000000000015
-    anchor: 9000000000161
+    way: 900000000015
+    anchor: 900000000161
     corners:
-    - 9000000000157
-    - 9000000000158
-    - 9000000000159
-    - 9000000000160
+    - 900000000157
+    - 900000000158
+    - 900000000159
+    - 900000000160
     overpass:
     - query_families_ports
 - element: SWM-TRN-0001:cargo
   openstreetmap:
     kind: area
-    way: 9000000000016
+    way: 900000000016
     corners:
-    - 9000000000162
-    - 9000000000163
-    - 9000000000164
-    - 9000000000165
+    - 900000000162
+    - 900000000163
+    - 900000000164
+    - 900000000165
     geofabrik:
       layer: landuse_a
       fclass: industrial
@@ -365,13 +365,13 @@ correspondence:
 - element: SWM-TRN-0002
   openstreetmap:
     kind: area
-    way: 9000000000017
-    anchor: 9000000000170
+    way: 900000000017
+    anchor: 900000000170
     corners:
-    - 9000000000166
-    - 9000000000167
-    - 9000000000168
-    - 9000000000169
+    - 900000000166
+    - 900000000167
+    - 900000000168
+    - 900000000169
     geofabrik:
       layer: transport_a
       fclass: airport
@@ -381,112 +381,112 @@ correspondence:
 - element: SWM-TRN-0003
   openstreetmap:
     kind: node
-    node: 9000000000171
+    node: 900000000171
     overpass:
     - TWN_Industrial
 - element: SWM-TRN-0004
   openstreetmap:
     kind: node
-    node: 9000000000172
+    node: 900000000172
 - element: SWM-TRN-L0001
   openstreetmap:
     kind: line
-    way: 9000000000018
+    way: 900000000018
     geofabrik:
       layer: roads
       fclass: primary
 - element: SWM-TRN-L0002
   openstreetmap:
     kind: line
-    way: 9000000000019
+    way: 900000000019
     geofabrik:
       layer: roads
       fclass: primary
 - element: SWM-TRN-L0003
   openstreetmap:
     kind: line
-    way: 9000000000020
+    way: 900000000020
     geofabrik:
       layer: roads
       fclass: primary
 - element: SWM-TRN-L0004
   openstreetmap:
     kind: line
-    way: 9000000000021
+    way: 900000000021
     geofabrik:
       layer: roads
       fclass: primary
 - element: SWM-TRN-L0005
   openstreetmap:
     kind: line
-    way: 9000000000022
+    way: 900000000022
     geofabrik:
       layer: roads
       fclass: primary
 - element: SWM-WAT-0001
   openstreetmap:
     kind: area
-    way: 9000000000023
-    anchor: 9000000000178
+    way: 900000000023
+    anchor: 900000000178
     corners:
-    - 9000000000174
-    - 9000000000175
-    - 9000000000176
-    - 9000000000177
+    - 900000000174
+    - 900000000175
+    - 900000000176
+    - 900000000177
     geofabrik:
       layer: water_a
       fclass: reservoir
 - element: SWM-WAT-0002
   openstreetmap:
     kind: area
-    way: 9000000000024
-    anchor: 9000000000183
+    way: 900000000024
+    anchor: 900000000183
     corners:
-    - 9000000000179
-    - 9000000000180
-    - 9000000000181
-    - 9000000000182
+    - 900000000179
+    - 900000000180
+    - 900000000181
+    - 900000000182
     geofabrik:
       layer: pois_a
       fclass: water_works
 - element: SWM-WAT-0003
   openstreetmap:
     kind: node
-    node: 9000000000184
+    node: 900000000184
 - element: SWM-WAT-0004
   openstreetmap:
     kind: node
-    node: 9000000000185
+    node: 900000000185
 - element: SWM-WAT-L0001
   openstreetmap:
     kind: line
-    way: 9000000000025
+    way: 900000000025
 - element: SWM-WAT-L0002
   openstreetmap:
     kind: line
-    way: 9000000000026
+    way: 900000000026
 - element: SWM-WAT-L0003
   openstreetmap:
     kind: line
-    way: 9000000000027
+    way: 900000000027
 - element: town-0
   openstreetmap:
     kind: town
-    node: 9000000000186
+    node: 900000000186
     geofabrik:
       layer: places
       fclass: town
 - element: town-1
   openstreetmap:
     kind: town
-    node: 9000000000187
+    node: 900000000187
     geofabrik:
       layer: places
       fclass: town
 - element: town-2
   openstreetmap:
     kind: town
-    node: 9000000000188
+    node: 900000000188
     geofabrik:
       layer: places
       fclass: town
@@ -9824,14 +9824,14 @@ declared_departures:
 - Names are in English only (E4); bilingual names come later.
 - Footprints are axis-aligned rectangles centred on the true location (E2).
 - PBF blobs are stored uncompressed, which the format allows, so the file is identical on every platform (A5); Geofabrik's extracts are compressed.
-- 'Geofabrik shapefiles: osm_id is C(13), one wider than the real C(12), for the reserved 13-digit ids (E3).'
-- Coordinates are WGS 84 at 7 decimals in every source (§4.1a); the real WRI file has 4.
-- 'Overpass: the three landed pulls kept no query text, so their queries are inferred from the real files'' tags.'
+- 'Facility register coordinates are at 6 decimals, a choice: the real files carry addresses, so there is no precision to measure (§4.1a).'
+- 'Columns the world does not hold are left empty: WRI''s commissioning_year and owner (Phase 6 draws them at fill rates measured from the real file; structure v0.11 §4.6).'
+- 'Overpass: TWN_Hospital, TWN_Industrial and TWN_Telecom_OSM_Overpass are inferred from landed tags, query text not saved; they are replaced when the pipeline supplies the text.'
 - The institution register's file is named in ASCII; the real one is named in Chinese.
 - 'Source overlap (assets missing from one of two sources) is Phase 3: in Phase 1 every true element in a source''s scope appears in it.'
 theta:
   registry_version: '0.1'
-  registry_sha256: a86c611b0a00c2963237497e3e488c0abcd17bec056478b9b17396190a68b0b3
+  registry_sha256: cad43993693de8793e435cc87122aca44a788f1fe59a5837f6c73f33545fed8d
   overrides: {}
   relaxed_limits: []
   theta_list:

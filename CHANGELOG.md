@@ -110,6 +110,12 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ### Changed
 
+- Emission per the PR 17 answers (decision 0015, addendum; structure v0.11):
+  - OpenStreetMap ids start at 900,000,000,000 and fit Geofabrik's C(12) `osm_id`;
+  - each source is written at its real coordinate precision (OpenStreetMap 7, WRI 4, OurAirports 6 as measured, the register 6 by choice);
+  - repeated major facilities in a town take a direction word, then a number;
+  - the inferred Overpass queries are marked as such;
+  - Linux CI opens the pilot extract in osmium.
 - The pole-line curve is calibrated to the expected share of line length down, not one realized draw: median 166.6993 m/s (pilot 7.28%, severity 70 32.70% expected) (PR 7b answers).
 - The Theta symbols follow Appendix A v1.7; pump capacity is a registry limit; an override outside a ruled range is noted (PR 15 answers).
 - The link builder obeys each layer's signature: no mast-to-mast or reservoir-to-reservoir link is built. The pilot loses SWM-TEL-L0004 (Work Order 7, Part 0).

@@ -7,7 +7,7 @@
     {
       "type": "Feature",
       "properties": {
-        "@id": "node/9000000000000",
+        "@id": "node/900000000000",
         "industrial": "oil",
         "landuse": "industrial",
         "name": "Coribrook Fuel Terminal"
@@ -19,12 +19,12 @@
           -48.8607984
         ]
       },
-      "id": "node/9000000000000"
+      "id": "node/900000000000"
     },
     {
       "type": "Feature",
       "properties": {
-        "@id": "node/9000000000171",
+        "@id": "node/900000000171",
         "industrial": "logistics",
         "landuse": "industrial",
         "name": "Coribrook Freight Yard"
@@ -36,12 +36,12 @@
           -48.8581259
         ]
       },
-      "id": "node/9000000000171"
+      "id": "node/900000000171"
     },
     {
       "type": "Feature",
       "properties": {
-        "@id": "way/9000000000000",
+        "@id": "way/900000000000",
         "industrial": "oil",
         "landuse": "industrial",
         "name": "Coribrook Oil Terminal"
@@ -73,12 +73,12 @@
           ]
         ]
       },
-      "id": "way/9000000000000"
+      "id": "way/900000000000"
     },
     {
       "type": "Feature",
       "properties": {
-        "@id": "way/9000000000016",
+        "@id": "way/900000000016",
         "industrial": "port",
         "landuse": "industrial"
       },
@@ -109,7 +109,7 @@
           ]
         ]
       },
-      "id": "way/9000000000016"
+      "id": "way/900000000016"
     }
   ]
 }

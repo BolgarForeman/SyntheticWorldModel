@@ -40,9 +40,6 @@ AREA_CLASSES = frozenset({
 """Classes real mapping draws as areas: plants, substations, hospitals, water works,
 reservoirs, ports, airports, tank farms and refineries (E2)."""
 
-MINOR_CLASSES = (C.MAST, C.PUMPING, C.DISTRIBUTION_SUBSTATION)
-"""Classes a share of which is left unnamed (E4)."""
-
 
 def build_observed(
     settings: Layers, terrain: TerrainResult, layers: LayersResult, rules: Registry, root_seed: int
@@ -73,10 +70,18 @@ def build_observed(
     by_id = {town.town_id: town for town in towns}
     emitted = [layer for layer in Layer if settings.get(layer).state == LayerState.EMITTED]
     unnamed = _unnamed(layers.nodes, emitted, rules, root_seed)
+    kept = [n for n in sorted(layers.nodes, key=lambda n: n.node_id) if n.layer in emitted]
+    qualifiers = major_qualifiers(kept, terrain, rules)
     nodes = tuple(
-        _node(node, by_id[node.city_id], node.node_id not in unnamed, rules, root_seed)
-        for node in sorted(layers.nodes, key=lambda n: n.node_id)
-        if node.layer in emitted
+        _node(
+            node,
+            by_id[node.city_id],
+            node.node_id not in unnamed,
+            rules,
+            root_seed,
+            qualifiers.get(node.node_id, (None, None)),
+        )
+        for node in kept
     )
     nodes_only = frozenset(layer for layer in emitted if settings.get(layer).nodes_only)
     return ObservedWorld(
@@ -154,10 +159,11 @@ def _unnamed(
 ) -> set[str]:
     """Leave the ruled share of each minor class unnamed, chosen on its layer's stream."""
     share = rules.number("emission.names.unnamed_share")
+    minor = [NodeClass(value) for value in rules.value("emission.names.minor_classes")]
     unnamed: set[str] = set()
     for layer in emitted:
         stream = rng.stream(root_seed, f"emission/unnamed/{layer}")
-        for node_class in MINOR_CLASSES:
+        for node_class in minor:
             members = sorted(
                 n.node_id for n in nodes if n.layer == layer and n.node_class == node_class
             )
@@ -169,8 +175,84 @@ def _unnamed(
     return unnamed
 
 
+def major_qualifiers(
+    nodes: Sequence[Node], terrain: TerrainResult, rules: Registry
+) -> dict[str, tuple[str, int | None]]:
+    """Tell apart major facilities of one group in one town by direction word, then number.
+
+    The first of a group in sorted world-id order keeps the plain name; each repeat takes the
+    word for its side of the town centre, and repeats that share a side are numbered from 2 in
+    world-id order.
+
+    Parameters
+    ----------
+    nodes : sequence of Node
+        The emitted nodes, sorted by id.
+    terrain : TerrainResult
+        The terrain, for the town centres.
+    rules : Registry
+        The modeling rules in force (``emission.names.major_classes``, ``direction_words``).
+
+    Returns
+    -------
+    dict
+        Per repeated node id, its direction word and its number (None unless another repeat in
+        its town shares the side).
+
+    Spec: structure v0.11 §4.6 (names); WO-08 PR answers, item 4.
+    """
+    group_of = {NodeClass(c): group for group, classes in
+                rules.value("emission.names.major_classes").items() for c in classes}  # fmt: skip
+    words = rules.value("emission.names.direction_words")
+    centres = {c.city_id: cell_centre_m(c.centre_row, c.centre_column, terrain.grid)
+               for c in terrain.cities}  # fmt: skip
+    members: dict[tuple[int, str], list[Node]] = {}
+    for node in nodes:
+        if node.node_class in group_of:
+            members.setdefault((node.city_id, group_of[node.node_class]), []).append(node)
+    qualifiers: dict[str, tuple[str, int | None]] = {}
+    for (city_id, _), group in sorted(members.items()):
+        # CHOICE: the lowest world id keeps the plain name; numbering of a shared side starts at 2.
+        seen: dict[str, int] = {}
+        for node in group[1:]:
+            cx, cy = centres[city_id]
+            word = words[side(node.x_m - cx, node.y_m - cy)]
+            seen[word] = seen.get(word, 0) + 1
+            qualifiers[node.node_id] = (word, seen[word] if seen[word] > 1 else None)
+    return qualifiers
+
+
+def side(east_m: float, north_m: float) -> str:
+    """Return the side of a point from a centre: east, west, north or south.
+
+    Comparisons only, no trigonometry (CLAUDE.md §4): the larger absolute offset decides the
+    axis and its sign the side.
+
+    Parameters
+    ----------
+    east_m, north_m : float
+        The point's offsets from the centre, in m.
+
+    Returns
+    -------
+    str
+        ``east``, ``west``, ``north`` or ``south``.
+
+    Spec: WO-08 PR answers, item 4.
+    """
+    # CHOICE: a point exactly on a diagonal counts as east or west.
+    if abs(east_m) >= abs(north_m):
+        return "east" if east_m >= 0 else "west"
+    return "north" if north_m >= 0 else "south"
+
+
 def _node(
-    node: Node, town: ObservedTown, named: bool, rules: Registry, root_seed: int
+    node: Node,
+    town: ObservedTown,
+    named: bool,
+    rules: Registry,
+    root_seed: int,
+    qualifier: tuple[str | None, int | None],
 ) -> ObservedNode:
     return ObservedNode(
         node_id=node.node_id,
@@ -185,6 +267,8 @@ def _node(
         if node.runway is None
         else (to_lonlat(*node.runway[0]), to_lonlat(*node.runway[1])),
         district=town.district,
+        direction=qualifier[0],
+        number=qualifier[1],
     )
 
 

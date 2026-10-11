@@ -14,7 +14,7 @@ Layouts recorded from the real files:
 - raw Overpass JSON (the ports check's responses): ``version, generator, osm3s, elements``,
   ways with ``bounds``, ``nodes`` and ``geometry`` under ``out geom``.
 
-Spec: structure v0.10 §4.6 (corrected); Work Order 8 answers, 2.
+Spec: structure v0.11 §4.6 (corrected); Work Order 8 answers, 2.
 """
 
 import json
@@ -44,7 +44,14 @@ class Query:
     """geom or center."""
     layout: str
     """turbo (overpass-turbo GeoJSON) or raw (Overpass API JSON)."""
+    provenance: str
+    """INFERRED, or where the pipeline's own query text was taken from."""
     note: str
+
+
+INFERRED = "inferred from landed tags, query text not saved"
+"""The mark on a query rebuilt from the tags of the file it produced; replaced when the pipeline
+supplies the real text (WO-08 PR answers, verification items)."""
 
 
 def _hospital(tags: Tags) -> bool:
@@ -79,22 +86,20 @@ def _ports(tags: Tags) -> bool:
 
 QUERIES = (
     Query("TWN_Hospital", ('nwr["amenity"="hospital"]', 'nwr["healthcare"="hospital"]'),
-          _hospital, "geom", "turbo",
-          "Inferred from the landed file: every feature carries amenity=hospital or "
-          "healthcare=hospital; no query text was saved."),
+          _hospital, "geom", "turbo", INFERRED,
+          "every feature of the landed file carries amenity=hospital or healthcare=hospital."),
     Query("TWN_Industrial", ('nwr["landuse"="industrial"]',), _industrial, "geom", "turbo",
-          "Inferred from the landed file: its features carry landuse=industrial; no query "
-          "text was saved."),
+          INFERRED, "the landed file's features carry landuse=industrial."),
     Query("TWN_Telecom_OSM_Overpass", (
         'nwr["man_made"~"^(mast|tower|communications_tower)$"]',
         'nwr["office"="telecommunication"]', 'nwr["telecom"]',
-        'nwr["tower:type"="communication"]'), _telecom, "center", "turbo",
-          "Inferred from the landed file: masts and towers, telecommunication offices, any "
-          "telecom=* and communication towers, written out center; no query text was saved."),
+        'nwr["tower:type"="communication"]'), _telecom, "center", "turbo", INFERRED,
+          "the landed file holds masts and towers, telecommunication offices, any telecom=* "
+          "and communication towers, written out center."),
     Query("query_families_ports", tuple(
         f'nwr["{k}"]' if v is None else f'nwr["{k}"="{v}"]' for k, v in PORT_FAMILIES),
-          _ports, "geom", "raw",
-          "The pipeline's ports check (osm_ports_check.py, the six port families)."),
+          _ports, "geom", "raw", "the pipeline's saved query (osm_ports_check.py)",
+          "the ports check's six port families."),
 )  # fmt: skip
 
 
@@ -148,7 +153,10 @@ def _poly(data: OsmData) -> str:
 
 def _query_text(query: Query, area: str) -> bytes:
     body = "\n".join(f"  {statement}({area});" for statement in query.statements)
-    text = f"// {query.note}\n[out:json][timeout:300];\n(\n{body}\n);\nout {query.out};\n"
+    text = (
+        f"// {query.provenance}: {query.note}\n"
+        f"[out:json][timeout:300];\n(\n{body}\n);\nout {query.out};\n"
+    )
     return text.encode("utf-8")
 
 

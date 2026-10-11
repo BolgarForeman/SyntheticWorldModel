@@ -61,11 +61,12 @@ DEPARTURES = (
     "Footprints are axis-aligned rectangles centred on the true location (E2).",
     "PBF blobs are stored uncompressed, which the format allows, so the file is identical on "
     "every platform (A5); Geofabrik's extracts are compressed.",
-    "Geofabrik shapefiles: osm_id is C(13), one wider than the real C(12), for the reserved "
-    "13-digit ids (E3).",
-    "Coordinates are WGS 84 at 7 decimals in every source (§4.1a); the real WRI file has 4.",
-    "Overpass: the three landed pulls kept no query text, so their queries are inferred from "
-    "the real files' tags.",
+    "Facility register coordinates are at 6 decimals, a choice: the real files carry addresses, "
+    "so there is no precision to measure (§4.1a).",
+    "Columns the world does not hold are left empty: WRI's commissioning_year and owner (Phase 6 "
+    "draws them at fill rates measured from the real file; structure v0.11 §4.6).",
+    "Overpass: TWN_Hospital, TWN_Industrial and TWN_Telecom_OSM_Overpass are inferred from "
+    "landed tags, query text not saved; they are replaced when the pipeline supplies the text.",
     "The institution register's file is named in ASCII; the real one is named in Chinese.",
     "Source overlap (assets missing from one of two sources) is Phase 3: in Phase 1 every true "
     "element in a source's scope appears in it.",

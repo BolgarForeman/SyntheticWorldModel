@@ -1,4 +1,4 @@
-// The pipeline's ports check (osm_ports_check.py, the six port families).
+// the pipeline's saved query (osm_ports_check.py): the ports check's six port families.
 [out:json][timeout:300];
 (
   nwr["landuse"="port"](poly:"-48.9033340 -123.5687505 -48.7460974 -123.5687505 -48.7460974 -123.2998006 -48.9033340 -123.2998006");

@@ -9,11 +9,11 @@ source contributes the features in its scope:
   is a way along its route; nodes-only layers have none;
 - every town is a ``place=town`` node.
 
-Ids start at 9,000,000,000,000 and are assigned in the sorted order of the world's own ids,
-nodes and ways each counting from there. Every object is version 1 with one fixed timestamp,
-user and changeset.
+Ids start at 900,000,000,000 (12 digits; E3 as amended) and are assigned in the sorted order
+of the world's own ids, nodes and ways each counting from there. Every object is version 1 with
+one fixed timestamp, user and changeset.
 
-Spec: structure v0.10 §4.6; Work Order 8, A1-A3; Emission ruling sheet v0.2, E1-E3.
+Spec: structure v0.11 §4.6; Work Order 8, A1-A3; Emission ruling sheet v0.2, E1-E3.
 """
 
 from collections.abc import Mapping
@@ -23,8 +23,9 @@ from swm.emit.observed import LonLat, ObservedLink, ObservedNode, ObservedWorld
 from swm.emit.osm_tags import PORT_PIECE_SHARE, PORT_PIECE_TAGS, link_tags, node_tags
 from swm.recipe.schema import SOURCE_SCOPES, Layer, NodeClass, Source
 
-FIRST_ID = 9_000_000_000_000
-"""Far above any real OpenStreetMap id, so a synthetic object is never taken for a real one."""
+FIRST_ID = 900_000_000_000
+"""About 70 times any real OpenStreetMap id, so a synthetic object is never taken for a real one;
+12 digits, so it fits Geofabrik's C(12) ``osm_id`` field (E3 as amended; structure v0.11 §4.6)."""
 TIMESTAMP = "2026-01-01T00:00:00Z"
 TIMESTAMP_S = 1_767_225_600
 """2026-01-01T00:00:00Z in seconds since 1970, the one timestamp every object carries."""

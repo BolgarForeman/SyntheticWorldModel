@@ -7,7 +7,7 @@
     {
       "type": "Feature",
       "properties": {
-        "@id": "way/9000000000001",
+        "@id": "way/900000000001",
         "amenity": "hospital",
         "beds": "1964",
         "healthcare": "hospital",
@@ -40,12 +40,12 @@
           ]
         ]
       },
-      "id": "way/9000000000001"
+      "id": "way/900000000001"
     },
     {
       "type": "Feature",
       "properties": {
-        "@id": "way/9000000000002",
+        "@id": "way/900000000002",
         "amenity": "hospital",
         "beds": "407",
         "healthcare": "hospital",
@@ -78,7 +78,7 @@
           ]
         ]
       },
-      "id": "way/9000000000002"
+      "id": "way/900000000002"
     }
   ]
 }

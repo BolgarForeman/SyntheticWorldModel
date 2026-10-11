@@ -19,6 +19,12 @@ class RecordedHeader:
     """Path under the data root (``machine.toml``)."""
     version: str
     columns: tuple[str, ...]
+    coordinate_columns: tuple[str, ...] = ()
+    """The latitude and longitude columns, if the real file carries coordinates."""
+    coordinate_decimals: int | None = None
+    """Decimal places of those coordinates, measured from the real file (the most common count)."""
+    decimals_measured: str | None = None
+    """When the count was measured, through ``machine.toml`` (``tools/check_source_headers.py``)."""
 
 
 WRI_GPPD = RecordedHeader(
@@ -38,6 +44,9 @@ WRI_GPPD = RecordedHeader(
         "estimated_generation_note_2015", "estimated_generation_note_2016",
         "estimated_generation_note_2017",
     ),
+    ("latitude", "longitude"),
+    4,
+    "2026-10-10: every coordinate in the file has 4 decimals",
 )  # fmt: skip
 
 OURAIRPORTS = RecordedHeader(
@@ -50,6 +59,10 @@ OURAIRPORTS = RecordedHeader(
         "icao_code", "iata_code", "gps_code", "local_code", "home_link", "wikipedia_link",
         "keywords",
     ),
+    ("latitude_deg", "longitude_deg"),
+    6,
+    "2026-10-10: 6 is the most common count, worldwide and for Taiwan; trailing zeros are "
+    "dropped, so shorter values occur",
 )  # fmt: skip
 
 INSTITUTION_REGISTER = RecordedHeader(

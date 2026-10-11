@@ -7,7 +7,7 @@
     {
       "type": "Feature",
       "properties": {
-        "@id": "node/9000000000153",
+        "@id": "node/900000000153",
         "name": "Coribrook Telephone Exchange",
         "operator": "SWM Telecom A",
         "telecom": "exchange"
@@ -19,12 +19,12 @@
           -48.8392189
         ]
       },
-      "id": "node/9000000000153"
+      "id": "node/900000000153"
     },
     {
       "type": "Feature",
       "properties": {
-        "@id": "node/9000000000154",
+        "@id": "node/900000000154",
         "man_made": "mast",
         "name": "Selimere Mast",
         "operator": "SWM Telecom A",
@@ -37,12 +37,12 @@
           -48.7460974
         ]
       },
-      "id": "node/9000000000154"
+      "id": "node/900000000154"
     },
     {
       "type": "Feature",
       "properties": {
-        "@id": "node/9000000000155",
+        "@id": "node/900000000155",
         "man_made": "mast",
         "operator": "SWM Telecom A",
         "tower:type": "communication"
@@ -54,12 +54,12 @@
           -48.7750947
         ]
       },
-      "id": "node/9000000000155"
+      "id": "node/900000000155"
     },
     {
       "type": "Feature",
       "properties": {
-        "@id": "node/9000000000156",
+        "@id": "node/900000000156",
         "man_made": "mast",
         "name": "Selimere Mast",
         "operator": "SWM Telecom A",
@@ -72,7 +72,7 @@
           -48.8481931
         ]
       },
-      "id": "node/9000000000156"
+      "id": "node/900000000156"
     }
   ]
 }

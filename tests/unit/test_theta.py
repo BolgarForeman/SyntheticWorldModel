@@ -130,7 +130,7 @@ def test_every_rule_is_classified() -> None:
     counts = classification_counts(RULES)
     assert sum(counts.values()) == len(RULES.rules)
     assert counts == {"construction": 169, "dynamics": 112, "stopping": 1, "analysis": 0,
-                      "world_content": 86}  # fmt: skip
+                      "world_content": 89}  # fmt: skip
     for rule in RULES.rules:
         if rule.theta_role == ThetaRole.WORLD_CONTENT:
             assert rule.theta_domain is None

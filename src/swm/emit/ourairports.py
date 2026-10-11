@@ -5,7 +5,7 @@ non-empty text value quoted, numbers bare). ``ident`` ``XS-0001`` … (OurAirpor
 an airfield with no ICAO code); no ICAO, IATA, GPS or local codes; ``iso_country`` ``XS`` and
 ``iso_region`` the airport's district, ``XS-01`` ….
 
-Spec: structure v0.10 §4.6; Work Order 8, B3 and B5; Emission ruling sheet v0.2, E3.
+Spec: structure v0.11 §4.6; Work Order 8, B3 and B5; Emission ruling sheet v0.2, E3.
 """
 
 from dataclasses import dataclass
@@ -17,6 +17,9 @@ from swm.recipe.schema import Layer, NodeClass, Source
 
 IDIOM = Idiom(line_ending="\n", bom=False, quote_text=True)
 FILE = "airports.csv"
+DECIMALS = OURAIRPORTS.coordinate_decimals
+"""The real file's precision (§4.1a): written as the shortest float, trailing zeros dropped, as
+the real file writes them."""
 CONTINENT = "OC"
 """CHOICE: the world sits at Point Nemo, in the South Pacific: Oceania."""
 SCHEDULED = {"small_airport": "no", "medium_airport": "yes", "large_airport": "yes"}
@@ -69,10 +72,10 @@ def _row(node: ObservedNode, record: AirportRecord) -> list[str | int | float | 
         "id": record.row_id,
         "ident": record.ident,
         "type": kind,
-        "name": f"{node.town} Airport",
+        "name": node.name("Airport"),
         # Numbers are bare in the real file; coordinates are WGS 84 at 7 decimals (§4.1a).
-        "latitude_deg": node.location[1],
-        "longitude_deg": node.location[0],
+        "latitude_deg": round(node.location[1], DECIMALS),
+        "longitude_deg": round(node.location[0], DECIMALS),
         "continent": CONTINENT,
         "iso_country": "XS",
         "iso_region": node.district,

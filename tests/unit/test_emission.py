@@ -9,6 +9,7 @@ import io
 import json
 import re
 import zipfile
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -17,9 +18,10 @@ import yaml
 
 from swm import rng
 from swm.cli import _built, _observed
+from swm.coordinates import from_lonlat
 from swm.emit.headers import BEDS, HOSPITAL_LISTS, INSTITUTION_REGISTER, OURAIRPORTS, WRI_GPPD
 from swm.emit.osm_model import FIRST_ID, OSM_SOURCES
-from swm.emit.osm_tags import LINK_TAGS, tag_table
+from swm.emit.osm_tags import LINK_TAGS, PORT_PIECE_SHARE, tag_table
 from swm.emit.sources import EmittedSources, emit_sources
 from swm.manifest.truth import TruthInputs, truth_manifest
 from swm.recipe.io import parse_recipe
@@ -27,14 +29,24 @@ from swm.recipe.resolve import resolve
 from swm.recipe.schema import SOURCE_SCOPES, Layer, NodeClass, Source
 from swm.rng import stream_record
 from swm.rules.registry import load_registry
-from swm.stages.emission import AREA_CLASSES, MINOR_CLASSES, _unnamed, town_name
+from swm.stages.emission import AREA_CLASSES, _unnamed, build_observed, side, town_name
 
 TESTS = Path(__file__).resolve().parents[1]
 SRC = TESTS.parent / "src" / "swm"
 PILOT = TESTS / "fixtures" / "pilot_hand_check.yaml"
 C = NodeClass
-CENTRE_TOLERANCE_DEG = 1e-5
-"""About a metre: a footprint's corners averaged in degrees, against its true point."""
+FIXTURES = TESTS / "fixtures"
+METRES_PER_DEGREE = 111_320.0
+"""A degree of latitude, about; a degree of longitude here is shorter, so this bounds both."""
+
+
+def rounding_deg(decimals: int) -> float:
+    """Half a unit in the last decimal place: a source's own rounding (section 4.1a)."""
+    return 0.5 * 10.0**-decimals
+
+
+OSM_ROUNDING_M = rounding_deg(7) * METRES_PER_DEGREE
+"""OpenStreetMap's 7-decimal rounding in metres, about 6 mm."""
 
 
 @functools.cache
@@ -48,6 +60,16 @@ def world(recipe_text: str) -> Any:
 
 def pilot() -> Any:
     return world(PILOT.read_text(encoding="utf-8"))
+
+
+@functools.cache
+def rich() -> Any:
+    """The 10-node-per-layer world of the couplings tests, emitted (no storm needed)."""
+    from couplings_helpers import rich_world
+
+    recipe, terrain, layers = rich_world()
+    observed = build_observed(recipe.layers, terrain, layers, load_registry(), recipe.root_seed)
+    return SimpleNamespace(observed=observed, sources=emit_sources(observed))
 
 
 def nodes_only_pilot() -> Any:
@@ -115,18 +137,30 @@ def test_outlines_are_closed_and_centred_on_the_true_location() -> None:
     ways = {w.osm_id: w for w in p.sources.osm.ways}
     by_id = {n.node_id: n for n in p.observed.nodes}
     areas = [e for e in p.sources.osm.elements if e.kind == "area"]
+    exact_m = {n.node_id: (n.x_m, n.y_m) for n in p.built.requirements.layers.nodes}
     assert {by_id[e.element_id].node_class for e in areas if e.element_id in by_id} <= AREA_CLASSES
     for element in areas:
         refs = ways[element.way].refs
         assert refs[0] == refs[-1]
         assert len(refs) == 5
-        lon = sum(nodes[r].location[0] for r in refs[:-1]) / 4
-        lat = sum(nodes[r].location[1] for r in refs[:-1]) / 4
-        true = by_id[element.element_id.split(":")[0]].location
-        # The rectangle is centred exactly in metres (EPSG:32710); averaged in degrees, the
-        # projection's curvature over a footprint moves the centre by well under a metre.
-        assert abs(lon - true[0]) < CENTRE_TOLERANCE_DEG
-        assert abs(lat - true[1]) < CENTRE_TOLERANCE_DEG
+        node_id, _, piece = element.element_id.partition(":")
+        true = by_id[node_id].location
+        if piece:
+            # The port's cargo piece is its harbour outline scaled by half about the true point,
+            # in degrees: its centre lies halfway from the true point to the outline's.
+            harbour = ways[next(e.way for e in areas if e.element_id == node_id)].refs[:-1]
+            for axis in (0, 1):
+                outer = sum(nodes[r].location[axis] for r in harbour) / 4
+                inner = sum(nodes[r].location[axis] for r in refs[:-1]) / 4
+                halfway = true[axis] + (outer - true[axis]) * PORT_PIECE_SHARE
+                assert abs(inner - halfway) <= rounding_deg(7)
+            continue
+        # A footprint is centred in metres (EPSG:32710): its corners, each rounded to 7
+        # decimals, average to the true point within that rounding.
+        corners = [from_lonlat(*nodes[r].location) for r in refs[:-1]]
+        x_m, y_m = exact_m[node_id]
+        assert abs(sum(c[0] for c in corners) / 4 - x_m) <= OSM_ROUNDING_M
+        assert abs(sum(c[1] for c in corners) / 4 - y_m) <= OSM_ROUNDING_M
 
 
 def test_each_line_passes_through_its_towers_in_order() -> None:
@@ -149,7 +183,9 @@ def test_osm_ids_are_reserved_unique_and_sorted() -> None:
     for objects in (osm.nodes, osm.ways):
         ids = [o.osm_id for o in objects]
         assert ids == sorted(set(ids))
-        assert ids[0] >= FIRST_ID
+        assert ids[0] >= FIRST_ID == 900_000_000_000
+        # 12 digits: Geofabrik's C(12) osm_id field holds every id.
+        assert ids[-1] < 10**12
     facilities = [e for e in osm.elements if e.kind != "town"]
     keys = [e.element_id for e in facilities]
     assert keys == sorted(keys)
@@ -290,7 +326,7 @@ def test_the_unnamed_share_is_a_fifth_of_ten_minor_nodes_within_rounding() -> No
 def test_only_minor_classes_go_unnamed_in_the_pilot() -> None:
     for node in pilot().observed.nodes:
         if not node.named:
-            assert node.node_class in MINOR_CLASSES
+            assert node.node_class.value in load_registry().value("emission.names.minor_classes")
 
 
 # --- Headers (B1, answer 1) -----------------------------------------------------------------
@@ -441,3 +477,179 @@ def test_no_source_file_carries_a_value_only_the_manifest_holds() -> None:
         if path.endswith((".csv", ".osm", ".geojson", ".json", ".overpassql")):
             words = set(re.findall(r"[A-Za-z_]+", body.decode("utf-8-sig")))
             assert not unobserved_words & words, (path, unobserved_words & words)
+
+
+# --- Coordinates at each source's precision (PR 17 answers, item 2) -------------------------
+
+
+def _decimals(value: str) -> int:
+    return len(value.split(".")[1]) if "." in value else 0
+
+
+def test_wri_writes_four_decimals_within_its_rounding() -> None:
+    p = pilot()
+    by_id = {n.node_id: n for n in p.observed.nodes}
+    plants = rows(p.sources, "sources/wri_gppd/global_power_plant_database.csv")
+    assert p.sources.wri
+    for record, row in zip(p.sources.wri, plants[1:], strict=True):
+        values = dict(zip(plants[0], row, strict=True))
+        true = by_id[record.node_id].location
+        assert _decimals(values["latitude"]) == 4
+        assert _decimals(values["longitude"]) == 4
+        assert abs(float(values["latitude"]) - true[1]) <= rounding_deg(4)
+        assert abs(float(values["longitude"]) - true[0]) <= rounding_deg(4)
+
+
+def test_ourairports_writes_six_decimals_within_its_rounding() -> None:
+    p = pilot()
+    by_id = {n.node_id: n for n in p.observed.nodes}
+    airports = rows(p.sources, "sources/ourairports/airports.csv")
+    assert p.sources.airports
+    for record, row in zip(p.sources.airports, airports[1:], strict=True):
+        values = dict(zip(airports[0], row, strict=True))
+        true = by_id[record.node_id].location
+        assert _decimals(values["latitude_deg"]) <= 6
+        assert abs(float(values["latitude_deg"]) - true[1]) <= rounding_deg(6)
+        assert abs(float(values["longitude_deg"]) - true[0]) <= rounding_deg(6)
+
+
+def test_the_register_writes_six_decimals_within_its_rounding() -> None:
+    p = pilot()
+    by_id = {n.node_id: n for n in p.observed.nodes}
+    codes = {r.code: r.node_id for r in p.sources.register}
+    lists = rows(p.sources, "sources/facility_register/A21030000I-D21001-003.csv")
+    assert lists[1:]
+    for row in lists[1:]:
+        values = dict(zip(lists[0], row, strict=True))
+        latitude, longitude = values["地址"].split(",")
+        true = by_id[codes[values["醫事機構代碼"]]].location
+        assert _decimals(latitude) == 6
+        assert _decimals(longitude) == 6
+        assert abs(float(latitude) - true[1]) <= rounding_deg(6)
+        assert abs(float(longitude) - true[0]) <= rounding_deg(6)
+
+
+def test_osm_point_nodes_carry_the_true_location_at_seven_decimals() -> None:
+    p = pilot()
+    nodes = {n.osm_id: n for n in p.sources.osm.nodes}
+    by_id = {n.node_id: n for n in p.observed.nodes}
+    points = [e for e in p.sources.osm.elements if e.kind == "node"]
+    assert points
+    for element in points:
+        assert element.node is not None
+        assert nodes[element.node].location == by_id[element.element_id].location
+
+
+def test_the_measured_precision_is_recorded_beside_each_header() -> None:
+    assert WRI_GPPD.coordinate_decimals == 4
+    assert OURAIRPORTS.coordinate_decimals == 6
+    for header in (WRI_GPPD, OURAIRPORTS):
+        assert header.decimals_measured
+        assert set(header.coordinate_columns) <= set(header.columns)
+
+
+# --- Columns the world does not hold (item 3) ------------------------------------------------
+
+
+def test_wri_year_and_owner_are_empty_and_declared() -> None:
+    plants = rows(pilot().sources, "sources/wri_gppd/global_power_plant_database.csv")
+    for row in plants[1:]:
+        values = dict(zip(plants[0], row, strict=True))
+        assert values["commissioning_year"] == ""
+        assert values["owner"] == ""
+    assert any("commissioning_year and owner" in d for d in manifest()["declared_departures"])
+
+
+# --- Major facilities are unique within their town (item 4) ---------------------------------
+
+NAMED_COLUMNS = {
+    "sources/wri_gppd/global_power_plant_database.csv": "name",
+    "sources/ourairports/airports.csv": "name",
+    "sources/facility_register/A21030000I-D21001-003.csv": "醫事機構名稱",
+    "sources/facility_register/A21030000I-D21002-005.csv": "醫事機構名稱",
+    "sources/facility_register/A21030000I-D21003-003.csv": "醫事機構名稱",
+}
+"""Files holding only major facilities, and their name column."""
+
+
+def _groups() -> dict[NodeClass, str]:
+    groups = load_registry().value("emission.names.major_classes")
+    return {NodeClass(c): group for group, classes in groups.items() for c in classes}
+
+
+def _assert_major_names_unique(emitted: Any) -> None:
+    groups = _groups()
+    elements = {e.element_id: e for e in emitted.sources.osm.elements}
+    objects = (*emitted.sources.osm.nodes, *emitted.sources.osm.ways)
+    tags = {o.osm_id: dict(o.tags) for o in objects}
+    seen: set[tuple[str, str, str]] = set()
+    for node in emitted.observed.nodes:
+        element = elements.get(node.node_id)
+        if node.node_class not in groups or element is None:
+            continue
+        main = element.way if element.way is not None else element.node
+        key = (node.town, groups[node.node_class], tags[main]["name"])
+        assert key not in seen, key
+        seen.add(key)
+    for path, column in NAMED_COLUMNS.items():
+        if path in emitted.sources.files:
+            table = rows(emitted.sources, path)
+            names = [dict(zip(table[0], row, strict=True))[column] for row in table[1:]]
+            assert len(names) == len(set(names)), path
+
+
+def test_no_two_major_facilities_of_a_group_share_a_name_in_any_source() -> None:
+    _assert_major_names_unique(pilot())
+    _assert_major_names_unique(rich())
+
+
+def test_the_rich_world_tells_its_repeats_apart_by_side() -> None:
+    repeats = [n for n in rich().observed.nodes if n.direction is not None]
+    assert repeats
+    for node in repeats:
+        assert node.node_class in _groups()
+        assert node.direction in {"North", "South", "East", "West"}
+        assert node.name("Substation").startswith(f"{node.town} {node.direction} ")
+
+
+def test_the_side_is_found_by_comparisons_alone() -> None:
+    assert side(10.0, 3.0) == "east"
+    assert side(-10.0, 3.0) == "west"
+    assert side(3.0, 10.0) == "north"
+    assert side(3.0, -10.0) == "south"
+    assert side(5.0, 5.0) == "east"
+    assert side(-5.0, -5.0) == "west"
+
+
+def test_a_name_reads_town_direction_word_number() -> None:
+    node = next(n for n in pilot().observed.nodes if n.node_class == C.TRANSMISSION_SUBSTATION)
+    numbered = replace(node, direction="North", number=2)
+    assert numbered.name("Substation") == f"{node.town} North Substation 2"
+    assert node.name("Substation") == f"{node.town} Substation"
+
+
+# --- Every world writes the same files (item 5) ---------------------------------------------
+
+
+def test_every_fixture_world_writes_the_same_source_files() -> None:
+    expected = set(pilot().sources.files)
+    assert "sources/facility_register/A21030000I-D21003-003.csv" in expected
+    for path in sorted(FIXTURES.rglob("*.yaml")):
+        assert set(world(path.read_text(encoding="utf-8")).sources.files) == expected, path
+
+
+def test_an_empty_hospital_level_is_its_header_alone() -> None:
+    body = pilot().sources.files["sources/facility_register/A21030000I-D21003-003.csv"]
+    assert body.decode("utf-8-sig") == ",".join(HOSPITAL_LISTS.columns) + "\n"
+
+
+# --- Overpass queries rebuilt from landed tags (verification items) -------------------------
+
+
+def test_the_inferred_overpass_queries_say_so() -> None:
+    files = pilot().sources.files
+    for name in ("TWN_Hospital", "TWN_Industrial", "TWN_Telecom_OSM_Overpass"):
+        first = files[f"sources/osm/overpass/{name}.overpassql"].decode("utf-8").splitlines()[0]
+        assert first.startswith("// inferred from landed tags, query text not saved:")
+    ports = files["sources/osm/overpass/query_families_ports.overpassql"].decode("utf-8")
+    assert "inferred" not in ports

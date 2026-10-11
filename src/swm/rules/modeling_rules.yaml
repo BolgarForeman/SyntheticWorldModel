@@ -10614,6 +10614,82 @@ rules:
     decision: '0015'
   history: []
   theta_role: world_content
+- id: emission.names.major_classes
+  title: Major facility classes, unique by name within their town
+  stage: emission
+  value:
+    power_plant: [generation]
+    transmission_substation: [transmission_substation]
+    hospital: [tertiary, regional]
+    airport: [airport]
+    seaport: [seaport]
+  units: class groups
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Work Order 8, answers to PR 17, item 4 (decision 0015, addendum)', url: docs/work_orders/WO-08-pr-answers.md,
+    quote: null, verified: null}
+  - {citation: 'Structure v0.11 §4.6 (names)', url: docs/design/World_Generator_Structure.md, quote: null,
+    verified: null}
+  reasoning: Plants, transmission substations, hospitals, airports and ports carry distinct names in real
+    sources. Two members of one group in one town must not share a name, so a repeat takes a direction word
+    and, if two share a direction, a number. Hospitals are one group because every source names them by the
+    same word.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-10'
+    decision: '0015'
+  history: []
+  theta_role: world_content
+- id: emission.names.minor_classes
+  title: Minor classes, which may share a name and of which a share goes unnamed
+  stage: emission
+  value: [mast, pumping, distribution_substation]
+  units: classes
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Work Order 8, answers to PR 17, item 4 (decision 0015, addendum)', url: docs/work_orders/WO-08-pr-answers.md,
+    quote: null, verified: null}
+  - {citation: 'Structure v0.11 §4.6 (names)', url: docs/design/World_Generator_Structure.md, quote: null,
+    verified: null}
+  reasoning: Masts, pumping stations and distribution substations are numerous and often share a name or
+    carry none in real mapping (E4).
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-10'
+    decision: '0015'
+  history: []
+  theta_role: world_content
+- id: emission.names.direction_words
+  title: Direction words that tell repeated major facilities apart
+  stage: emission
+  value: {east: East, west: West, north: North, south: South}
+  units: words
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Work Order 8, answers to PR 17, item 4 (decision 0015, addendum)', url: docs/work_orders/WO-08-pr-answers.md,
+    quote: null, verified: null}
+  - {citation: 'Structure v0.11 §4.6 (names)', url: docs/design/World_Generator_Structure.md, quote: null,
+    verified: null}
+  reasoning: A repeated major facility takes the word for its side of the town centre, found by comparing
+    the absolute east and north offsets and their signs, with no trigonometry (CLAUDE.md §4).
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-10'
+    decision: '0015'
+  history: []
+  theta_role: world_content
 - id: emission.footprint_m
   title: Footprint side lengths of area classes
   stage: emission
