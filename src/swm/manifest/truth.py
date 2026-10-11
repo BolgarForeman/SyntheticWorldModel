@@ -152,7 +152,8 @@ def correspondence(sources: EmittedSources) -> list[dict[str, object]]:
     Spec: Work Order 8, C1 (cross-source correspondence).
     """
     entries: dict[str, dict[str, object]] = {}
-    ways = {r.osm_id: r for r in sources.geofabrik}
+    # OpenStreetMap's node and way ids are separate spaces that overlap here: match on both.
+    shapefiles = {(r.osm_type, r.osm_id): r for r in sources.geofabrik}
     for element in sources.osm.elements:
         record: dict[str, object] = {"kind": element.kind}
         for name in ("node", "way", "anchor"):
@@ -163,11 +164,16 @@ def correspondence(sources: EmittedSources) -> list[dict[str, object]]:
             record["corners"] = list(element.corners)
         if element.towers:
             record["towers"] = list(element.towers)
-        main = element.way if element.way is not None else element.node
-        shapefile = ways.get(main) if main is not None else None
+        osm_type, osm_id = (
+            ("way", element.way) if element.way is not None else ("node", element.node)
+        )
+        if osm_id is None:
+            raise ValueError(f"{element.element_id} has neither a node nor a way")
+        main = (osm_type, osm_id)
+        shapefile = shapefiles.get(main)
         if shapefile is not None:
             record["geofabrik"] = {"layer": shapefile.layer, "fclass": shapefile.fclass}
-        queries = sorted(r.query for r in sources.overpass if r.osm_id == main)
+        queries = sorted(r.query for r in sources.overpass if (r.osm_type, r.osm_id) == main)
         if queries:
             record["overpass"] = queries
         entries.setdefault(element.element_id, {})["openstreetmap"] = record

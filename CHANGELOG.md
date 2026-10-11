@@ -110,6 +110,7 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ### Changed
 
+- Name uniqueness within a town is the default for every class except six shared-name classes. The unnamed share stays on masts, pumping stations and distribution substations. The registry splits `emission.names.minor_classes` and replaces `major_classes` with `name_groups` (decision 0015, addendum 2; structure v0.12).
 - Emission per the PR 17 answers (decision 0015, addendum; structure v0.11):
   - OpenStreetMap ids start at 900,000,000,000 and fit Geofabrik's C(12) `osm_id`;
   - each source is written at its real coordinate precision (OpenStreetMap 7, WRI 4, OurAirports 6 as measured, the register 6 by choice);
@@ -161,6 +162,7 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ### Fixed
 
+- The truth manifest matched Geofabrik and Overpass records to elements by id alone, although OpenStreetMap node and way ids overlap. It now matches on type and id, which corrects six pilot entries (decision 0015, addendum 2).
 - The terrain now delivers exactly the requested number of outlying islands. An island placed near the grid edge could merge with the main island, because its clearance window was cut empty. If the count can't be met, the build stops with an error naming `terrain.character.outlying_islands` (decision 0010, item 3). The pilot terrain is unchanged.
 
 ### Removed

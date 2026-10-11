@@ -86,6 +86,8 @@ needs, and its code and fclass (as on disk)."""
 class GeofabrikRecord:
     """Where one OpenStreetMap object landed in the shapefiles."""
 
+    osm_type: str
+    """node or way: OpenStreetMap's node and way ids are separate spaces, and here they overlap."""
     osm_id: int
     layer: str
     fclass: str
@@ -112,13 +114,14 @@ def geofabrik_files(data: OsmData) -> tuple[dict[str, bytes], tuple[GeofabrikRec
     records: list[GeofabrikRecord] = []
     locations = {node.osm_id: node.location for node in data.nodes}
     for node in data.nodes:
-        _place(rows, records, node.osm_id, dict(node.tags), Shape(((node.location,),)), False)
+        _place(rows, records, ("node", node.osm_id), dict(node.tags),
+               Shape(((node.location,),)), False)  # fmt: skip
     for way in data.ways:
         ring = tuple(locations[ref] for ref in way.refs)
         closed = len(ring) > 3 and way.refs[0] == way.refs[-1]
         # Shapefile outer rings run clockwise.
         shape = Shape((tuple(reversed(ring)),)) if closed else Shape((ring,))
-        _place(rows, records, way.osm_id, dict(way.tags), shape, closed)
+        _place(rows, records, ("way", way.osm_id), dict(way.tags), shape, closed)
     files: dict[str, bytes] = {}
     for layer, (shape_type, fields) in LAYERS.items():
         written = shapefile(shape_type, fields, rows[layer])
@@ -127,24 +130,25 @@ def geofabrik_files(data: OsmData) -> tuple[dict[str, bytes], tuple[GeofabrikRec
             files[f"{stem}.{ext}"] = written[ext]
         files[f"{stem}.prj"] = PRJ
         files[f"{stem}.cpg"] = CPG
-    ordered = sorted(records, key=lambda r: (r.layer, r.osm_id))
+    ordered = sorted(records, key=lambda r: (r.layer, r.osm_type, r.osm_id))
     return files, tuple(ordered)
 
 
 def _place(
     rows: dict[str, list[tuple[Shape, list[object]]]],
     records: list[GeofabrikRecord],
-    osm_id: int,
+    key: tuple[str, int],
     tags: Mapping[str, str],
     shape: Shape,
     closed: bool,
 ) -> None:
-    """Put an object in the layer Geofabrik's rules give its tags, if any."""
+    """Put an object, keyed by its type and id, in the layer Geofabrik's rules give its tags."""
+    osm_id = key[1]
     if not closed and len(shape.parts[0]) > 1:
         if tags.get("highway") == "primary":
             values: list[object] = [str(osm_id), *ROAD_CODE, tags.get("name", ""), *ROAD_FLAGS]
             rows["roads"].append((shape, values))
-            records.append(GeofabrikRecord(osm_id, "roads", "primary"))
+            records.append(GeofabrikRecord(*key, "roads", "primary"))
         return
     for family, needed, code, fclass in CLASSES:
         if not all(tags.get(k) == v for k, v in needed):
@@ -157,7 +161,7 @@ def _place(
         if family == "places":
             values = [str(osm_id), code, fclass, PLACE_POPULATION, name]
         rows[layer].append((shape, values))
-        records.append(GeofabrikRecord(osm_id, layer, fclass))
+        records.append(GeofabrikRecord(*key, layer, fclass))
         return
 
 

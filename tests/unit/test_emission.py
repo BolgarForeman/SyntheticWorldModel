@@ -236,7 +236,7 @@ def test_every_shapefile_and_overpass_record_is_an_extract_object() -> None:
     nodes = {n.osm_id for n in p.sources.osm.nodes}
     ways = {w.osm_id for w in p.sources.osm.ways}
     for record in p.sources.geofabrik:
-        assert record.osm_id in nodes | ways
+        assert record.osm_id in (nodes if record.osm_type == "node" else ways)
     for hit in p.sources.overpass:
         assert hit.osm_id in (nodes if hit.osm_type == "node" else ways)
 
@@ -323,10 +323,10 @@ def test_the_unnamed_share_is_a_fifth_of_ten_minor_nodes_within_rounding() -> No
     assert _unnamed(nodes, [Layer.TELECOM], load_registry(), 0) == unnamed  # type: ignore[arg-type]
 
 
-def test_only_minor_classes_go_unnamed_in_the_pilot() -> None:
+def test_only_the_unnamed_classes_go_unnamed_in_the_pilot() -> None:
     for node in pilot().observed.nodes:
         if not node.named:
-            assert node.node_class.value in load_registry().value("emission.names.minor_classes")
+            assert node.node_class.value in load_registry().value("emission.names.unnamed_classes")
 
 
 # --- Headers (B1, answer 1) -----------------------------------------------------------------
@@ -403,7 +403,7 @@ def test_every_record_maps_to_exactly_one_true_element() -> None:
             assert key not in owners, key
             owners[key] = element.element_id
     for record in p.sources.geofabrik:
-        assert ("way", record.osm_id) in owners or ("node", record.osm_id) in owners
+        assert (record.osm_type, record.osm_id) in owners
     for records in (p.sources.wri, p.sources.airports, p.sources.register):
         ids = [r.node_id for r in records]
         assert len(ids) == len(set(ids))
@@ -560,7 +560,7 @@ def test_wri_year_and_owner_are_empty_and_declared() -> None:
     assert any("commissioning_year and owner" in d for d in manifest()["declared_departures"])
 
 
-# --- Major facilities are unique within their town (item 4) ---------------------------------
+# --- Names are unique within their town unless shared (item 4; answers 2, item 2) -----------
 
 NAMED_COLUMNS = {
     "sources/wri_gppd/global_power_plant_database.csv": "name",
@@ -569,47 +569,76 @@ NAMED_COLUMNS = {
     "sources/facility_register/A21030000I-D21002-005.csv": "醫事機構名稱",
     "sources/facility_register/A21030000I-D21003-003.csv": "醫事機構名稱",
 }
-"""Files holding only major facilities, and their name column."""
+"""Delimited files whose every row is outside the shared-name list, and their name column."""
+REGISTER_ODS = "sources/facility_register/medical_institution_register.ods"
 
 
-def _groups() -> dict[NodeClass, str]:
-    groups = load_registry().value("emission.names.major_classes")
-    return {NodeClass(c): group for group, classes in groups.items() for c in classes}
+def _shared() -> set[NodeClass]:
+    return {NodeClass(c) for c in load_registry().value("emission.names.shared_name_classes")}
 
 
-def _assert_major_names_unique(emitted: Any) -> None:
-    groups = _groups()
+def _register_names(emitted: Any) -> list[str]:
+    with zipfile.ZipFile(io.BytesIO(emitted.sources.files[REGISTER_ODS])) as archive:
+        content = archive.read("content.xml").decode("utf-8")
+    cell = r"<table:table-cell[^>]*?(?:/>|><text:p>([^<]*)</text:p></table:table-cell>)"
+    table = [re.findall(cell, row) for row in content.split("</table:table-row>")[:-1]]
+    column = table[0].index("機構名稱")
+    return [row[column] for row in table[1:]]
+
+
+def _assert_unshared_names_unique(emitted: Any) -> None:
+    shared = _shared()
     elements = {e.element_id: e for e in emitted.sources.osm.elements}
-    objects = (*emitted.sources.osm.nodes, *emitted.sources.osm.ways)
-    tags = {o.osm_id: dict(o.tags) for o in objects}
-    seen: set[tuple[str, str, str]] = set()
+    # Node and way ids are separate spaces in OpenStreetMap, and here they overlap.
+    node_tags = {o.osm_id: dict(o.tags) for o in emitted.sources.osm.nodes}
+    way_tags = {o.osm_id: dict(o.tags) for o in emitted.sources.osm.ways}
+    seen: set[tuple[str, str]] = set()
+    checked = 0
     for node in emitted.observed.nodes:
         element = elements.get(node.node_id)
-        if node.node_class not in groups or element is None:
+        if node.node_class in shared or element is None:
             continue
-        main = element.way if element.way is not None else element.node
-        key = (node.town, groups[node.node_class], tags[main]["name"])
+        tags = way_tags[element.way] if element.way is not None else node_tags[element.node]
+        key = (node.town, tags["name"])
         assert key not in seen, key
         seen.add(key)
+        checked += 1
+    assert checked
     for path, column in NAMED_COLUMNS.items():
         if path in emitted.sources.files:
             table = rows(emitted.sources, path)
             names = [dict(zip(table[0], row, strict=True))[column] for row in table[1:]]
             assert len(names) == len(set(names)), path
+    names = _register_names(emitted)
+    assert names
+    assert len(names) == len(set(names)), REGISTER_ODS
 
 
-def test_no_two_major_facilities_of_a_group_share_a_name_in_any_source() -> None:
-    _assert_major_names_unique(pilot())
-    _assert_major_names_unique(rich())
+def test_no_two_unshared_elements_share_a_name_within_a_town_in_any_source() -> None:
+    _assert_unshared_names_unique(pilot())
+    _assert_unshared_names_unique(rich())
 
 
 def test_the_rich_world_tells_its_repeats_apart_by_side() -> None:
     repeats = [n for n in rich().observed.nodes if n.direction is not None]
-    assert repeats
+    assert {n.node_class for n in repeats} >= {C.CLINIC, C.GENERATION}
     for node in repeats:
-        assert node.node_class in _groups()
+        assert node.node_class not in _shared()
         assert node.direction in {"North", "South", "East", "West"}
-        assert node.name("Substation").startswith(f"{node.town} {node.direction} ")
+        assert node.name("Clinic").startswith(f"{node.town} {node.direction} ")
+
+
+def test_shared_name_classes_may_repeat_and_only_three_go_unnamed() -> None:
+    rules = load_registry()
+    shared = set(rules.value("emission.names.shared_name_classes"))
+    unnamed = set(rules.value("emission.names.unnamed_classes"))
+    assert unnamed == {"mast", "pumping", "distribution_substation"}
+    assert unnamed < shared
+    assert all(n.direction is None for n in rich().observed.nodes if n.node_class.value in shared)
+    assert any(not n.named for n in rich().observed.nodes)
+    for node in rich().observed.nodes:
+        if not node.named:
+            assert node.node_class.value in unnamed
 
 
 def test_the_side_is_found_by_comparisons_alone() -> None:
@@ -653,3 +682,24 @@ def test_the_inferred_overpass_queries_say_so() -> None:
         assert first.startswith("// inferred from landed tags, query text not saved:")
     ports = files["sources/osm/overpass/query_families_ports.overpassql"].decode("utf-8")
     assert "inferred" not in ports
+
+
+def test_the_manifest_matches_each_view_by_type_and_id() -> None:
+    # Node and way ids overlap, so a match on the id alone would give an element another's row.
+    p = pilot()
+    node_tags = {n.osm_id: dict(n.tags) for n in p.sources.osm.nodes}
+    way_tags = {w.osm_id: dict(w.tags) for w in p.sources.osm.ways}
+    elements = {e.element_id: e for e in p.sources.osm.elements}
+    fclass = {"hospital": "amenity", "clinic": "amenity", "fuel": "amenity",
+              "airport": "aeroway", "reservoir": "water", "water_works": "man_made",
+              "industrial": "landuse", "primary": "highway", "town": "place"}  # fmt: skip
+    checked = 0
+    for entry in manifest()["correspondence"]:
+        view = entry.get("openstreetmap", {}).get("geofabrik")
+        if view is None:
+            continue
+        element = elements[entry["element"]]
+        tags = way_tags[element.way] if element.way is not None else node_tags[element.node]
+        assert fclass[view["fclass"]] in tags, (entry["element"], view, tags)
+        checked += 1
+    assert checked

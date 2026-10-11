@@ -10614,38 +10614,71 @@ rules:
     decision: '0015'
   history: []
   theta_role: world_content
-- id: emission.names.major_classes
-  title: Major facility classes, unique by name within their town
+- id: emission.names.name_groups
+  title: Classes that share a name word, kept apart as one group
   stage: emission
   value:
-    power_plant: [generation]
-    transmission_substation: [transmission_substation]
     hospital: [tertiary, regional]
-    airport: [airport]
-    seaport: [seaport]
   units: class groups
   applies_to: {layer: null, node_class: null, condition: null}
   grade: J
   jurisdiction: null
   sources:
-  - {citation: 'Work Order 8, answers to PR 17, item 4 (decision 0015, addendum)', url: docs/work_orders/WO-08-pr-answers.md,
+  - {citation: 'Work Order 8, answers to the PR 17 update, item 2 (decision 0015, addendum)', url: docs/work_orders/WO-08-pr-answers-2.md,
     quote: null, verified: null}
-  - {citation: 'Structure v0.11 §4.6 (names)', url: docs/design/World_Generator_Structure.md, quote: null,
+  - {citation: 'Structure v0.12 §4.6 (names)', url: docs/design/World_Generator_Structure.md, quote: null,
     verified: null}
-  reasoning: Plants, transmission substations, hospitals, airports and ports carry distinct names in real
-    sources. Two members of one group in one town must not share a name, so a repeat takes a direction word
-    and, if two share a direction, a number. Hospitals are one group because every source names them by the
-    same word.
+  reasoning: Every facility is unique by name within its town unless its class shares names. Classes that
+    every source names by the same word are told apart as one group, so a tertiary and a regional hospital
+    in one town are never both "<Town> Hospital". Every other class is its own group. Replaces
+    emission.names.major_classes, under which only five groups were unique.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
+    date: '2026-10-11'
+    decision: '0015'
+  history:
+  - value:
+      power_plant: [generation]
+      transmission_substation: [transmission_substation]
+      hospital: [tertiary, regional]
+      airport: [airport]
+      seaport: [seaport]
+    units: class groups (emission.names.major_classes, unique within their town)
     date: '2026-10-10'
     decision: '0015'
-  history: []
   theta_role: world_content
-- id: emission.names.minor_classes
-  title: Minor classes, which may share a name and of which a share goes unnamed
+- id: emission.names.shared_name_classes
+  title: Classes that may repeat a name within a town
+  stage: emission
+  value: [mast, pumping, distribution_substation, storage, road_junction, depot]
+  units: classes
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Work Order 8, answers to the PR 17 update, item 2 (decision 0015, addendum)', url: docs/work_orders/WO-08-pr-answers-2.md,
+    quote: null, verified: null}
+  - {citation: 'Structure v0.12 §4.6 (names)', url: docs/design/World_Generator_Structure.md, quote: null,
+    verified: null}
+  reasoning: Masts, pumping stations, distribution substations, water storage tanks, road junctions and
+    fuel depots are numerous and often share a name in real mapping. Every other class, including one added
+    later, is unique within its town. Split from emission.names.minor_classes.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-11'
+    decision: '0015'
+  history:
+  - value: [mast, pumping, distribution_substation]
+    units: classes (emission.names.minor_classes, shared names and the unnamed share)
+    date: '2026-10-10'
+    decision: '0015'
+  theta_role: world_content
+- id: emission.names.unnamed_classes
+  title: Classes of which a share is left unnamed
   stage: emission
   value: [mast, pumping, distribution_substation]
   units: classes
@@ -10653,19 +10686,23 @@ rules:
   grade: J
   jurisdiction: null
   sources:
-  - {citation: 'Work Order 8, answers to PR 17, item 4 (decision 0015, addendum)', url: docs/work_orders/WO-08-pr-answers.md,
+  - {citation: 'Work Order 8, answers to the PR 17 update, item 2 (decision 0015, addendum)', url: docs/work_orders/WO-08-pr-answers-2.md,
     quote: null, verified: null}
-  - {citation: 'Structure v0.11 §4.6 (names)', url: docs/design/World_Generator_Structure.md, quote: null,
+  - {citation: 'Structure v0.12 §4.6 (names)', url: docs/design/World_Generator_Structure.md, quote: null,
     verified: null}
-  reasoning: Masts, pumping stations and distribution substations are numerous and often share a name or
-    carry none in real mapping (E4).
+  reasoning: The unnamed share (emission.names.unnamed_share) applies to these classes only, as ruled in
+    E4. Split from emission.names.minor_classes; the value is unchanged.
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
+    date: '2026-10-11'
+    decision: '0015'
+  history:
+  - value: [mast, pumping, distribution_substation]
+    units: classes (emission.names.minor_classes, shared names and the unnamed share)
     date: '2026-10-10'
     decision: '0015'
-  history: []
   theta_role: world_content
 - id: emission.names.direction_words
   title: Direction words that tell repeated major facilities apart

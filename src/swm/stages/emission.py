@@ -71,7 +71,7 @@ def build_observed(
     emitted = [layer for layer in Layer if settings.get(layer).state == LayerState.EMITTED]
     unnamed = _unnamed(layers.nodes, emitted, rules, root_seed)
     kept = [n for n in sorted(layers.nodes, key=lambda n: n.node_id) if n.layer in emitted]
-    qualifiers = major_qualifiers(kept, terrain, rules)
+    qualifiers = repeat_qualifiers(kept, terrain, rules)
     nodes = tuple(
         _node(
             node,
@@ -159,7 +159,7 @@ def _unnamed(
 ) -> set[str]:
     """Leave the ruled share of each minor class unnamed, chosen on its layer's stream."""
     share = rules.number("emission.names.unnamed_share")
-    minor = [NodeClass(value) for value in rules.value("emission.names.minor_classes")]
+    minor = [NodeClass(value) for value in rules.value("emission.names.unnamed_classes")]
     unnamed: set[str] = set()
     for layer in emitted:
         stream = rng.stream(root_seed, f"emission/unnamed/{layer}")
@@ -175,11 +175,13 @@ def _unnamed(
     return unnamed
 
 
-def major_qualifiers(
+def repeat_qualifiers(
     nodes: Sequence[Node], terrain: TerrainResult, rules: Registry
 ) -> dict[str, tuple[str, int | None]]:
-    """Tell apart major facilities of one group in one town by direction word, then number.
+    """Tell apart facilities of one name group in one town by direction word, then number.
 
+    Every class is unique by name within its town unless it is on the shared-name list; classes
+    that share a name word (``name_groups``) count as one group, every other class as its own.
     The first of a group in sorted world-id order keeps the plain name; each repeat takes the
     word for its side of the town centre, and repeats that share a side are numbered from 2 in
     world-id order.
@@ -191,7 +193,8 @@ def major_qualifiers(
     terrain : TerrainResult
         The terrain, for the town centres.
     rules : Registry
-        The modeling rules in force (``emission.names.major_classes``, ``direction_words``).
+        The modeling rules in force (``emission.names.name_groups``, ``shared_name_classes``,
+        ``direction_words``).
 
     Returns
     -------
@@ -199,17 +202,19 @@ def major_qualifiers(
         Per repeated node id, its direction word and its number (None unless another repeat in
         its town shares the side).
 
-    Spec: structure v0.11 §4.6 (names); WO-08 PR answers, item 4.
+    Spec: structure v0.12 §4.6 (names); WO-08 PR answers, item 4, and answers 2, item 2.
     """
+    shared = {NodeClass(c) for c in rules.value("emission.names.shared_name_classes")}
     group_of = {NodeClass(c): group for group, classes in
-                rules.value("emission.names.major_classes").items() for c in classes}  # fmt: skip
+                rules.value("emission.names.name_groups").items() for c in classes}  # fmt: skip
     words = rules.value("emission.names.direction_words")
     centres = {c.city_id: cell_centre_m(c.centre_row, c.centre_column, terrain.grid)
                for c in terrain.cities}  # fmt: skip
     members: dict[tuple[int, str], list[Node]] = {}
     for node in nodes:
-        if node.node_class in group_of:
-            members.setdefault((node.city_id, group_of[node.node_class]), []).append(node)
+        if node.node_class not in shared:
+            group = group_of.get(node.node_class, node.node_class.value)
+            members.setdefault((node.city_id, group), []).append(node)
     qualifiers: dict[str, tuple[str, int | None]] = {}
     for (city_id, _), group in sorted(members.items()):
         # CHOICE: the lowest world id keeps the plain name; numbering of a shared side starts at 2.

@@ -137,3 +137,26 @@ Each stays a placeholder where it sets a number.
 - the C(13) `osm_id` and the WRI 7 decimals are gone;
 - added: the register's 6 decimals, a choice;
 - added: the empty WRI columns.
+
+### Addendum 2: the PR 17 update answers
+
+- **Date:** 2026-10-11
+- **Decided by:** the author (Foreman)
+- **Source:** `docs/work_orders/WO-08-pr-answers-2.md`; structure v0.12 §4.6
+
+1. **A repeated group keeps one plain name.** The lowest world id keeps the plain name; each repeat takes a direction word, then a number if two share a direction. This confirms the reading in addendum 1.
+2. **Name uniqueness is the default for every class.**
+   - Only the shared-name classes may repeat a name within a town: masts, pumping stations, distribution substations, water storage tanks, road junctions and fuel depots.
+   - Every other class, including one added later, takes the direction-word rule when it repeats.
+   - Classes that every source names by one word are told apart as one group; today that is only the hospital group (tertiary and regional).
+   - The 20% unnamed share stays on masts, pumping stations and distribution substations only (E4).
+   - The registry changes as follows, all placeholders (J), ruled 2026-10-11, with the old values in history:
+     - `emission.names.major_classes` becomes `emission.names.name_groups`;
+     - `emission.names.minor_classes` splits into `emission.names.shared_name_classes` (six classes) and `emission.names.unnamed_classes` (the three).
+3. **The Overpass "inferred" mark** is added to the Emission Ruling Sheet by the design side.
+
+**Accepted as stated:**
+- the two extra golden changes (the register at 6 decimals; the `.overpassql` provenance line);
+- the four choices (the register's 6 decimals; the lowest id keeps the plain name and numbering starts at 2; a diagonal counts as east or west; hospitals as one naming group).
+
+**Fixed with this change:** the truth manifest's correspondence matched Geofabrik and Overpass records by id alone. OpenStreetMap node and way ids are separate spaces, and here they overlap, so six pilot elements were credited with another object's shapefile row or query hit. Records now carry the object type and are matched on type and id.

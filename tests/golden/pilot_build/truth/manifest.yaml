@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: cad43993693de8793e435cc87122aca44a788f1fe59a5837f6c73f33545fed8d
+  registry_sha256: 6e3bfb53e8abae89b6119e62ebae8735309ac057dc03f2ad8258b907724a97df
   overrides: {}
   relaxed_limits: []
   out_of_range: []
@@ -13,11 +13,7 @@ correspondence:
   openstreetmap:
     kind: node
     node: 900000000000
-    geofabrik:
-      layer: landuse_a
-      fclass: industrial
     overpass:
-    - TWN_Industrial
     - TWN_Industrial
 - element: SWM-FUE-0002
   openstreetmap:
@@ -33,7 +29,6 @@ correspondence:
       layer: landuse_a
       fclass: industrial
     overpass:
-    - TWN_Industrial
     - TWN_Industrial
 - element: SWM-FUE-0003
   openstreetmap:
@@ -96,8 +91,8 @@ correspondence:
     kind: node
     node: 900000000018
     geofabrik:
-      layer: roads
-      fclass: primary
+      layer: pois
+      fclass: clinic
   facility_register:
     code: XS00000003
     files:
@@ -106,9 +101,6 @@ correspondence:
   openstreetmap:
     kind: node
     node: 900000000019
-    geofabrik:
-      layer: roads
-      fclass: primary
   facility_register:
     code: XS00000004
     files:
@@ -155,9 +147,6 @@ correspondence:
     - 900000000036
     - 900000000037
     - 900000000038
-    geofabrik:
-      layer: traffic
-      fclass: fuel
 - element: SWM-POW-L0001
   openstreetmap:
     kind: line
@@ -185,9 +174,6 @@ correspondence:
     - 900000000059
     - 900000000060
     - 900000000061
-    geofabrik:
-      layer: traffic
-      fclass: fuel
 - element: SWM-POW-L0002
   openstreetmap:
     kind: line
@@ -9831,7 +9817,7 @@ declared_departures:
 - 'Source overlap (assets missing from one of two sources) is Phase 3: in Phase 1 every true element in a source''s scope appears in it.'
 theta:
   registry_version: '0.1'
-  registry_sha256: cad43993693de8793e435cc87122aca44a788f1fe59a5837f6c73f33545fed8d
+  registry_sha256: 6e3bfb53e8abae89b6119e62ebae8735309ac057dc03f2ad8258b907724a97df
   overrides: {}
   relaxed_limits: []
   theta_list:

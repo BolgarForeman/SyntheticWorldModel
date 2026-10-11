@@ -76,6 +76,10 @@
 
 The tests compare each emitted location with the true one within half a unit in that source's last decimal place. The Phase 3 realized-error check must therefore measure planted error against the clean, rounded file, never against the true location.
 
+**Names (PR 17 answers 2).** Every class is unique by name within its town except six shared-name classes. A repeat takes a direction word, then a number. The unnamed share stays on three classes.
+
+**Correction found in testing.** The manifest's view matching treated OpenStreetMap node and way ids as one space. A test that read names across views hit the same overlap, which exposed the mistake. Matching is now on type and id, and a regression test checks every listed shapefile class against the element's own tags.
+
 **Figures.**
 - `figures/wo8_pilot_extract_qgis.png`: the pilot's `island.osm.pbf` rendered by QGIS 3.40.14, with its multipolygons, lines and points, and points labelled by name.
 - `figures/wo8_hand_trace_map_scenario_7.png`: the trace pack's `map.pdf` rasterized by GDAL.

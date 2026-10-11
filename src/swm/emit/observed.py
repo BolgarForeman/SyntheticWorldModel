@@ -46,7 +46,7 @@ class ObservedNode:
     runway: tuple[LonLat, LonLat] | None
     district: str
     direction: str | None = None
-    """A repeated major facility's direction word from its town centre, else None (§4.6)."""
+    """A repeated facility's direction word from its town centre, else None (§4.6)."""
     number: int | None = None
     """Its number when another repeat in its town shares the direction, else None."""
 
