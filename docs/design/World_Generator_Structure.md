@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.10 · 2026-10-10 · companion to the World Generator Interface mockup v0.5 and recipe schema v3 · supersedes v0.9*
+*v0.11 · 2026-10-10 · companion to the World Generator Interface mockup v0.5 and recipe schema v3 · supersedes v0.10*
 
 ## 1. What this is
 
@@ -75,7 +75,7 @@ Each stage reads the recipe and the outputs of earlier stages, draws from its ow
 ### 4.1a Coordinates
 
 - **Working projection:** WGS 84 / UTM zone 10S (EPSG:32710). Point Nemo lies almost on the zone's central meridian (123°W), so distortion is minimal for every size up to Taiwan scale. The generator's local metres are placed at a fixed offset from the centroid, so they are real projected coordinates.
-- **Emitted sources:** WGS 84 latitude and longitude (EPSG:4326), in each source's own format, exactly as real sources carry them. Emitted coordinates are rounded to 7 decimal places (about 1 cm, the precision OpenStreetMap stores), so the transform gives the same bytes on every platform.
+- **Emitted sources:** WGS 84 latitude and longitude (EPSG:4326), in each source's own format, exactly as real sources carry them. Each source is written at the precision its real file carries, so the transform gives the same bytes on every platform and the clean emission looks like the real source: OpenStreetMap at 7 decimal places (about 1 cm, the precision it stores); WRI at 4 (about 11 m); OurAirports and the facility register at the precision measured from the real files and recorded beside each header. The rounding is part of the clean emission, not error: the realized-error check (§7) measures planted error against the clean, rounded file, never against the true location. (Ruled 2026-10-10, PR 17 answers.)
 - **Truth manifest:** EPSG:32710 metres, with latitude and longitude alongside.
 - **Analysis:** the pipeline takes the analysis projection per world: EPSG:32710 for constructed worlds, EPSG:3826 (TWD97 / TM2) for Taiwan. Both are metric Transverse Mercator, so the analysis code is the same.
 - **Very large and huge presets** outgrow one UTM zone and use a custom Lambert azimuthal equal-area projection centred on Point Nemo (Phase 5).
@@ -542,9 +542,10 @@ Where a class has a telecom tolerance row, the tolerance acts first: full functi
 - **How each source is written** (ruled 2026-10-10, decision 0015; `evidence/Emission_Ruling_Sheet_v0_2.md`):
   - **OpenStreetMap in three forms, built from the same features** (corrected 2026-10-10, PR 8 answers): the canonical `.osm.pbf` extract for the island (with a plain-text `.osm` copy); Geofabrik-style free shapefiles for the classes those carry; and Overpass-style GeoJSON for each query the pipeline runs. The last two are how the pipeline ingests Taiwan today. Each source's scope decides which features it contributes, and its own error settings apply to those features in Phase 3. The manifest records which records in each form are the same element.
   - **Outlines where real mapping uses them.** Classes usually mapped as areas (plants, substations, hospitals, water works, reservoirs, ports, airports, tank farms, refineries) are closed outlines with a rectangular footprint sized by class (J); the rest are points. The true location is the outline's centre. Lines on emitted layers are ways: power lines through their tower points, pipelines, mains and communication lines.
-  - **Identifiers from reserved ranges.** Country `XS` / `XSW` ("Synthetic World", ISO 3166 user-assigned); OpenStreetMap ids from 9,000,000,000,000; WRI `XSW0000001…`; OurAirports `XS-0001…` with no ICAO or IATA codes; register codes with an `XS` prefix.
-  - **Names.** Plain, pronounceable invented town names from a fixed syllable list in the registry, in English only (Phase 1); facilities named by town and class in each source's own style; a share of minor elements unnamed (J). A test screens names against common words and well-known places. Leaks are flagged by the identifiers, not the names.
-  - **The facility register is three real-style file types, joined on the institution code** (corrected 2026-10-10, PR 8 answers): the health ministry's institution register (every facility; code, name, county and district), the national health insurance hospital lists (one file per level), and the beds table by code. Column headers as in the real files; values in English; coordinates in place of addresses in Phase 1 (declared departure). The emergency-hospitals PDF, synthetic addresses, a gazetteer and the pipeline's geocoder come in Phase 6.
+  - **Identifiers from reserved ranges.** Country `XS` / `XSW` ("Synthetic World", ISO 3166 user-assigned); OpenStreetMap ids from 900,000,000,000 (12 digits, so they fit Geofabrik's 12-character `osm_id` field; still far above any real id; amended 2026-10-10, PR 17 answers); WRI `XSW0000001…`; OurAirports `XS-0001…` with no ICAO or IATA codes; register codes with an `XS` prefix.
+  - **Names.** Plain, pronounceable invented town names from a fixed syllable list in the registry, in English only (Phase 1); facilities named by town and class in each source's own style; a share of minor elements unnamed (J). Major facilities (plants, transmission substations, hospitals, airports, ports; the class split is a registry placeholder, J) are unique within their town: a repeat takes a direction word from its position relative to the town centre, found by comparing east and north offsets, and a number if two share a direction. Minor elements (masts, pumping stations, distribution substations) may share a name, as real ones do (ruled 2026-10-10, PR 17 answers). A test screens names against common words and well-known places. Leaks are flagged by the identifiers, not the names.
+  - **The facility register is three real-style file types, joined on the institution code** (corrected 2026-10-10, PR 8 answers): the health ministry's institution register (every facility; code, name, county and district), the national health insurance hospital lists (one file per level), and the beds table by code. Column headers as in the real files; values in English; coordinates in place of addresses in Phase 1 (declared departure). The emergency-hospitals PDF, synthetic addresses, a gazetteer and the pipeline's geocoder come in Phase 6. Every hospital-level file is written in every world; a level with no hospitals is a file holding only its header.
+  - **Columns the world does not hold** are left empty, as the real file leaves them: in Phase 1, WRI's commissioning year and owner. Phase 6 draws them at fill rates measured from the real file. The manifest declares the empty columns.
   - **Scored attributes:** location; class; capacity where the source carries it (MW, voltage); line end points (OpenStreetMap); capacity and primary fuel (WRI); type and scheduled service (OurAirports); register level and beds (register). Everything else, names included, is context.
 - **Printable hand-trace pack:** a one-page map (nodes, lines and towers, links, the seven couplings switched on, the crew base, the storm track and damage) and tables (nodes and stocks, dependencies, the scenario's damage, the reference-run timeline), as a PDF with fixed metadata and as CSV. Scenario 7 by default.
 
@@ -694,6 +695,14 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.10
+
+All ruled by the author, 2026-10-10 (PR 17 answers; addendum to decision 0015):
+- §4.1a: each source is written at its real coordinate precision (OpenStreetMap 7 decimals, WRI 4, the others as measured); rounding is part of the clean emission, not error.
+- §4.6: OpenStreetMap ids start at 900,000,000,000 (12 digits), amending ruling E3, so they fit Geofabrik's `osm_id` field without a departure.
+- §4.6: major facilities have unique names within their town (direction word, then number); minor ones may share a name.
+- §4.6: every hospital-level file is written, header-only when empty; columns the world does not hold (WRI commissioning year and owner) stay empty until Phase 6.
 
 ## Changes from v0.9
 
