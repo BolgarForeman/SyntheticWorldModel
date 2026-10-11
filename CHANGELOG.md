@@ -110,6 +110,12 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ### Changed
 
+- The hand-trace pack can be traced by hand (Work Order 9, Part A):
+  - **Blind pack:** `trace_pack/` holds the map, a one-page rules sheet and the tables.
+  - **Answer:** the reference run's timeline moves to `trace_pack/answer/`, so a tracer can set it aside.
+  - **New tables:** links, stocks, generators, tolerance, failure points with travel from the base, damaged facilities, crews, travel to every node, the crew order and the Lifeline weights. The node and dependency tables gain columns. Every value is read from the engine's world or the registry.
+  - **Map:** framed on the island, with a storm-track inset, larger-scale insets for crowded clusters, every line labelled and every failure point marked.
+  - **Engine:** `crew_order` and `trip_hours` become public functions so the pack prints exactly what the engine uses. Behaviour is unchanged, and the reference runs are identical.
 - Name uniqueness within a town is the default for every class except six shared-name classes. The unnamed share stays on masts, pumping stations and distribution substations. The registry splits `emission.names.minor_classes` and replaces `major_classes` with `name_groups` (decision 0015, addendum 2; structure v0.12).
 - Emission per the PR 17 answers (decision 0015, addendum; structure v0.11):
   - OpenStreetMap ids start at 900,000,000,000 and fit Geofabrik's C(12) `osm_id`;

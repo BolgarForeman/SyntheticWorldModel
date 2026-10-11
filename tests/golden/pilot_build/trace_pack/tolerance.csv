@@ -1,0 +1,17 @@
+dependency,consumer,rule,T_h,ramp_to_h,d,kappa_public_share,d_eff,manual_switching
+SWM-DEP-0017,SWM-POW-0001,tolerance.generation,12.0,,0.95,0.2,0.99,no
+SWM-DEP-0018,SWM-POW-0002,tolerance.substation,12.0,,1.0,0.2,1.0,yes
+SWM-DEP-0019,SWM-POW-0003,tolerance.substation,12.0,,1.0,0.5,1.0,yes
+SWM-DEP-0020,SWM-POW-0004,tolerance.substation,12.0,,1.0,0.5,1.0,yes
+SWM-DEP-0021,SWM-WAT-0002,tolerance.treatment,24.0,,0.9,0.5,0.95,no
+SWM-DEP-0022,SWM-WAT-0003,tolerance.pumping,12.0,,0.8,0.5,0.9,no
+SWM-DEP-0023,SWM-TRN-0001,tolerance.seaport_freight_yard,24.0,,0.5,1.0,0.5,no
+SWM-DEP-0024,SWM-TRN-0002,tolerance.towered_airport,0.0,,0.2,1.0,0.19999999999999996,no
+SWM-DEP-0025,SWM-TRN-0003,tolerance.seaport_freight_yard,24.0,,0.5,1.0,0.5,no
+SWM-DEP-0026,SWM-FUE-0001,tolerance.import_terminal,12.0,,0.8,0.5,0.9,no
+SWM-DEP-0027,SWM-FUE-0003,tolerance.depot,12.0,,0.6,1.0,0.6,no
+SWM-DEP-0028,SWM-FUE-0004,tolerance.depot,12.0,,0.6,1.0,0.6,no
+SWM-DEP-0029,SWM-HLT-0001,tolerance.hospital_records_on_site,24.0,,0.85,1.0,0.85,no
+SWM-DEP-0030,SWM-HLT-0002,tolerance.hospital_records_on_site,24.0,,0.85,1.0,0.85,no
+SWM-DEP-0031,SWM-HLT-0003,tolerance.clinic,24.0,,0.8,1.0,0.8,no
+SWM-DEP-0032,SWM-HLT-0004,tolerance.blood_bank,24.0,,0.7,1.0,0.7,no

@@ -1,0 +1,20 @@
+stock,node,kind,covers,quantity,units,draw_per_h,hours,refill,generator_fuel,rule
+SWM-FUE-0001:lng,SWM-FUE-0001,lng,transport,76895.87368290884,GJ,243.106726829482,316.305002,none,no,reserves.lng.days
+SWM-FUE-0002:oil_government,SWM-FUE-0002,oil_government,fuel,1081672.1726156368,GJ,714.661749487883,1513.544237,none,no,reserves.oil.government_days
+SWM-FUE-0002:oil_industry,SWM-FUE-0002,oil_industry,fuel,1565263.134054395,GJ,714.661749487883,2190.21535,none,no,reserves.oil.industry_days
+SWM-HLT-0001:generator_fuel,SWM-HLT-0001,generator_fuel,power,41906.70923012689,L,499.5908164238084,83.882065,delivery,yes,reserves.hospital.generator_fuel_h
+SWM-HLT-0001:supplies,SWM-HLT-0001,supplies,transport,114.22077179814225,hours of supplies,1.0,114.220772,none,no,reserves.hospital.supplies_h
+SWM-HLT-0001:water,SWM-HLT-0001,water,water,1403.117547912844,m3,24.55,57.153464,main,no,reserves.hospital.water_h
+SWM-HLT-0002:generator_fuel,SWM-HLT-0002,generator_fuel,power,15365.525275333406,L,281.61994913182707,54.56121,delivery,yes,reserves.hospital.generator_fuel_h
+SWM-HLT-0002:supplies,SWM-HLT-0002,supplies,transport,33.11912581696437,hours of supplies,1.0,33.119126,none,no,reserves.hospital.supplies_h
+SWM-HLT-0002:water,SWM-HLT-0002,water,water,548.7867701044333,m3,5.0874999999999995,107.869635,main,no,reserves.hospital.water_h
+SWM-HLT-0004:blood,SWM-HLT-0004,blood,transport,127.27339667543612,hours of issue,1.0,127.273397,none,no,reserves.blood_bank.blood_stock_days
+SWM-HLT-0004:generator_fuel,SWM-HLT-0004,generator_fuel,power,464.68756433935766,L,12.534425637686184,37.072904,delivery,yes,reserves.blood_bank.generator_fuel_h
+SWM-POW-0001:purified_water,SWM-POW-0001,purified_water,water,687.4728540085878,m3,67.41207048677568,10.198068,main,no,reserves.generation.purified_water_h
+SWM-TEL-0001:battery,SWM-TEL-0001,battery,power,448.4885900489903,kWh,187.41566278367821,2.393016,battery,no,reserves.exchange.battery_h
+SWM-TEL-0001:generator_fuel,SWM-TEL-0001,generator_fuel,power,1329.935302397058,L,50.41481328880944,26.379852,delivery,yes,reserves.exchange.fuel_h
+SWM-TEL-0002:battery,SWM-TEL-0002,battery,power,17.84456918763688,kWh,4.573906085451859,3.901385,battery,no,reserves.mast.battery_h
+SWM-TEL-0003:battery,SWM-TEL-0003,battery,power,21.028980007759102,kWh,2.722028524425703,7.725481,battery,no,reserves.mast.battery_h
+SWM-TEL-0004:battery,SWM-TEL-0004,battery,power,23.951322668125318,kWh,5.496388257254363,4.357648,battery,no,reserves.mast.battery_h
+SWM-WAT-0002:generator_fuel,SWM-WAT-0002,generator_fuel,power,34476.8149422015,L,974.0793226044929,35.394258,delivery,yes,reserves.treatment.fuel_h
+SWM-WAT-0004:distribution_water,SWM-WAT-0004,distribution_water,water,3975.260944353419,m3,165.56130698872812,24.010809,pumps,no,reserves.storage.peak_day_h

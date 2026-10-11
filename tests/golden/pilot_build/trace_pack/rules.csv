@@ -1,0 +1,25 @@
+rule,what,value,units
+dynamics.step_min,step length,15.0,min
+dynamics.settling_cap_passes,settling cap,100.0,passes
+dynamics.trip_point,trip point,0.9,ratio of supply received
+reserves.hospital.essential_load_fraction,floor (hospital on generator),0.6,ratio of normal load
+dynamics.threshold,threshold θ (logistic and control edges),0.5,ratio of supplier state
+repair.crew_bound_lead_h,crew-bound lead per job,2.0,h
+storm.line_crew_work_h,line work per failure point,6.0,h per failure point
+storm.tower_crew_work_h,line work per towered failure point,72.0,h
+repair.manual_switching_h,manual switching on site,1.0,h on site
+crews.road_speed_kmh,road speed,40.0,km/h
+crews.offroad_speed_kmh,off-road speed,2.0,km/h
+crews.outlying_island_mobilisation_h,sea-trip mobilisation,12.0,h
+reserves.battery_recharge_h,"battery recharge, empty to full",12.0,h
+reserves.fuel_resupply.lead_time_h,fuel delivery lead time,12.0,h
+reserves.fuel_resupply.delivery_h,fuel delivery interval,24.0,h of fuel
+reserves.main_refill_rate_fraction,"refill from the main, share of drain rate",1.0,ratio of the drain rate
+dynamics.horizon_h,horizon,72.0,h
+refill: battery,how the stock refills,battery,
+refill: generator_fuel,how the stock refills,delivery,
+refill: purified_water,how the stock refills,main,
+refill: makeup_water,how the stock refills,main,
+refill: water,how the stock refills,main,
+refill: distribution_water,how the stock refills,pumps,
+refill: any other kind,how the stock refills,none,

@@ -1,0 +1,12 @@
+class,lifeline_weight
+tertiary,10.0
+regional,7.0
+seaport,7.0
+blood_bank,6.0
+airport,6.0
+distribution_substation,5.0
+storage,5.0
+depot,4.0
+freight_yard,4.0
+clinic,3.0
+mast,1.0

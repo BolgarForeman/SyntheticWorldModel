@@ -296,7 +296,9 @@ def write_hash_list(hashes: Sequence[tuple[str, str]], path: Path) -> Path:
     return _write(path, lines.encode("utf-8"))
 
 
-def write_csv(rows: Sequence[Mapping[str, object]], path: Path) -> Path:
+def write_csv(
+    rows: Sequence[Mapping[str, object]], path: Path, columns: Sequence[str] = ()
+) -> Path:
     """Write rows as UTF-8 CSV with a header, LF line endings and the rows in the order given.
 
     Parameters
@@ -305,6 +307,8 @@ def write_csv(rows: Sequence[Mapping[str, object]], path: Path) -> Path:
         The rows; the first row's keys, in order, are the header.
     path : Path
         The file to write; its folder is created if absent.
+    columns : sequence of str
+        The header for a table with no rows (ignored when there are rows).
 
     Returns
     -------
@@ -314,7 +318,7 @@ def write_csv(rows: Sequence[Mapping[str, object]], path: Path) -> Path:
     Spec: Work Order 4 review, answer 3 (couplings_edges.csv).
     """
     buffer = io.StringIO()
-    header = list(rows[0]) if rows else []
+    header = list(rows[0]) if rows else list(columns)
     writer = csv.DictWriter(buffer, fieldnames=header, lineterminator="\n")
     writer.writeheader()
     writer.writerows(rows)
