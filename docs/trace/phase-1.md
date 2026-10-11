@@ -36,3 +36,50 @@
 - **Line-loss calibration:** the targets were moved from one realized draw to the expected share. The realized share depended on the draws, which changed when storm damage moved to one stream per element (PR 15 answers; PR 7b answers).
 - **Degradation profiles:** v0.2 said LNG and oil plants ride out a fuel cut on their own stocks. The world holds those stocks upstream, so v0.3 corrects the profile to the world as built.
 - **Delivery timing:** a fuel delivery waits for the depot's settled state within its step.
+
+## Emission (Work Order 8; decision 0015)
+
+**What was built.**
+- **Projection:** the emission stage projects the world onto an observed-only world, which is all the writers ever see.
+- **Writers:** they write the OpenStreetMap extract and its two views (Geofabrik shapefiles and Overpass responses), WRI, OurAirports and the three register file types.
+- **Truth manifest:** it holds:
+  - every record's true element;
+  - the true geometry and every unobserved value;
+  - the hidden items and the declared departures;
+  - θ\* by registry fingerprint, and the seeds.
+- **Commands:** `swm build` writes the whole tree, with a hand-trace pack for scenario 7.
+
+**How it was tested.**
+- **Identity:** the pilot's 115 built files are golden.
+- **OpenStreetMap geometry:** each feature is in its source's scope, outlines are closed and centred, lines pass through their towers in order, ids are reserved, unique and sorted, and nodes-only layers have no ways.
+- **Identifiers and names:** identifiers are reserved, and names are deterministic and screened.
+- **Headers:** they match exactly, and were checked once against the real files through `machine.toml`.
+- **Correspondence:** each record maps to exactly one true element, and every in-scope element is listed.
+- **Separation:** no writer reaches unobserved fields, the dynamics or error induction, and no source file carries a manifest-only id or value.
+- **Hand trace:** the timeline equals reference run 7.
+
+**Departures from the design.** These are the declared departures in the manifest (as amended by the PR 17 answers):
+- the register's stand-in coordinates at 6 decimals, a choice;
+- WRI's commissioning year and owner left empty, because the world does not hold them;
+- three Overpass queries inferred from landed tags, query text not saved;
+- an ASCII register file name;
+- uncompressed PBF blobs.
+
+**Rounding is part of the clean emission (PR 17 answers; structure v0.11 §4.1a).** Each source is written at its real file's precision:
+
+| Source | Decimals |
+|---|---|
+| OpenStreetMap | 7 |
+| WRI | 4 |
+| OurAirports | 6, measured as the most common count |
+| Facility register | 6, a choice |
+
+The tests compare each emitted location with the true one within half a unit in that source's last decimal place. The Phase 3 realized-error check must therefore measure planted error against the clean, rounded file, never against the true location.
+
+**Names (PR 17 answers 2).** Every class is unique by name within its town except six shared-name classes. A repeat takes a direction word, then a number. The unnamed share stays on three classes.
+
+**Correction found in testing.** The manifest's view matching treated OpenStreetMap node and way ids as one space. A test that read names across views hit the same overlap, which exposed the mistake. Matching is now on type and id, and a regression test checks every listed shapefile class against the element's own tags.
+
+**Figures.**
+- `figures/wo8_pilot_extract_qgis.png`: the pilot's `island.osm.pbf` rendered by QGIS 3.40.14, with its multipolygons, lines and points, and points labelled by name.
+- `figures/wo8_hand_trace_map_scenario_7.png`: the trace pack's `map.pdf` rasterized by GDAL.

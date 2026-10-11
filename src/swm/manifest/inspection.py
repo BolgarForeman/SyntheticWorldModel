@@ -15,6 +15,7 @@ from numpy.typing import NDArray
 
 from swm.coordinates import WORKING_CRS, domain_origin_m
 from swm.recipe.schema import Layer
+from swm.rules.registry import Registry
 from swm.stages.couplings import CouplingsResult
 from swm.stages.layers import AttributeValue, LayersResult, Node
 from swm.stages.terrain import TerrainResult
@@ -48,8 +49,14 @@ def export_gis(
     couplings: CouplingsResult,
     out_dir: Path,
     rules_stamp: Mapping[str, object],
+    rules: Registry | None = None,
+    root_seed: int = 0,
 ) -> list[Path]:
-    """Write world.gpkg (nodes, links, couplings, cities, coastline) and three GeoTIFFs.
+    """Write world.gpkg and three GeoTIFFs.
+
+    The package holds the nodes, links, couplings, cities and coastline, and, given the
+    registry, the true footprints, the power lines' tower points and the feeds' road routes
+    (Work Order 8, C2).
 
     Parameters
     ----------
@@ -63,6 +70,10 @@ def export_gis(
         The folder to write into; created if absent.
     rules_stamp : Mapping[str, object]
         The modeling rules registry's version, hash and overrides, stamped on the package.
+    rules : Registry or None
+        The modeling rules in force, for the footprints; None leaves the truth layers out.
+    root_seed : int
+        The recipe's root seed, for the footprints' streams.
 
     Returns
     -------
@@ -79,6 +90,8 @@ def export_gis(
     _write_nodes(package, layers, metadata)
     _write_links(package, layers, metadata)
     _write_couplings(package, couplings, metadata)
+    if rules is not None:
+        _write_truth(package, layers, couplings, rules, root_seed, metadata)
     cities = (np.asarray(terrain.urban_id) + 1).astype(np.int32)
     _write_polygons(package, "cities", terrain, cities, "city_id", metadata)
     land = np.asarray(terrain.land).astype(np.int32)
@@ -240,6 +253,53 @@ def _write_couplings(
         "inspection only, never emitted. " + SYNTHETIC_NOTICE
     )
     _write_layer(package, "couplings", geometry, columns, "LineString", description, metadata)
+
+
+def _write_truth(
+    package: Path,
+    layers: LayersResult,
+    couplings: CouplingsResult,
+    rules: Registry,
+    root_seed: int,
+    metadata: Mapping[str, str],
+) -> None:
+    """Write the true footprints, tower points and feed routes (Work Order 8, C2)."""
+    import shapely
+
+    from swm.stages.emission import AREA_CLASSES, outline_m
+
+    areas = [
+        n for n in sorted(layers.nodes, key=lambda n: n.node_id) if n.node_class in AREA_CLASSES
+    ]
+    if areas:
+        geometry = np.array(
+            [shapely.to_wkb(shapely.Polygon(outline_m(n, rules, root_seed))) for n in areas]
+        )
+        columns = _typed_columns(
+            [{"node_id": n.node_id, "class": n.node_class.value} for n in areas]
+        )
+        description = "True footprints: each area class's outline, centred on its location. "
+        _write_layer(package, "true_footprints", geometry, columns, "Polygon",
+                     description + SYNTHETIC_NOTICE, metadata)  # fmt: skip
+    towers = [
+        (line.link_id, index, point)
+        for line in layers.power_lines
+        for index, point in enumerate(line.tower_points)
+    ]
+    if towers:
+        geometry = np.array([shapely.to_wkb(shapely.Point(p)) for _, _, p in towers])
+        columns = _typed_columns([{"line_id": line, "tower": i} for line, i, _ in towers])
+        _write_layer(package, "towers", geometry, columns, "Point",
+                     "Power line tower points, in order along each route. " + SYNTHETIC_NOTICE,
+                     metadata)  # fmt: skip
+    feeds = [edge for edge in couplings.edges if edge.route]
+    if feeds:
+        geometry = np.array([shapely.to_wkb(shapely.LineString(e.route)) for e in feeds])
+        columns = _typed_columns([{"edge_id": e.edge_id, "supplier_id": e.supplier_id,
+                                   "consumer_id": e.consumer_id} for e in feeds])  # fmt: skip
+        _write_layer(package, "feed_routes", geometry, columns, "LineString",
+                     "Power feeds along the roads: unobserved truth, never emitted. "
+                     + SYNTHETIC_NOTICE, metadata)  # fmt: skip
 
 
 def _write_polygons(

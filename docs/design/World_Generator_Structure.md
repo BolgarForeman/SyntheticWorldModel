@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.9 · 2026-10-09 · companion to the World Generator Interface mockup v0.5 and recipe schema v2 · supersedes v0.8*
+*v0.12 · 2026-10-11 · companion to the World Generator Interface mockup v0.5 and recipe schema v3 · supersedes v0.11*
 
 ## 1. What this is
 
@@ -75,7 +75,7 @@ Each stage reads the recipe and the outputs of earlier stages, draws from its ow
 ### 4.1a Coordinates
 
 - **Working projection:** WGS 84 / UTM zone 10S (EPSG:32710). Point Nemo lies almost on the zone's central meridian (123°W), so distortion is minimal for every size up to Taiwan scale. The generator's local metres are placed at a fixed offset from the centroid, so they are real projected coordinates.
-- **Emitted sources:** WGS 84 latitude and longitude (EPSG:4326), in each source's own format, exactly as real sources carry them. Emitted coordinates are rounded to 7 decimal places (about 1 cm, the precision OpenStreetMap stores), so the transform gives the same bytes on every platform.
+- **Emitted sources:** WGS 84 latitude and longitude (EPSG:4326), in each source's own format, exactly as real sources carry them. Each source is written at the precision its real file carries, so the transform gives the same bytes on every platform and the clean emission looks like the real source: OpenStreetMap at 7 decimal places (about 1 cm, the precision it stores); WRI at 4 (about 11 m); OurAirports and the facility register at the precision measured from the real files and recorded beside each header. The rounding is part of the clean emission, not error: the realized-error check (§7) measures planted error against the clean, rounded file, never against the true location. (Ruled 2026-10-10, PR 17 answers.)
 - **Truth manifest:** EPSG:32710 metres, with latitude and longitude alongside.
 - **Analysis:** the pipeline takes the analysis projection per world: EPSG:32710 for constructed worlds, EPSG:3826 (TWD97 / TM2) for Taiwan. Both are metric Transverse Mercator, so the analysis code is the same.
 - **Very large and huge presets** outgrow one UTM zone and use a custom Lambert azimuthal equal-area projection centred on Point Nemo (Phase 5).
@@ -497,7 +497,7 @@ Where a class has a telecom tolerance row, the tolerance acts first: full functi
 - A stock covers its own commodity's shortfall while it lasts, drawn down at the actual draw (a hospital on generator draws its essential load).
 - A generator that fails to start never covers; one that fails to run stops at its drawn time.
 - **Fuel deliveries** arrive 12 h after the consumer loses power, then every 24 h, while the depot is up and a road links them.
-- **Refill:** batteries recharge from empty to full in 12 h (J); water storage refills from the pumps' spare capacity while still serving demand; purified and make-up water stocks refill from the main once it returns, as does hospital water; generator tanks refill only by delivery, every 24 h until full; national LNG, oil and coal stocks do not refill inside the window.
+- **Refill:** batteries recharge from empty to full in 12 h (J); water storage refills from the pumps' spare capacity while still serving demand; purified and make-up water stocks refill from the main once it returns, as does hospital water, at the rate they drained (range half that rate to the same rate; relaxed value instant refill; ruled 2026-10-10); generator tanks refill only by delivery, every 24 h until full; national LNG, oil and coal stocks do not refill inside the window.
 
 **Repair and crews.**
 - Recovery is all or nothing in Phase 1.
@@ -535,10 +535,19 @@ Where a class has a telecom tolerance row, the tolerance acts first: full functi
 
 - **Produces:** one set of files per source switched on, for emitted layers only, in the source's real container, schema and idioms.
   - On node-only layers, links are withheld.
-  - Hidden layers and switched-off couplings are withheld.
+  - Hidden layers and switched-off couplings are withheld. Couplings (edges between layers) and the feeds below the substations are never emitted.
   - Overlapping assets appear in each of their sources.
   - All attributes the real source carries are emitted, scored or not (§4.7).
   - The true correspondence across sources is written to the truth manifest.
+- **How each source is written** (ruled 2026-10-10, decision 0015; `evidence/Emission_Ruling_Sheet_v0_2.md`):
+  - **OpenStreetMap in three forms, built from the same features** (corrected 2026-10-10, PR 8 answers): the canonical `.osm.pbf` extract for the island (with a plain-text `.osm` copy); Geofabrik-style free shapefiles for the classes those carry; and Overpass-style GeoJSON for each query the pipeline runs. The last two are how the pipeline ingests Taiwan today. Each source's scope decides which features it contributes, and its own error settings apply to those features in Phase 3. The manifest records which records in each form are the same element.
+  - **Outlines where real mapping uses them.** Classes usually mapped as areas (plants, substations, hospitals, water works, reservoirs, ports, airports, tank farms, refineries) are closed outlines with a rectangular footprint sized by class (J); the rest are points. The true location is the outline's centre. Lines on emitted layers are ways: power lines through their tower points, pipelines, mains and communication lines.
+  - **Identifiers from reserved ranges.** Country `XS` / `XSW` ("Synthetic World", ISO 3166 user-assigned); OpenStreetMap ids from 900,000,000,000 (12 digits, so they fit Geofabrik's 12-character `osm_id` field; still far above any real id; amended 2026-10-10, PR 17 answers); WRI `XSW0000001…`; OurAirports `XS-0001…` with no ICAO or IATA codes; register codes with an `XS` prefix.
+  - **Names.** Plain, pronounceable invented town names from a fixed syllable list in the registry, in English only (Phase 1); facilities named by town and class in each source's own style; a share of minor elements unnamed (J). Every facility is unique by name within its town unless its class is on the shared-name list (masts, pumping stations, distribution substations, water storage tanks, road junctions, fuel depots; registry placeholder, J). A repeat takes a direction word from its position relative to the town centre, found by comparing east and north offsets, and a number if two share a direction; the lowest world id keeps the plain name. Shared-name classes may repeat a name, as real ones do. The unnamed share applies only to masts, pumping stations and distribution substations (ruled 2026-10-10 and 2026-10-11, PR 17 answers). A test screens names against common words and well-known places. Leaks are flagged by the identifiers, not the names.
+  - **The facility register is three real-style file types, joined on the institution code** (corrected 2026-10-10, PR 8 answers): the health ministry's institution register (every facility; code, name, county and district), the national health insurance hospital lists (one file per level), and the beds table by code. Column headers as in the real files; values in English; coordinates in place of addresses in Phase 1 (declared departure). The emergency-hospitals PDF, synthetic addresses, a gazetteer and the pipeline's geocoder come in Phase 6. Every hospital-level file is written in every world; a level with no hospitals is a file holding only its header.
+  - **Columns the world does not hold** are left empty, as the real file leaves them: in Phase 1, WRI's commissioning year and owner. Phase 6 draws them at fill rates measured from the real file. The manifest declares the empty columns.
+  - **Scored attributes:** location; class; capacity where the source carries it (MW, voltage); line end points (OpenStreetMap); capacity and primary fuel (WRI); type and scheduled service (OurAirports); register level and beds (register). Everything else, names included, is context.
+- **Printable hand-trace pack:** a one-page map (nodes, lines and towers, links, the seven couplings switched on, the crew base, the storm track and damage) and tables (nodes and stocks, dependencies, the scenario's damage, the reference-run timeline), as a PDF with fixed metadata and as CSV. Scenario 7 by default.
 
 ### 4.7 Error induction
 
@@ -558,14 +567,17 @@ The denominator no longer depends on any model. It is fixed by the world and the
 
 ### 4.8 Truth manifest
 
-- **Produces:**
-  - every planted error, with target, observability, source and mechanism;
+- **Produces** (one YAML file per world, beside the GeoPackage inspection export, in its own folder; the pipeline is never pointed at it):
+  - every planted error, with target, observability, source and mechanism (empty in Phase 1, and stated as a zero-error emission);
   - every unobserved value, with its design target, context factors, heterogeneity and compliance gap;
-  - every hidden layer and hidden coupling;
-  - the cross-source correspondence;
-  - the scored and context attribute lists per layer;
-  - the dynamics composition;
+  - every hidden layer and hidden coupling, and the feeds with their routes;
+  - the cross-source correspondence: every true element's record in each file, by id;
+  - the true geometry: each location, each outline's corners and centre, each line's route and tower points;
+  - the scored and context attribute lists per source;
+  - the declared departures from the real sources;
+  - the dynamics composition, θ\*, by registry fingerprint, with the Theta List;
   - the seeds and spawn tree.
+- A test proves no source file holds anything found only in the manifest.
 
 ### 4.9 Ensembles (later)
 
@@ -683,6 +695,27 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.11
+
+Ruled by the author, 2026-10-11 (PR 17 answers 2; addendum to decision 0015):
+- §4.6: name uniqueness within a town is the default for every class; only six shared-name classes may repeat a name. The unnamed share still applies only to masts, pumping stations and distribution substations.
+
+## Changes from v0.10
+
+All ruled by the author, 2026-10-10 (PR 17 answers; addendum to decision 0015):
+- §4.1a: each source is written at its real coordinate precision (OpenStreetMap 7 decimals, WRI 4, the others as measured); rounding is part of the clean emission, not error.
+- §4.6: OpenStreetMap ids start at 900,000,000,000 (12 digits), amending ruling E3, so they fit Geofabrik's `osm_id` field without a departure.
+- §4.6: major facilities have unique names within their town (direction word, then number); minor ones may share a name.
+- §4.6: every hospital-level file is written, header-only when empty; columns the world does not hold (WRI commissioning year and owner) stay empty until Phase 6.
+
+## Changes from v0.9
+
+All ruled by the author, 2026-10-10 (decision 0015; Emission Ruling Sheet v0.2):
+- §4.6 specifies how each source is written: one OpenStreetMap extract; outlines where real mapping uses them; reserved identifiers (XS / XSW); plain invented names in English; coordinates in the facility register for Phase 1; scored and context attributes; the printable hand-trace pack.
+- §4.8 adds the true geometry (outlines, routes, towers), the feed routes and the declared departures to the truth manifest.
+- §4.5: water stocks refill from the main at the rate they drained (range half to the same rate; relaxed value instant).
+- Later phases, recorded at the author's request: bilingual names (Chinese and English); synthetic addresses with a gazetteer and the pipeline's geocoder (Phase 6).
 
 ## Changes from v0.8
 

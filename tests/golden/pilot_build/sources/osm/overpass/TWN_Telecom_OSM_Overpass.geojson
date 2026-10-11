@@ -1,0 +1,78 @@
+{
+  "type": "FeatureCollection",
+  "generator": "overpass-turbo",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+  "timestamp": "2026-01-01T00:00:00Z",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/900000000153",
+        "name": "Coribrook Telephone Exchange",
+        "operator": "SWM Telecom A",
+        "telecom": "exchange"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -123.321381,
+          -48.8392189
+        ]
+      },
+      "id": "node/900000000153"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/900000000154",
+        "man_made": "mast",
+        "name": "Selimere Mast",
+        "operator": "SWM Telecom A",
+        "tower:type": "communication"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -123.5687505,
+          -48.7460974
+        ]
+      },
+      "id": "node/900000000154"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/900000000155",
+        "man_made": "mast",
+        "operator": "SWM Telecom A",
+        "tower:type": "communication"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -123.511126,
+          -48.7750947
+        ]
+      },
+      "id": "node/900000000155"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/900000000156",
+        "man_made": "mast",
+        "name": "Selimere Mast",
+        "operator": "SWM Telecom A",
+        "tower:type": "communication"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -123.4919196,
+          -48.8481931
+        ]
+      },
+      "id": "node/900000000156"
+    }
+  ]
+}

@@ -38,3 +38,12 @@ jobs:
 
       - name: Test with coverage
         run: uv run pytest
+
+      # Work Order 8, A5: the pilot's extract opens in osmium. The golden PBF is the built one
+      # (the identity test above proves it), so osmium reads it straight from the repository.
+      - name: Open the pilot extract in osmium
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y osmium-tool
+          osmium fileinfo -e tests/golden/pilot_build/sources/osm/island.osm.pbf

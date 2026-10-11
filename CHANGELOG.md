@@ -94,9 +94,29 @@ All notable changes to this project are recorded here. Each phase closes with a 
 - A severity-70 copy of the pilot (`tests/fixtures/storm_sensitivity/`), a fixture rather than a golden file, so the flood-damage path is exercised.
 - Each storm scenario draws its closest approach to the island (0–40 km), its radius of maximum wind (20–60 km) and its rainfall (±75 mm of its rung). Power plants and transmission substations stand on 2 m platforms. The lee is measured against the terrain's smooth spine line, now recorded with the terrain; a flat island has none. Wooded land takes the town factor. Refineries and import terminals get flood thresholds (decision 0012, addendum).
 - The storm hazard rules of structure v0.7 §4.3b, each with the new registry field `theta_role: dynamics`.
+- Emission (Work Order 8; decision 0015). Every source of a world is written under `sources/` from an observed-only projection of the world:
+  - the OpenStreetMap extract (`island.osm.pbf` with `island.osm`), Geofabrik-style free shapefiles (18 layers) and Overpass-style responses for the pipeline's four queries;
+  - the WRI power plant database;
+  - OurAirports;
+  - the facility register as three file types (institution register, hospital lists, beds), joined on an `XS` institution code.
+- The truth manifest `truth/manifest.yaml` (Work Order 8, Part C). The GIS export gains true footprints, towers and feed routes.
+- New commands (Work Order 8, Parts D–E):
+  - `swm emit`, which writes `sources/`;
+  - `swm build`, which writes the resolved recipe, `sources/`, `truth/` and `trace_pack/`;
+  - `swm trace-pack`, a one-page map with tables as PDF and CSV, whose timeline is the saved reference run's.
+- The pilot's whole build as golden files (`tests/golden/pilot_build/`).
+- `tools/check_source_headers.py`, which checks the recorded headers against the real files through `machine.toml`.
+- `reserves.main_refill_rate_fraction` (Work Order 8, Part 0): water from the main refills a stock at 0.5–1.0 of its drain rate, default 1.0. The `emission.*` naming and footprint rules.
 
 ### Changed
 
+- Name uniqueness within a town is the default for every class except six shared-name classes. The unnamed share stays on masts, pumping stations and distribution substations. The registry splits `emission.names.minor_classes` and replaces `major_classes` with `name_groups` (decision 0015, addendum 2; structure v0.12).
+- Emission per the PR 17 answers (decision 0015, addendum; structure v0.11):
+  - OpenStreetMap ids start at 900,000,000,000 and fit Geofabrik's C(12) `osm_id`;
+  - each source is written at its real coordinate precision (OpenStreetMap 7, WRI 4, OurAirports 6 as measured, the register 6 by choice);
+  - repeated major facilities in a town take a direction word, then a number;
+  - the inferred Overpass queries are marked as such;
+  - Linux CI opens the pilot extract in osmium.
 - The pole-line curve is calibrated to the expected share of line length down, not one realized draw: median 166.6993 m/s (pilot 7.28%, severity 70 32.70% expected) (PR 7b answers).
 - The Theta symbols follow Appendix A v1.7; pump capacity is a registry limit; an override outside a ruled range is noted (PR 15 answers).
 - The link builder obeys each layer's signature: no mast-to-mast or reservoir-to-reservoir link is built. The pilot loses SWM-TEL-L0004 (Work Order 7, Part 0).
@@ -142,6 +162,7 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ### Fixed
 
+- The truth manifest matched Geofabrik and Overpass records to elements by id alone, although OpenStreetMap node and way ids overlap. It now matches on type and id, which corrects six pilot entries (decision 0015, addendum 2).
 - The terrain now delivers exactly the requested number of outlying islands. An island placed near the grid edge could merge with the main island, because its clearance window was cut empty. If the count can't be met, the build stops with an error naming `terrain.character.outlying_islands` (decision 0010, item 3). The pilot terrain is unchanged.
 
 ### Removed
