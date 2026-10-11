@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.11 · 2026-10-10 · companion to the World Generator Interface mockup v0.5 and recipe schema v3 · supersedes v0.10*
+*v0.12 · 2026-10-11 · companion to the World Generator Interface mockup v0.5 and recipe schema v3 · supersedes v0.11*
 
 ## 1. What this is
 
@@ -543,7 +543,7 @@ Where a class has a telecom tolerance row, the tolerance acts first: full functi
   - **OpenStreetMap in three forms, built from the same features** (corrected 2026-10-10, PR 8 answers): the canonical `.osm.pbf` extract for the island (with a plain-text `.osm` copy); Geofabrik-style free shapefiles for the classes those carry; and Overpass-style GeoJSON for each query the pipeline runs. The last two are how the pipeline ingests Taiwan today. Each source's scope decides which features it contributes, and its own error settings apply to those features in Phase 3. The manifest records which records in each form are the same element.
   - **Outlines where real mapping uses them.** Classes usually mapped as areas (plants, substations, hospitals, water works, reservoirs, ports, airports, tank farms, refineries) are closed outlines with a rectangular footprint sized by class (J); the rest are points. The true location is the outline's centre. Lines on emitted layers are ways: power lines through their tower points, pipelines, mains and communication lines.
   - **Identifiers from reserved ranges.** Country `XS` / `XSW` ("Synthetic World", ISO 3166 user-assigned); OpenStreetMap ids from 900,000,000,000 (12 digits, so they fit Geofabrik's 12-character `osm_id` field; still far above any real id; amended 2026-10-10, PR 17 answers); WRI `XSW0000001…`; OurAirports `XS-0001…` with no ICAO or IATA codes; register codes with an `XS` prefix.
-  - **Names.** Plain, pronounceable invented town names from a fixed syllable list in the registry, in English only (Phase 1); facilities named by town and class in each source's own style; a share of minor elements unnamed (J). Major facilities (plants, transmission substations, hospitals, airports, ports; the class split is a registry placeholder, J) are unique within their town: a repeat takes a direction word from its position relative to the town centre, found by comparing east and north offsets, and a number if two share a direction. Minor elements (masts, pumping stations, distribution substations) may share a name, as real ones do (ruled 2026-10-10, PR 17 answers). A test screens names against common words and well-known places. Leaks are flagged by the identifiers, not the names.
+  - **Names.** Plain, pronounceable invented town names from a fixed syllable list in the registry, in English only (Phase 1); facilities named by town and class in each source's own style; a share of minor elements unnamed (J). Every facility is unique by name within its town unless its class is on the shared-name list (masts, pumping stations, distribution substations, water storage tanks, road junctions, fuel depots; registry placeholder, J). A repeat takes a direction word from its position relative to the town centre, found by comparing east and north offsets, and a number if two share a direction; the lowest world id keeps the plain name. Shared-name classes may repeat a name, as real ones do. The unnamed share applies only to masts, pumping stations and distribution substations (ruled 2026-10-10 and 2026-10-11, PR 17 answers). A test screens names against common words and well-known places. Leaks are flagged by the identifiers, not the names.
   - **The facility register is three real-style file types, joined on the institution code** (corrected 2026-10-10, PR 8 answers): the health ministry's institution register (every facility; code, name, county and district), the national health insurance hospital lists (one file per level), and the beds table by code. Column headers as in the real files; values in English; coordinates in place of addresses in Phase 1 (declared departure). The emergency-hospitals PDF, synthetic addresses, a gazetteer and the pipeline's geocoder come in Phase 6. Every hospital-level file is written in every world; a level with no hospitals is a file holding only its header.
   - **Columns the world does not hold** are left empty, as the real file leaves them: in Phase 1, WRI's commissioning year and owner. Phase 6 draws them at fill rates measured from the real file. The manifest declares the empty columns.
   - **Scored attributes:** location; class; capacity where the source carries it (MW, voltage); line end points (OpenStreetMap); capacity and primary fuel (WRI); type and scheduled service (OurAirports); register level and beds (register). Everything else, names included, is context.
@@ -695,6 +695,11 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.11
+
+Ruled by the author, 2026-10-11 (PR 17 answers 2; addendum to decision 0015):
+- §4.6: name uniqueness within a town is the default for every class; only six shared-name classes may repeat a name. The unnamed share still applies only to masts, pumping stations and distribution substations.
 
 ## Changes from v0.10
 

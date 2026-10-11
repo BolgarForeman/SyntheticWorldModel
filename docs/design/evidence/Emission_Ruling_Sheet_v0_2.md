@@ -113,3 +113,7 @@ Name, operator, dates, and the long tail of tags are context. They are emitted, 
 - default: the rate it drained;
 - range: half that rate (twice as long) to the same rate;
 - relaxed value: instant refill.
+
+## Note added 2026-10-11
+
+- **Overpass views.** The pipeline saved no query text for its hospital, industrial and telecom Overpass pulls. The generator's queries for those three were inferred from the tags in the landed files, and are marked "inferred from landed tags, query text not saved" in the code, in each `.overpassql` and in the manifest. The ports query is the pipeline's own. Replace the three when the pipeline side supplies the real text.
