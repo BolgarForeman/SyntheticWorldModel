@@ -1,7 +1,7 @@
 """Identity check (golden): ``swm build`` writes the pilot's whole tree, the same bytes on every
 platform: the resolved recipe, ``sources/``, ``truth/`` and ``trace_pack/`` (Work Order 8, E1).
 
-The hand-trace pack's timeline is the reference run's own: each hour's states equal the saved
+The hand-trace pack's answer timeline is the reference run's own: each hour's states equal the saved
 reference run 7 (Part D).
 """
 
@@ -17,6 +17,8 @@ from swm.cli import main
 TESTS = Path(__file__).resolve().parents[1]
 GOLDEN = TESTS / "golden" / "pilot_build"
 RUNS = TESTS / "golden" / "pilot_reference_runs"
+TIMELINE = GOLDEN / "trace_pack" / "answer" / "timeline.csv"
+"""The answer's timeline, printed apart from the blind pack (Work Order 9, A1)."""
 PILOT = TESTS / "fixtures" / "pilot_hand_check.yaml"
 
 
@@ -61,7 +63,7 @@ def test_emit_writes_the_sources_alone(tmp_path: Path, built: Path) -> None:
 
 
 def test_the_timeline_equals_reference_run_7() -> None:
-    with (GOLDEN / "trace_pack" / "timeline.csv").open(encoding="utf-8", newline="") as handle:
+    with TIMELINE.open(encoding="utf-8", newline="") as handle:
         timeline = list(csv.DictReader(handle))
     with (RUNS / "run_7_states.csv").open(encoding="utf-8", newline="") as handle:
         states = {row["hour"]: row for row in csv.DictReader(handle)}
@@ -72,7 +74,7 @@ def test_the_timeline_equals_reference_run_7() -> None:
 
 
 def test_the_timeline_crews_follow_the_saved_crew_jobs() -> None:
-    with (GOLDEN / "trace_pack" / "timeline.csv").open(encoding="utf-8", newline="") as handle:
+    with TIMELINE.open(encoding="utf-8", newline="") as handle:
         timeline = list(csv.DictReader(handle))
     with (RUNS / "run_7_crews.csv").open(encoding="utf-8", newline="") as handle:
         jobs = list(csv.DictReader(handle))
@@ -86,7 +88,7 @@ def test_the_timeline_crews_follow_the_saved_crew_jobs() -> None:
 
 
 def test_the_trace_pdfs_carry_a_fixed_producer_and_no_date_or_compression() -> None:
-    for name in ("map.pdf", "tables.pdf"):
+    for name in ("map.pdf", "rules.pdf", "tables.pdf", "answer/timeline.pdf"):
         body = (GOLDEN / "trace_pack" / name).read_bytes()
         assert b"/Producer (swm trace-pack)" in body
         assert b"/CreationDate" not in body
@@ -104,3 +106,11 @@ def test_the_trace_pack_command_takes_a_scenario(tmp_path: Path) -> None:
     assert main(["trace-pack", str(PILOT), "--scenario", "4", "-o", str(tmp_path)]) == 0
     assert (tmp_path / "trace_pack" / "map.pdf").exists()
     assert main(["trace-pack", str(PILOT), "--scenario", "99", "-o", str(tmp_path)]) != 0
+
+
+def test_the_blind_pack_and_its_answer_are_apart() -> None:
+    blind = {p.name for p in (GOLDEN / "trace_pack").iterdir() if p.is_file()}
+    assert "timeline.csv" not in blind
+    assert {"map.pdf", "rules.pdf", "tables.pdf", "rules.csv", "links.csv"} <= blind
+    answer = {p.name for p in (GOLDEN / "trace_pack" / "answer").iterdir()}
+    assert answer == {"timeline.csv", "timeline.pdf"}

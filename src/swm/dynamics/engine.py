@@ -41,6 +41,7 @@ from swm.dynamics.world import (
     SUBSTATIONS,
     EngineDependency,
     EngineWorld,
+    Settings,
     Stock,
 )
 from swm.recipe.schema import Layer, NodeClass
@@ -457,17 +458,7 @@ class _Engine:
             )
 
     def _priority(self, element_id: str) -> tuple[int, float]:
-        """Return the default crew order key (D6): tier, then the highest Lifeline weight."""
-        if element_id in self.world.towered:
-            return (0, 0.0)
-        node = self.nodes.get(element_id)
-        if node is not None and node.node_class == NodeClass.TRANSMISSION_SUBSTATION:
-            return (0, 0.0)
-        if node is not None and node.node_class == NodeClass.DISTRIBUTION_SUBSTATION:
-            return (1, -(node.end_use_weight or 0.0))
-        if element_id in self.world.feeds_to_end_use:
-            return (1, -self.world.feeds_to_end_use[element_id])
-        return (2, 0.0)
+        return crew_order(self.world, element_id)
 
     def _dispatch_units(self) -> None:
         """Send each mobile unit to an eligible damaged node, in the crew order (§4.4a)."""
@@ -543,14 +534,7 @@ class _Engine:
         return self._trip_hours(self.world.legs(start, end))
 
     def _trip_hours(self, legs: Legs) -> float:
-        hours = 0.0
-        if "crews.road_speed_kmh" not in self.relaxed:
-            hours += legs.road_km / self.settings.road_kmh
-        if "crews.offroad_speed_kmh" not in self.relaxed:
-            hours += legs.offroad_km / self.settings.offroad_kmh
-        if legs.by_sea and "crews.outlying_island_mobilisation_h" not in self.relaxed:
-            hours += self.settings.mobilisation_h
-        return hours
+        return trip_hours(legs, self.settings, self.relaxed)
 
     def _crew_positions(self, t: float) -> tuple[tuple[str, str], ...]:
         positions = []
@@ -755,6 +739,70 @@ class _Engine:
                     self.due[resupply.edge_id] = t + lead
             elif not lost:
                 self.loss[resupply.edge_id] = None
+
+
+def crew_order(world: EngineWorld, element_id: str) -> tuple[int, float]:
+    """Return an element's key in the default crew order (D6): tier, then -Lifeline weight.
+
+    Tier 0: towered lines and transmission substations. Tier 1: distribution substations and
+    power feeds to end-use nodes, the highest Lifeline weight first. Tier 2: everything else.
+
+    Parameters
+    ----------
+    world : EngineWorld
+        The world played out.
+    element_id : str
+        A node or line id.
+
+    Returns
+    -------
+    tuple of (int, float)
+        The tier and the negated weight; a smaller key is served first.
+
+    Spec: structure v0.9 §4.5 (repair and crews); ruling D6.
+    """
+    if element_id in world.towered:
+        return (0, 0.0)
+    node = next((n for n in world.nodes if n.node_id == element_id), None)
+    if node is not None and node.node_class == NodeClass.TRANSMISSION_SUBSTATION:
+        return (0, 0.0)
+    if node is not None and node.node_class == NodeClass.DISTRIBUTION_SUBSTATION:
+        return (1, -(node.end_use_weight or 0.0))
+    if element_id in world.feeds_to_end_use:
+        return (1, -world.feeds_to_end_use[element_id])
+    return (2, 0.0)
+
+
+def trip_hours(legs: Legs, settings: Settings, relaxed: frozenset[str] = frozenset()) -> float:
+    """Return a trip's hours by road, off road and, for a sea trip, mobilisation.
+
+    Road km at road speed, off-road km at off-road speed, plus the outlying-island mobilisation
+    delay for a sea trip; a relaxed part counts as zero (D11).
+
+    Parameters
+    ----------
+    legs : Legs
+        The trip's road km, off-road km and whether it crosses the sea.
+    settings : Settings
+        The engine's settings (speeds in km/h, mobilisation in h).
+    relaxed : frozenset of str
+        Relaxed rule ids.
+
+    Returns
+    -------
+    float
+        Hours.
+
+    Spec: structure v0.9 §4.5 (repair and crews); ruling D6.
+    """
+    hours = 0.0
+    if "crews.road_speed_kmh" not in relaxed:
+        hours += legs.road_km / settings.road_kmh
+    if "crews.offroad_speed_kmh" not in relaxed:
+        hours += legs.offroad_km / settings.offroad_kmh
+    if legs.by_sea and "crews.outlying_island_mobilisation_h" not in relaxed:
+        hours += settings.mobilisation_h
+    return hours
 
 
 def _without(

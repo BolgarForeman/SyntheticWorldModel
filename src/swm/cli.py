@@ -603,9 +603,9 @@ def _trace_pack_command(resolution: Resolution, arguments: argparse.Namespace) -
 
 
 def _write_trace_pack(resolution: Resolution, built: _Built, scenario: int, out_dir: Path) -> None:
-    """Write the hand-trace pack for one scenario (Work Order 8, Part D)."""
+    """Write the hand-trace pack for one scenario (Work Order 8, Part D; Work Order 9, Part A)."""
     try:
-        from swm.trace_pack import TraceInputs, trace_pack
+        from swm.trace_pack import COLUMNS, TraceInputs, trace_pack
     except ImportError as error:  # pragma: no cover - the preview extra is installed in CI
         raise CommandError(
             "the trace pack needs the preview extra: uv sync --extra preview"
@@ -617,13 +617,19 @@ def _write_trace_pack(resolution: Resolution, built: _Built, scenario: int, out_
     pack = trace_pack(TraceInputs(
         scenario, built.terrain, built.requirements.layers, built.requirements, built.couplings,
         built.strength, built.buffers, built.crews, built.repair,
-        built.storm.scenarios[scenario], built.scenarios.scenarios[scenario], run,
+        built.storm.scenarios[scenario], built.scenarios.scenarios[scenario],
+        built.scenarios.lines, engine.world, engine.damage[scenario], built.rules, run,
     ))  # fmt: skip
+    # The blind pack, then the answer in its own folder so a tracer can set it aside (WO 9, A1).
     folder = out_dir / TRACE_PACK_DIR
     write_binary(pack.map_pdf, folder / "map.pdf")
+    write_binary(pack.rules_pdf, folder / "rules.pdf")
     write_binary(pack.tables_pdf, folder / "tables.pdf")
     for name, rows in pack.tables.items():
-        write_csv(rows, folder / f"{name}.csv")
+        write_csv(rows, folder / f"{name}.csv", COLUMNS.get(name, ()))
+    write_binary(pack.answer_pdf, folder / "answer" / "timeline.pdf")
+    for name, rows in pack.answer.items():
+        write_csv(rows, folder / "answer" / f"{name}.csv")
 
 
 def _build_command(resolution: Resolution, arguments: argparse.Namespace) -> None:

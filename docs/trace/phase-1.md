@@ -83,3 +83,18 @@ The tests compare each emitted location with the true one within half a unit in 
 **Figures.**
 - `figures/wo8_pilot_extract_qgis.png`: the pilot's `island.osm.pbf` rendered by QGIS 3.40.14, with its multipolygons, lines and points, and points labelled by name.
 - `figures/wo8_hand_trace_map_scenario_7.png`: the trace pack's `map.pdf` rasterized by GDAL.
+
+## The hand-trace pack (Work Order 9, PR 9a)
+
+**What was built.**
+- The pack is split into a blind part (`trace_pack/`: map, rules sheet, tables) and the answer (`trace_pack/answer/`: the reference run's timeline).
+- The new tables give a tracer what the design side's first trace had to take from the truth manifest and the stage outputs: link lengths and flow, stocks, generator draws, tolerance rows, failure points with travel, crews, travel times, the crew order and the engine's numbers with their registry ids.
+- The map is framed on the island. It carries a storm-track inset, larger-scale insets where labels crowd, and line ids and failure points.
+
+**How it was tested.**
+- Every table value is compared with the engine's world or the registry.
+- The travel to a failure point equals the reference run's first trip.
+- The blind pack is byte-identical whether the run is the reference run or one with a protected line, so it holds nothing from the run.
+- The golden pack changes only under `trace_pack/`.
+
+**Figure.** `figures/wo9a_hand_trace_map_scenario_7.png`.
