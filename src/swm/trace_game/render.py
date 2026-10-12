@@ -28,7 +28,7 @@ from swm.trace_game.content import (
     tokens,
     travel_hours,
 )
-from swm.trace_game.text import RuleCard, value_text
+from swm.trace_game.text import RuleCard
 from swm.trace_pack import (
     INSET_MARGIN_KM,
     LAYER_COLOURS,
@@ -71,8 +71,6 @@ TILE_PRINTABLE_IN = (8.0, 10.5)
 """A letter sheet's printable area, quarter-inch margins, for the tiled board."""
 DRAFT_MARK = "DRAFT"
 ROWS_PER_SHEET = 24
-LABEL_ALONG = 0.65
-"""Where an illustration arrow's label sits, as a share of the way to its head (layout)."""
 """Blank rows on a log sheet."""
 
 
@@ -184,102 +182,58 @@ def node_cards_pdf(cards: Sequence[NodeCard]) -> bytes:
 # --- Rule cards (H3) ------------------------------------------------------------------------
 
 
-def rule_front(card: RuleCard, values: Sequence[tuple[str, str]]) -> list[tuple[str, bool]]:
-    """Return a rule card's front: title, the rule, and its registry values with their ids."""
-    lines: list[tuple[str, bool]] = [(w, True) for w in _wrap(card.title)]
-    if card.draft:
-        lines.append((f"{DRAFT_MARK} wording", False))
-    lines += [(w, False) for w in _wrap(card.rule)]
-    if values:
-        lines.append(("Registry", True))
-    for rule_id, value in values:
-        if value:
-            lines += [(w, False) for w in _wrap(f"= {value}", CARD_COLUMNS, "  ")]
-        lines += [(w, False) for w in id_lines(rule_id)]
-    return lines
+def rule_faces(card: RuleCard) -> list[tuple[list[tuple[str, bool]], list[tuple[str, bool]]]]:
+    """Return a rule card as (front, back) face pairs: a long side runs onto a second card.
+
+    The pairs stay together, so each back prints behind its own front when duplexed.
+    """
+    head = [(w, True) for w in _wrap(f"{card.number}. {card.title}")]
+    mark = [(f"{DRAFT_MARK} wording", False)] if card.draft else []
+    fronts = _faces([*head, *mark], _body(card.front))
+    backs = _faces([(w, True) for w in _wrap(f"{card.number}. {card.title}")], _body(card.back))
+    count = max(len(fronts), len(backs))
+    fronts += [[*head, ("(see the other side)", False)]] * (count - len(fronts))
+    backs += [[("(see the other side)", False)]] * (count - len(backs))
+    return list(zip(fronts, backs, strict=True))
 
 
-def id_lines(rule_id: str, width: int = CARD_COLUMNS) -> list[str]:
-    """Return a registry id over as many lines as it needs, broken only after a dot."""
-    lines, line = [], "  ["
-    for part in rule_id.split("."):
-        piece = part if line.endswith("[") else f".{part}"
-        if len(line) + len(piece) + 1 > width and not line.endswith("["):
-            lines.append(line)
-            line = "    "
-            piece = piece
-        line += piece
-    return [*lines, line + "]"]
+CARD_LABELS = ("Value:", "Example:", "Drill:", "Answer:")
+"""A card line that opens with one of these prints the label on its own bold line."""
 
 
-def rule_back(card: RuleCard) -> list[tuple[str, bool]]:
-    """Return a rule card's back: the drill and its answer."""
-    lines: list[tuple[str, bool]] = [(w, True) for w in _wrap(f"Drill: {card.title}")]
-    if card.draft:
-        lines.append((f"{DRAFT_MARK} wording", False))
-    lines += [(w, False) for w in _wrap(card.drill)]
-    lines += [("", False), ("Answer", True), *((w, False) for w in _wrap(card.answer))]
-    return lines
+def _body(lines: Sequence[str]) -> list[tuple[str, bool]]:
+    body: list[tuple[str, bool]] = []
+    for line in lines:
+        indent = "  " if line.startswith("• ") or line[:2].rstrip(".").isdigit() else ""
+        label = next((lab for lab in CARD_LABELS if line.startswith(lab)), None)
+        if label is not None:
+            body.append((label.rstrip(":"), True))
+            line = line.removeprefix(label).strip()
+        body += [(w, False) for w in _wrap(line, CARD_COLUMNS, indent)]
+    return body
 
 
-def rule_cards_pdf(cards: Sequence[RuleCard], values: Mapping[str, Sequence[tuple[str, str]]]
-                   ) -> bytes:  # fmt: skip
+def _faces(head: list[tuple[str, bool]], body: list[tuple[str, bool]]
+           ) -> list[list[tuple[str, bool]]]:  # fmt: skip
+    room = CARD_LINES - len(head) - 1
+    pages = [body[i : i + room] for i in range(0, len(body), room)] or [[]]
+    return [[*head, *([(f"(cont. {i + 1}/{len(pages)})", False)] if i else []), *page]
+            for i, page in enumerate(pages)]  # fmt: skip
+
+
+def rule_cards_pdf(cards: Sequence[RuleCard]) -> bytes:
     """Return the rule-card sheets: fronts, then their backs mirrored for long-edge duplex."""
+    faces = [pair for card in cards for pair in rule_faces(card)]
     figures = []
-    for start in range(0, len(cards), 9):
-        batch = cards[start : start + 9]
+    for start in range(0, len(faces), 9):
         front, back = _letter(), _letter()
         for figure in (front, back):
             _cut_lines(figure)
-        for slot, card in enumerate(batch):
-            lines = rule_front(card, values[card.name])
-            _card_text(front, slot, lines)
-            _illustration(front, slot, card, len(lines))
-            _card_text(back, slot, rule_back(card), mirrored=True)
+        for slot, (face, reverse) in enumerate(faces[start : start + 9]):
+            _card_text(front, slot, face)
+            _card_text(back, slot, reverse, mirrored=True)
         figures += [front, back]
     return pdf_pages(figures)
-
-
-def _illustration(figure: "Figure", slot: int, card: RuleCard, used: int) -> None:
-    """Draw the card's generic nodes (A, B, C ...) round a circle, with labelled arrows."""
-    from matplotlib.patches import FancyArrowPatch
-
-    names: list[str] = []
-    for edge in card.illustration:
-        for name in (edge.start, edge.end):
-            if name not in names:
-                names.append(name)
-    if not names:
-        return
-    x, top = _card_origin(slot)
-    room = top - 0.12 - used * MIN_PT * 1.2 / 72 - 0.1
-    height = min(1.2, room - (top - CARD_IN[1]) - 0.1)
-    if height < 0.5:
-        return
-    width, page_h = LETTER_IN
-    axes = figure.add_axes(((x + 0.15) / width, (room - height) / page_h,
-                            (CARD_IN[0] - 0.3) / width, height / page_h))  # fmt: skip
-    axes.set_axis_off()
-    axes.set_xlim(-1.4, 1.4)
-    axes.set_ylim(-1.0, 1.0)
-    count = len(names)
-    # Nodes sit evenly on a line, two up and one down, so straight arrows never cross a node.
-    spots = {name: (-1.0 + 2.0 * i / max(1, count - 1), 0.5 if i % 2 == 0 else -0.5)
-             for i, name in enumerate(names)}  # fmt: skip
-    for edge in card.illustration:
-        axes.add_patch(FancyArrowPatch(spots[edge.start], spots[edge.end], arrowstyle="-|>",
-                                       mutation_scale=10, shrinkA=12, shrinkB=12,
-                                       color="#444444"))  # fmt: skip
-        (sx, sy), (ex, ey) = spots[edge.start], spots[edge.end]
-        mx, my = sx + LABEL_ALONG * (ex - sx), sy + LABEL_ALONG * (ey - sy)
-        # Labels sit toward the arrow's head and alternate above and below, so two arrows
-        # from one node keep their labels apart.
-        above = card.illustration.index(edge) % 2 == 0
-        axes.text(mx, my + (0.12 if above else -0.28), edge.label, fontsize=MIN_PT,
-                  ha="center", family=MONO)  # fmt: skip
-    for name, (nx, ny) in spots.items():
-        axes.text(nx, ny, name, fontsize=MIN_PT + 2, ha="center", va="center",
-                  fontweight="bold", bbox={"boxstyle": "circle", "facecolor": "white"})  # fmt: skip
 
 
 # --- The board (H4) -------------------------------------------------------------------------
@@ -754,21 +708,3 @@ def answer_pdf(inputs: TraceInputs) -> bytes:
 
 OUTAGE_COLUMNS = ("node", "weight", "out (h)", "hours out", "weighted")
 OUTAGE_WIDTHS = (10, 7, 28, 10, 10)
-
-
-def rule_values(cards: Sequence[RuleCard], lookup: object) -> dict[str, list[tuple[str, str]]]:
-    """Return each card's registry values as (id, value with units), read from the registry."""
-    from swm.rules.registry import Registry
-
-    assert isinstance(lookup, Registry)
-    result: dict[str, list[tuple[str, str]]] = {}
-    for card in cards:
-        pairs = []
-        for rule_id in card.value_ids:
-            units = lookup.rule(rule_id).units
-            value = lookup.value(rule_id)
-            # A rule given in words is already in the card's sentence; only its id is added.
-            text = "" if isinstance(value, str | list) else value_text(value)
-            pairs.append((rule_id, f"{text} {units}" if text and units else text))
-        result[card.name] = pairs
-    return result

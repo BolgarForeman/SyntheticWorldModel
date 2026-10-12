@@ -1,8 +1,0 @@
-DRAFT: wording written by the coder from structure v0.12 §4.4a and §4.5 until the design side supplies it (WO 9, H3).
-title: Manual switching
-values: repair.manual_switching_h ; storm.line_crew_work_h
-rule: A substation that lost all power while its telecom is down cannot be switched back remotely: when power returns, a crew must travel to it and spend {repair.manual_switching_h} h on site.
-illustration: A -> B power line ; T -> B telecom
-drill: Line A-B is down 5 km from A (on the road from the base at A), needing {storm.line_crew_work_h} h of work. B is a substation 10 km from A; its telecom T is lost for good. One crew at A. At what hour is B back on?
-answer: 9.5: the line is done at 8.125 and returns at step 8.25; the crew drives 0.125 h to B and switches for {repair.manual_switching_h} h, done at 9.375, back on at step 9.5.
-expect: 9.5

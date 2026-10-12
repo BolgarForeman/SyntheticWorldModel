@@ -14,11 +14,11 @@ All notable changes to this project are recorded here. Each phase closes with a 
     - the mission briefing;
     - the log sheets (crew, event log, outage, decision and play-test feedback);
     - the token sheet;
-    - a DRAFT field manual.
-  - **`answer/`, sealed:** the event timeline with exact times and steps, each end-use node's outages, the score (weighted service-hours lost, with unweighted hours out beside it), a DRAFT debrief, and PR 9a's timeline.
+    - the field manual (design-side draft).
+  - **`answer/`, sealed:** the event timeline with exact times and steps, each end-use node's outages, the score (weighted service-hours lost, with unweighted hours out beside it), the debrief (design-side draft), and PR 9a's timeline.
   - **`data/`:** PR 9a's tables, moved unchanged.
   - **Drills:** every drill is played by the engine at build, and a printed answer the engine does not reproduce stops the build.
-  - **Wording:** the rule-card text lives in `docs/design/trace_game/rule_cards/`, marked DRAFT until the design side supplies it.
+  - **Wording:** the rule cards, field manual and debrief are typeset from the design side's draft Markdown in `docs/design/trace_game/`, with registry values filled at build and DRAFT marked while the files say so.
 - Repository scaffold (Work Order 0): uv project with the `swm` package, stage package layout, `swm --version`, smoke test, CI on Linux and Windows, repository rules (`CLAUDE.md`), decision log, TRACE log and work-order records.
 - Spawn tree (Work Order 1): `stable_id`, named streams off the root seed, the stream registry and the stream record.
 - Recipe schema v1 (Work Order 1): the full recipe, validation notes, resolution of defaults, canonical YAML and `recipe_sha256`, and the buildability check.

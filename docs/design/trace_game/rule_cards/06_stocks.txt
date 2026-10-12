@@ -1,8 +1,0 @@
-DRAFT: wording written by the coder from structure v0.12 §4.4a and §4.5 until the design side supplies it (WO 9, H3).
-title: Stocks drain and refill
-values: reserves.battery_recharge_h ; reserves.main_refill_rate_fraction
-rule: A stock covers its own supply while it lasts, at the node's draw. Batteries recharge empty to full in {reserves.battery_recharge_h} h once power is back; water from the main refills at {reserves.main_refill_rate_fraction} × the drain rate.
-illustration: A -> C power
-drill: C trips without power and holds 3 h of battery. A, its only power, is damaged at hour 0. At what hour does C go out?
-answer: 3: the battery covers C for 3 h, then C trips.
-expect: 3

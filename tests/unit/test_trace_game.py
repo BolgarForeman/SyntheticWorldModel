@@ -30,14 +30,16 @@ from swm.trace_game.content import (
     step_of,
     tokens,
 )
-from swm.trace_game.drills import DRILLS, DrillError, verify
+from swm.trace_game.drills import DRILLS, DrillError, first_jobs, travel_case, verify
 from swm.trace_game.pack import BOARD_CHOICES, game_files, trace_game
-from swm.trace_game.render import board_pdf, id_lines, network_order, rule_values
+from swm.trace_game.render import board_pdf, network_order
 from swm.trace_game.text import (
     DEBRIEF,
     FIELD_MANUAL,
+    PLACEHOLDER,
     RULE_CARD_DIR,
     fill,
+    lookup,
     pages_of,
     rule_cards,
     value_text,
@@ -81,50 +83,60 @@ def base_inputs() -> TraceInputs:
 def test_there_is_a_rule_card_and_a_drill_for_every_mechanic_in_order() -> None:
     cards = rule_cards(pilot()[0].rules)
     assert [c.name for c in cards] == list(DRILLS)
-    assert len(cards) == 12
+    assert [c.number for c in cards] == list(range(1, 13))
 
 
 @pytest.mark.parametrize("card", rule_cards(pilot()[0].rules), ids=lambda c: c.name)
 def test_each_drill_is_reproduced_by_the_engine(card: Any) -> None:
-    assert verify(card.name, card.expect, pilot()[0].rules) == pytest.approx(card.expect)
-    # The printed answer leads with the number the engine reproduces.
-    assert float(card.answer.split(":")[0]) == card.expect
+    answer = verify(card.name, card.expected, pilot()[0].rules)
+    assert answer == pytest.approx(card.expected)
 
 
 def test_a_drill_the_engine_does_not_reproduce_stops_the_build() -> None:
     with pytest.raises(DrillError, match=r"the weakest_supply drill prints 0\.7"):
-        verify("weakest_supply", 0.7, pilot()[0].rules)
+        verify("weakest_supply", (0.7,), pilot()[0].rules)
 
 
-def test_the_rule_cards_are_marked_draft_until_the_design_side_supplies_them() -> None:
-    for path in sorted(RULE_CARD_DIR.glob("*.txt")):
-        draft = path.read_text(encoding="utf-8").startswith("DRAFT")
+def test_the_crew_order_drill_sends_both_crews_to_the_substations_first() -> None:
+    first = first_jobs(pilot()[0].rules)
+    assert set(first.values()) == {"S_h", "S_c"}
+    # The engine ranks a distribution substation by its own Lifeline weight; both are equal, so
+    # the nearer goes to the first crew (reported against the card's printed answer).
+    assert first == {"crew 1": "S_c", "crew 2": "S_h"}
+
+
+def test_the_travel_case_is_timed_from_where_the_crew_stands() -> None:
+    rules = pilot()[0].rules
+    lead = rules.number("repair.crew_bound_lead_h")
+    speed = rules.number("crews.road_speed_kmh")
+    first_done = 8.0 / speed + lead + 1.0
+    assert travel_case(rules) == pytest.approx(first_done + 6.0 / speed + lead + 1.0)
+
+
+def test_the_rule_cards_say_draft_while_their_files_do() -> None:
+    for path in sorted(RULE_CARD_DIR.glob("*.md")):
+        opening = path.read_text(encoding="utf-8").split("-->", 1)[0].lower()
         card = next(c for c in rule_cards(pilot()[0].rules) if path.stem.endswith(c.name))
-        assert card.draft == draft
+        assert card.draft == ("draft" in opening)
 
 
 # --- Every number equals its source (H10) ---------------------------------------------------
 
 
-def test_each_rule_cards_values_are_read_from_the_registry() -> None:
+def test_each_rule_card_value_is_read_from_the_registry() -> None:
     rules = pilot()[0].rules
-    cards = rule_cards(rules)
-    values = rule_values(cards, rules)
-    for card in cards:
-        for rule_id, printed in values[card.name]:
-            value = rules.value(rule_id)
-            if isinstance(value, str | list):
-                assert printed == ""
-            else:
-                assert printed.startswith(value_text(value))
-    clinic = rules.value("tolerance.clinic")
-    fallback = next(c for c in cards if c.name == "telecom_fallback")
-    assert f"T = {value_text(clinic['t_h'])} h" in fallback.rule
+    for path in sorted(RULE_CARD_DIR.glob("*.md")):
+        raw = path.read_text(encoding="utf-8")
+        card = next(c for c in rule_cards(rules) if path.stem.endswith(c.name))
+        printed = "\n".join((*card.front, *card.back))
+        assert "{rule:" not in printed
+        for rule_id in PLACEHOLDER.findall(raw.split("## Drill world")[0]):
+            assert value_text(lookup(rule_id, rules)) in printed, (card.name, rule_id)
 
 
 def test_a_placeholder_must_name_a_registry_rule() -> None:
     with pytest.raises(KeyError):
-        fill("{no.such.rule}", pilot()[0].rules)
+        fill("{rule:no.such.rule}", pilot()[0].rules)
 
 
 def test_each_node_card_is_the_engines_node() -> None:
@@ -210,7 +222,7 @@ def test_no_teaching_text_names_a_node_or_line_of_the_world() -> None:
     names = ids | {short(i) for i in ids}
     texts = []
     for card in rule_cards(built.rules):
-        texts += [card.title, card.rule, card.drill, card.answer]
+        texts += [card.title, *card.front, *card.back]
     texts += pages_of(FIELD_MANUAL, "Field manual")[1] + pages_of(DEBRIEF, "Debrief")[1]
     for text in texts:
         assert not {name for name in names if re.search(rf"\b{re.escape(name)}\b", text)}, text
@@ -278,12 +290,6 @@ def test_the_board_is_identical_at_every_size(size: str) -> None:
     assert hashlib.sha256(body).hexdigest() == recorded_boards()[f"board_{size}.pdf"]
 
 
-def test_a_registry_id_breaks_only_at_its_dots() -> None:
-    lines = id_lines("reserves.fuel_resupply.lead_time_h")
-    assert "".join(line.strip() for line in lines) == "[reserves.fuel_resupply.lead_time_h]"
-    assert all(len(line) <= 30 for line in lines)
-
-
 def test_a_missing_text_prints_a_draft_placeholder(tmp_path: Path) -> None:
     draft, lines = pages_of(tmp_path / "absent.md", "Field manual")
     assert draft
@@ -291,3 +297,6 @@ def test_a_missing_text_prints_a_draft_placeholder(tmp_path: Path) -> None:
     ruled = tmp_path / "ruled.md"
     ruled.write_text("# Field manual\n\nText.\n", encoding="utf-8")
     assert pages_of(ruled, "Field manual") == (False, ["# Field manual", "", "Text."])
+    drafted = tmp_path / "drafted.md"
+    drafted.write_text("<!-- Draft v0.1 -->\n# Debrief\n- **one**\n", encoding="utf-8")
+    assert pages_of(drafted, "Debrief") == (True, ["# Debrief", "• one"])

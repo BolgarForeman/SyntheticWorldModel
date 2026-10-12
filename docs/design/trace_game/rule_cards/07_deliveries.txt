@@ -1,8 +1,0 @@
-DRAFT: wording written by the coder from structure v0.12 §4.4a and §4.5 until the design side supplies it (WO 9, H3).
-title: Fuel deliveries
-values: reserves.fuel_resupply.lead_time_h ; reserves.fuel_resupply.delivery_h
-rule: A generator tank is refilled by delivery from a working depot: the first {reserves.fuel_resupply.lead_time_h} h after power is lost, then every {reserves.fuel_resupply.delivery_h} h, each bringing {reserves.fuel_resupply.delivery_h} h of fuel.
-illustration: A -> C power ; D -> C fuel
-drill: C runs on its generator with 6 h of fuel when A, its power, is damaged at hour 0. Depot D is working. At what hour is C back on?
-answer: 12: the tank runs dry at hour 6; the first delivery lands {reserves.fuel_resupply.lead_time_h} h after power was lost.
-expect: 12

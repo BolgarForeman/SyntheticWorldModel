@@ -101,7 +101,7 @@ The tests compare each emitted location with the true one within half a unit in 
 
 ## The trace game (Work Order 9, PR 9g)
 
-**What was built.** The hand-trace pack became a print-and-play game: node cards, rule cards with drills, the board, the briefing, log sheets and tokens in `game/`, and the sealed answer in `answer/`. PR 9a's tables moved to `data/`. The field manual, debrief and rule-card wording are DRAFT until the design side supplies them.
+**What was built.** The hand-trace pack became a print-and-play game: node cards, rule cards with drills, the board, the briefing, log sheets and tokens in `game/`, and the sealed answer in `answer/`. PR 9a's tables moved to `data/`. The rule cards, field manual and debrief are typeset from the design side's draft text (v0.1), awaiting Foreman's ruling.
 
 **How it was tested.**
 - Every number on the cards, the briefing and the sheets is compared with the engine's world, the scenario's damage or the registry.
@@ -112,7 +112,8 @@ The tests compare each emitted location with the true one within half a unit in 
 - The board is golden at every size.
 
 **Departures from the design.**
-- The fallback symbol is ◷, because the bundled font has no ⏳.
+- The fallback symbol is ◷, because the bundled font has no ⏳; the design text's ⏳ prints as ◷.
+- Rule card 9's printed answer gives crew 1 the substation feeding the hospital. The engine ranks a distribution substation by its own Lifeline weight; both weigh the same, so the nearer one goes to crew 1. The drill world's expectation (both substations first, the pump waiting) holds. Reported for a ruling.
 - The node cards' needs include the hidden couplings the engine plays (marked "(hidden)"); supplies and the board show switched-on couplings only, as the work order says. This is a question for the design side.
 
 **Figures.** `figures/wo9g_*.png`.

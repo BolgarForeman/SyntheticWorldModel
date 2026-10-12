@@ -1,8 +1,0 @@
-DRAFT: wording written by the coder from structure v0.12 §4.4a and §4.5 until the design side supplies it (WO 9, H3).
-title: How a partial supply passes
-values: dynamics.threshold
-rule: An edge passes its supplier's state on in one of two ways. Linear: it passes κ × the state. Threshold: it passes all while the supplier is at least {dynamics.threshold}, else nothing.
-illustration: A -> B power 0.4 ; B -> C telecom threshold
-drill: B takes power from A at κ = 0.4 and throttles, so B runs at 0.4. C takes telecom from B on a threshold edge and throttles. What is C's state at hour 0?
-answer: 0: B at 0.4 is below the threshold {dynamics.threshold}, so nothing passes.
-expect: 0

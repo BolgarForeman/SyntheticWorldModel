@@ -18,7 +18,6 @@ from swm.trace_game.render import (
     briefing_pdf,
     node_cards_pdf,
     rule_cards_pdf,
-    rule_values,
     sheets_pdf,
     text_pdf,
     tokens_pdf,
@@ -68,11 +67,11 @@ def game_files(inputs: TraceInputs, board_size: str = DEFAULT_BOARD) -> dict[str
     """Return everything a player gets; built without the reference run (H10)."""
     cards = rule_cards(inputs.rules)
     for card in cards:
-        verify(card.name, card.expect, inputs.rules)
-    manual_draft, manual = pages_of(FIELD_MANUAL, "Field manual")
+        verify(card.name, card.expected, inputs.rules)
+    manual_draft, manual = pages_of(FIELD_MANUAL, "Field manual", inputs.rules)
     return {
         "field_manual.pdf": text_pdf(manual, manual_draft),
-        "rule_cards.pdf": rule_cards_pdf(cards, rule_values(cards, inputs.rules)),
+        "rule_cards.pdf": rule_cards_pdf(cards),
         "node_cards.pdf": node_cards_pdf(node_cards(inputs)),
         "board.pdf": board_pdf(inputs, board_size),
         "briefing.pdf": briefing_pdf(inputs, inputs.scenario),
@@ -82,7 +81,7 @@ def game_files(inputs: TraceInputs, board_size: str = DEFAULT_BOARD) -> dict[str
 
 
 def _answer(inputs: TraceInputs) -> tuple[dict[str, bytes], dict[str, list[dict[str, object]]]]:
-    debrief_draft, debrief = pages_of(DEBRIEF, "Debrief")
+    debrief_draft, debrief = pages_of(DEBRIEF, "Debrief", inputs.rules)
     files = {"answer.pdf": answer_pdf(inputs), "debrief.pdf": text_pdf(debrief, debrief_draft)}
     score = answer_score(inputs.run, inputs.world)
     tables: dict[str, list[dict[str, object]]] = {

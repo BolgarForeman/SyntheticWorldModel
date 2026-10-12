@@ -1,8 +1,0 @@
-DRAFT: wording written by the coder from structure v0.12 §4.4a and §4.5 until the design side supplies it (WO 9, H3).
-title: Crew priority order and ties
-values: dynamics.crew_order
-rule: A free crew takes the most urgent job first: {dynamics.crew_order}. Ties go to the shortest trip, then the lowest id.
-illustration: base -> B road 20 km ; base -> C road 4 km
-drill: One crew. B, a transmission substation 20 km east, and C, a clinic 4 km east, are damaged; each needs 2 h of work. At what hour is C done?
-answer: 8.9: B first (4.5), then 16 km back to C, {repair.crew_bound_lead_h} h to prepare, 2 h of work.
-expect: 8.9

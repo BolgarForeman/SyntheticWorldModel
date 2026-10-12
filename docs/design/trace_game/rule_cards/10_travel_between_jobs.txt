@@ -1,8 +1,0 @@
-DRAFT: wording written by the coder from structure v0.12 §4.4a and §4.5 until the design side supplies it (WO 9, H3).
-title: Travel between jobs
-values: crews.road_speed_kmh ; crews.offroad_speed_kmh ; crews.outlying_island_mobilisation_h
-rule: A crew goes from job to job and never back to base. It drives at {crews.road_speed_kmh} km/h, walks to a line at {crews.offroad_speed_kmh} km/h, and a sea crossing adds {crews.outlying_island_mobilisation_h} h.
-illustration: base -> B road 8 km ; B -> C road 6 km
-drill: One crew. B (8 km east) and C (8 km east, 6 km north) are clinics needing 1 h each. At what hour is C done?
-answer: 6.35: B is nearer, done at 3.2; then 0.15 h to C, {repair.crew_bound_lead_h} h to prepare, 1 h of work.
-expect: 6.35
