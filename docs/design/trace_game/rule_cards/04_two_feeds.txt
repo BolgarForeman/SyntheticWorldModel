@@ -1,0 +1,8 @@
+DRAFT: wording written by the coder from structure v0.12 §4.4a and §4.5 until the design side supplies it (WO 9, H3).
+title: Two supplies into one node
+values: 
+rule: Two feeds of one supply add up, each giving κ × its supplier's state, to at most 1. Within its own network, a node takes the best of its incoming links.
+illustration: A -> C power 0.5 ; B -> C power 0.5
+drill: C takes power from A and from B, κ = 0.5 each, and throttles. A is damaged. What is C's state at hour 0?
+answer: 0.5: B's half arrives; A's does not.
+expect: 0.5

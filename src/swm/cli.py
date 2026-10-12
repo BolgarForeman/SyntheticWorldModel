@@ -70,6 +70,8 @@ EXIT_OK = 0
 TRACE_SCENARIO = 7
 """The pilot's restorative-model scenario, the hand trace's default (Pilot Spec v0.7)."""
 TRACE_PACK_DIR = "trace_pack"
+BOARD_SIZES = ("11x17", "tiled-letter", "24x36", "36x48")
+"""The trace game's board sizes, the first the default (WO 9, H1)."""
 TRUTH_FILE = "truth/manifest.yaml"
 EXIT_FAILED = 1
 TERRAIN_STATS_FILE = "terrain_stats.yaml"
@@ -599,12 +601,18 @@ def _write_sources(emitted: EmittedSources, out_dir: Path) -> None:
 
 def _trace_pack_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
     built = _built(resolution)
-    _write_trace_pack(resolution, built, arguments.scenario, Path(arguments.out_dir))
+    _write_trace_pack(
+        resolution, built, arguments.scenario, Path(arguments.out_dir), arguments.board_size
+    )
 
 
-def _write_trace_pack(resolution: Resolution, built: _Built, scenario: int, out_dir: Path) -> None:
-    """Write the hand-trace pack for one scenario (Work Order 8, Part D; Work Order 9, Part A)."""
+def _write_trace_pack(
+    resolution: Resolution, built: _Built, scenario: int, out_dir: Path, board_size: str
+) -> None:
+    """Write the trace game for one scenario: game, sealed answer and data (WO 9, A and H)."""
     try:
+        from swm.trace_game.drills import DrillError
+        from swm.trace_game.pack import trace_game
         from swm.trace_pack import COLUMNS, TraceInputs, trace_pack
     except ImportError as error:  # pragma: no cover - the preview extra is installed in CI
         raise CommandError(
@@ -614,22 +622,34 @@ def _write_trace_pack(resolution: Resolution, built: _Built, scenario: int, out_
     if not 0 <= scenario < len(engine.damage):
         raise CommandError(f"scenario {scenario} is not among the {len(engine.damage)} drawn")
     run = simulate(engine.world, RunRequest(engine.damage[scenario], scenario=scenario))
-    pack = trace_pack(TraceInputs(
+    inputs = TraceInputs(
         scenario, built.terrain, built.requirements.layers, built.requirements, built.couplings,
         built.strength, built.buffers, built.crews, built.repair,
         built.storm.scenarios[scenario], built.scenarios.scenarios[scenario],
         built.scenarios.lines, engine.world, engine.damage[scenario], built.rules, run,
-    ))  # fmt: skip
-    # The blind pack, then the answer in its own folder so a tracer can set it aside (WO 9, A1).
+    )  # fmt: skip
+    pack = trace_pack(inputs)
+    try:
+        game = trace_game(inputs, board_size)
+    except DrillError as error:
+        raise CommandError(str(error)) from error
+    # What a player gets; the sealed answer; PR 9a's tables as the data appendix (WO 9, H1).
     folder = out_dir / TRACE_PACK_DIR
-    write_binary(pack.map_pdf, folder / "map.pdf")
-    write_binary(pack.rules_pdf, folder / "rules.pdf")
-    write_binary(pack.tables_pdf, folder / "tables.pdf")
-    for name, rows in pack.tables.items():
-        write_csv(rows, folder / f"{name}.csv", COLUMNS.get(name, ()))
+    for name, body in game.game.items():
+        write_binary(body, folder / "game" / name)
+    for name, body in game.answer.items():
+        write_binary(body, folder / "answer" / name)
+    for name, rows in game.answer_tables.items():
+        write_csv(rows, folder / "answer" / f"{name}.csv")
     write_binary(pack.answer_pdf, folder / "answer" / "timeline.pdf")
     for name, rows in pack.answer.items():
         write_csv(rows, folder / "answer" / f"{name}.csv")
+    data = folder / "data"
+    write_binary(pack.map_pdf, data / "map.pdf")
+    write_binary(pack.rules_pdf, data / "rules.pdf")
+    write_binary(pack.tables_pdf, data / "tables.pdf")
+    for name, rows in pack.tables.items():
+        write_csv(rows, data / f"{name}.csv", COLUMNS.get(name, ()))
 
 
 def _build_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
@@ -647,7 +667,7 @@ def _build_command(resolution: Resolution, arguments: argparse.Namespace) -> Non
         built.strength, built.buffers, built.crews, built.repair, observed, emitted, streams,
     ))  # fmt: skip
     write_canonical_yaml(_stamped(manifest, resolution), out_dir / TRUTH_FILE)
-    _write_trace_pack(resolution, built, arguments.scenario, out_dir)
+    _write_trace_pack(resolution, built, arguments.scenario, out_dir, arguments.board_size)
     sys.stdout.write(f"{len(emitted.files)} source files, the truth manifest and the trace pack\n")
 
 
@@ -896,6 +916,9 @@ def _parser() -> argparse.ArgumentParser:
     build_command.add_argument(
         "--scenario", type=int, default=TRACE_SCENARIO, help="the trace pack's scenario (7)"
     )
+    build_command.add_argument(
+        "--board-size", choices=BOARD_SIZES, default=BOARD_SIZES[0], help="the game board's size"
+    )
     pack_command = commands.add_parser(
         "trace-pack", help="write the printable hand-trace pack for one scenario"
     )
@@ -903,6 +926,12 @@ def _parser() -> argparse.ArgumentParser:
     pack_command.add_argument("-o", "--out-dir", required=True, help="output folder")
     pack_command.add_argument(
         "--scenario", type=int, default=TRACE_SCENARIO, help="the scenario (default 7)"
+    )
+    pack_command.add_argument(
+        "--board-size",
+        choices=BOARD_SIZES,
+        default=BOARD_SIZES[0],
+        help="the game board's size: 11x17 (default), tiled-letter, 24x36 or 36x48",
     )
     world_check = commands.add_parser(
         "check", help="run the world checks: every consumer supplied before any disruption"

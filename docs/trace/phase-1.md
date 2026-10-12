@@ -98,3 +98,21 @@ The tests compare each emitted location with the true one within half a unit in 
 - The golden pack changes only under `trace_pack/`.
 
 **Figure.** `figures/wo9a_hand_trace_map_scenario_7.png`.
+
+## The trace game (Work Order 9, PR 9g)
+
+**What was built.** The hand-trace pack became a print-and-play game: node cards, rule cards with drills, the board, the briefing, log sheets and tokens in `game/`, and the sealed answer in `answer/`. PR 9a's tables moved to `data/`. The field manual, debrief and rule-card wording are DRAFT until the design side supplies them.
+
+**How it was tested.**
+- Every number on the cards, the briefing and the sheets is compared with the engine's world, the scenario's damage or the registry.
+- The player's `game/` is byte-identical whether the run is the reference run or another.
+- No teaching text names a node, line or crew of the world.
+- Each of the 12 drills is a constructed world played by the engine, and its printed answer must match.
+- The sealed score equals the reference run's.
+- The board is golden at every size.
+
+**Departures from the design.**
+- The fallback symbol is ◷, because the bundled font has no ⏳.
+- The node cards' needs include the hidden couplings the engine plays (marked "(hidden)"); supplies and the board show switched-on couplings only, as the work order says. This is a question for the design side.
+
+**Figures.** `figures/wo9g_*.png`.

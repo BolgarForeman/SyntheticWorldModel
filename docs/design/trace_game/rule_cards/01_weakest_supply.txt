@@ -1,0 +1,8 @@
+DRAFT: wording written by the coder from structure v0.12 §4.4a and §4.5 until the design side supplies it (WO 9, H3).
+title: Weakest supply wins
+values: failure_modes.combining
+rule: A node works only as well as its weakest supply. Its state is the lowest of its responses to everything it needs ({failure_modes.combining}).
+illustration: A -> C power 0.6 ; B -> C water 0.8
+drill: C takes power from A at κ = 0.6 and water from B at κ = 0.8, and throttles on both. A and B are working. What is C's state at hour 0?
+answer: 0.6: the lower of 0.6 and 0.8, not their product.
+expect: 0.6

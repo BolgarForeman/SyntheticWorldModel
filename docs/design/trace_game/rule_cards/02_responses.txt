@@ -1,0 +1,8 @@
+DRAFT: wording written by the coder from structure v0.12 §4.4a and §4.5 until the design side supplies it (WO 9, H3).
+title: Throttle, trip and floor
+values: dynamics.trip_point ; reserves.hospital.essential_load_fraction
+rule: Short of a supply, a node throttles (runs at the share it gets), trips (runs fully while it gets at least {dynamics.trip_point}, else stops) or, on its generator, steps to a floor of {reserves.hospital.essential_load_fraction}.
+illustration: A -> C power 0.6
+drill: C takes power from A at κ = 0.6 and trips. A is working. What is C's state at hour 0?
+answer: 0: 0.6 is below the trip point {dynamics.trip_point}, so C stops.
+expect: 0

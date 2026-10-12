@@ -1,0 +1,8 @@
+DRAFT: wording written by the coder from structure v0.12 §4.4a and §4.5 until the design side supplies it (WO 9, H3).
+title: Time and rounding to steps
+values: dynamics.step_min ; dynamics.horizon_h
+rule: Play from event to event at exact times. The engine moves in {dynamics.step_min}-minute steps: an event takes effect at the first step at or after its exact time. Play ends at hour {dynamics.horizon_h}.
+illustration: base -> C road 8 km
+drill: As in the crew-sequence drill, the crew finishes C's work at hour 5.2. At what hour is C back on in the engine?
+answer: 5.25: the first {dynamics.step_min}-minute step at or after 5.2.
+expect: 5.25

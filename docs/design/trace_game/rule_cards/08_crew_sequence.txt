@@ -1,0 +1,8 @@
+DRAFT: wording written by the coder from structure v0.12 §4.4a and §4.5 until the design side supplies it (WO 9, H3).
+title: The crew sequence
+values: repair.crew_bound_lead_h ; crews.road_speed_kmh
+rule: A crew's job runs in order: travel, then {repair.crew_bound_lead_h} h to assess and prepare, then wait for any parts, then the work. Roads at {crews.road_speed_kmh} km/h.
+illustration: base -> C road 8 km
+drill: One crew at the base. C, 8 km away by road, is damaged and needs 3 h of work and no parts. At what hour is the work done?
+answer: 5.2: 0.2 h of travel, {repair.crew_bound_lead_h} h to prepare, 3 h of work.
+expect: 5.2

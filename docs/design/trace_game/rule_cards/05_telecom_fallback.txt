@@ -1,0 +1,8 @@
+DRAFT: wording written by the coder from structure v0.12 §4.4a and §4.5 until the design side supplies it (WO 9, H3).
+title: Telecom fallback
+values: tolerance.clinic
+rule: When telecom is lost, a node with a fallback keeps full function for T hours, then drops to d_eff = 1 − κ(1 − d). A clinic: T = {tolerance.clinic.t_h} h, d = {tolerance.clinic.d}.
+illustration: A -> C telecom
+drill: C is a clinic whose telecom comes from A (κ = 1) and throttles. A is damaged at hour 0 and never repaired. What is C's state at hour 30?
+answer: 0.8: full until hour {tolerance.clinic.t_h}, then d_eff = 1 − 1 × (1 − {tolerance.clinic.d}) = 0.8.
+expect: 0.8
