@@ -30,7 +30,13 @@ from swm.trace_game.content import (
     step_of,
     tokens,
 )
-from swm.trace_game.drills import DRILLS, DrillError, first_jobs, travel_case, verify
+from swm.trace_game.drills import (
+    DRILLS,
+    DrillError,
+    first_jobs,
+    travel_between_jobs,
+    verify,
+)
 from swm.trace_game.pack import BOARD_CHOICES, game_files, trace_game
 from swm.trace_game.render import board_pdf, network_order
 from swm.trace_game.text import (
@@ -105,12 +111,25 @@ def test_the_crew_order_drill_sends_both_crews_to_the_substations_first() -> Non
     assert first == {"crew 1": "S_c", "crew 2": "S_h"}
 
 
-def test_the_travel_case_is_timed_from_where_the_crew_stands() -> None:
+def test_the_travel_drill_is_timed_from_where_the_crew_stands() -> None:
+    # Card 10: B on the road 8 km east, then line L's two points 1 km off it at 12 and 14 km.
     rules = pilot()[0].rules
-    lead = rules.number("repair.crew_bound_lead_h")
-    speed = rules.number("crews.road_speed_kmh")
-    first_done = 8.0 / speed + lead + 1.0
-    assert travel_case(rules) == pytest.approx(first_done + 6.0 / speed + lead + 1.0)
+    lead, work = rules.number("repair.crew_bound_lead_h"), rules.number("storm.line_crew_work_h")
+    road, foot = rules.number("crews.road_speed_kmh"), rules.number("crews.offroad_speed_kmh")
+    b_done = 8.0 / road + lead + 1.0
+    first_done = b_done + 4.0 / road + 1.0 / foot + lead + work
+    # Between a line's points the crew walks off, drives and walks back on; no new preparation.
+    line_done = first_done + 1.0 / foot + 2.0 / road + 1.0 / foot + work
+    assert travel_between_jobs(rules) == pytest.approx((line_done,))
+    card = next(c for c in rule_cards(rules) if c.name == "travel_between_jobs")
+    assert card.expected == pytest.approx((line_done,))
+
+
+def test_no_rule_card_still_asks_for_the_engine() -> None:
+    for card in rule_cards(pilot()[0].rules):
+        text = "\n".join((*card.front, *card.back))
+        assert "CONFIRM WITH ENGINE" not in text, card.name
+        assert "[To be written" not in text, card.name
 
 
 def test_the_rule_cards_say_draft_while_their_files_do() -> None:

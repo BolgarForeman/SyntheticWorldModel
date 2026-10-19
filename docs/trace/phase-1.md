@@ -116,4 +116,10 @@ The tests compare each emitted location with the true one within half a unit in 
 - Rule card 9's printed answer gives crew 1 the substation feeding the hospital. The engine ranks a distribution substation by its own Lifeline weight; both weigh the same, so the nearer one goes to crew 1. The drill world's expectation (both substations first, the pump waiting) holds. Reported for a ruling.
 - The node cards' needs include the hidden couplings the engine plays (marked "(hidden)"); supplies and the board show switched-on couplings only, as the work order says. This is a question for the design side.
 
+**Rule cards 5, 10 and 12 read from the engine (PR 19 follow-up).** Their "[CONFIRM WITH ENGINE]" markers now state what the engine does. Card 10 has a worked example and an engine-verified drill: the crew finishes the line at 18.85 h.
+
+Where the engine departs from structure v0.12 §4.5 (reported, not changed):
+- **Telecom fallback.** §4.5 says "then d_eff". In the engine, the received share is raised to r + (1 − r) × d_eff and the facility's telecom response acts on it. A tripping facility whose d_eff is below the trip point goes to 0: the pilot's tertiary hospital trips on telecom with d_eff 0.85.
+- **Travel.** §4.5 names only the off-road walk to a line. The engine also drives a facility's access leg to the nearest road, walks off a line when leaving it, and crosses where no road joins at road speed plus the mobilisation delay. Preparation comes once per job.
+
 **Figures.** `figures/wo9g_*.png`.

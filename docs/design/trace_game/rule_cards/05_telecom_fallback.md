@@ -9,7 +9,7 @@ Many facilities can work for a while without telecom, by phone, paper and hand. 
 - After that it runs at d_eff = 1 − κ(1 − d), where d is the level without any telecom and κ the share of its telecom that comes over the public network.
 - When telecom returns, the facility returns to full.
 
-[CONFIRM WITH ENGINE: state in one sentence how the fallback combines with the facility's telecom failure mode after T.]
+After T hours of shortfall, counted in {rule:dynamics.step_min}-minute steps, the telecom the facility receives is raised to r + (1 − r) × d_eff, where r is the share that still arrives, and the facility's telecom response on its card acts on that level: throttle runs at it; trip runs fully only if it is at least the trip point ({rule:dynamics.trip_point}), and otherwise stops. The T-hour clock starts again from zero each time its telecom is fully back.
 
 **Value:** T and d from the tolerance rules on each card
 

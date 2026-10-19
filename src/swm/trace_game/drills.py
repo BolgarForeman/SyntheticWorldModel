@@ -18,6 +18,7 @@ from typing import Any
 
 from swm.dynamics.engine import simulate
 from swm.dynamics.records import Run, RunRequest
+from swm.dynamics.travel import Legs, Site
 from swm.dynamics.world import (
     CrewStart,
     Damage,
@@ -123,12 +124,15 @@ def _first(run: Run, node_id: str, test: Callable[[float], bool], after: float =
 
 
 def _completion(run: Run, element_id: str) -> float:
-    """Return the exact hour a crew finishes an element's repair (the crew log, not the step)."""
-    for _, log in run.crews:
-        for entry in log:
-            if entry.job_id == f"repair:{element_id}" and entry.activity == "repair":
-                return entry.end_h
-    raise DrillError(f"{element_id} is never repaired")
+    """Return the exact hour a crew finishes an element's repair (the crew log, not the step).
+
+    A line's job holds one stretch of work per failure point; the repair ends with the last.
+    """
+    ends = [entry.end_h for _, log in run.crews for entry in log
+            if entry.job_id == f"repair:{element_id}" and entry.activity == "repair"]  # fmt: skip
+    if not ends:
+        raise DrillError(f"{element_id} is never repaired")
+    return max(ends)
 
 
 # --- The drills, one per card, as each card's drill world specifies -------------------------
@@ -315,26 +319,38 @@ def crew_order(rules: Registry) -> tuple[float, ...]:
     return ()
 
 
-def travel_between_jobs(rules: Registry) -> tuple[float, ...]:
-    """Card 10: no printed answer yet; ``travel_case`` shows the engine's rule for the report."""
-    del rules
-    return ()
+def _road_along_east(start: Site, end: Site) -> Legs:
+    """Return the legs of a trip on a world with one straight road, along y = 0.
 
-
-def travel_case(rules: Registry) -> float:
-    """One crew; B (8 km east) and C (8 km east, 6 km north) need 1 h each: C's work done.
-
-    The engine times the second trip from B, where the crew stands: 0.15 h for 6 km.
+    As the engine's road finder does: each end reaches the road straight north or south; that
+    access leg is driven from a facility and walked from a point on a line; the rest is road.
     """
+    road_m, offroad_m = abs(end.point[0] - start.point[0]), 0.0
+    for site in (start, end):
+        if site.on_line:
+            offroad_m += abs(site.point[1])
+        else:
+            road_m += abs(site.point[1])
+    return Legs(road_m / M_PER_KM, offroad_m / M_PER_KM, False)
+
+
+def travel_between_jobs(rules: Registry) -> tuple[float, ...]:
+    """Card 10: the exact hour one crew finishes line L, after facility B.
+
+    B is on the road 8 km east; line L's two failure points lie 1 km off it, at 12 and 14 km.
+    """
+    work = rules.number("storm.line_crew_work_h")
     world = _world(
         rules,
         [_source("A", Layer.POWER, NodeClass.GENERATION),
-         _consumer("B", Layer.HEALTHCARE, NodeClass.CLINIC, 8.0),
-         _consumer("C", Layer.HEALTHCARE, NodeClass.CLINIC, 8.0, 6.0)],
-        repairs=(FacilityRepair("B", 0.0, 1.0), FacilityRepair("C", 0.0, 1.0)),
+         _consumer("B", Layer.HEALTHCARE, NodeClass.CLINIC, 8.0)],
+        repairs=(FacilityRepair("B", 0.0, 1.0),),
         crews=(CrewStart("crew 1", (0.0, 0.0)),),
+        legs=_road_along_east,
     )  # fmt: skip
-    return _completion(_run(world, nodes=("B", "C")), "C")
+    points = (FailurePoint("L", 0.5, (12000.0, 1000.0), work),
+              FailurePoint("L", 2.5, (14000.0, 1000.0), work))  # fmt: skip
+    return (_completion(_run(world, nodes=("B",), lines=("L",), points=points), "L"),)
 
 
 def manual_switching(rules: Registry) -> tuple[float, ...]:
