@@ -7,6 +7,7 @@ a stated reason (Work Order 9, B1 to B3).
 """
 
 import hashlib
+import re
 import struct
 import xml.etree.ElementTree as ElementTree
 from collections.abc import Iterator
@@ -36,22 +37,17 @@ OSM = "sources/osm/"
 GEOFABRIK = OSM + "geofabrik_island-260101-free/gis_osm_"
 OVERPASS = OSM + "overpass/"
 RENUMBERED = "OpenStreetMap ids are numbered in emission order; fewer emitted objects renumber"
-EXTENT = "the extract's bounds are the emitted objects' extent, which the change moves"
 SHARED_DIFFERENCES = {
     "resolved_recipe.yaml": "the one change, and the Phase 1 note lists the error settings",
     "truth/manifest.yaml": "correspondence (renumbered ids) and the hidden section; the true "
     "world is unchanged",
-    OSM + "island.osm": f"the change's objects are gone; {RENUMBERED}; {EXTENT}",
-    OSM + "island.osm.pbf": f"the change's objects are gone; {RENUMBERED}; {EXTENT}",
+    OSM + "island.osm": f"the change's objects are gone; {RENUMBERED}",
+    OSM + "island.osm.pbf": f"the change's objects are gone; {RENUMBERED}",
     **{
         f"{GEOFABRIK}{layer}_free_1.dbf": f"{RENUMBERED} (the osm_id field)"
         for layer in ("landuse_a", "places", "pois_a", "roads", "transport_a", "water_a")
     },
-    OVERPASS + "TWN_Hospital.overpassql": f"the query's polygon: {EXTENT}",
-    OVERPASS + "TWN_Industrial.overpassql": f"the query's polygon: {EXTENT}",
     OVERPASS + "TWN_Industrial.geojson": RENUMBERED,
-    OVERPASS + "TWN_Telecom_OSM_Overpass.overpassql": f"the query's polygon: {EXTENT}",
-    OVERPASS + "query_families_ports.overpassql": f"the query's polygon: {EXTENT}",
     OVERPASS + "query_families_ports.json": RENUMBERED,
 }
 DIFFERENCES = {
@@ -184,6 +180,66 @@ def test_the_manifests_true_world_equals_the_pilots(world: str) -> None:
 def sorted_edges(hidden: dict[str, list[dict[str, object]]]) -> list[dict[str, object]]:
     """Every coupling, hidden or shown: the couplings that exist."""
     return sorted(hidden["couplings"] + hidden["switched_on_couplings"], key=lambda r: str(r["id"]))
+
+
+# --- The area each file says it covers ----------------------------------------------------
+
+
+@pytest.mark.parametrize("world", WORLDS)
+def test_bounds_and_search_areas_equal_the_pilots(world: str) -> None:
+    """The stated area is the terrain's map area, so hiding or thinning moves none (v0.15 §4.6)."""
+    assert stated_areas(golden(world)) == stated_areas(PILOT_BUILD)
+
+
+def test_the_stated_area_is_the_whole_map_not_the_emitted_extent() -> None:
+    areas = stated_areas(PILOT_BUILD)
+    west, south, east, north = areas["island.osm"]
+    assert areas["island.osm.pbf"] == areas["island.osm"]
+    root = ElementTree.parse(PILOT_BUILD / OSM / "island.osm").getroot()
+    for node in root.iter("node"):
+        assert south < float(node.get("lat", "")) < north
+        assert west < float(node.get("lon", "")) < east
+    polygon = (south, west, north, west, north, east, south, east)
+    queries = [name for name in areas if name.endswith(".overpassql")]
+    assert queries
+    assert all(areas[name] == (polygon,) * len(areas[name]) for name in queries)
+
+
+def stated_areas(folder: Path) -> dict[str, tuple[float, ...] | tuple[tuple[float, ...], ...]]:
+    """The .osm bounds, the .pbf header box and every Overpass query's search areas."""
+    bounds = ElementTree.parse(folder / OSM / "island.osm").getroot().find("bounds")
+    assert bounds is not None
+    names = ("minlon", "minlat", "maxlon", "maxlat")
+    areas: dict[str, tuple[float, ...] | tuple[tuple[float, ...], ...]] = {
+        "island.osm": tuple(float(bounds.get(name, "")) for name in names),
+        "island.osm.pbf": pbf_box((folder / OSM / "island.osm.pbf").read_bytes()),
+    }
+    for query in sorted((folder / OVERPASS).glob("*.overpassql")):
+        text = query.read_text(encoding="utf-8")
+        polygons = re.findall(r'poly:"([^"]+)"', text)
+        assert polygons, query.name
+        areas[query.name] = tuple(tuple(float(v) for v in p.split()) for p in polygons)
+    return areas
+
+
+def pbf_box(body: bytes) -> tuple[float, ...]:
+    """The PBF header's box as (west, south, east, north), in degrees."""
+    (header_length,) = struct.unpack(">I", body[:4])
+    header = dict(fields(body[4 : 4 + header_length]))
+    size = header[3]
+    assert isinstance(size, int)
+    blob = dict(fields(body[4 + header_length : 4 + header_length + size]))
+    raw = blob[1]
+    assert isinstance(raw, bytes)
+    box = dict(fields(dict(fields(raw))[1]))  # type: ignore[arg-type]
+    assert header[1] == b"OSMHeader"
+    left, right, top, bottom = (unzigzag(box[n]) / 1e9 for n in (1, 2, 3, 4))
+    return round(left, 7), round(bottom, 7), round(right, 7), round(top, 7)
+
+
+def unzigzag(value: int | bytes) -> int:
+    assert isinstance(value, int)
+    return (value >> 1) ^ -(value & 1)
 
 
 # --- Hidden layer ---------------------------------------------------------------------------

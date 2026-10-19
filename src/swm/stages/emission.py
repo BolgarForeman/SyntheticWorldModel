@@ -18,7 +18,7 @@ import math
 from collections.abc import Mapping, Sequence
 
 from swm import rng
-from swm.coordinates import cell_centre_m, to_lonlat
+from swm.coordinates import cell_centre_m, domain_origin_m, to_lonlat
 from swm.emit.observed import (
     LonLat,
     ObservedLink,
@@ -90,7 +90,37 @@ def build_observed(
         towns=towns,
         sources=tuple((layer, tuple(settings.get(layer).sources)) for layer in emitted),
         nodes_only=nodes_only,
+        map_area=map_area(terrain),
     )
+
+
+def map_area(terrain: TerrainResult) -> tuple[float, float, float, float]:
+    """Return the world's whole map area as a longitude and latitude box.
+
+    The box is fixed by the terrain, never by what is emitted, so hiding a layer or withholding
+    links moves no file's stated area (ruled by Foreman, option A).
+
+    Parameters
+    ----------
+    terrain : TerrainResult
+        The terrain, whose grid is the map.
+
+    Returns
+    -------
+    tuple of float
+        (west, south, east, north) in degrees, at 7 decimals: the smallest box holding the
+        grid's four corners.
+
+    Spec: structure v0.15 §4.6; Work Order 9b answers, 2.
+    """
+    grid = terrain.grid
+    west_m, south_m = domain_origin_m(grid)
+    side_m = grid.cells * grid.cell_size_m
+    corners = [to_lonlat(x_m, y_m) for x_m in (west_m, west_m + side_m)
+               for y_m in (south_m, south_m + side_m)]  # fmt: skip
+    longitudes = [lon for lon, _ in corners]
+    latitudes = [lat for _, lat in corners]
+    return min(longitudes), min(latitudes), max(longitudes), max(latitudes)
 
 
 # --- Towns (E4) -----------------------------------------------------------------------------

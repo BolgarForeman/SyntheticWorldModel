@@ -23,7 +23,7 @@ def osm_xml_bytes(data: OsmData) -> bytes:
 
     Spec: Work Order 8, A1.
     """
-    west, south, east, north = data.bounds()
+    west, south, east, north = data.map_area
     meta = f'version="1" timestamp="{TIMESTAMP}" uid="{UID}" user="{USER}" changeset="{CHANGESET}"'
     lines = [
         "<?xml version='1.0' encoding='UTF-8'?>",

@@ -99,6 +99,9 @@ class ObservedWorld:
     sources: tuple[tuple[Layer, tuple[Source, ...]], ...]
     """The switched-on sources of each emitted layer."""
     nodes_only: frozenset[Layer]
+    map_area: tuple[float, float, float, float]
+    """(west, south, east, north) in degrees: the smallest box holding the terrain grid's four
+    corners. Every file that says what area it covers says this one (spec v0.15 §4.6)."""
 
     def sources_of(self, layer: Layer) -> tuple[Source, ...]:
         """Return the switched-on sources of a layer (empty if it is not emitted)."""

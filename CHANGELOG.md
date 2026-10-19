@@ -10,6 +10,7 @@ All notable changes to this project are recorded here. Each phase closes with a 
   - **Two fixture worlds,** each the pilot with one change: `pilot_hidden_telecom` (telecom hidden) and `pilot_power_nodes_only` (power reports nodes only). Their full `swm build` output is checked in with hashes. Tests prove that every stage hash, the manifest's true world and all 8 reference runs equal the pilot's, and that every file that differs from the pilot's golden build has a stated reason.
   - **The manifest's hidden section** counts a coupling as hidden when either end's layer is hidden. It also lists the links that nodes-only sources withhold (`withheld_links`).
   - **Error settings are recorded, not applied (Phase 1).** `swm build` and `swm emit` print one warning naming every source whose settings are above zero. The manifest declares the departure, and the resolved recipe carries the note beside its errors section. Sources are byte-equal to a zero-rate build's.
+  - **The area a file says it covers is the world's whole map area** (spec v0.15 §4.6, ruled by Foreman). This covers the `.osm` bounds, the `.pbf` header box and every Overpass search area. Hiding a layer or withholding links no longer moves them.
   - **New property tests:**
     - error settings and the error streams' seed move nothing that exists;
     - nodes = area × density within rounding;

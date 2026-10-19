@@ -108,7 +108,7 @@ def _units(degrees: float) -> int:
 
 
 def _header(data: OsmData) -> bytes:
-    west, south, east, north = data.bounds()
+    west, south, east, north = data.map_area
     bbox = (
         _sint(1, _units(west) * GRANULARITY)
         + _sint(2, _units(east) * GRANULARITY)

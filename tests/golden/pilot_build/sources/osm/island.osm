@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <osm version="0.6" generator="swm">
-  <bounds minlat="-48.9033340" minlon="-123.5687505" maxlat="-48.7460974" maxlon="-123.2998006"/>
+  <bounds minlat="-49.0304644" minlon="-123.6274826" maxlat="-48.7224721" maxlon="-123.1605361"/>
   <node id="900000000000" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8607984" lon="-123.3088206">
     <tag k="industrial" v="oil"/>
     <tag k="landuse" v="industrial"/>

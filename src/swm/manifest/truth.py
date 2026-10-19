@@ -262,8 +262,8 @@ def _hidden(inputs: TruthInputs) -> dict[str, object]:
     ]
     edges = edge_table(inputs.couplings)
 
-    # A coupling is hidden when it is switched off, or when either end's layer is hidden: no
-    # source shows a hidden layer, so none shows its couplings (WO-09 B3).
+    # CHOICE: a coupling is hidden when it is switched off, or when either end's layer is hidden;
+    # no source shows a hidden layer, so none shows its couplings (accepted, decision 0017).
     def hidden(row: Mapping[str, object]) -> bool:
         ends = (row.get("supplier_layer"), row.get("consumer_layer"))
         return not row.get("switched_on") or any(end in hidden_layers for end in ends)

@@ -4,6 +4,11 @@ Error settings shape only what a source reports. No stage output (terrain throug
 no reference run and no truth-manifest value other than the recorded settings may move when
 they change (Work Order 9, C1; CLAUDE.md §7: changing the error seed never moves terrain or
 infrastructure).
+
+There is one root seed and no separate error-seed field; the error streams are the ``errors/``
+streams, keyed by their own stable names. The test gives them a different seed. In Phase 1 no
+stage draws from them, so the property holds trivially; it bites from Phase 3, when error
+induction draws from them (WO-09b answers, answer 1).
 """
 
 import functools
