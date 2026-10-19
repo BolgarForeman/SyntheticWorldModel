@@ -1,6 +1,6 @@
 # Work Order 9g: answers 2, crew travel along a line (apply on this branch before merge)
 
-*2026-10-19 · ruled by Foreman (the author) · apply on `wo9g/trace-game`, push to PR 19 · add to decision 0016 · spec now v0.14*
+*2026-10-19 · ruled by Foreman (the author) · apply on `wo9g/trace-game`, push to PR 19 · add to decision 0017 · spec now v0.14*
 
 ## Why
 

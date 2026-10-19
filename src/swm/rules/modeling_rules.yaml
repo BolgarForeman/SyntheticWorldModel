@@ -10469,7 +10469,7 @@ rules:
   grade: J
   jurisdiction: null
   sources:
-  - {citation: 'Work Order 9g, answers to PR 19, answer 1 (decision 0016)', url: docs/work_orders/WO-09g-answers.md,
+  - {citation: 'Work Order 9g, answers to PR 19, answer 1 (decision 0017)', url: docs/work_orders/WO-09g-answers.md,
     quote: null, verified: null}
   - {citation: Structure v0.13 §4.5 (default crew order), url: docs/design/World_Generator_Structure.md,
     quote: null, verified: null}
@@ -10482,7 +10482,7 @@ rules:
   ruling:
     by: the author (Foreman)
     date: '2026-10-19'
-    decision: '0016'
+    decision: '0017'
   history: []
   theta_role: dynamics
   theta_domain: truth
@@ -10497,7 +10497,7 @@ rules:
   grade: J
   jurisdiction: null
   sources:
-  - {citation: 'Work Order 9g, answers 2 (decision 0016)', url: docs/work_orders/WO-09g-answers-2.md,
+  - {citation: 'Work Order 9g, answers 2 (decision 0017)', url: docs/work_orders/WO-09g-answers-2.md,
     quote: null, verified: null}
   - {citation: Structure v0.14 §4.5 (repair and crews), url: docs/design/World_Generator_Structure.md,
     quote: null, verified: null}
@@ -10511,7 +10511,7 @@ rules:
   ruling:
     by: the author (Foreman)
     date: '2026-10-19'
-    decision: '0016'
+    decision: '0017'
   history: []
   theta_role: dynamics
   theta_domain: truth

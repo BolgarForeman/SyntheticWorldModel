@@ -1,6 +1,6 @@
 # Work Order 9g: answers to PR 19 (apply on this branch before merge)
 
-*2026-10-19 · ruled by Foreman (the author) · apply on `wo9g/trace-game`, push to PR 19 · record in decision 0016 · spec now v0.13*
+*2026-10-19 · ruled by Foreman (the author) · apply on `wo9g/trace-game`, push to PR 19 · record in decision 0017 · spec now v0.13*
 
 ## Answer 1: crew order among distribution substations (your report on card 9)
 

@@ -1,4 +1,4 @@
-# 0016 — Phase 1 close: the trace game and its rulings
+# 0017 — Phase 1 close: the trace game and its rulings
 
 - **Date:** opened 2026-10-19; completed with PR 9c
 - **Decided by:** the author (Foreman)

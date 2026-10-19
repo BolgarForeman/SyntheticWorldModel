@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: 13fcef83e1debf7433782d580f7eb75122faa642c96c30af3fbfa6831bdda671
+  registry_sha256: 976a0b234cffb8ce917430384f432b735a7ccd95f11f459678888c15425cdfc4
   overrides: {}
   relaxed_limits: []
   out_of_range: []
@@ -9817,7 +9817,7 @@ declared_departures:
 - 'Source overlap (assets missing from one of two sources) is Phase 3: in Phase 1 every true element in a source''s scope appears in it.'
 theta:
   registry_version: '0.1'
-  registry_sha256: 13fcef83e1debf7433782d580f7eb75122faa642c96c30af3fbfa6831bdda671
+  registry_sha256: 976a0b234cffb8ce917430384f432b735a7ccd95f11f459678888c15425cdfc4
   overrides: {}
   relaxed_limits: []
   theta_list:
@@ -9909,7 +9909,7 @@ theta:
     ruling:
       by: the author (Foreman)
       date: '2026-10-19'
-      decision: '0016'
+      decision: '0017'
   - theta_id: dynamics.substation_crew_rank
     domain: truth
     sub_type: dynamics
@@ -9926,7 +9926,7 @@ theta:
     ruling:
       by: the author (Foreman)
       date: '2026-10-19'
-      decision: '0016'
+      decision: '0017'
   - theta_id: dynamics.trip_point
     domain: truth
     sub_type: dynamics

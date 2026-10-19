@@ -124,7 +124,7 @@ Where the engine departs from structure v0.12 §4.5 (reported, not changed):
 
 **Figures.** `figures/wo9g_*.png`.
 
-## Crew order among distribution substations (WO-09g answers; decision 0016)
+## Crew order among distribution substations (WO-09g answers; decision 0017)
 
 **What changed.** A distribution substation in crew-order group 2 now ranks by the highest Lifeline weight among the end uses it supplies through the electricity couplings the engine plays, switched on or hidden. The engine reads `dynamics.substation_crew_rank`.
 
