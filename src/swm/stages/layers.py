@@ -1043,7 +1043,8 @@ def _site_freight_yard(s: _Siter, layer: Layer, index: int, stream: np.random.Ge
 
 def _site_bridge(s: _Siter, layer: Layer, index: int, stream: np.random.Generator) -> _Sited:
     g = s.ground
-    # Decision 0016: a bridge may sit on a river but never on wetland.
+    # A bridge is excepted from the river rule only, never from wetland (WO-03 B3; decision
+    # 0006; decision 0016).
     free = ~g.occupied & ~g.wetland
     for start, end in _bridge_roads(s):
         vertices, _ = s.road(start, end)
