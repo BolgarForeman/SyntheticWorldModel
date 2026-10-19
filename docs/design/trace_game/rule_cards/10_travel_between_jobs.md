@@ -10,7 +10,7 @@ A crew that finishes a job goes straight to its next job from where it stands; i
 - along the roads in between: driven at {rule:crews.road_speed_kmh} km/h;
 - if no road joins the two places: straight across at road speed, plus {rule:crews.outlying_island_mobilisation_h} h.
 
-Preparation ({rule:repair.crew_bound_lead_h} h) comes once per job, at its first site. Between a line's failure points the crew walks off, drives and walks back on, without preparing again.
+Preparation ({rule:repair.crew_bound_lead_h} h) comes once per job, at its first site. Between failure points of the same line, the crew walks along the line at {rule:crews.offroad_speed_kmh} km/h, without preparing again.
 
 **Value:** road {rule:crews.road_speed_kmh} km/h; off road {rule:crews.offroad_speed_kmh} km/h
 
@@ -20,7 +20,7 @@ Preparation ({rule:repair.crew_bound_lead_h} h) comes once per job, at its first
 
 **Drill:** One crew sets out from the base, on a straight road. Facility B, on the road 8 km east, needs 1 h of work. Line L has two failure points, each 1 km off the road, at 12 km and 14 km east, each needing {rule:storm.line_crew_work_h} h. Both jobs are in the same priority group. When does the crew finish line L?
 
-**Answer:** B first, the shorter trip: done at hour 3.2. To L's first point: 4 km by road and 1 km on foot, 0.6 h, so there at 3.8; prepared at 5.8; done at 11.8. To the second point: 1 km off, 2 km by road, 1 km back on, 1.05 h, so there at 12.85; no new preparation; done at **18.85**.
+**Answer:** B first, the shorter trip: done at hour 3.2. To L's first point: 4 km by road and 1 km on foot, 0.6 h, so there at 3.8; prepared at 5.8; done at 11.8. To the second point: 2 km along the line on foot, 1.0 h, so there at 12.8; no new preparation; done at **18.8**.
 
 ## Drill world (for the engine test, not printed)
 
