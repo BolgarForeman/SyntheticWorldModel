@@ -1,4 +1,4 @@
-from hypothesis import given, settings
+from hypothesis import example, given, settings
 from hypothesis import strategies as st
 
 from layers_helpers import (
@@ -21,11 +21,29 @@ layer_settings = st.fixed_dictionaries(
 )
 
 
+def _emitted(node_count: int, links_per_node: float) -> dict[str, object]:
+    return {"state": "emitted", "node_count": node_count, "links_per_node": links_per_node}
+
+
 @settings(max_examples=8, deadline=None)
 @given(
     sections=st.fixed_dictionaries({layer.value: layer_settings for layer in Layer}),
     dual=st.booleans(),
     terrain_seed=st.integers(min_value=0, max_value=2**32),
+)
+# Issue #21: Hypothesis found a bridge sited on a wetland river cell with terrain seed 15746
+# (decision 0016, addendum).
+@example(
+    sections={
+        "power": _emitted(12, 1.1),
+        "telecom": _emitted(10, 2.4),
+        "water": _emitted(18, 1.1),
+        "transport": _emitted(18, 2.0),
+        "fuel": _emitted(4, 1.1),
+        "healthcare": _emitted(3, 2.9),
+    },
+    dual=False,
+    terrain_seed=15746,
 )
 def test_any_valid_layers_section_keeps_the_invariants(
     sections: dict[str, dict[str, object]], dual: bool, terrain_seed: int

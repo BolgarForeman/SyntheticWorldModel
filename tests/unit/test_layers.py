@@ -25,7 +25,7 @@ from swm.stages.layers import (
     link_table,
     node_table,
 )
-from swm.stages.terrain import GRID_CELLS, TerrainResult, array_hashes
+from swm.stages.terrain import GRID_CELLS, CoverClass, TerrainResult, array_hashes
 
 ATTRIBUTE_RANGES = layer_rules().attribute_ranges
 COMPOSITION = layer_rules().composition
@@ -488,3 +488,27 @@ def test_no_bridge_sits_on_a_wetland_river_cell() -> None:
         node for node in nodes_of(result, Layer.TRANSPORT) if node.node_class.value == "bridge"
     ]
     assert len(bridges) == 2
+
+
+def test_no_bridge_sits_on_a_wetland_river_cell_with_terrain_seed_15746() -> None:
+    """Issue #21: the second bridge of terrain seed 15746 was drawn on a wetland river cell."""
+    sections = {
+        "power": {"state": "emitted", "node_count": 12, "links_per_node": 1.1},
+        "telecom": {"state": "emitted", "node_count": 10, "links_per_node": 2.4},
+        "water": {"state": "emitted", "node_count": 18, "links_per_node": 1.1},
+        "transport": {"state": "emitted", "node_count": 18, "links_per_node": 2.0},
+        "fuel": {"state": "emitted", "node_count": 4, "links_per_node": 1.1},
+        "healthcare": {"state": "emitted", "node_count": 3, "links_per_node": 2.9},
+    }
+    _, terrain, result = build_world(
+        terrain={"terrain_seed": 15746, "area_km2": 1500},
+        layers={"dual_membership": False, **sections},
+    )
+    assert sited_on_bad_ground(terrain, result) == []
+    wetland = np.asarray(terrain.land_cover) == CoverClass.WETLAND
+    river = np.asarray(terrain.river)
+    bridges = [n for n in nodes_of(result, Layer.TRANSPORT) if n.node_class == NodeClass.BRIDGE]
+    assert len(bridges) == 2
+    for bridge in bridges:
+        assert river[bridge.row, bridge.column]
+        assert not wetland[bridge.row, bridge.column]
