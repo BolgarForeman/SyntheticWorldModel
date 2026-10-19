@@ -6,7 +6,7 @@
 
 **Within its own network** (a substation fed by two lines), a facility takes the **largest** supply arriving, up to full. Losing one line costs nothing if another still carries full supply.
 
-**From another network,** supplies come in feed groups (on the card: single, two half, two full). Each group passes what its arrows pass; the groups add up, to at most full.
+**From another network,** supplies come in feed groups (on the card: single, two half, two full). Each group passes the smallest of its arrows (a group needs all its arrows); the groups add up, to at most full.
 - **two half:** each feed covers half, so losing one leaves 0.5.
 - **two full:** either feed covers it all, so losing one leaves 1.
 
