@@ -716,6 +716,7 @@ class _Ground:
     land: NDArray[np.bool_]
     main_land: NDArray[np.bool_]
     river: NDArray[np.bool_]
+    wetland: NDArray[np.bool_]
     sea: NDArray[np.bool_]
     buildable: NDArray[np.bool_]
     coast: NDArray[np.bool_]
@@ -750,6 +751,7 @@ class _Ground:
             land=land,
             main_land=main_land,
             river=river,
+            wetland=wetland,
             sea=~land,
             buildable=land & ~river & ~wetland,
             coast=land & _dilate(~land),
@@ -1041,7 +1043,8 @@ def _site_freight_yard(s: _Siter, layer: Layer, index: int, stream: np.random.Ge
 
 def _site_bridge(s: _Siter, layer: Layer, index: int, stream: np.random.Generator) -> _Sited:
     g = s.ground
-    free = ~g.occupied
+    # Decision 0016: a bridge may sit on a river but never on wetland.
+    free = ~g.occupied & ~g.wetland
     for start, end in _bridge_roads(s):
         vertices, _ = s.road(start, end)
         crossing = [c for c in _polyline_cells(vertices) if g.river.flat[c] and free.flat[c]]
@@ -1059,7 +1062,7 @@ def _relaxed_bridge(s: _Siter, layer: Layer) -> _Sited:
     road_cells = sorted(
         {c for start, end in _bridge_roads(s) for c in _polyline_cells(s.road(start, end)[0])}
     )
-    rivers = np.flatnonzero((g.river & g.main_land & ~g.occupied).ravel())
+    rivers = np.flatnonzero((g.river & g.main_land & ~g.wetland & ~g.occupied).ravel())
     if rivers.size and road_cells:
         road_rows, road_columns = np.divmod(np.array(road_cells), GRID_CELLS)
         river_rows, river_columns = np.divmod(rivers, GRID_CELLS)
@@ -1067,8 +1070,8 @@ def _relaxed_bridge(s: _Siter, layer: Layer) -> _Sited:
         dc = river_columns[:, None] - road_columns[None, :]
         cell = int(rivers[int(np.argmin((dr * dr + dc * dc).min(axis=1)))])
         s.notes[layer].append(
-            "bridge: no road crosses a river; placed on the river cell nearest the road "
-            "network, joined by a spur road"
+            "bridge: no road crosses a river off wetland; placed on the river cell off wetland "
+            "nearest the road network, joined by a spur road"
         )
         g.occupied.flat[cell] = True
         return _Sited(NodeClass.BRIDGE, cell, river_accumulation=int(g.accumulation.flat[cell]))
@@ -1076,15 +1079,20 @@ def _relaxed_bridge(s: _Siter, layer: Layer) -> _Sited:
     candidates = [
         c
         for c in _polyline_cells(s.road(start, end)[0])
-        if g.land.flat[c] and not g.occupied.flat[c] and c not in (start, end)
+        if g.land.flat[c]
+        and not g.wetland.flat[c]
+        and not g.occupied.flat[c]
+        and c not in (start, end)
     ]
     if not candidates:
-        raise ValueError("no eligible cell for transport bridge: no river and no main road")
+        raise ValueError(
+            "no eligible cell for transport bridge: no river and no main road off wetland"
+        )
     cell = min(candidates, key=lambda c: (float(g.elevation_m.flat[c]), c))
     s.bridge_roads[cell] = (start, end)
     s.notes[layer].append(
-        "bridge: the island has no river; placed as a viaduct at the main road's lowest land "
-        "crossing of a valley"
+        "bridge: the island has no river off wetland; placed as a viaduct at the main road's "
+        "lowest land crossing of a valley, off wetland"
     )
     g.occupied.flat[cell] = True
     return _Sited(NodeClass.BRIDGE, cell)
