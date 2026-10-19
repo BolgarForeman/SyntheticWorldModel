@@ -243,6 +243,11 @@ class Settings:
     road_kmh: float
     offroad_kmh: float
     mobilisation_h: float
+    substation_rank: str = "highest supplied weight"
+    """How a distribution substation ranks in crew-order group 2.
+
+    Read from ``dynamics.substation_crew_rank``.
+    """
 
 
 def settings_from(rules: Registry) -> Settings:
@@ -276,6 +281,7 @@ def settings_from(rules: Registry) -> Settings:
         road_kmh=rules.number("crews.road_speed_kmh"),
         offroad_kmh=rules.number("crews.offroad_speed_kmh"),
         mobilisation_h=rules.number("crews.outlying_island_mobilisation_h"),
+        substation_rank=str(rules.value("dynamics.substation_crew_rank")),
     )
 
 

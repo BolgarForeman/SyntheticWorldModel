@@ -106,9 +106,9 @@ def test_a_drill_the_engine_does_not_reproduce_stops_the_build() -> None:
 def test_the_crew_order_drill_sends_both_crews_to_the_substations_first() -> None:
     first = first_jobs(pilot()[0].rules)
     assert set(first.values()) == {"S_h", "S_c"}
-    # The engine ranks a distribution substation by its own Lifeline weight; both are equal, so
-    # the nearer goes to the first crew (reported against the card's printed answer).
-    assert first == {"crew 1": "S_c", "crew 2": "S_h"}
+    # A distribution substation ranks by the highest weight it supplies (WO-09g answers, 1): the
+    # hospital's (10) before the clinic's (3), though the clinic's is nearer.
+    assert first == {"crew 1": "S_h", "crew 2": "S_c"}
 
 
 def test_the_travel_drill_is_timed_from_where_the_crew_stands() -> None:

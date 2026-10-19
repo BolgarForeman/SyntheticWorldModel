@@ -123,3 +123,14 @@ Where the engine departs from structure v0.12 §4.5 (reported, not changed):
 - **Travel.** §4.5 names only the off-road walk to a line. The engine also drives a facility's access leg to the nearest road, walks off a line when leaving it, and crosses where no road joins at road speed plus the mobilisation delay. Preparation comes once per job.
 
 **Figures.** `figures/wo9g_*.png`.
+
+## Crew order among distribution substations (WO-09g answers; decision 0016)
+
+**What changed.** A distribution substation in crew-order group 2 now ranks by the highest Lifeline weight among the end uses it supplies through the electricity couplings the engine plays, switched on or hidden. The engine reads `dynamics.substation_crew_rank`.
+
+**How it was tested.**
+- The ranking is checked node by node on the pilot.
+- An alternative named in the registry stops the run.
+- Rule card 9's drill now checks the printed crew assignment.
+
+**Golden changes.** The reference runs, stage stats, resolved recipes and manifest change only in the registry stamp; the manifest also gains the new Theta List entry. No pilot run has a distribution-substation job, so no crew order, timeline or hours out moved.

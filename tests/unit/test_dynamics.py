@@ -422,3 +422,43 @@ def test_the_main_refill_rule_is_ruled_with_its_range() -> None:
     assert rule.value == 1.0
     assert rule.range == [0.5, 1.0]
     assert rule.relaxed == "unlimited"
+
+
+# --- Crew order among distribution substations (WO-09g answers, 1) -------------------------
+
+
+def test_a_distribution_substation_ranks_by_the_highest_weight_it_supplies() -> None:
+    from swm.dynamics.engine import crew_order, substation_weight
+
+    world = pilot().world
+    substations = [n for n in world.nodes if n.node_class == C.DISTRIBUTION_SUBSTATION]
+    assert substations
+    weights = {n.node_id: n.end_use_weight for n in world.nodes}
+    for node in substations:
+        supplied = {
+            d.consumer_id for d in world.dependencies if d.supplier_layer == Layer.POWER
+            and any(e.supplier_id == node.node_id for g in d.groups for e in g)
+        }  # fmt: skip
+        expected = max(w for w in (weights[node.node_id], *(weights[s] for s in supplied))
+                       if w is not None)  # fmt: skip
+        assert substation_weight(world, node.node_id) == expected
+        assert crew_order(world, node.node_id) == (1, -expected)
+
+
+def test_the_substation_ranking_is_ruled_with_its_two_alternatives() -> None:
+    rule = RULES.rule("dynamics.substation_crew_rank")
+    assert rule.value == "highest supplied weight"
+    assert rule.theta_alternatives == ("own weight only", "sum of supplied weights")
+    assert rule.grade == "J"
+    assert rule.ruling is not None
+    assert rule.ruling.date == "2026-10-19"
+
+
+def test_an_alternative_ranking_is_not_yet_selectable() -> None:
+    from swm.dynamics.engine import substation_weight
+
+    world = pilot().world
+    other = replace(world, settings=replace(world.settings, substation_rank="own weight only"))
+    node = next(n for n in world.nodes if n.node_class == C.DISTRIBUTION_SUBSTATION)
+    with pytest.raises(ValueError, match="selectable only in a later phase"):
+        substation_weight(other, node.node_id)

@@ -10460,6 +10460,34 @@ rules:
   theta_role: dynamics
   theta_domain: truth
   theta_symbol: R
+- id: dynamics.substation_crew_rank
+  title: How a distribution substation ranks in group 2 of the default crew order
+  stage: dynamics
+  value: highest supplied weight
+  units: null
+  applies_to: {layer: null, node_class: distribution_substation, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Work Order 9g, answers to PR 19, answer 1 (decision 0016)', url: docs/work_orders/WO-09g-answers.md,
+    quote: null, verified: null}
+  - {citation: Structure v0.13 §4.5 (default crew order), url: docs/design/World_Generator_Structure.md,
+    quote: null, verified: null}
+  reasoning: A distribution substation ranks by the highest Lifeline weight among the end uses it supplies,
+    its own weight included, so one feeding the tertiary hospital (10) outranks one feeding a clinic (3).
+    It supplies an end use through an electricity coupling the engine plays, switched on or hidden. Ties
+    go to the shortest trip, then the lowest id. Power feeds to end uses keep their own key.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-19'
+    decision: '0016'
+  history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
+  theta_alternatives: [own weight only, sum of supplied weights]
 - id: strength.supply_days
   title: Days of its own stock a supplier delivers in a day's turnover
   stage: strength

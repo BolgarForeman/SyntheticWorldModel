@@ -745,7 +745,8 @@ def crew_order(world: EngineWorld, element_id: str) -> tuple[int, float]:
     """Return an element's key in the default crew order (D6): tier, then -Lifeline weight.
 
     Tier 0: towered lines and transmission substations. Tier 1: distribution substations and
-    power feeds to end-use nodes, the highest Lifeline weight first. Tier 2: everything else.
+    power feeds to end-use nodes, the highest Lifeline weight first; a distribution substation
+    ranks by ``substation_weight``. Tier 2: everything else.
 
     Parameters
     ----------
@@ -759,7 +760,7 @@ def crew_order(world: EngineWorld, element_id: str) -> tuple[int, float]:
     tuple of (int, float)
         The tier and the negated weight; a smaller key is served first.
 
-    Spec: structure v0.9 §4.5 (repair and crews); ruling D6.
+    Spec: structure v0.13 §4.5 (repair and crews); ruling D6; WO-09g answers, 1.
     """
     if element_id in world.towered:
         return (0, 0.0)
@@ -767,10 +768,55 @@ def crew_order(world: EngineWorld, element_id: str) -> tuple[int, float]:
     if node is not None and node.node_class == NodeClass.TRANSMISSION_SUBSTATION:
         return (0, 0.0)
     if node is not None and node.node_class == NodeClass.DISTRIBUTION_SUBSTATION:
-        return (1, -(node.end_use_weight or 0.0))
+        return (1, -substation_weight(world, element_id))
     if element_id in world.feeds_to_end_use:
         return (1, -world.feeds_to_end_use[element_id])
     return (2, 0.0)
+
+
+def substation_weight(world: EngineWorld, node_id: str) -> float:
+    """Return the weight a distribution substation ranks by in crew-order group 2.
+
+    The highest Lifeline weight among the end uses it supplies, its own included: it supplies an
+    end use through an electricity coupling the engine plays, switched on or hidden.
+
+    Parameters
+    ----------
+    world : EngineWorld
+        The world played out.
+    node_id : str
+        A distribution substation.
+
+    Returns
+    -------
+    float
+        The weight; 0 if neither it nor anything it supplies is an end use.
+
+    Raises
+    ------
+    ValueError
+        If the registry names an alternative not yet selectable (WO-09g answers, recorded for
+        later).
+
+    Spec: structure v0.13 §4.5 (default crew order); WO-09g answers, 1.
+    """
+    if world.settings.substation_rank != HIGHEST_SUPPLIED_WEIGHT:
+        raise ValueError(
+            f"dynamics.substation_crew_rank is '{world.settings.substation_rank}': its "
+            "alternatives are recorded but become selectable only in a later phase"
+        )
+    weights = {n.node_id: n.end_use_weight for n in world.nodes}
+    supplied = [
+        weights[d.consumer_id]
+        for d in world.dependencies
+        if d.supplier_layer == Layer.POWER
+        and any(e.supplier_id == node_id for group in d.groups for e in group)
+    ]
+    return max((w for w in (weights[node_id], *supplied) if w is not None), default=0.0)
+
+
+HIGHEST_SUPPLIED_WEIGHT = "highest supplied weight"
+"""The ruled value of ``dynamics.substation_crew_rank`` (WO-09g answers, 1)."""
 
 
 def trip_hours(legs: Legs, settings: Settings, relaxed: frozenset[str] = frozenset()) -> float:

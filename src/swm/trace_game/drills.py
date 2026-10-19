@@ -292,8 +292,13 @@ def crew_sequence(rules: Registry) -> tuple[float, ...]:
 
 
 def first_jobs(rules: Registry) -> dict[str, str]:
-    """Card 9's world: two crews at the base, three jobs: each crew's first job."""
+    """Card 9's world: two crews at the base, three jobs: each crew's first job.
+
+    S_h supplies power to a tertiary hospital, S_c to a clinic; P is a pumping station.
+    """
     weight = LIFELINE_WEIGHTS[EndUseClass.DISTRIBUTION_SUBSTATION]
+    hospital = LIFELINE_WEIGHTS[EndUseClass.TERTIARY]
+    clinic = LIFELINE_WEIGHTS[EndUseClass.CLINIC]
     world = _world(
         rules,
         [_source("A", Layer.POWER, NodeClass.GENERATION),
@@ -301,7 +306,11 @@ def first_jobs(rules: Registry) -> dict[str, str]:
          _consumer("S_h", Layer.POWER, NodeClass.DISTRIBUTION_SUBSTATION, _road_km(rules, 3.0),
                    weight=weight),
          _consumer("S_c", Layer.POWER, NodeClass.DISTRIBUTION_SUBSTATION, _road_km(rules, 2.0),
-                   weight=weight)],
+                   weight=weight),
+         _consumer("H", Layer.HEALTHCARE, NodeClass.TERTIARY, 30.0, weight=hospital),
+         _consumer("C", Layer.HEALTHCARE, NodeClass.CLINIC, 30.0, 5.0, weight=clinic)],
+        dependencies=(_need("H", Layer.POWER, [("S_h", 1.0, "linear")], "throttle"),
+                      _need("C", Layer.POWER, [("S_c", 1.0, "linear")], "throttle")),
         repairs=tuple(FacilityRepair(n, 0.0, 4.0) for n in ("P", "S_c", "S_h")),
         crews=(CrewStart("crew 1", (0.0, 0.0)), CrewStart("crew 2", (0.0, 0.0))),
     )  # fmt: skip
@@ -310,11 +319,11 @@ def first_jobs(rules: Registry) -> dict[str, str]:
 
 
 def crew_order(rules: Registry) -> tuple[float, ...]:
-    """Card 9: the two crews' first jobs are the two distribution substations, not the pump."""
+    """Card 9: crew 1 takes the substation feeding the hospital, crew 2 the clinic's; P waits."""
     first = first_jobs(rules)
-    if set(first.values()) != {"S_h", "S_c"}:
+    if first != {"crew 1": "S_h", "crew 2": "S_c"}:
         raise DrillError(
-            f"the crew-order drill expects S_h and S_c first; the engine gives {first}"
+            f"the crew-order drill prints crew 1 to S_h and crew 2 to S_c; the engine gives {first}"
         )
     return ()
 

@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: 6e3bfb53e8abae89b6119e62ebae8735309ac057dc03f2ad8258b907724a97df
+  registry_sha256: e089833d27007e63da09a89b48cf44493c8c977f29df28aaeee8709122bd914b
   overrides: {}
   relaxed_limits: []
   out_of_range: []
@@ -9817,7 +9817,7 @@ declared_departures:
 - 'Source overlap (assets missing from one of two sources) is Phase 3: in Phase 1 every true element in a source''s scope appears in it.'
 theta:
   registry_version: '0.1'
-  registry_sha256: 6e3bfb53e8abae89b6119e62ebae8735309ac057dc03f2ad8258b907724a97df
+  registry_sha256: e089833d27007e63da09a89b48cf44493c8c977f29df28aaeee8709122bd914b
   overrides: {}
   relaxed_limits: []
   theta_list:
@@ -9893,6 +9893,23 @@ theta:
       by: the author (Foreman)
       date: '2026-09-29'
       decision: 0009
+  - theta_id: dynamics.substation_crew_rank
+    domain: truth
+    sub_type: dynamics
+    symbol: R
+    chosen: 'How a distribution substation ranks in group 2 of the default crew order: highest supplied weight.'
+    alternatives:
+    - own weight only
+    - sum of supplied weights
+    registry_ids:
+    - dynamics.substation_crew_rank
+    relaxed: null
+    carried_vs_flattened: keeps
+    sensitivity: none planned
+    ruling:
+      by: the author (Foreman)
+      date: '2026-10-19'
+      decision: '0016'
   - theta_id: dynamics.trip_point
     domain: truth
     sub_type: dynamics
