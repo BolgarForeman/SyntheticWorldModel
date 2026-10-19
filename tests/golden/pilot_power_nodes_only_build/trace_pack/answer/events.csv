@@ -1,0 +1,21 @@
+exact_h,step_h,event
+0.0,0.0,CRW-0001 sets out for POW-L0004
+0.0,0.0,CRW-0002 sets out for TEL-L0002
+0.0,0.0,TEL-0002 state 1 -> 0
+0.0,0.0,TEL-0003 state 1 -> 0
+1.749164,1.75,CRW-0001 arrives for POW-L0004
+2.998577,3.0,CRW-0002 arrives for TEL-L0002
+3.749164,3.75,CRW-0001 finishes preparing POW-L0004
+4.998577,5.0,CRW-0002 finishes preparing TEL-L0002
+10.998577,11.0,CRW-0002 finishes the work on TEL-L0002
+10.998577,11.0,CRW-0002 sets out for TEL-L0002
+11.998577,12.0,CRW-0002 arrives for TEL-L0002
+17.998577,18.0,CRW-0002 finishes the work on TEL-L0002
+17.998577,18.0,CRW-0002 sets out for TEL-L0001
+18.0,18.0,TEL-0003 state 0 -> 1
+18.0,18.0,TEL-L0002 back in service
+26.243683,26.25,CRW-0002 arrives for TEL-L0001
+28.243683,28.25,CRW-0002 finishes preparing TEL-L0001
+34.243683,34.25,CRW-0002 finishes the work on TEL-L0001
+34.25,34.25,TEL-0002 state 0 -> 1
+34.25,34.25,TEL-L0001 back in service

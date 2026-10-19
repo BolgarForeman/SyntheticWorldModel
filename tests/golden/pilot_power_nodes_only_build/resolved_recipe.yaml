@@ -1,0 +1,310 @@
+recipe_version: 3
+root_seed: 91577
+modeling_rules:
+  registry_version: '0.1'
+  registry_sha256: 976a0b234cffb8ce917430384f432b735a7ccd95f11f459678888c15425cdfc4
+  overrides: {}
+  relaxed_limits: []
+  out_of_range: []
+terrain:
+  map_type: spine_island
+  terrain_seed: 0
+  size_preset: hand_check
+  area_km2: 400.0
+  hold_on_area_change: density
+  character:
+    mountainous: 60
+    forested: 35
+    river_density: 40
+    urban_density: 45
+    coastline_complexity: 50
+    lowland_and_wetland: 20
+    aridity: 20
+    outlying_islands: 2
+  urban_pattern: several_cities
+layers:
+  dual_membership: false
+  power:
+    state: emitted
+    node_count: 4
+    links_per_node: 2.4
+    nodes_only: true
+    sources:
+    - osm_power
+    - wri_gppd
+    overlap_pct: 30
+  telecom:
+    state: emitted
+    node_count: 4
+    links_per_node: 2.2
+    nodes_only: false
+    sources:
+    - osm_telecom
+    overlap_pct: 30
+  water:
+    state: emitted
+    node_count: 4
+    links_per_node: 1.6
+    nodes_only: false
+    sources:
+    - osm_water
+    overlap_pct: 30
+  transport:
+    state: emitted
+    node_count: 4
+    links_per_node: 2.6
+    nodes_only: false
+    sources:
+    - ourairports
+    - osm_transport
+    overlap_pct: 30
+  fuel:
+    state: emitted
+    node_count: 4
+    links_per_node: 1.4
+    nodes_only: true
+    sources:
+    - osm_fuel
+    overlap_pct: 30
+  healthcare:
+    state: emitted
+    node_count: 4
+    links_per_node: 1.2
+    nodes_only: true
+    sources:
+    - osm_health
+    - facility_register
+    overlap_pct: 30
+couplings:
+  switched_on:
+  - supplier: power
+    consumer: telecom
+  - supplier: power
+    consumer: water
+  - supplier: power
+    consumer: healthcare
+  - supplier: telecom
+    consumer: power
+  - supplier: water
+    consumer: healthcare
+  - supplier: transport
+    consumer: fuel
+  - supplier: fuel
+    consumer: power
+  switched_off_handling: generate_and_hide
+  density: 0
+  two_way_pct: 0
+  supplier_not_nearest_pct: 25
+  concentration: 40
+  feed_mix:
+    single_feed_pct: 60
+    two_full_feeds_pct: 25
+    two_half_feeds_pct: 15
+  public_telecom_share:
+    generation_pct: 20
+    transmission_pct: 20
+    distribution_pct: 50
+    water_pct: 50
+    pipelines_pct: 50
+  distribution_voltage_kv: 11.4
+shared_causes:
+  hazards:
+    storm_corridor:
+      switched_on: true
+      correlation_km: 10
+      severity: 50
+    seismic_zone:
+      switched_on: false
+      correlation_km: 60
+      severity: 60
+    flood_plain:
+      switched_on: false
+      correlation_km: 20
+      severity: 60
+  scenarios: 8
+  facility_damage_cap: moderate
+unobserved:
+  reserves:
+    heterogeneity_pct: 50
+    compliance_gap_pct: 30
+  requirements:
+    heterogeneity_pct: 40
+    compliance_gap_pct: 0
+  repair_rates:
+    heterogeneity_pct: null
+    compliance_gap_pct: 0
+  failure_mode:
+    heterogeneity_pct: 10
+    compliance_gap_pct: 0
+  links_on_nodes_only_layers:
+    heterogeneity_pct: 35
+    compliance_gap_pct: 0
+  crews: 2
+  crew_base: 1
+  mobile_substations: 1
+  mobile_cell_sites: 1
+dynamics:
+  tier: exact
+  combining: typed_weakest_link
+  transfer_forms:
+    physical_flow: linear
+    logistic: threshold
+    control: threshold
+    service: linear
+  removed_dependencies: []
+# error settings recorded, not applied (Phase 1: zero-error emission): facility_register, osm_fuel, osm_health, osm_power, osm_telecom, osm_transport, osm_water, ourairports, wri_gppd
+errors:
+  default_mechanism: parametric
+  sources:
+    osm_power:
+      mechanism: parametric
+      coverage_pct: 90
+      snapshot_age_y: 2
+      phantom_pct: 2
+      missing_pct: 5
+      merged_pct: 2
+      location_pct: 10
+      attributes_pct: 15
+      links_pct: 5
+      labels_pct: 5
+    wri_gppd:
+      mechanism: parametric
+      coverage_pct: 90
+      snapshot_age_y: 2
+      phantom_pct: 2
+      missing_pct: 5
+      merged_pct: 2
+      location_pct: 10
+      attributes_pct: 15
+      links_pct: 5
+      labels_pct: 5
+    osm_telecom:
+      mechanism: parametric
+      coverage_pct: 90
+      snapshot_age_y: 2
+      phantom_pct: 2
+      missing_pct: 5
+      merged_pct: 2
+      location_pct: 10
+      attributes_pct: 15
+      links_pct: 5
+      labels_pct: 5
+    osm_water:
+      mechanism: parametric
+      coverage_pct: 90
+      snapshot_age_y: 2
+      phantom_pct: 2
+      missing_pct: 5
+      merged_pct: 2
+      location_pct: 10
+      attributes_pct: 15
+      links_pct: 5
+      labels_pct: 5
+    ourairports:
+      mechanism: parametric
+      coverage_pct: 90
+      snapshot_age_y: 2
+      phantom_pct: 2
+      missing_pct: 5
+      merged_pct: 2
+      location_pct: 10
+      attributes_pct: 15
+      links_pct: 5
+      labels_pct: 5
+    osm_transport:
+      mechanism: parametric
+      coverage_pct: 90
+      snapshot_age_y: 2
+      phantom_pct: 2
+      missing_pct: 5
+      merged_pct: 2
+      location_pct: 10
+      attributes_pct: 15
+      links_pct: 5
+      labels_pct: 5
+    osm_fuel:
+      mechanism: parametric
+      coverage_pct: 90
+      snapshot_age_y: 2
+      phantom_pct: 2
+      missing_pct: 5
+      merged_pct: 2
+      location_pct: 10
+      attributes_pct: 15
+      links_pct: 5
+      labels_pct: 5
+    osm_health:
+      mechanism: parametric
+      coverage_pct: 90
+      snapshot_age_y: 2
+      phantom_pct: 2
+      missing_pct: 5
+      merged_pct: 2
+      location_pct: 10
+      attributes_pct: 15
+      links_pct: 5
+      labels_pct: 5
+    facility_register:
+      mechanism: parametric
+      coverage_pct: 90
+      snapshot_age_y: 2
+      phantom_pct: 2
+      missing_pct: 5
+      merged_pct: 2
+      location_pct: 10
+      attributes_pct: 15
+      links_pct: 5
+      labels_pct: 5
+ensemble:
+  members: 1
+  vary:
+    terrain: false
+    infrastructure: false
+    unobserved: false
+    errors: true
+answer_key_requests:
+- model: protect_condition_and_add_reserve
+  member_class: defensive
+  objective: unserved_demand_hours
+  service_weights: lifeline
+  custom_weights: null
+  window_h: 72
+  budget_cost_units: 3
+  protect_condition_cost_units: 2
+  add_reserve_cost_units: 1
+- model: protect_condition_and_add_reserve
+  member_class: defensive
+  objective: unserved_demand_hours
+  service_weights: lifeline
+  custom_weights: null
+  window_h: 72
+  budget_cost_units: 4
+  protect_condition_cost_units: 2
+  add_reserve_cost_units: 1
+- model: strike_nodes
+  member_class: offensive
+  objective: unserved_demand_hours
+  service_weights: lifeline
+  custom_weights: null
+  window_h: 72
+  strikes_k: 2
+- model: strike_nodes
+  member_class: offensive
+  objective: unserved_demand_hours
+  service_weights: lifeline
+  custom_weights: null
+  window_h: 72
+  strikes_k: 3
+- model: sequence_repair_crews
+  member_class: restorative
+  objective: unserved_demand_hours
+  service_weights: lifeline
+  custom_weights: null
+  window_h: 72
+- model: observe_uncertain_couplings
+  member_class: informative
+  objective: unserved_demand_hours
+  service_weights: lifeline
+  custom_weights: null
+  window_h: 72
+  observations_n: 1

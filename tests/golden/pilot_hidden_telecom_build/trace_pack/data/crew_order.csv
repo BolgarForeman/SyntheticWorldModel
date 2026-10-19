@@ -1,0 +1,4 @@
+job,group,lifeline_weight,why
+repair:SWM-POW-L0004,0,,towered line
+repair:SWM-TEL-L0001,2,,everything else
+repair:SWM-TEL-L0002,2,,everything else

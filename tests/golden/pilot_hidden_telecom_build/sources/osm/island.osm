@@ -1,0 +1,782 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="swm">
+  <bounds minlat="-48.9033340" minlon="-123.5067180" maxlat="-48.8029087" maxlon="-123.2998006"/>
+  <node id="900000000000" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8607984" lon="-123.3088206">
+    <tag k="industrial" v="oil"/>
+    <tag k="landuse" v="industrial"/>
+    <tag k="name" v="Coribrook Fuel Terminal"/>
+  </node>
+  <node id="900000000001" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8740026" lon="-123.3162569"/>
+  <node id="900000000002" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8740130" lon="-123.3124342"/>
+  <node id="900000000003" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8715033" lon="-123.3124186"/>
+  <node id="900000000004" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8714929" lon="-123.3162411"/>
+  <node id="900000000005" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8727530" lon="-123.3143377"/>
+  <node id="900000000006" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8559555" lon="-123.3287438">
+    <tag k="amenity" v="fuel"/>
+    <tag k="fuel:HGV_diesel" v="yes"/>
+    <tag k="name" v="Coribrook Fuel Depot"/>
+  </node>
+  <node id="900000000007" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8828562" lon="-123.5031488">
+    <tag k="amenity" v="fuel"/>
+    <tag k="fuel:HGV_diesel" v="yes"/>
+    <tag k="name" v="Selimere Fuel Depot"/>
+  </node>
+  <node id="900000000008" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8556880" lon="-123.3445137"/>
+  <node id="900000000009" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8556955" lon="-123.3419927"/>
+  <node id="900000000010" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8537445" lon="-123.3419794"/>
+  <node id="900000000011" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8537370" lon="-123.3445003"/>
+  <node id="900000000012" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8547163" lon="-123.3432465"/>
+  <node id="900000000013" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8825414" lon="-123.5059856"/>
+  <node id="900000000014" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8825504" lon="-123.5039355"/>
+  <node id="900000000015" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8807614" lon="-123.5039175"/>
+  <node id="900000000016" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8807524" lon="-123.5059676"/>
+  <node id="900000000017" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8816514" lon="-123.5049516"/>
+  <node id="900000000018" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8029087" lon="-123.4425526">
+    <tag k="amenity" v="clinic"/>
+    <tag k="beds" v="8"/>
+    <tag k="healthcare" v="clinic"/>
+    <tag k="name" v="Selimere Clinic"/>
+  </node>
+  <node id="900000000019" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8403639" lon="-123.3395218">
+    <tag k="healthcare" v="blood_bank"/>
+    <tag k="name" v="Coribrook Blood Bank"/>
+  </node>
+  <node id="900000000020" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8622703" lon="-123.3156745"/>
+  <node id="900000000021" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8622974" lon="-123.3056131"/>
+  <node id="900000000022" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8569227" lon="-123.3055804"/>
+  <node id="900000000023" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8568956" lon="-123.3156407"/>
+  <node id="900000000024" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8595966" lon="-123.3106272"/>
+  <node id="900000000025" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8708480" lon="-123.4077154"/>
+  <node id="900000000026" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8708540" lon="-123.4060098"/>
+  <node id="900000000027" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8692915" lon="-123.4059971"/>
+  <node id="900000000028" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8692855" lon="-123.4077027"/>
+  <node id="900000000029" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8700697" lon="-123.4068562"/>
+  <node id="900000000030" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8815678" lon="-123.3019974"/>
+  <node id="900000000031" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8815695" lon="-123.3013808"/>
+  <node id="900000000032" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8807629" lon="-123.3013759"/>
+  <node id="900000000033" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8807613" lon="-123.3019926"/>
+  <node id="900000000034" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8811654" lon="-123.3016867"/>
+  <node id="900000000035" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8725228" lon="-123.4833651"/>
+  <node id="900000000036" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8725252" lon="-123.4828060"/>
+  <node id="900000000037" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8718161" lon="-123.4827991"/>
+  <node id="900000000038" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8718138" lon="-123.4833583"/>
+  <node id="900000000039" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8721695" lon="-123.4830821"/>
+  <node id="900000000040" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8595836" lon="-123.3153989">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000041" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8583756" lon="-123.3194116">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000042" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8583623" lon="-123.3241832">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000043" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8582578" lon="-123.3288970">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000044" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8582629" lon="-123.3322711">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000045" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8583256" lon="-123.3369952">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000046" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8583115" lon="-123.3417668">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000047" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8582973" lon="-123.3465384">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000048" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8582829" lon="-123.3513099">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000049" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8573710" lon="-123.3555108">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000050" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8581429" lon="-123.3594217">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000051" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8603586" lon="-123.3628117">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000052" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8625743" lon="-123.3662021">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000053" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8630100" lon="-123.3706949">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000054" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8629945" lon="-123.3754669">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000055" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8629789" lon="-123.3802389">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000056" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8629630" lon="-123.3850109">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000057" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8634734" lon="-123.3894572">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000058" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8656883" lon="-123.3928489">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000059" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8665129" lon="-123.3971010">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000060" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8676959" lon="-123.4011314">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000061" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8689394" lon="-123.4051244">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000062" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8723079" lon="-123.4034994">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000063" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8724917" lon="-123.3988330">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000064" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8734058" lon="-123.3946321">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000065" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8739545" lon="-123.3901984">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000066" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8753476" lon="-123.3863025">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000067" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8761394" lon="-123.3820235">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000068" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8781334" lon="-123.3785101">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000069" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8795261" lon="-123.3746135">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000070" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8817634" lon="-123.3712546">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000071" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8833683" lon="-123.3674929">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000072" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8833834" lon="-123.3627189">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000073" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8833984" lon="-123.3579450">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000074" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8834131" lon="-123.3531710">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000075" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8831984" lon="-123.3485392">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000076" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8810436" lon="-123.3451101">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000077" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8796139" lon="-123.3412317">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000078" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8774744" lon="-123.3377936">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000079" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8774883" lon="-123.3330202">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000080" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8786439" lon="-123.3289727">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000081" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8787103" lon="-123.3242328">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000082" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8787236" lon="-123.3194592">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000083" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8775378" lon="-123.3154299">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000084" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8775889" lon="-123.3106807">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000085" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8798242" lon="-123.3073190">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000086" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8811609" lon="-123.3033863">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000087" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8705876" lon="-123.4112982">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000088" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8728018" lon="-123.4146914">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000089" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8748169" lon="-123.4182079">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000090" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8763816" lon="-123.4220031">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000091" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8777472" lon="-123.4259215">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000092" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8795630" lon="-123.4295618">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000093" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8804780" lon="-123.4337589">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000094" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8826915" lon="-123.4371538">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000095" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8831081" lon="-123.4416590">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000096" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8830897" lon="-123.4464329">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000097" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8818772" lon="-123.4504443">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000098" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8818584" lon="-123.4552180">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000099" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8799606" lon="-123.4587915">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000100" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8782387" lon="-123.4624773">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000101" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8782195" lon="-123.4672507">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000102" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8766177" lon="-123.4710129">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000103" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8757928" lon="-123.4752715">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000104" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8746698" lon="-123.4793394">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000105" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8724294" lon="-123.4826931">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000106" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8618319" lon="-123.3072667">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000107" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8640672" lon="-123.3039059">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000108" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8663024" lon="-123.3005449">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000109" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8692447" lon="-123.2998006">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000110" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8723932" lon="-123.2998194">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000111" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8755417" lon="-123.2998382">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000112" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8786901" lon="-123.2998570">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000113" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8595836" lon="-123.3153989">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000114" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8583756" lon="-123.3194116">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000115" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8583623" lon="-123.3241832">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000116" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8582578" lon="-123.3288970">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000117" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8582629" lon="-123.3322711">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000118" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8583256" lon="-123.3369952">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000119" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8583115" lon="-123.3417668">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000120" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8582973" lon="-123.3465384">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000121" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8582829" lon="-123.3513099">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000122" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8573710" lon="-123.3555108">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000123" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8581429" lon="-123.3594217">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000124" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8603586" lon="-123.3628117">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000125" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8625743" lon="-123.3662021">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000126" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8630100" lon="-123.3706949">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000127" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8629945" lon="-123.3754669">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000128" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8629789" lon="-123.3802389">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000129" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8629630" lon="-123.3850109">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000130" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8629470" lon="-123.3897829">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000131" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8629308" lon="-123.3945549">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000132" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8629144" lon="-123.3993268">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000133" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8628977" lon="-123.4040988">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000134" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8616867" lon="-123.4081096">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000135" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8616697" lon="-123.4128815">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000136" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8616525" lon="-123.4176533">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000137" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8630822" lon="-123.4213129">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000138" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8655784" lon="-123.4236893">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000139" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8677922" lon="-123.4270827">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000140" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8700059" lon="-123.4304765">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000141" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8713712" lon="-123.4343946">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000142" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8723474" lon="-123.4385532">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000143" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8723292" lon="-123.4433260">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000144" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8723107" lon="-123.4480989">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000145" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8710981" lon="-123.4521094">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000146" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8710793" lon="-123.4568821">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000147" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8710603" lon="-123.4616548">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000148" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8710411" lon="-123.4664275">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000149" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8698279" lon="-123.4704375">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000150" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8710083" lon="-123.4744698">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000151" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8725924" lon="-123.4782533">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000152" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8727844" lon="-123.4821617">
+    <tag k="power" v="tower"/>
+  </node>
+  <node id="900000000153" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8319535" lon="-123.3764524"/>
+  <node id="900000000154" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8320158" lon="-123.3568692"/>
+  <node id="900000000155" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8150928" lon="-123.3567491"/>
+  <node id="900000000156" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8150305" lon="-123.3763256"/>
+  <node id="900000000157" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8235236" lon="-123.3665991"/>
+  <node id="900000000158" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8277385" lon="-123.3715258"/>
+  <node id="900000000159" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8277697" lon="-123.3617342"/>
+  <node id="900000000160" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8193082" lon="-123.3616741"/>
+  <node id="900000000161" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8192770" lon="-123.3714624"/>
+  <node id="900000000162" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8518106" lon="-123.3380646"/>
+  <node id="900000000163" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8519032" lon="-123.3048591"/>
+  <node id="900000000164" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8314126" lon="-123.3047348"/>
+  <node id="900000000165" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8313200" lon="-123.3379267"/>
+  <node id="900000000166" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8416128" lon="-123.3213963"/>
+  <node id="900000000167" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8581259" lon="-123.3995035">
+    <tag k="industrial" v="logistics"/>
+    <tag k="landuse" v="industrial"/>
+    <tag k="name" v="Coribrook Freight Yard"/>
+  </node>
+  <node id="900000000168" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8745480" lon="-123.4867342">
+    <tag k="man_made" v="bridge"/>
+    <tag k="name" v="Selimere Bridge"/>
+  </node>
+  <node id="900000000169" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8331662" lon="-123.3449124"/>
+  <node id="900000000170" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8288243" lon="-123.4502357"/>
+  <node id="900000000171" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8289221" lon="-123.4244492"/>
+  <node id="900000000172" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8225161" lon="-123.4243951"/>
+  <node id="900000000173" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8224183" lon="-123.4501783"/>
+  <node id="900000000174" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8256709" lon="-123.4373146"/>
+  <node id="900000000175" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8199189" lon="-123.4278478"/>
+  <node id="900000000176" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8199297" lon="-123.4249300"/>
+  <node id="900000000177" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8171414" lon="-123.4249064"/>
+  <node id="900000000178" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8171306" lon="-123.4278241"/>
+  <node id="900000000179" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8185301" lon="-123.4263771"/>
+  <node id="900000000180" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8426628" lon="-123.3703656">
+    <tag k="man_made" v="pumping_station"/>
+    <tag k="name" v="Coribrook Pumping Station"/>
+    <tag k="substance" v="water"/>
+  </node>
+  <node id="900000000181" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8713773" lon="-123.3742064">
+    <tag k="content" v="water"/>
+    <tag k="man_made" v="storage_tank"/>
+    <tag k="name" v="Coribrook Water Tank"/>
+  </node>
+  <node id="900000000182" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8500064" lon="-123.3160090">
+    <tag k="name" v="Coribrook"/>
+    <tag k="place" v="town"/>
+  </node>
+  <node id="900000000183" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8768558" lon="-123.5067180">
+    <tag k="name" v="Selimere"/>
+    <tag k="place" v="town"/>
+  </node>
+  <node id="900000000184" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.9033340" lon="-123.4724887">
+    <tag k="name" v="Peliwyn Bay"/>
+    <tag k="place" v="town"/>
+  </node>
+  <way id="900000000000" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000001"/>
+    <nd ref="900000000002"/>
+    <nd ref="900000000003"/>
+    <nd ref="900000000004"/>
+    <nd ref="900000000001"/>
+    <tag k="industrial" v="oil"/>
+    <tag k="landuse" v="industrial"/>
+    <tag k="name" v="Coribrook Oil Terminal"/>
+  </way>
+  <way id="900000000001" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000008"/>
+    <nd ref="900000000009"/>
+    <nd ref="900000000010"/>
+    <nd ref="900000000011"/>
+    <nd ref="900000000008"/>
+    <tag k="amenity" v="hospital"/>
+    <tag k="beds" v="1964"/>
+    <tag k="healthcare" v="hospital"/>
+    <tag k="name" v="Coribrook Hospital"/>
+  </way>
+  <way id="900000000002" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000013"/>
+    <nd ref="900000000014"/>
+    <nd ref="900000000015"/>
+    <nd ref="900000000016"/>
+    <nd ref="900000000013"/>
+    <tag k="amenity" v="hospital"/>
+    <tag k="beds" v="407"/>
+    <tag k="healthcare" v="hospital"/>
+    <tag k="name" v="Selimere Hospital"/>
+  </way>
+  <way id="900000000003" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000020"/>
+    <nd ref="900000000021"/>
+    <nd ref="900000000022"/>
+    <nd ref="900000000023"/>
+    <nd ref="900000000020"/>
+    <tag k="name" v="Coribrook Power Station"/>
+    <tag k="plant:method" v="combustion"/>
+    <tag k="plant:output:electricity" v="52.4 MW"/>
+    <tag k="plant:source" v="gas"/>
+    <tag k="power" v="plant"/>
+  </way>
+  <way id="900000000004" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000025"/>
+    <nd ref="900000000026"/>
+    <nd ref="900000000027"/>
+    <nd ref="900000000028"/>
+    <nd ref="900000000025"/>
+    <tag k="name" v="Peliwyn Bay Substation"/>
+    <tag k="power" v="substation"/>
+    <tag k="substation" v="transmission"/>
+    <tag k="voltage" v="161000"/>
+  </way>
+  <way id="900000000005" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000030"/>
+    <nd ref="900000000031"/>
+    <nd ref="900000000032"/>
+    <nd ref="900000000033"/>
+    <nd ref="900000000030"/>
+    <tag k="name" v="Coribrook Substation"/>
+    <tag k="power" v="substation"/>
+    <tag k="substation" v="distribution"/>
+    <tag k="voltage" v="22800"/>
+  </way>
+  <way id="900000000006" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000035"/>
+    <nd ref="900000000036"/>
+    <nd ref="900000000037"/>
+    <nd ref="900000000038"/>
+    <nd ref="900000000035"/>
+    <tag k="name" v="Selimere Substation"/>
+    <tag k="power" v="substation"/>
+    <tag k="substation" v="distribution"/>
+    <tag k="voltage" v="22800"/>
+  </way>
+  <way id="900000000007" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000024"/>
+    <nd ref="900000000040"/>
+    <nd ref="900000000041"/>
+    <nd ref="900000000042"/>
+    <nd ref="900000000043"/>
+    <nd ref="900000000044"/>
+    <nd ref="900000000045"/>
+    <nd ref="900000000046"/>
+    <nd ref="900000000047"/>
+    <nd ref="900000000048"/>
+    <nd ref="900000000049"/>
+    <nd ref="900000000050"/>
+    <nd ref="900000000051"/>
+    <nd ref="900000000052"/>
+    <nd ref="900000000053"/>
+    <nd ref="900000000054"/>
+    <nd ref="900000000055"/>
+    <nd ref="900000000056"/>
+    <nd ref="900000000057"/>
+    <nd ref="900000000058"/>
+    <nd ref="900000000059"/>
+    <nd ref="900000000060"/>
+    <nd ref="900000000061"/>
+    <nd ref="900000000029"/>
+    <tag k="cables" v="3"/>
+    <tag k="circuits" v="1"/>
+    <tag k="power" v="line"/>
+    <tag k="voltage" v="161000"/>
+  </way>
+  <way id="900000000008" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000029"/>
+    <nd ref="900000000062"/>
+    <nd ref="900000000063"/>
+    <nd ref="900000000064"/>
+    <nd ref="900000000065"/>
+    <nd ref="900000000066"/>
+    <nd ref="900000000067"/>
+    <nd ref="900000000068"/>
+    <nd ref="900000000069"/>
+    <nd ref="900000000070"/>
+    <nd ref="900000000071"/>
+    <nd ref="900000000072"/>
+    <nd ref="900000000073"/>
+    <nd ref="900000000074"/>
+    <nd ref="900000000075"/>
+    <nd ref="900000000076"/>
+    <nd ref="900000000077"/>
+    <nd ref="900000000078"/>
+    <nd ref="900000000079"/>
+    <nd ref="900000000080"/>
+    <nd ref="900000000081"/>
+    <nd ref="900000000082"/>
+    <nd ref="900000000083"/>
+    <nd ref="900000000084"/>
+    <nd ref="900000000085"/>
+    <nd ref="900000000086"/>
+    <nd ref="900000000034"/>
+    <tag k="cables" v="3"/>
+    <tag k="circuits" v="1"/>
+    <tag k="power" v="line"/>
+    <tag k="voltage" v="69000"/>
+  </way>
+  <way id="900000000009" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000029"/>
+    <nd ref="900000000087"/>
+    <nd ref="900000000088"/>
+    <nd ref="900000000089"/>
+    <nd ref="900000000090"/>
+    <nd ref="900000000091"/>
+    <nd ref="900000000092"/>
+    <nd ref="900000000093"/>
+    <nd ref="900000000094"/>
+    <nd ref="900000000095"/>
+    <nd ref="900000000096"/>
+    <nd ref="900000000097"/>
+    <nd ref="900000000098"/>
+    <nd ref="900000000099"/>
+    <nd ref="900000000100"/>
+    <nd ref="900000000101"/>
+    <nd ref="900000000102"/>
+    <nd ref="900000000103"/>
+    <nd ref="900000000104"/>
+    <nd ref="900000000105"/>
+    <nd ref="900000000039"/>
+    <tag k="cables" v="3"/>
+    <tag k="circuits" v="1"/>
+    <tag k="power" v="line"/>
+    <tag k="voltage" v="69000"/>
+  </way>
+  <way id="900000000010" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000024"/>
+    <nd ref="900000000106"/>
+    <nd ref="900000000107"/>
+    <nd ref="900000000108"/>
+    <nd ref="900000000109"/>
+    <nd ref="900000000110"/>
+    <nd ref="900000000111"/>
+    <nd ref="900000000112"/>
+    <nd ref="900000000034"/>
+    <tag k="cables" v="3"/>
+    <tag k="circuits" v="1"/>
+    <tag k="power" v="line"/>
+    <tag k="voltage" v="161000"/>
+  </way>
+  <way id="900000000011" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000024"/>
+    <nd ref="900000000113"/>
+    <nd ref="900000000114"/>
+    <nd ref="900000000115"/>
+    <nd ref="900000000116"/>
+    <nd ref="900000000117"/>
+    <nd ref="900000000118"/>
+    <nd ref="900000000119"/>
+    <nd ref="900000000120"/>
+    <nd ref="900000000121"/>
+    <nd ref="900000000122"/>
+    <nd ref="900000000123"/>
+    <nd ref="900000000124"/>
+    <nd ref="900000000125"/>
+    <nd ref="900000000126"/>
+    <nd ref="900000000127"/>
+    <nd ref="900000000128"/>
+    <nd ref="900000000129"/>
+    <nd ref="900000000130"/>
+    <nd ref="900000000131"/>
+    <nd ref="900000000132"/>
+    <nd ref="900000000133"/>
+    <nd ref="900000000134"/>
+    <nd ref="900000000135"/>
+    <nd ref="900000000136"/>
+    <nd ref="900000000137"/>
+    <nd ref="900000000138"/>
+    <nd ref="900000000139"/>
+    <nd ref="900000000140"/>
+    <nd ref="900000000141"/>
+    <nd ref="900000000142"/>
+    <nd ref="900000000143"/>
+    <nd ref="900000000144"/>
+    <nd ref="900000000145"/>
+    <nd ref="900000000146"/>
+    <nd ref="900000000147"/>
+    <nd ref="900000000148"/>
+    <nd ref="900000000149"/>
+    <nd ref="900000000150"/>
+    <nd ref="900000000151"/>
+    <nd ref="900000000152"/>
+    <nd ref="900000000039"/>
+    <tag k="cables" v="3"/>
+    <tag k="circuits" v="1"/>
+    <tag k="power" v="line"/>
+    <tag k="voltage" v="161000"/>
+  </way>
+  <way id="900000000012" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000153"/>
+    <nd ref="900000000154"/>
+    <nd ref="900000000155"/>
+    <nd ref="900000000156"/>
+    <nd ref="900000000153"/>
+    <tag k="landuse" v="harbour"/>
+    <tag k="name" v="Coribrook Port"/>
+  </way>
+  <way id="900000000013" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000158"/>
+    <nd ref="900000000159"/>
+    <nd ref="900000000160"/>
+    <nd ref="900000000161"/>
+    <nd ref="900000000158"/>
+    <tag k="industrial" v="port"/>
+    <tag k="landuse" v="industrial"/>
+  </way>
+  <way id="900000000014" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000162"/>
+    <nd ref="900000000163"/>
+    <nd ref="900000000164"/>
+    <nd ref="900000000165"/>
+    <nd ref="900000000162"/>
+    <tag k="aeroway" v="aerodrome"/>
+    <tag k="name" v="Coribrook Airport"/>
+  </way>
+  <way id="900000000015" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000168"/>
+    <nd ref="900000000166"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="900000000016" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000168"/>
+    <nd ref="900000000167"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="900000000017" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000157"/>
+    <nd ref="900000000169"/>
+    <nd ref="900000000166"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="900000000018" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000157"/>
+    <nd ref="900000000167"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="900000000019" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000166"/>
+    <nd ref="900000000167"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="900000000020" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000170"/>
+    <nd ref="900000000171"/>
+    <nd ref="900000000172"/>
+    <nd ref="900000000173"/>
+    <nd ref="900000000170"/>
+    <tag k="name" v="Selimere Reservoir"/>
+    <tag k="natural" v="water"/>
+    <tag k="water" v="reservoir"/>
+  </way>
+  <way id="900000000021" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000175"/>
+    <nd ref="900000000176"/>
+    <nd ref="900000000177"/>
+    <nd ref="900000000178"/>
+    <nd ref="900000000175"/>
+    <tag k="man_made" v="water_works"/>
+    <tag k="name" v="Selimere Water Works"/>
+  </way>
+  <way id="900000000022" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000174"/>
+    <nd ref="900000000179"/>
+    <tag k="location" v="underground"/>
+    <tag k="man_made" v="pipeline"/>
+    <tag k="substance" v="water"/>
+  </way>
+  <way id="900000000023" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000179"/>
+    <nd ref="900000000180"/>
+    <tag k="location" v="underground"/>
+    <tag k="man_made" v="pipeline"/>
+    <tag k="substance" v="water"/>
+  </way>
+  <way id="900000000024" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000180"/>
+    <nd ref="900000000181"/>
+    <tag k="location" v="underground"/>
+    <tag k="man_made" v="pipeline"/>
+    <tag k="substance" v="water"/>
+  </way>
+</osm>

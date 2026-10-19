@@ -1,0 +1,25 @@
+node,layer,class,end_use,service_weight,capacity_mw,capacity_m3_per_day,requirement,own_layer_response,failure_modes
+SWM-FUE-0001,fuel,import_terminal,no,,,,MW 10.3744; m3/day 8.93205,source,power: throttle; telecom: throttle; transport: throttle
+SWM-FUE-0002,fuel,tank_farm,no,,,,MW 1.27728; m3/day 10.5285,trip,power: trip
+SWM-FUE-0003,fuel,depot,yes,4.0,,,MW 0.112303; m3/day 7.68856,trip,power: trip; telecom: throttle; transport: throttle
+SWM-FUE-0004,fuel,depot,yes,4.0,,,MW 0.0635019; m3/day 11.9703,trip,power: trip; telecom: throttle; transport: throttle
+SWM-HLT-0001,healthcare,tertiary,yes,10.0,,,MW 3.09536; m3/day 2803.7,source,power: step_to_floor (floor 0.6); telecom: trip; transport: throttle; water: trip
+SWM-HLT-0002,healthcare,regional,yes,7.0,,,MW 1.74486; m3/day 252.821,source,power: step_to_floor (floor 0.6); telecom: throttle; transport: throttle; water: trip
+SWM-HLT-0003,healthcare,clinic,yes,3.0,,,MW 0.0243536; m3/day 1.62625,source,power: trip; telecom: throttle; transport: trip; water: trip
+SWM-HLT-0004,healthcare,blood_bank,yes,6.0,,,MW 0.0465964; m3/day 4.60035,source,power: trip; telecom: throttle; transport: throttle
+SWM-POW-0001,power,generation,no,,52.4,,m3/day 1617.89; GJ/day 5834.56,source,fuel: trip; telecom: throttle; water: trip
+SWM-POW-0002,power,transmission_substation,no,,,,,throttle,telecom: throttle
+SWM-POW-0003,power,distribution_substation,yes,5.0,,,,throttle,telecom: throttle
+SWM-POW-0004,power,distribution_substation,yes,5.0,,,,throttle,telecom: trip
+SWM-TEL-0001,telecom,exchange,no,,,,MW 0.187416,source,power: trip
+SWM-TEL-0002,telecom,mast,yes,1.0,,,MW 0.00457391,trip,power: trip
+SWM-TEL-0003,telecom,mast,yes,1.0,,,MW 0.00272203,trip,power: trip
+SWM-TEL-0004,telecom,mast,yes,1.0,,,MW 0.00549639,trip,power: trip
+SWM-TRN-0001,transport,seaport,yes,7.0,,,MW 6.92338; GJ/day 14367.4,source,fuel: throttle; power: trip; telecom: throttle
+SWM-TRN-0002,transport,airport,yes,6.0,,,MW 0.196918; GJ/day 2691.38,source,fuel: trip; power: trip; telecom: trip
+SWM-TRN-0003,transport,freight_yard,yes,4.0,,,MW 0.583885; GJ/day 93.1231,source,fuel: throttle; telecom: trip
+SWM-TRN-0004,transport,bridge,no,,,,,source,
+SWM-WAT-0001,water,reservoir,no,,,,,source,
+SWM-WAT-0002,water,treatment,no,,,226300,MW 3.62111,throttle,power: throttle; telecom: throttle
+SWM-WAT-0003,water,pumping,no,,,199800,MW 2.76,throttle,power: throttle; telecom: throttle
+SWM-WAT-0004,water,storage,yes,5.0,,,,trip,

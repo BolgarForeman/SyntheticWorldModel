@@ -1,0 +1,5 @@
+line,structure,peak_gust_m_per_s,failure_point,km_along_line,road_km,offroad_km,by_sea,travel_h_from_base,crew_work_h
+SWM-POW-L0004,tower,83.594,1,1.3905,1.013322,3.447662,no,1.749164,72.0
+SWM-TEL-L0001,pole,95.01,1,12.5,5.155214,8.749773,no,4.503767,6.0
+SWM-TEL-L0002,pole,83.668,1,9.5,5.447586,5.724775,no,2.998577,6.0
+SWM-TEL-L0002,pole,83.668,2,11.5,5.623446,7.717028,no,3.9991,6.0

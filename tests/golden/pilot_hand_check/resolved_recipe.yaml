@@ -152,6 +152,7 @@ dynamics:
     control: threshold
     service: linear
   removed_dependencies: []
+# error settings recorded, not applied (Phase 1: zero-error emission): facility_register, osm_fuel, osm_health, osm_power, osm_telecom, osm_transport, osm_water, ourairports, wri_gppd
 errors:
   default_mechanism: parametric
   sources:

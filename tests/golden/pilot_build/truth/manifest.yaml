@@ -9751,6 +9751,19 @@ hidden:
     - SWM-CPL-0073
     switched_on: false
     notes: []
+  withheld_links:
+  - link: SWM-FUE-L0001
+    layer: fuel
+  - link: SWM-FUE-L0002
+    layer: fuel
+  - link: SWM-FUE-L0003
+    layer: fuel
+  - link: SWM-HLT-L0001
+    layer: healthcare
+  - link: SWM-HLT-L0002
+    layer: healthcare
+  - link: SWM-HLT-L0003
+    layer: healthcare
 scored_and_context:
   openstreetmap:
     scored:
@@ -9815,6 +9828,7 @@ declared_departures:
 - 'Overpass: TWN_Hospital, TWN_Industrial and TWN_Telecom_OSM_Overpass are inferred from landed tags, query text not saved; they are replaced when the pipeline supplies the text.'
 - The institution register's file is named in ASCII; the real one is named in Chinese.
 - 'Source overlap (assets missing from one of two sources) is Phase 3: in Phase 1 every true element in a source''s scope appears in it.'
+- 'Error settings recorded, not applied (Phase 1: zero-error emission): facility_register, osm_fuel, osm_health, osm_power, osm_telecom, osm_transport, osm_water, ourairports, wri_gppd.'
 theta:
   registry_version: '0.1'
   registry_sha256: 976a0b234cffb8ce917430384f432b735a7ccd95f11f459678888c15425cdfc4

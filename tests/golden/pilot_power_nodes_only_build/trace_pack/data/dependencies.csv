@@ -1,0 +1,74 @@
+edge,dependency,supplier,consumer,commodity,kappa,transfer_form,feed_configuration,feed_group,fuel_resupply,switched_on
+SWM-CPL-0001,SWM-DEP-0001,SWM-POW-0003,SWM-TEL-0001,electricity,1.0,linear,single,1,no,True
+SWM-CPL-0002,SWM-DEP-0002,SWM-POW-0002,SWM-TEL-0002,electricity,1.0,linear,two_half,1,no,True
+SWM-CPL-0003,SWM-DEP-0002,SWM-POW-0004,SWM-TEL-0002,electricity,1.0,linear,two_half,1,no,True
+SWM-CPL-0004,SWM-DEP-0003,SWM-POW-0002,SWM-TEL-0003,electricity,1.0,linear,single,1,no,True
+SWM-CPL-0005,SWM-DEP-0004,SWM-POW-0004,SWM-TEL-0004,electricity,1.0,linear,two_full,1,no,True
+SWM-CPL-0006,SWM-DEP-0004,SWM-POW-0002,SWM-TEL-0004,electricity,1.0,linear,two_full,2,no,True
+SWM-CPL-0007,SWM-DEP-0005,SWM-POW-0002,SWM-WAT-0002,electricity,1.0,linear,single,1,no,True
+SWM-CPL-0008,SWM-DEP-0006,SWM-POW-0003,SWM-WAT-0003,electricity,1.0,linear,two_full,1,no,True
+SWM-CPL-0009,SWM-DEP-0006,SWM-POW-0002,SWM-WAT-0003,electricity,1.0,linear,two_full,2,no,True
+SWM-CPL-0010,SWM-DEP-0007,SWM-POW-0002,SWM-TRN-0001,electricity,1.0,linear,single,1,no,False
+SWM-CPL-0011,SWM-DEP-0008,SWM-POW-0002,SWM-TRN-0002,electricity,1.0,linear,two_full,1,no,False
+SWM-CPL-0012,SWM-DEP-0008,SWM-POW-0003,SWM-TRN-0002,electricity,1.0,linear,two_full,2,no,False
+SWM-CPL-0013,SWM-DEP-0009,SWM-POW-0002,SWM-FUE-0001,electricity,1.0,linear,single,1,no,False
+SWM-CPL-0014,SWM-DEP-0010,SWM-POW-0003,SWM-FUE-0002,electricity,1.0,linear,two_full,1,no,False
+SWM-CPL-0015,SWM-DEP-0010,SWM-POW-0002,SWM-FUE-0002,electricity,1.0,linear,two_full,2,no,False
+SWM-CPL-0016,SWM-DEP-0011,SWM-POW-0002,SWM-FUE-0003,electricity,1.0,linear,two_half,1,no,False
+SWM-CPL-0017,SWM-DEP-0011,SWM-POW-0003,SWM-FUE-0003,electricity,1.0,linear,two_half,1,no,False
+SWM-CPL-0018,SWM-DEP-0012,SWM-POW-0004,SWM-FUE-0004,electricity,1.0,linear,single,1,no,False
+SWM-CPL-0019,SWM-DEP-0013,SWM-POW-0003,SWM-HLT-0001,electricity,1.0,linear,single,1,no,True
+SWM-CPL-0020,SWM-DEP-0014,SWM-POW-0002,SWM-HLT-0002,electricity,1.0,linear,two_full,1,no,True
+SWM-CPL-0021,SWM-DEP-0014,SWM-POW-0004,SWM-HLT-0002,electricity,1.0,linear,two_full,2,no,True
+SWM-CPL-0022,SWM-DEP-0015,SWM-POW-0002,SWM-HLT-0003,electricity,1.0,linear,single,1,no,True
+SWM-CPL-0023,SWM-DEP-0016,SWM-POW-0003,SWM-HLT-0004,electricity,1.0,linear,single,1,no,True
+SWM-CPL-0024,SWM-DEP-0017,SWM-TEL-0001,SWM-POW-0001,communications,0.2,threshold,single,1,no,True
+SWM-CPL-0025,SWM-DEP-0018,SWM-TEL-0001,SWM-POW-0002,communications,0.2,threshold,single,1,no,True
+SWM-CPL-0026,SWM-DEP-0019,SWM-TEL-0003,SWM-POW-0003,communications,0.5,threshold,two_full,1,no,True
+SWM-CPL-0027,SWM-DEP-0019,SWM-TEL-0004,SWM-POW-0003,communications,0.5,threshold,two_full,2,no,True
+SWM-CPL-0028,SWM-DEP-0020,SWM-TEL-0001,SWM-POW-0004,communications,0.5,threshold,two_half,1,no,True
+SWM-CPL-0029,SWM-DEP-0020,SWM-TEL-0003,SWM-POW-0004,communications,0.5,threshold,two_half,1,no,True
+SWM-CPL-0030,SWM-DEP-0021,SWM-TEL-0001,SWM-WAT-0002,communications,0.5,threshold,two_full,1,no,False
+SWM-CPL-0031,SWM-DEP-0021,SWM-TEL-0004,SWM-WAT-0002,communications,0.5,threshold,two_full,2,no,False
+SWM-CPL-0032,SWM-DEP-0022,SWM-TEL-0001,SWM-WAT-0003,communications,0.5,threshold,single,1,no,False
+SWM-CPL-0033,SWM-DEP-0023,SWM-TEL-0001,SWM-TRN-0001,communications,1.0,linear,single,1,no,False
+SWM-CPL-0034,SWM-DEP-0024,SWM-TEL-0001,SWM-TRN-0002,communications,1.0,threshold,single,1,no,False
+SWM-CPL-0035,SWM-DEP-0025,SWM-TEL-0002,SWM-TRN-0003,communications,1.0,linear,two_full,1,no,False
+SWM-CPL-0036,SWM-DEP-0025,SWM-TEL-0001,SWM-TRN-0003,communications,1.0,linear,two_full,2,no,False
+SWM-CPL-0037,SWM-DEP-0026,SWM-TEL-0003,SWM-FUE-0001,communications,0.5,threshold,two_full,1,no,False
+SWM-CPL-0038,SWM-DEP-0026,SWM-TEL-0001,SWM-FUE-0001,communications,0.5,threshold,two_full,2,no,False
+SWM-CPL-0039,SWM-DEP-0027,SWM-TEL-0001,SWM-FUE-0003,communications,1.0,linear,single,1,no,False
+SWM-CPL-0040,SWM-DEP-0028,SWM-TEL-0004,SWM-FUE-0004,communications,1.0,linear,single,1,no,False
+SWM-CPL-0041,SWM-DEP-0029,SWM-TEL-0001,SWM-HLT-0001,communications,1.0,linear,single,1,no,False
+SWM-CPL-0042,SWM-DEP-0030,SWM-TEL-0004,SWM-HLT-0002,communications,1.0,linear,two_half,1,no,False
+SWM-CPL-0043,SWM-DEP-0030,SWM-TEL-0003,SWM-HLT-0002,communications,1.0,linear,two_half,1,no,False
+SWM-CPL-0044,SWM-DEP-0031,SWM-TEL-0001,SWM-HLT-0003,communications,1.0,linear,two_full,1,no,False
+SWM-CPL-0045,SWM-DEP-0031,SWM-TEL-0003,SWM-HLT-0003,communications,1.0,linear,two_full,2,no,False
+SWM-CPL-0046,SWM-DEP-0032,SWM-TEL-0001,SWM-HLT-0004,communications,1.0,linear,single,1,no,False
+SWM-CPL-0047,SWM-DEP-0033,SWM-WAT-0003,SWM-POW-0001,water,1.0,linear,single,1,no,False
+SWM-CPL-0048,SWM-DEP-0034,SWM-WAT-0004,SWM-HLT-0001,water,1.0,linear,single,1,no,True
+SWM-CPL-0049,SWM-DEP-0035,SWM-WAT-0004,SWM-HLT-0002,water,1.0,linear,two_full,1,no,True
+SWM-CPL-0050,SWM-DEP-0035,SWM-WAT-0003,SWM-HLT-0002,water,1.0,linear,two_full,2,no,True
+SWM-CPL-0051,SWM-DEP-0036,SWM-WAT-0003,SWM-HLT-0003,water,1.0,linear,single,1,no,True
+SWM-CPL-0052,SWM-DEP-0037,SWM-TRN-0001,SWM-FUE-0001,transport access,1.0,threshold,any_reachable,1,no,True
+SWM-CPL-0053,SWM-DEP-0038,SWM-TRN-0003,SWM-FUE-0003,transport access,1.0,threshold,any_reachable,1,no,True
+SWM-CPL-0054,SWM-DEP-0039,SWM-TRN-0003,SWM-FUE-0004,transport access,1.0,threshold,any_reachable,1,no,True
+SWM-CPL-0055,SWM-DEP-0040,SWM-TRN-0002,SWM-HLT-0001,transport access,1.0,threshold,any_reachable,1,no,False
+SWM-CPL-0056,SWM-DEP-0040,SWM-TRN-0001,SWM-HLT-0001,transport access,1.0,threshold,any_reachable,2,no,False
+SWM-CPL-0057,SWM-DEP-0040,SWM-TRN-0003,SWM-HLT-0001,transport access,1.0,threshold,any_reachable,3,no,False
+SWM-CPL-0058,SWM-DEP-0041,SWM-TRN-0003,SWM-HLT-0002,transport access,1.0,threshold,any_reachable,1,no,False
+SWM-CPL-0059,SWM-DEP-0041,SWM-TRN-0001,SWM-HLT-0002,transport access,1.0,threshold,any_reachable,2,no,False
+SWM-CPL-0060,SWM-DEP-0041,SWM-TRN-0002,SWM-HLT-0002,transport access,1.0,threshold,any_reachable,3,no,False
+SWM-CPL-0061,SWM-DEP-0042,SWM-TRN-0003,SWM-HLT-0003,transport access,1.0,threshold,any_reachable,1,no,False
+SWM-CPL-0062,SWM-DEP-0043,SWM-TRN-0002,SWM-HLT-0004,transport access,1.0,threshold,any_reachable,1,no,False
+SWM-CPL-0063,SWM-DEP-0043,SWM-TRN-0003,SWM-HLT-0004,transport access,1.0,threshold,any_reachable,2,no,False
+SWM-CPL-0064,SWM-DEP-0044,SWM-FUE-0001,SWM-POW-0001,fuel,1.0,linear,single,1,no,True
+SWM-CPL-0065,SWM-DEP-0045,SWM-FUE-0002,SWM-TEL-0001,fuel,1.0,threshold,single,1,yes,False
+SWM-CPL-0066,SWM-DEP-0049,SWM-FUE-0003,SWM-WAT-0002,fuel,1.0,threshold,single,1,yes,False
+SWM-CPL-0067,SWM-DEP-0051,SWM-FUE-0003,SWM-TRN-0001,fuel,1.0,threshold,two_full,1,no,False
+SWM-CPL-0068,SWM-DEP-0051,SWM-FUE-0002,SWM-TRN-0001,fuel,1.0,threshold,two_full,2,no,False
+SWM-CPL-0069,SWM-DEP-0052,SWM-FUE-0002,SWM-TRN-0002,fuel,1.0,linear,single,1,no,False
+SWM-CPL-0070,SWM-DEP-0053,SWM-FUE-0002,SWM-TRN-0003,fuel,1.0,threshold,single,1,no,False
+SWM-CPL-0071,SWM-DEP-0054,SWM-FUE-0003,SWM-HLT-0001,fuel,1.0,threshold,single,1,yes,False
+SWM-CPL-0072,SWM-DEP-0055,SWM-FUE-0004,SWM-HLT-0002,fuel,1.0,threshold,single,1,yes,False
+SWM-CPL-0073,SWM-DEP-0057,SWM-FUE-0004,SWM-HLT-0004,fuel,1.0,threshold,single,1,yes,False

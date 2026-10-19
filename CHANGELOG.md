@@ -6,6 +6,15 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ### Added
 
+- Golden worlds, error settings and property tests (Work Order 9, PR 9b):
+  - **Two fixture worlds,** each the pilot with one change: `pilot_hidden_telecom` (telecom hidden) and `pilot_power_nodes_only` (power reports nodes only). Their full `swm build` output is checked in with hashes. Tests prove that every stage hash, the manifest's true world and all 8 reference runs equal the pilot's, and that every file that differs from the pilot's golden build has a stated reason.
+  - **The manifest's hidden section** counts a coupling as hidden when either end's layer is hidden. It also lists the links that nodes-only sources withhold (`withheld_links`).
+  - **Error settings are recorded, not applied (Phase 1).** `swm build` and `swm emit` print one warning naming every source whose settings are above zero. The manifest declares the departure, and the resolved recipe carries the note beside its errors section. Sources are byte-equal to a zero-rate build's.
+  - **New property tests:**
+    - error settings and the error streams' seed move nothing that exists;
+    - nodes = area × density within rounding;
+    - the same recipe gives the same bytes for any seed.
+- The interface mockup's standalone export, `docs/design/Interface_Mockup_v0_5.html`.
 - The trace game (Work Order 9, Part H; Trace pack ruling sheet v0.2). `swm trace-pack --scenario N [--board-size S]` writes `trace_pack/`:
   - **`game/`, everything a player gets:**
     - node cards with symbols and a legend card;

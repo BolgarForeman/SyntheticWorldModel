@@ -1,0 +1,96 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-01-01T00:00:00Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "way",
+      "id": 900000000012,
+      "bounds": {
+        "minlat": -48.8320158,
+        "minlon": -123.3764524,
+        "maxlat": -48.8150305,
+        "maxlon": -123.3567491
+      },
+      "nodes": [
+        900000000153,
+        900000000154,
+        900000000155,
+        900000000156,
+        900000000153
+      ],
+      "geometry": [
+        {
+          "lat": -48.8319535,
+          "lon": -123.3764524
+        },
+        {
+          "lat": -48.8320158,
+          "lon": -123.3568692
+        },
+        {
+          "lat": -48.8150928,
+          "lon": -123.3567491
+        },
+        {
+          "lat": -48.8150305,
+          "lon": -123.3763256
+        },
+        {
+          "lat": -48.8319535,
+          "lon": -123.3764524
+        }
+      ],
+      "tags": {
+        "landuse": "harbour",
+        "name": "Coribrook Port"
+      }
+    },
+    {
+      "type": "way",
+      "id": 900000000013,
+      "bounds": {
+        "minlat": -48.8277697,
+        "minlon": -123.3715258,
+        "maxlat": -48.819277,
+        "maxlon": -123.3616741
+      },
+      "nodes": [
+        900000000158,
+        900000000159,
+        900000000160,
+        900000000161,
+        900000000158
+      ],
+      "geometry": [
+        {
+          "lat": -48.8277385,
+          "lon": -123.3715258
+        },
+        {
+          "lat": -48.8277697,
+          "lon": -123.3617342
+        },
+        {
+          "lat": -48.8193082,
+          "lon": -123.3616741
+        },
+        {
+          "lat": -48.819277,
+          "lon": -123.3714624
+        },
+        {
+          "lat": -48.8277385,
+          "lon": -123.3715258
+        }
+      ],
+      "tags": {
+        "industrial": "port",
+        "landuse": "industrial"
+      }
+    }
+  ]
+}

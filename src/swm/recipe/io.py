@@ -10,7 +10,13 @@ from typing import Any
 
 import yaml
 
-from swm.recipe.schema import RECIPE_VERSION, SUPPORTED_RECIPE_VERSIONS, Recipe
+from swm.recipe.schema import (
+    RECIPE_VERSION,
+    RECORDED_NOT_APPLIED,
+    SUPPORTED_RECIPE_VERSIONS,
+    Recipe,
+    errors_above_zero,
+)
 from swm.rng import StreamRecord
 
 RESOLVED_RECIPE_FILE = "resolved_recipe.yaml"
@@ -230,9 +236,17 @@ def write_resolved_recipe(recipe: Recipe, out_dir: Path) -> Path:
     Path
         The file written.
 
-    Spec: CLAUDE.md §4; Work Order 1, items 3 and 4.
+    In Phase 1 a comment beside the errors section says the error settings are recorded but
+    not applied (WO-09 C2); a comment changes neither the recipe it loads as nor its hash.
+
+    Spec: CLAUDE.md §4; Work Order 1, items 3 and 4; Work Order 9, C2.
     """
-    return _write(out_dir / RESOLVED_RECIPE_FILE, recipe_bytes(recipe))
+    body = recipe_bytes(recipe)
+    sources = errors_above_zero(recipe.errors)
+    if sources:
+        note = f"# {RECORDED_NOT_APPLIED}: {', '.join(sources)}\n".encode()
+        body = body.replace(b"\nerrors:\n", b"\n" + note + b"errors:\n", 1)
+    return _write(out_dir / RESOLVED_RECIPE_FILE, body)
 
 
 def write_stream_record(record: StreamRecord, out_dir: Path) -> Path:

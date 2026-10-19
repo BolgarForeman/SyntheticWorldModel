@@ -4,7 +4,8 @@ One YAML file per world, under ``truth/``, which the pipeline is never pointed a
 - the planted errors (none in Phase 1: a zero-error emission, and it says so);
 - every unobserved value with its target and levers: subtypes, requirements, reserves,
   backup, tolerance, failure modes, coupling strength, repair and crews;
-- the hidden layers and couplings, and the feeds with their road routes;
+- the hidden layers and couplings, the links nodes-only sources withhold, and the feeds with
+  their road routes;
 - the cross-source correspondence: each true element's record in every file and view;
 - the true geometry: locations, outlines' corners and centres, routes and tower points;
 - the scored and context attribute lists per source, and the declared departures;
@@ -20,7 +21,14 @@ from typing import Any
 from swm.coordinates import to_lonlat
 from swm.emit.observed import ObservedWorld
 from swm.emit.sources import EmittedSources
-from swm.recipe.schema import Layer, LayerState, Recipe, Source
+from swm.recipe.schema import (
+    RECORDED_NOT_APPLIED,
+    Layer,
+    LayerState,
+    Recipe,
+    Source,
+    errors_above_zero,
+)
 from swm.rng import StreamRecord
 from swm.rules.registry import Registry
 from swm.rules.theta import theta_list
@@ -118,7 +126,7 @@ def truth_manifest(inputs: TruthInputs) -> dict[str, object]:
             source: {"scored": list(scored), "context": list(context)}
             for source, (scored, context) in SCORED.items()
         },
-        "declared_departures": list(DEPARTURES),
+        "declared_departures": [*DEPARTURES, *_phase_1_errors(recipe)],
         "theta": {
             "registry_version": inputs.rules.version,
             "registry_sha256": inputs.rules.sha256,
@@ -134,6 +142,14 @@ def truth_manifest(inputs: TruthInputs) -> dict[str, object]:
             ],
         },
     }
+
+
+def _phase_1_errors(recipe: Recipe) -> list[str]:
+    """Declare the error settings Phase 1 records but does not apply (WO-09 C2)."""
+    sources = errors_above_zero(recipe.errors)
+    if not sources:
+        return []
+    return [f"{RECORDED_NOT_APPLIED[0].upper()}{RECORDED_NOT_APPLIED[1:]}: {', '.join(sources)}."]
 
 
 def correspondence(sources: EmittedSources) -> list[dict[str, object]]:
@@ -245,11 +261,23 @@ def _hidden(inputs: TruthInputs) -> dict[str, object]:
         layer.value for layer in Layer if recipe.layers.get(layer).state != LayerState.EMITTED
     ]
     edges = edge_table(inputs.couplings)
+
+    # A coupling is hidden when it is switched off, or when either end's layer is hidden: no
+    # source shows a hidden layer, so none shows its couplings (WO-09 B3).
+    def hidden(row: Mapping[str, object]) -> bool:
+        ends = (row.get("supplier_layer"), row.get("consumer_layer"))
+        return not row.get("switched_on") or any(end in hidden_layers for end in ends)
+
     return {
         "layers": hidden_layers,
-        "couplings": [row for row in edges if not row.get("switched_on")],
-        "switched_on_couplings": [row for row in edges if row.get("switched_on")],
+        "couplings": [row for row in edges if hidden(row)],
+        "switched_on_couplings": [row for row in edges if not hidden(row)],
         "dependencies": dependency_table(inputs.couplings),
+        "withheld_links": [
+            {"link": link.link_id, "layer": link.layer.value}
+            for link in sorted(inputs.layers.links, key=lambda link: link.link_id)
+            if link.layer in inputs.observed.nodes_only
+        ],
     }
 
 
