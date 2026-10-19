@@ -118,25 +118,33 @@ def test_the_travel_drill_is_timed_from_where_the_crew_stands() -> None:
     road, foot = rules.number("crews.road_speed_kmh"), rules.number("crews.offroad_speed_kmh")
     b_done = 8.0 / road + lead + 1.0
     first_done = b_done + 4.0 / road + 1.0 / foot + lead + work
-    # Between a line's points the crew walks off, drives and walks back on; no new preparation.
-    line_done = first_done + 1.0 / foot + 2.0 / road + 1.0 / foot + work
+    # Between a line's points the crew walks 2 km along the line (spec v0.14 §4.5); no new
+    # preparation.
+    line_done = first_done + 2.0 / foot + work
     assert travel_between_jobs(rules) == pytest.approx((line_done,))
     card = next(c for c in rule_cards(rules) if c.name == "travel_between_jobs")
     assert card.expected == pytest.approx((line_done,))
 
 
+AWAITING_RULING = {"throttle_trip_floor"}
+"""Card 2's floor line asks for the engine; the engine's answer is reported for a ruling and the
+card is left as the design side wrote it (PR 19, final pass)."""
+
+
 def test_no_rule_card_still_asks_for_the_engine() -> None:
     for card in rule_cards(pilot()[0].rules):
         text = "\n".join((*card.front, *card.back))
-        assert "CONFIRM WITH ENGINE" not in text, card.name
+        assert ("CONFIRM WITH ENGINE" in text) == (card.name in AWAITING_RULING), card.name
         assert "[To be written" not in text, card.name
 
 
-def test_the_rule_cards_say_draft_while_their_files_do() -> None:
-    for path in sorted(RULE_CARD_DIR.glob("*.md")):
-        opening = path.read_text(encoding="utf-8").split("-->", 1)[0].lower()
-        card = next(c for c in rule_cards(pilot()[0].rules) if path.stem.endswith(c.name))
-        assert card.draft == ("draft" in opening)
+def test_the_approved_cards_manual_and_debrief_carry_no_draft_mark() -> None:
+    rules = pilot()[0].rules
+    assert not any(card.draft for card in rule_cards(rules))
+    assert not pages_of(FIELD_MANUAL, "Field manual", rules)[0]
+    assert not pages_of(DEBRIEF, "Debrief", rules)[0]
+    for card in rule_cards(rules):
+        assert "DRAFT" not in "\n".join((*card.front, *card.back)), card.name
 
 
 # --- Every number equals its source (H10) ---------------------------------------------------

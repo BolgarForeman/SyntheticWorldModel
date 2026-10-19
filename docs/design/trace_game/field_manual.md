@@ -1,4 +1,4 @@
-<!-- Trace game: field manual. Draft v0.1, design side, 2026-10-11. For Foreman's ruling. Context and purpose only: no mechanics shortcuts, nothing about any mission. -->
+<!-- Trace game: field manual. Drafted by the design side, 2026-10-11; approved by Foreman, 2026-10-19 (REVIEW_LOG.md). Context and purpose only: no mechanics shortcuts, nothing about any mission. -->
 
 # Field manual
 

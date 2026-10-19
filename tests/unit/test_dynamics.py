@@ -462,3 +462,45 @@ def test_an_alternative_ranking_is_not_yet_selectable() -> None:
     node = next(n for n in world.nodes if n.node_class == C.DISTRIBUTION_SUBSTATION)
     with pytest.raises(ValueError, match="selectable only in a later phase"):
         substation_weight(other, node.node_id)
+
+
+# --- Travel between failure points of one line (WO-09g answers 2) --------------------------
+
+
+def _two_point_line(rules_overrides: dict[str, object] | None = None) -> Any:
+    from swm.dynamics.travel import Legs, Site
+    from swm.dynamics.world import FailurePoint
+
+    def far_road(start: Site, end: Site) -> Legs:
+        # Any road trip is long, so a walk along the line is clearly the shorter way.
+        return Legs(100.0, 1.0, False)
+
+    node = OneNode(C.MAST, Layer.TELECOM).needs(Layer.POWER)
+    world = replace(node.world(**(rules_overrides or {})), legs=far_road,
+                    crews=(CrewStart("CRW-1", (0.0, 0.0)),))  # fmt: skip
+    points = (
+        FailurePoint("L", 3.0, (0.0, 1000.0), 6.0),
+        FailurePoint("L", 5.5, (0.0, 3500.0), 6.0),
+    )
+    return simulate(world, RunRequest(Damage((), ("L",), points)))
+
+
+def test_a_crew_walks_along_the_line_between_its_failure_points() -> None:
+    run = _two_point_line()
+    travel = [e for _, log in run.crews for e in log if e.activity == "travel"]
+    walk = travel[1].end_h - travel[1].start_h
+    assert walk == pytest.approx(2.5 / RULES.number("crews.offroad_speed_kmh"))
+    assert [e.activity for _, log in run.crews for e in log].count("assess") == 1
+
+
+def test_the_line_travel_rule_is_ruled_with_its_two_alternatives() -> None:
+    rule = RULES.rule("dynamics.line_point_travel")
+    assert rule.value == "along the line within a job; via the road between jobs"
+    assert rule.theta_alternatives == ("always via the road", "whichever way is shorter")
+    assert rule.ruling is not None
+    assert rule.ruling.date == "2026-10-19"
+
+
+def test_an_alternative_line_travel_is_not_yet_selectable() -> None:
+    with pytest.raises(ValueError, match="selectable only in a later phase"):
+        _two_point_line({"line_point_travel": "always via the road"})

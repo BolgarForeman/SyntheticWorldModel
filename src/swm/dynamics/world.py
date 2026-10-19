@@ -248,6 +248,11 @@ class Settings:
 
     Read from ``dynamics.substation_crew_rank``.
     """
+    line_point_travel: str = "along the line within a job; via the road between jobs"
+    """How a crew travels between failure points of one line.
+
+    Read from ``dynamics.line_point_travel``.
+    """
 
 
 def settings_from(rules: Registry) -> Settings:
@@ -282,6 +287,7 @@ def settings_from(rules: Registry) -> Settings:
         offroad_kmh=rules.number("crews.offroad_speed_kmh"),
         mobilisation_h=rules.number("crews.outlying_island_mobilisation_h"),
         substation_rank=str(rules.value("dynamics.substation_crew_rank")),
+        line_point_travel=str(rules.value("dynamics.line_point_travel")),
     )
 
 

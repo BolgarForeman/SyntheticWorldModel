@@ -89,6 +89,8 @@ class _Job:
     lead_h: float
     parts_ready_h: float
     crew_id: str | None = None
+    along_km: tuple[float, ...] = ()
+    """A line job's failure points, km along the line: the crew walks between them."""
 
 
 @dataclass
@@ -455,6 +457,7 @@ class _Engine:
                 tuple(p.crew_work_h for p in points),
                 lead,
                 0.0,
+                along_km=tuple(p.km for p in points),
             )
 
     def _priority(self, element_id: str) -> tuple[int, float]:
@@ -508,7 +511,10 @@ class _Engine:
         clock = start
         site = crew.site
         for index, (target, work_h) in enumerate(zip(job.sites, job.work_h, strict=True)):
-            trip = self._hours(site, target)
+            trip = (
+                self._along_line_hours(job, index) if index > 0 and job.along_km
+                else self._hours(site, target)
+            )  # fmt: skip
             crew.log.append(CrewEntry(crew.crew_id, job.job_id, "travel", clock, clock + trip))
             clock += trip
             if index == 0 and job.lead_h > 0.0:
@@ -529,6 +535,18 @@ class _Engine:
         crew.free_at = clock
         self.pending.append((clock, job.job_id))
         self.pending.sort()
+
+    def _along_line_hours(self, job: _Job, index: int) -> float:
+        """Walk from one failure point of a line to the next, along the line (spec v0.14 §4.5)."""
+        if self.settings.line_point_travel != ALONG_THE_LINE:
+            raise ValueError(
+                f"dynamics.line_point_travel is '{self.settings.line_point_travel}': its "
+                "alternatives are recorded but become selectable only in a later phase"
+            )
+        if "crews.offroad_speed_kmh" in self.relaxed:
+            return 0.0
+        walk_km = abs(job.along_km[index] - job.along_km[index - 1])
+        return walk_km / self.settings.offroad_kmh
 
     def _hours(self, start: Site, end: Site) -> float:
         return self._trip_hours(self.world.legs(start, end))
@@ -815,6 +833,8 @@ def substation_weight(world: EngineWorld, node_id: str) -> float:
     return max((w for w in (weights[node_id], *supplied) if w is not None), default=0.0)
 
 
+ALONG_THE_LINE = "along the line within a job; via the road between jobs"
+"""The ruled value of ``dynamics.line_point_travel`` (WO-09g answers 2)."""
 HIGHEST_SUPPLIED_WEIGHT = "highest supplied weight"
 """The ruled value of ``dynamics.substation_crew_rank`` (WO-09g answers, 1)."""
 

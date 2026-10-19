@@ -111,8 +111,12 @@ def _answer(back: str) -> str:
 
 
 def _is_draft(raw: str) -> bool:
+    """Return whether a file's opening comment marks it a draft ("Drafted by" does not)."""
     match = COMMENT.search(raw)
-    return match is not None and "draft" in match.group(1).lower()
+    return match is not None and DRAFT_WORD.search(match.group(1)) is not None
+
+
+DRAFT_WORD = re.compile(r"\bdraft\b", re.IGNORECASE)
 
 
 GLYPHS = {"⏳": "◷"}

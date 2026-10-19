@@ -1,4 +1,4 @@
-<!-- Trace game: debrief. Draft v0.1, design side, 2026-10-11, for Foreman's ruling. Read only after the envelope is opened. -->
+<!-- Trace game: debrief. Drafted by the design side, 2026-10-11; approved by Foreman, 2026-10-19 (REVIEW_LOG.md). Read only after the envelope is opened. -->
 
 # Debrief: read after you open the envelope
 

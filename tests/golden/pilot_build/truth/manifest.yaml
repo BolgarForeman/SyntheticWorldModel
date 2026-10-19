@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: e089833d27007e63da09a89b48cf44493c8c977f29df28aaeee8709122bd914b
+  registry_sha256: 13fcef83e1debf7433782d580f7eb75122faa642c96c30af3fbfa6831bdda671
   overrides: {}
   relaxed_limits: []
   out_of_range: []
@@ -9817,7 +9817,7 @@ declared_departures:
 - 'Source overlap (assets missing from one of two sources) is Phase 3: in Phase 1 every true element in a source''s scope appears in it.'
 theta:
   registry_version: '0.1'
-  registry_sha256: e089833d27007e63da09a89b48cf44493c8c977f29df28aaeee8709122bd914b
+  registry_sha256: 13fcef83e1debf7433782d580f7eb75122faa642c96c30af3fbfa6831bdda671
   overrides: {}
   relaxed_limits: []
   theta_list:
@@ -9893,6 +9893,23 @@ theta:
       by: the author (Foreman)
       date: '2026-09-29'
       decision: 0009
+  - theta_id: dynamics.line_point_travel
+    domain: truth
+    sub_type: dynamics
+    symbol: R
+    chosen: 'How a crew travels between failure points of one line, and between jobs: along the line within a job; via the road between jobs.'
+    alternatives:
+    - always via the road
+    - whichever way is shorter
+    registry_ids:
+    - dynamics.line_point_travel
+    relaxed: null
+    carried_vs_flattened: keeps
+    sensitivity: none planned
+    ruling:
+      by: the author (Foreman)
+      date: '2026-10-19'
+      decision: '0016'
   - theta_id: dynamics.substation_crew_rank
     domain: truth
     sub_type: dynamics

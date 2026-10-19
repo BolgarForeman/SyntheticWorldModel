@@ -134,3 +134,11 @@ Where the engine departs from structure v0.12 §4.5 (reported, not changed):
 - Rule card 9's drill now checks the printed crew assignment.
 
 **Golden changes.** The reference runs, stage stats, resolved recipes and manifest change only in the registry stamp; the manifest also gains the new Theta List entry. No pilot run has a distribution-substation job, so no crew order, timeline or hours out moved.
+
+## Crew travel along a line, and the approved teaching text (WO-09g answers 2)
+
+**The hand trace.** The design side's sealed trace of scenario 7 found one point the spec had not settled: travel between failure points of one line. Under Foreman's ruling (walk along the line), the engine's scenario 7 matches the design side's recomputed trace exactly: TEL-0003 back at 18.00 h, TEL-0002 at 34.25 h, 52.25 service-hours lost.
+
+**Golden changes.** Scenario 7's run changes: crew 2's second walk on TEL-L0002 takes 1.0 h instead of 6.7 h, and everything after it moves 5.725 h earlier. The other seven runs change only in the registry stamp.
+
+**Teaching text.** The rule cards, field manual and debrief are approved and print without DRAFT marks. Card 2's floor line is reported against the engine: when the generator's fuel runs out, the engine trips, rather than taking what arrives.

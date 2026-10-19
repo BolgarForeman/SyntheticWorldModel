@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: e089833d27007e63da09a89b48cf44493c8c977f29df28aaeee8709122bd914b
+  registry_sha256: 13fcef83e1debf7433782d580f7eb75122faa642c96c30af3fbfa6831bdda671
   overrides: {}
   relaxed_limits: []
   out_of_range: []
@@ -13,10 +13,10 @@ relaxed_limits: []
 removed_dependencies: []
 actions: []
 summary:
-  hours_out: 63.75
+  hours_out: 52.25
   longest_out: SWM-TEL-0002
-  longest_out_hours: 40.0
-  last_repair_h: 40.0
+  longest_out_hours: 34.25
+  last_repair_h: 34.25
   most_passes: 2
   capped_steps: 0
 hours_out:
@@ -28,8 +28,8 @@ hours_out:
   SWM-HLT-0004: 0.0
   SWM-POW-0003: 0.0
   SWM-POW-0004: 0.0
-  SWM-TEL-0002: 40.0
-  SWM-TEL-0003: 23.75
+  SWM-TEL-0002: 34.25
+  SWM-TEL-0003: 18.0
   SWM-TEL-0004: 0.0
   SWM-TRN-0001: 0.0
   SWM-TRN-0002: 0.0
@@ -38,10 +38,10 @@ hours_out:
 completions:
 - element: SWM-TEL-L0002
   kind: line
-  hour: 23.75
+  hour: 18.0
 - element: SWM-TEL-L0001
   kind: line
-  hour: 40.0
+  hour: 34.25
 deliveries: []
 passes:
   most: 2

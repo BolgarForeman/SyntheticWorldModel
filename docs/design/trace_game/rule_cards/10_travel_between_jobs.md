@@ -1,4 +1,4 @@
-<!-- Trace game rule card 10. Draft v0.1, design side, 2026-10-11, for Foreman's ruling. {rule:<id>} is replaced at build with the registry value. Nothing here may name the mission's nodes or lines. -->
+<!-- Trace game rule card 10. Drafted by the design side, 2026-10-11; approved by Foreman, 2026-10-19 (REVIEW_LOG.md). {rule:<id>} is replaced at build with the registry value. Nothing here may name the mission's nodes or lines. -->
 
 # 10. Travel between jobs
 
@@ -24,4 +24,4 @@ Preparation ({rule:repair.crew_bound_lead_h} h) comes once per job, at its first
 
 ## Drill world (for the engine test, not printed)
 
-One crew at the base, on a straight road along y = 0. B, a clinic on the road 8 km east, 1 h of work. Line L down, with failure points 1 km north of the road at 12 km and 14 km east, {rule:storm.line_crew_work_h} h each. The drill's leg finder follows the engine's road rule: a facility's access to the road is driven, a line point's is walked. Expect line L done at 18.85 (exact, before step rounding).
+One crew at the base, on a straight road along y = 0. B, a clinic on the road 8 km east, 1 h of work. Line L down, with failure points 1 km north of the road at 12 km and 14 km east, {rule:storm.line_crew_work_h} h each. The drill's leg finder follows the engine's road rule: a facility's access to the road is driven, a line point's is walked. Between L's two failure points the crew walks 2 km along the line (spec v0.14 §4.5). Expect line L done at 18.8 (exact, before step rounding).
