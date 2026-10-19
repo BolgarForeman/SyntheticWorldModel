@@ -4,9 +4,13 @@
 
 ## Front
 
-A crew that finishes a job goes straight to its next job from where it stands. It does not return to base.
+A crew that finishes a job goes straight to its next job from where it stands; it never returns to base. Its trip:
+- from a facility to the nearest road, and from the road to a facility: driven;
+- from a point on a line to the nearest road, and back on: walked at {rule:crews.offroad_speed_kmh} km/h;
+- along the roads in between: driven at {rule:crews.road_speed_kmh} km/h;
+- if no road joins the two places: straight across at road speed, plus {rule:crews.outlying_island_mobilisation_h} h.
 
-A crew's next trip starts where it stands: between a facility and the nearest road it drives, between a point on a line and the nearest road it walks at {rule:crews.offroad_speed_kmh} km/h, and in between it drives the roads at {rule:crews.road_speed_kmh} km/h; if no road joins the two places, it crosses straight at road speed and adds {rule:crews.outlying_island_mobilisation_h} h. Preparation ({rule:repair.crew_bound_lead_h} h) comes once per job, at its first site: a crew working a line's failure points in turn walks off, drives and walks back on between them without preparing again.
+Preparation ({rule:repair.crew_bound_lead_h} h) comes once per job, at its first site. Between a line's failure points the crew walks off, drives and walks back on, without preparing again.
 
 **Value:** road {rule:crews.road_speed_kmh} km/h; off road {rule:crews.offroad_speed_kmh} km/h
 

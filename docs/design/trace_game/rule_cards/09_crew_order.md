@@ -6,7 +6,7 @@
 
 A free crew takes the waiting job that comes first in this order:
 1. towered power lines and transmission substations;
-2. distribution substations and power feeds to end uses, highest weight first;
+2. distribution substations and power feeds to end uses, highest weight first (a substation counts the highest weight among what it supplies, its own included);
 3. everything else.
 
 Ties go to the shortest trip from where the crew stands, then the lowest id. Crews never go back to base between jobs.

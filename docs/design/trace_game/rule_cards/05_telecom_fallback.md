@@ -4,21 +4,19 @@
 
 ## Front
 
-Many facilities can work for a while without telecom, by phone, paper and hand. The card shows ⏳ **T** (hours of full function) and **d_eff** (the level afterwards).
-- A telecom arrow passes the supplier's level without κ (unlike card 3). On a telecom arrow, κ is instead the share of the facility's telecom that runs over the public network, and it sets the fallback level below.
-- From the moment its telecom falls short, the facility runs fully for T hours.
-- After that it runs at d_eff = 1 − κ(1 − d), where d is the level without any telecom and κ the share of its telecom that comes over the public network.
-- When telecom returns, the facility returns to full.
+Facilities can work for a while without telecom, by phone, paper and hand. Each card shows ⏳ **T** (hours of full function) and **d_eff** (the level the missing telecom counts as afterwards).
+- Telecom arrows pass the supplier's level without κ. On a telecom arrow, κ is the share of the facility's telecom that runs over the public network; it is built into d_eff = 1 − κ(1 − d).
+- When telecom falls short, the facility runs fully for **T** hours.
+- After T hours, the telecom it receives counts as **r + (1 − r) × d_eff**, where r is the share still arriving. Its telecom response then acts on that: **throttle** runs at it; **trip** runs only if it is at least the trip point ({rule:dynamics.trip_point}), and otherwise stops.
+- The T-hour clock starts again from zero each time telecom is fully back.
 
-After T hours of shortfall, counted in {rule:dynamics.step_min}-minute steps, the telecom the facility receives is raised to r + (1 − r) × d_eff, where r is the share that still arrives, and the facility's telecom response on its card acts on that level: throttle runs at it; trip runs fully only if it is at least the trip point ({rule:dynamics.trip_point}), and otherwise stops. The T-hour clock starts again from zero each time its telecom is fully back.
+**Value:** T, d and κ from each facility's card
 
-**Value:** T and d from the tolerance rules on each card
-
-**Example:** Facility C, with T = 6 h and d_eff = 0.7, loses telecom at hour 0. It runs at 1 until hour 6, then at 0.7.
+**Example:** C loses all telecom at hour 0; T = 6 h, d_eff = 0.7. If C throttles on telecom, it runs at 1 until hour 6, then at 0.7. If C trips on telecom, it runs at 1 until hour 6, then stops (0.7 is below the trip point).
 
 ## Back
 
-**Drill:** B loses telecom at hour 0. Its card shows T = 12 h and d_eff = 0.9. Telecom returns at hour 20. What is B's level at hours 6, 15 and 21?
+**Drill:** B throttles on telecom and loses it at hour 0. Its card shows T = 12 h and d_eff = 0.9. Telecom returns at hour 20. What is B's level at hours 6, 15 and 21?
 
 **Answer:** **1** at hour 6; **0.9** at hour 15; **1** at hour 21.
 

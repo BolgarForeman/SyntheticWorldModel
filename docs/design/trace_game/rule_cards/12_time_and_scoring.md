@@ -4,7 +4,7 @@
 
 ## Front
 
-The model moves in steps of {rule:dynamics.step_min} minutes. Log every event at its exact time. Then note that the model applies it at the end of the step it falls in. Exactly: a repair, a switching trip or a fuel delivery takes effect at the first {rule:dynamics.step_min}-minute step at or after its exact time, so one finished at hour 9.40 counts from 9.50, and one finished at exactly 9.50 counts from 9.50. Crews are not rounded: a crew starts its next trip the moment it finishes, and each facility's level holds for the whole step it is set in.
+The model moves in steps of {rule:dynamics.step_min} minutes. Log every event at its exact time. A repair, a switching trip or a fuel delivery takes effect at the first step boundary at or after its exact time: one finished at hour 9.40 counts from 9.50; one finished at exactly 9.50 counts from 9.50. Crews are not rounded: a crew starts its next trip the moment it finishes. A facility's level holds for the whole step it is set in.
 
 **Hours out:** a facility at level s for h hours counts (1 − s) × h hours out. Only end-use facilities are scored; their weights are on their cards. The horizon is {rule:dynamics.horizon_h} h.
 
