@@ -7,7 +7,7 @@
 When a supply falls short, the facility responds in one of three ways (shown on its card):
 - ◐ **throttle**: runs at the share it receives;
 - ⚡ **trip**: runs fully while it receives at least the trip point, otherwise shuts off;
-- ▁ **floor**: a hospital on its generator runs at its essential level.
+- ▁ **floor**: a hospital whose power falls short runs at its essential level ({rule:reserves.hospital.essential_load_fraction}) on its generator, as long as the generator runs and has fuel. When the fuel runs out, its power response falls to what actually arrives. [CONFIRM WITH ENGINE: keep this sentence only if the engine does exactly this; otherwise state what it does and report the difference.]
 
 **Value:** trip point {rule:dynamics.trip_point}; floor {rule:reserves.hospital.essential_load_fraction}
 
