@@ -24,7 +24,7 @@ damage:
 crews:
   CRW-0001:
     - job: POW-L0004
-      arrives_h: 1.75
+      arrives_h: 1.75        # exact failure-point position; the trace's km-segment table gave 1.798 h
       prepared_h: 3.75
       done_h: null          # not finished within the 72-hour horizon
   CRW-0002:
