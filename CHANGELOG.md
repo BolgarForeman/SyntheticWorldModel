@@ -170,6 +170,7 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 - The truth manifest matched Geofabrik and Overpass records to elements by id alone, although OpenStreetMap node and way ids overlap. It now matches on type and id, which corrects six pilot entries (decision 0015, addendum 2).
 - The terrain now delivers exactly the requested number of outlying islands. An island placed near the grid edge could merge with the main island, because its clearance window was cut empty. If the count can't be met, the build stops with an error naming `terrain.character.outlying_islands` (decision 0010, item 3). The pilot terrain is unchanged.
+- A transport bridge could be sited on a river cell whose land cover is wetland. Bridges now never sit on wetland, on any siting path (decision 0016). The pilot is unchanged.
 
 ### Removed
 
