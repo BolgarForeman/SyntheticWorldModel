@@ -5,6 +5,7 @@
 ## Front
 
 Many facilities can work for a while without telecom, by phone, paper and hand. The card shows ⏳ **T** (hours of full function) and **d_eff** (the level afterwards).
+- A telecom arrow passes the supplier's level without κ (unlike card 3). On a telecom arrow, κ is instead the share of the facility's telecom that runs over the public network, and it sets the fallback level below.
 - From the moment its telecom falls short, the facility runs fully for T hours.
 - After that it runs at d_eff = 1 − κ(1 − d), where d is the level without any telecom and κ the share of its telecom that comes over the public network.
 - When telecom returns, the facility returns to full.

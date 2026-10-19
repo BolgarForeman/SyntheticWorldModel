@@ -5,10 +5,10 @@
 ## Front
 
 Each arrow on the board has a form:
-- **linear**: it passes κ × the supplier's level;
-- **threshold**: it passes κ in full while the supplier is at or above θ, otherwise nothing.
+- **linear**: it passes κ (the *share*) × the supplier's level;
+- **threshold**: it passes κ in full while the supplier is at or above θ (the *cut-off*), otherwise nothing.
 
-κ is the share of the user's need that this supplier covers. Telecom arrows pass the supplier's level without κ; their κ is used by the telecom fallback card instead.
+κ is the share of the user's need that this supplier covers. Telecom arrows work differently: see card 5.
 
 **Value:** threshold θ {rule:dynamics.threshold}
 
