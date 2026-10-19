@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.12 · 2026-10-11 · companion to the World Generator Interface mockup v0.5 and recipe schema v3 · supersedes v0.11*
+*v0.14 · 2026-10-19 · companion to the World Generator Interface mockup v0.5 and recipe schema v3 · supersedes v0.13*
 
 ## 1. What this is
 
@@ -504,8 +504,8 @@ Where a class has a telecom tolerance row, the tolerance acts first: full functi
 - **Crew-bound lead time** (mobilize, assess, stage): 2 h (J) plus travel, starting when a crew is assigned and repeating at every job.
 - **Parts lead time:** the rest of the Hazus lead time, max(0, lead time − 2 h). It runs in parallel with no crew; in Phase 1 its clock starts at the end of the storm.
 - **A crew's sequence:** assigned → travel → assess → repair once its parts are in → travel to the next job. Crews move job to job; they do not return to base.
-- **Travel** uses the road network, then off road at 2 km/h to a line's failure point (§4.3b). In Phase 1 one line is one job for one crew.
-- **Default crew order** (the restorative model replaces it): (1) towered lines and transmission substations; (2) distribution substations and feeds to end uses, highest Lifeline weight first; (3) everything else. Ties go to the shortest travel, then the lowest id. Emergency units go to eligible damaged nodes in the same order.
+- **Travel** uses the road network, then off road at 2 km/h to a line's failure point (§4.3b). In Phase 1 one line is one job for one crew. Between failure points of the same line, the crew walks along the line at off-road speed; between different jobs, it walks or drives to the nearest road, drives, and walks or drives back in (ruled 2026-10-19; alternatives: always via the road; whichever way is shorter).
+- **Default crew order** (the restorative model replaces it): (1) towered lines and transmission substations; (2) distribution substations and feeds to end uses, highest Lifeline weight first, where a distribution substation ranks by the highest Lifeline weight among the end uses it supplies, its own weight included (ruled 2026-10-19; alternatives: its own weight only, or the sum over what it supplies); (3) everything else. Ties go to the shortest travel, then the lowest id. Emergency units go to eligible damaged nodes in the same order.
 - **Manual switching:** when a repair should re-energize a substation whose telecom is down, power returns only after a crew travels there and switches by hand: 1 h on site (range 0.5–2 h, J) plus travel as for repairs. The trip uses a crew like any job. It does not apply when the repair is at the substation itself.
 
 **Time.**
@@ -695,6 +695,17 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.13
+
+Ruled by the author, 2026-10-19 (PR 19 answers 2, from the hand-trace comparison):
+- §4.5 travel: between failure points of the same line, a crew walks along the line at off-road speed; between jobs it goes via the nearest road. Alternatives recorded: always via the road (the engine's earlier rule); whichever way is shorter.
+
+## Changes from v0.12
+
+Ruled by the author, 2026-10-19 (PR 19 answers):
+- §4.5 default crew order: a distribution substation ranks by the highest Lifeline weight among the end uses it supplies, its own included. Alternatives recorded: its own weight only; the sum over what it supplies.
+- Standing requirement (later phase): each dynamics rule with recorded alternatives becomes a selectable option in the recipe and the interface, so the same world can be run under each alternative and the results compared.
 
 ## Changes from v0.11
 

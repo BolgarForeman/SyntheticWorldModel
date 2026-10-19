@@ -89,6 +89,8 @@ class _Job:
     lead_h: float
     parts_ready_h: float
     crew_id: str | None = None
+    along_km: tuple[float, ...] = ()
+    """A line job's failure points, km along the line: the crew walks between them."""
 
 
 @dataclass
@@ -455,6 +457,7 @@ class _Engine:
                 tuple(p.crew_work_h for p in points),
                 lead,
                 0.0,
+                along_km=tuple(p.km for p in points),
             )
 
     def _priority(self, element_id: str) -> tuple[int, float]:
@@ -508,7 +511,10 @@ class _Engine:
         clock = start
         site = crew.site
         for index, (target, work_h) in enumerate(zip(job.sites, job.work_h, strict=True)):
-            trip = self._hours(site, target)
+            trip = (
+                self._along_line_hours(job, index) if index > 0 and job.along_km
+                else self._hours(site, target)
+            )  # fmt: skip
             crew.log.append(CrewEntry(crew.crew_id, job.job_id, "travel", clock, clock + trip))
             clock += trip
             if index == 0 and job.lead_h > 0.0:
@@ -529,6 +535,18 @@ class _Engine:
         crew.free_at = clock
         self.pending.append((clock, job.job_id))
         self.pending.sort()
+
+    def _along_line_hours(self, job: _Job, index: int) -> float:
+        """Walk from one failure point of a line to the next, along the line (spec v0.14 §4.5)."""
+        if self.settings.line_point_travel != ALONG_THE_LINE:
+            raise ValueError(
+                f"dynamics.line_point_travel is '{self.settings.line_point_travel}': its "
+                "alternatives are recorded but become selectable only in a later phase"
+            )
+        if "crews.offroad_speed_kmh" in self.relaxed:
+            return 0.0
+        walk_km = abs(job.along_km[index] - job.along_km[index - 1])
+        return walk_km / self.settings.offroad_kmh
 
     def _hours(self, start: Site, end: Site) -> float:
         return self._trip_hours(self.world.legs(start, end))
@@ -745,7 +763,8 @@ def crew_order(world: EngineWorld, element_id: str) -> tuple[int, float]:
     """Return an element's key in the default crew order (D6): tier, then -Lifeline weight.
 
     Tier 0: towered lines and transmission substations. Tier 1: distribution substations and
-    power feeds to end-use nodes, the highest Lifeline weight first. Tier 2: everything else.
+    power feeds to end-use nodes, the highest Lifeline weight first; a distribution substation
+    ranks by ``substation_weight``. Tier 2: everything else.
 
     Parameters
     ----------
@@ -759,7 +778,7 @@ def crew_order(world: EngineWorld, element_id: str) -> tuple[int, float]:
     tuple of (int, float)
         The tier and the negated weight; a smaller key is served first.
 
-    Spec: structure v0.9 §4.5 (repair and crews); ruling D6.
+    Spec: structure v0.13 §4.5 (repair and crews); ruling D6; WO-09g answers, 1.
     """
     if element_id in world.towered:
         return (0, 0.0)
@@ -767,10 +786,57 @@ def crew_order(world: EngineWorld, element_id: str) -> tuple[int, float]:
     if node is not None and node.node_class == NodeClass.TRANSMISSION_SUBSTATION:
         return (0, 0.0)
     if node is not None and node.node_class == NodeClass.DISTRIBUTION_SUBSTATION:
-        return (1, -(node.end_use_weight or 0.0))
+        return (1, -substation_weight(world, element_id))
     if element_id in world.feeds_to_end_use:
         return (1, -world.feeds_to_end_use[element_id])
     return (2, 0.0)
+
+
+def substation_weight(world: EngineWorld, node_id: str) -> float:
+    """Return the weight a distribution substation ranks by in crew-order group 2.
+
+    The highest Lifeline weight among the end uses it supplies, its own included: it supplies an
+    end use through an electricity coupling the engine plays, switched on or hidden.
+
+    Parameters
+    ----------
+    world : EngineWorld
+        The world played out.
+    node_id : str
+        A distribution substation.
+
+    Returns
+    -------
+    float
+        The weight; 0 if neither it nor anything it supplies is an end use.
+
+    Raises
+    ------
+    ValueError
+        If the registry names an alternative not yet selectable (WO-09g answers, recorded for
+        later).
+
+    Spec: structure v0.13 §4.5 (default crew order); WO-09g answers, 1.
+    """
+    if world.settings.substation_rank != HIGHEST_SUPPLIED_WEIGHT:
+        raise ValueError(
+            f"dynamics.substation_crew_rank is '{world.settings.substation_rank}': its "
+            "alternatives are recorded but become selectable only in a later phase"
+        )
+    weights = {n.node_id: n.end_use_weight for n in world.nodes}
+    supplied = [
+        weights[d.consumer_id]
+        for d in world.dependencies
+        if d.supplier_layer == Layer.POWER
+        and any(e.supplier_id == node_id for group in d.groups for e in group)
+    ]
+    return max((w for w in (weights[node_id], *supplied) if w is not None), default=0.0)
+
+
+ALONG_THE_LINE = "along the line within a job; via the road between jobs"
+"""The ruled value of ``dynamics.line_point_travel`` (WO-09g answers 2)."""
+HIGHEST_SUPPLIED_WEIGHT = "highest supplied weight"
+"""The ruled value of ``dynamics.substation_crew_rank`` (WO-09g answers, 1)."""
 
 
 def trip_hours(legs: Legs, settings: Settings, relaxed: frozenset[str] = frozenset()) -> float:

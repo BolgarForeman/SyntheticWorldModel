@@ -1,7 +1,7 @@
 """Identity check (golden): ``swm build`` writes the pilot's whole tree, the same bytes on every
 platform: the resolved recipe, ``sources/``, ``truth/`` and ``trace_pack/`` (Work Order 8, E1).
 
-The hand-trace pack's answer timeline is the reference run's own: each hour's states equal the saved
+The trace game's sealed timeline is the reference run's own: each hour's states equal the saved
 reference run 7 (Part D).
 """
 
@@ -88,7 +88,9 @@ def test_the_timeline_crews_follow_the_saved_crew_jobs() -> None:
 
 
 def test_the_trace_pdfs_carry_a_fixed_producer_and_no_date_or_compression() -> None:
-    for name in ("map.pdf", "rules.pdf", "tables.pdf", "answer/timeline.pdf"):
+    pdfs = sorted(p for p in (GOLDEN / "trace_pack").rglob("*.pdf"))
+    assert len(pdfs) == 13
+    for name in (p.relative_to(GOLDEN / "trace_pack").as_posix() for p in pdfs):
         body = (GOLDEN / "trace_pack" / name).read_bytes()
         assert b"/Producer (swm trace-pack)" in body
         assert b"/CreationDate" not in body
@@ -104,13 +106,20 @@ def test_the_manifest_records_every_seed_and_the_zero_error_emission() -> None:
 
 def test_the_trace_pack_command_takes_a_scenario(tmp_path: Path) -> None:
     assert main(["trace-pack", str(PILOT), "--scenario", "4", "-o", str(tmp_path)]) == 0
-    assert (tmp_path / "trace_pack" / "map.pdf").exists()
+    assert (tmp_path / "trace_pack" / "game" / "board.pdf").exists()
+    assert (tmp_path / "trace_pack" / "data" / "map.pdf").exists()
     assert main(["trace-pack", str(PILOT), "--scenario", "99", "-o", str(tmp_path)]) != 0
 
 
-def test_the_blind_pack_and_its_answer_are_apart() -> None:
-    blind = {p.name for p in (GOLDEN / "trace_pack").iterdir() if p.is_file()}
-    assert "timeline.csv" not in blind
-    assert {"map.pdf", "rules.pdf", "tables.pdf", "rules.csv", "links.csv"} <= blind
-    answer = {p.name for p in (GOLDEN / "trace_pack" / "answer").iterdir()}
-    assert answer == {"timeline.csv", "timeline.pdf"}
+def test_the_game_its_sealed_answer_and_the_data_sit_apart() -> None:
+    pack = GOLDEN / "trace_pack"
+    assert {p.name for p in pack.iterdir()} == {"game", "answer", "data"}
+    assert {p.name for p in (pack / "game").iterdir()} == {
+        "field_manual.pdf", "rule_cards.pdf", "node_cards.pdf", "board.pdf", "briefing.pdf",
+        "sheets.pdf", "tokens.pdf"}  # fmt: skip
+    assert {p.name for p in (pack / "answer").iterdir()} == {
+        "answer.pdf", "debrief.pdf", "events.csv", "outages.csv", "score.csv", "timeline.csv",
+        "timeline.pdf"}  # fmt: skip
+    data = {p.name for p in (pack / "data").iterdir()}
+    assert {"map.pdf", "rules.pdf", "tables.pdf", "rules.csv", "links.csv"} <= data
+    assert "timeline.csv" not in data

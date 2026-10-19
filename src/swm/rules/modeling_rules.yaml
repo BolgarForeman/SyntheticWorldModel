@@ -10460,6 +10460,63 @@ rules:
   theta_role: dynamics
   theta_domain: truth
   theta_symbol: R
+- id: dynamics.substation_crew_rank
+  title: How a distribution substation ranks in group 2 of the default crew order
+  stage: dynamics
+  value: highest supplied weight
+  units: null
+  applies_to: {layer: null, node_class: distribution_substation, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Work Order 9g, answers to PR 19, answer 1 (decision 0017)', url: docs/work_orders/WO-09g-answers.md,
+    quote: null, verified: null}
+  - {citation: Structure v0.13 §4.5 (default crew order), url: docs/design/World_Generator_Structure.md,
+    quote: null, verified: null}
+  reasoning: A distribution substation ranks by the highest Lifeline weight among the end uses it supplies,
+    its own weight included, so one feeding the tertiary hospital (10) outranks one feeding a clinic (3).
+    It supplies an end use through an electricity coupling the engine plays, switched on or hidden. Ties
+    go to the shortest trip, then the lowest id. Power feeds to end uses keep their own key.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-19'
+    decision: '0017'
+  history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
+  theta_alternatives: [own weight only, sum of supplied weights]
+- id: dynamics.line_point_travel
+  title: How a crew travels between failure points of one line, and between jobs
+  stage: dynamics
+  value: along the line within a job; via the road between jobs
+  units: null
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Work Order 9g, answers 2 (decision 0017)', url: docs/work_orders/WO-09g-answers-2.md,
+    quote: null, verified: null}
+  - {citation: Structure v0.14 §4.5 (repair and crews), url: docs/design/World_Generator_Structure.md,
+    quote: null, verified: null}
+  - {citation: 'Hand trace comparison, scenario 7, v0.1', url: docs/design/evidence/Hand_Trace_Comparison_Scenario_7_v0_1.md,
+    quote: null, verified: null}
+  reasoning: Between failure points of the same line a crew walks along the line, the distance between the
+    two points along it, at crews.offroad_speed_kmh, without preparing again. Between different jobs it
+    goes as before, to the nearest road, along the roads, and back in.
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-19'
+    decision: '0017'
+  history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
+  theta_alternatives: [always via the road, whichever way is shorter]
 - id: strength.supply_days
   title: Days of its own stock a supplier delivers in a day's turnover
   stage: strength

@@ -690,7 +690,7 @@ def _map_pdf(inputs: TraceInputs) -> bytes:
         "damage in red",
         fontsize=8,
     )
-    return _pdf([figure])
+    return pdf_pages([figure])
 
 
 def _land(axes: "Axes", terrain: TerrainResult) -> None:
@@ -748,7 +748,7 @@ def _failure_points(axes: "Axes", inputs: TraceInputs, km: ToKm) -> None:
 
 def _nodes(axes: "Axes", inputs: TraceInputs, km: ToKm, skip: set[str]) -> None:
     damaged = set(inputs.engine_damage.nodes)
-    crowded = _crowded(inputs)
+    crowded_ids = crowded(inputs)
     for node in inputs.world.nodes:
         x, y = km(node.site)
         colour = DAMAGE_COLOUR if node.node_id in damaged else LAYER_COLOURS[node.layer]
@@ -758,15 +758,15 @@ def _nodes(axes: "Axes", inputs: TraceInputs, km: ToKm, skip: set[str]) -> None:
             continue
         label = f"{node.node_id.replace('SWM-', '')}\n{node.node_class.value}"
         # A node close to one with a lower id labels to the left and below, so the two clear.
-        left = node.node_id in crowded
+        left = node.node_id in crowded_ids
         axes.annotate(label, (x, y), fontsize=5, xytext=(-4, -9) if left else (4, 2),
                       textcoords="offset points", ha="right" if left else "left",
                       clip_on=True)  # fmt: skip
 
 
-def _crowded(inputs: TraceInputs) -> set[str]:
-    """Return the nodes within ``LABEL_CLEARANCE_KM`` of a node with a lower id."""
-    reach_m = LABEL_CLEARANCE_KM * M_PER_KM
+def crowded(inputs: TraceInputs, clearance_km: float = 0.0) -> set[str]:
+    """Return the nodes within a clearance (``LABEL_CLEARANCE_KM`` if 0) of a lower-id node."""
+    reach_m = (clearance_km or LABEL_CLEARANCE_KM) * M_PER_KM
     nodes = inputs.world.nodes
     return {
         b.node_id for a in nodes for b in nodes
@@ -837,7 +837,7 @@ def _tables_pdf(scenario: int, tables: Mapping[str, list[dict[str, object]]]) ->
             figure.text(0.02, 0.93, "\n".join(lines[start:start + LINES_PER_PAGE]), fontsize=5.2,
                         family="monospace", va="top")  # fmt: skip
             figures.append(figure)
-    return _pdf(figures)
+    return pdf_pages(figures)
 
 
 def _text_table(rows: Sequence[Mapping[str, object]], empty: Sequence[str]) -> list[str]:
@@ -854,7 +854,7 @@ def _text(value: object) -> str:
     return "" if value is None else str(value)
 
 
-def _pdf(figures: Sequence["Figure"]) -> bytes:
+def pdf_pages(figures: Sequence["Figure"]) -> bytes:
     """Write figures as one PDF with fixed metadata and no stream compression."""
     import matplotlib
     from matplotlib.backends.backend_pdf import PdfPages

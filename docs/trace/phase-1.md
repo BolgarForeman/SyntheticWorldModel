@@ -98,3 +98,47 @@ The tests compare each emitted location with the true one within half a unit in 
 - The golden pack changes only under `trace_pack/`.
 
 **Figure.** `figures/wo9a_hand_trace_map_scenario_7.png`.
+
+## The trace game (Work Order 9, PR 9g)
+
+**What was built.** The hand-trace pack became a print-and-play game: node cards, rule cards with drills, the board, the briefing, log sheets and tokens in `game/`, and the sealed answer in `answer/`. PR 9a's tables moved to `data/`. The rule cards, field manual and debrief are typeset from the design side's draft text (v0.1), awaiting Foreman's ruling.
+
+**How it was tested.**
+- Every number on the cards, the briefing and the sheets is compared with the engine's world, the scenario's damage or the registry.
+- The player's `game/` is byte-identical whether the run is the reference run or another.
+- No teaching text names a node, line or crew of the world.
+- Each of the 12 drills is a constructed world played by the engine, and its printed answer must match.
+- The sealed score equals the reference run's.
+- The board is golden at every size.
+
+**Departures from the design.**
+- The fallback symbol is ◷, because the bundled font has no ⏳; the design text's ⏳ prints as ◷.
+- Rule card 9's printed answer gives crew 1 the substation feeding the hospital. The engine ranks a distribution substation by its own Lifeline weight; both weigh the same, so the nearer one goes to crew 1. The drill world's expectation (both substations first, the pump waiting) holds. Reported for a ruling.
+- The node cards' needs include the hidden couplings the engine plays (marked "(hidden)"); supplies and the board show switched-on couplings only, as the work order says. This is a question for the design side.
+
+**Rule cards 5, 10 and 12 read from the engine (PR 19 follow-up).** Their "[CONFIRM WITH ENGINE]" markers now state what the engine does. Card 10 has a worked example and an engine-verified drill: the crew finishes the line at 18.85 h.
+
+Where the engine departs from structure v0.12 §4.5 (reported, not changed):
+- **Telecom fallback.** §4.5 says "then d_eff". In the engine, the received share is raised to r + (1 − r) × d_eff and the facility's telecom response acts on it. A tripping facility whose d_eff is below the trip point goes to 0: the pilot's tertiary hospital trips on telecom with d_eff 0.85.
+- **Travel.** §4.5 names only the off-road walk to a line. The engine also drives a facility's access leg to the nearest road, walks off a line when leaving it, and crosses where no road joins at road speed plus the mobilisation delay. Preparation comes once per job.
+
+**Figures.** `figures/wo9g_*.png`.
+
+## Crew order among distribution substations (WO-09g answers; decision 0017)
+
+**What changed.** A distribution substation in crew-order group 2 now ranks by the highest Lifeline weight among the end uses it supplies through the electricity couplings the engine plays, switched on or hidden. The engine reads `dynamics.substation_crew_rank`.
+
+**How it was tested.**
+- The ranking is checked node by node on the pilot.
+- An alternative named in the registry stops the run.
+- Rule card 9's drill now checks the printed crew assignment.
+
+**Golden changes.** The reference runs, stage stats, resolved recipes and manifest change only in the registry stamp; the manifest also gains the new Theta List entry. No pilot run has a distribution-substation job, so no crew order, timeline or hours out moved.
+
+## Crew travel along a line, and the approved teaching text (WO-09g answers 2)
+
+**The hand trace.** The design side's sealed trace of scenario 7 found one point the spec had not settled: travel between failure points of one line. Under Foreman's ruling (walk along the line), the engine's scenario 7 matches the design side's recomputed trace exactly: TEL-0003 back at 18.00 h, TEL-0002 at 34.25 h, 52.25 service-hours lost.
+
+**Golden changes.** Scenario 7's run changes: crew 2's second walk on TEL-L0002 takes 1.0 h instead of 6.7 h, and everything after it moves 5.725 h earlier. The other seven runs change only in the registry stamp.
+
+**Teaching text.** The rule cards, field manual and debrief are approved and print without DRAFT marks. Card 2's floor line is reported against the engine: when the generator's fuel runs out, the engine trips, rather than taking what arrives.

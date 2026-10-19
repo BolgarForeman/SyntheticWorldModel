@@ -6,6 +6,19 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ### Added
 
+- The trace game (Work Order 9, Part H; Trace pack ruling sheet v0.2). `swm trace-pack --scenario N [--board-size S]` writes `trace_pack/`:
+  - **`game/`, everything a player gets:**
+    - node cards with symbols and a legend card;
+    - 12 rule cards, each with its registry values and a drill on its back;
+    - the board (network side, map side and hour track), at `11x17` (the default), `tiled-letter`, `24x36` or `36x48`;
+    - the mission briefing;
+    - the log sheets (crew, event log, outage, decision and play-test feedback);
+    - the token sheet;
+    - the field manual (design-side draft).
+  - **`answer/`, sealed:** the event timeline with exact times and steps, each end-use node's outages, the score (weighted service-hours lost, with unweighted hours out beside it), the debrief (design-side draft), and PR 9a's timeline.
+  - **`data/`:** PR 9a's tables, moved unchanged.
+  - **Drills:** every drill is played by the engine at build, and a printed answer the engine does not reproduce stops the build.
+  - **Wording:** the rule cards, field manual and debrief are typeset from the design side's draft Markdown in `docs/design/trace_game/`, with registry values filled at build and DRAFT marked while the files say so.
 - Repository scaffold (Work Order 0): uv project with the `swm` package, stage package layout, `swm --version`, smoke test, CI on Linux and Windows, repository rules (`CLAUDE.md`), decision log, TRACE log and work-order records.
 - Spawn tree (Work Order 1): `stable_id`, named streams off the root seed, the stream registry and the stream record.
 - Recipe schema v1 (Work Order 1): the full recipe, validation notes, resolution of defaults, canonical YAML and `recipe_sha256`, and the buildability check.
@@ -110,6 +123,8 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ### Changed
 
+- Between failure points of the same line, a crew walks along the line instead of going via the road (`dynamics.line_point_travel`, with two alternatives in the Theta List; decision 0017; structure v0.14 §4.5). Only scenario 7's reference run changes: 52.25 service-hours lost, down from 63.75. The trace game's teaching text is approved, and the game prints it without DRAFT marks.
+- In group 2 of the default crew order, a distribution substation ranks by the highest Lifeline weight among the end uses it supplies, its own included (`dynamics.substation_crew_rank`, with its two alternatives in the Theta List; decision 0017; structure v0.13 §4.5). The pilot's reference runs are unchanged.
 - The hand-trace pack can be traced by hand (Work Order 9, Part A):
   - **Blind pack:** `trace_pack/` holds the map, a one-page rules sheet and the tables.
   - **Answer:** the reference run's timeline moves to `trace_pack/answer/`, so a tracer can set it aside.

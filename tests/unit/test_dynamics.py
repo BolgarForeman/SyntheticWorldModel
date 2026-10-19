@@ -422,3 +422,85 @@ def test_the_main_refill_rule_is_ruled_with_its_range() -> None:
     assert rule.value == 1.0
     assert rule.range == [0.5, 1.0]
     assert rule.relaxed == "unlimited"
+
+
+# --- Crew order among distribution substations (WO-09g answers, 1) -------------------------
+
+
+def test_a_distribution_substation_ranks_by_the_highest_weight_it_supplies() -> None:
+    from swm.dynamics.engine import crew_order, substation_weight
+
+    world = pilot().world
+    substations = [n for n in world.nodes if n.node_class == C.DISTRIBUTION_SUBSTATION]
+    assert substations
+    weights = {n.node_id: n.end_use_weight for n in world.nodes}
+    for node in substations:
+        supplied = {
+            d.consumer_id for d in world.dependencies if d.supplier_layer == Layer.POWER
+            and any(e.supplier_id == node.node_id for g in d.groups for e in g)
+        }  # fmt: skip
+        expected = max(w for w in (weights[node.node_id], *(weights[s] for s in supplied))
+                       if w is not None)  # fmt: skip
+        assert substation_weight(world, node.node_id) == expected
+        assert crew_order(world, node.node_id) == (1, -expected)
+
+
+def test_the_substation_ranking_is_ruled_with_its_two_alternatives() -> None:
+    rule = RULES.rule("dynamics.substation_crew_rank")
+    assert rule.value == "highest supplied weight"
+    assert rule.theta_alternatives == ("own weight only", "sum of supplied weights")
+    assert rule.grade == "J"
+    assert rule.ruling is not None
+    assert rule.ruling.date == "2026-10-19"
+
+
+def test_an_alternative_ranking_is_not_yet_selectable() -> None:
+    from swm.dynamics.engine import substation_weight
+
+    world = pilot().world
+    other = replace(world, settings=replace(world.settings, substation_rank="own weight only"))
+    node = next(n for n in world.nodes if n.node_class == C.DISTRIBUTION_SUBSTATION)
+    with pytest.raises(ValueError, match="selectable only in a later phase"):
+        substation_weight(other, node.node_id)
+
+
+# --- Travel between failure points of one line (WO-09g answers 2) --------------------------
+
+
+def _two_point_line(rules_overrides: dict[str, object] | None = None) -> Any:
+    from swm.dynamics.travel import Legs, Site
+    from swm.dynamics.world import FailurePoint
+
+    def far_road(start: Site, end: Site) -> Legs:
+        # Any road trip is long, so a walk along the line is clearly the shorter way.
+        return Legs(100.0, 1.0, False)
+
+    node = OneNode(C.MAST, Layer.TELECOM).needs(Layer.POWER)
+    world = replace(node.world(**(rules_overrides or {})), legs=far_road,
+                    crews=(CrewStart("CRW-1", (0.0, 0.0)),))  # fmt: skip
+    points = (
+        FailurePoint("L", 3.0, (0.0, 1000.0), 6.0),
+        FailurePoint("L", 5.5, (0.0, 3500.0), 6.0),
+    )
+    return simulate(world, RunRequest(Damage((), ("L",), points)))
+
+
+def test_a_crew_walks_along_the_line_between_its_failure_points() -> None:
+    run = _two_point_line()
+    travel = [e for _, log in run.crews for e in log if e.activity == "travel"]
+    walk = travel[1].end_h - travel[1].start_h
+    assert walk == pytest.approx(2.5 / RULES.number("crews.offroad_speed_kmh"))
+    assert [e.activity for _, log in run.crews for e in log].count("assess") == 1
+
+
+def test_the_line_travel_rule_is_ruled_with_its_two_alternatives() -> None:
+    rule = RULES.rule("dynamics.line_point_travel")
+    assert rule.value == "along the line within a job; via the road between jobs"
+    assert rule.theta_alternatives == ("always via the road", "whichever way is shorter")
+    assert rule.ruling is not None
+    assert rule.ruling.date == "2026-10-19"
+
+
+def test_an_alternative_line_travel_is_not_yet_selectable() -> None:
+    with pytest.raises(ValueError, match="selectable only in a later phase"):
+        _two_point_line({"line_point_travel": "always via the road"})

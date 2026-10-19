@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: 6e3bfb53e8abae89b6119e62ebae8735309ac057dc03f2ad8258b907724a97df
+  registry_sha256: 976a0b234cffb8ce917430384f432b735a7ccd95f11f459678888c15425cdfc4
   overrides: {}
   relaxed_limits: []
   out_of_range: []
@@ -9817,7 +9817,7 @@ declared_departures:
 - 'Source overlap (assets missing from one of two sources) is Phase 3: in Phase 1 every true element in a source''s scope appears in it.'
 theta:
   registry_version: '0.1'
-  registry_sha256: 6e3bfb53e8abae89b6119e62ebae8735309ac057dc03f2ad8258b907724a97df
+  registry_sha256: 976a0b234cffb8ce917430384f432b735a7ccd95f11f459678888c15425cdfc4
   overrides: {}
   relaxed_limits: []
   theta_list:
@@ -9893,6 +9893,40 @@ theta:
       by: the author (Foreman)
       date: '2026-09-29'
       decision: 0009
+  - theta_id: dynamics.line_point_travel
+    domain: truth
+    sub_type: dynamics
+    symbol: R
+    chosen: 'How a crew travels between failure points of one line, and between jobs: along the line within a job; via the road between jobs.'
+    alternatives:
+    - always via the road
+    - whichever way is shorter
+    registry_ids:
+    - dynamics.line_point_travel
+    relaxed: null
+    carried_vs_flattened: keeps
+    sensitivity: none planned
+    ruling:
+      by: the author (Foreman)
+      date: '2026-10-19'
+      decision: '0017'
+  - theta_id: dynamics.substation_crew_rank
+    domain: truth
+    sub_type: dynamics
+    symbol: R
+    chosen: 'How a distribution substation ranks in group 2 of the default crew order: highest supplied weight.'
+    alternatives:
+    - own weight only
+    - sum of supplied weights
+    registry_ids:
+    - dynamics.substation_crew_rank
+    relaxed: null
+    carried_vs_flattened: keeps
+    sensitivity: none planned
+    ruling:
+      by: the author (Foreman)
+      date: '2026-10-19'
+      decision: '0017'
   - theta_id: dynamics.trip_point
     domain: truth
     sub_type: dynamics
