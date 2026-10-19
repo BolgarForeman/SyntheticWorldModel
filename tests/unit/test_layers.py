@@ -465,3 +465,24 @@ def test_ports_and_airports_are_sized_by_the_city_they_serve(pilot: Any) -> None
     }
     assert classes[NodeClass.SEAPORT] == "S"
     assert classes[NodeClass.AIRPORT] == "small_airport"
+
+
+# The property test's falsifying case of 2026-10-19: the second bridge sits on a river cell
+# whose land cover is wetland. Decision 0006 lets a bridge sit on a river but is silent on
+# wetland; strict, so the test fails loudly once Foreman's ruling is implemented.
+@pytest.mark.xfail(strict=True, reason="open question: may a bridge sit on a wetland river cell?")
+def test_no_bridge_sits_on_a_wetland_river_cell() -> None:
+    one_node = {"state": "emitted", "node_count": 1, "links_per_node": 1.0}
+    _, terrain, result = build_world(
+        terrain={"terrain_seed": 3220, "area_km2": 1500},
+        layers={
+            "dual_membership": False,
+            "power": {"state": "emitted", "node_count": 12, "links_per_node": 1.1},
+            "telecom": one_node,
+            "water": one_node,
+            "transport": {"state": "emitted", "node_count": 18, "links_per_node": 2.0},
+            "fuel": one_node,
+            "healthcare": {"state": "emitted", "node_count": 3, "links_per_node": 2.9},
+        },
+    )
+    assert sited_on_bad_ground(terrain, result) == []
