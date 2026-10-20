@@ -7,7 +7,7 @@ value. A stock of H hours empties at hour H, so the node holds 1 through the ste
 
 import pytest
 
-from dynamics_helpers import TARGET, OneNode, cut, first_change, supplier_id
+from dynamics_helpers import RULES, TARGET, OneNode, cut, first_change, supplier_id
 from swm.recipe.schema import Layer, NodeClass
 
 C = NodeClass
@@ -393,6 +393,36 @@ def test_hospital_power_cut_runs_its_fuel_dry_at_72_h_without_deliveries() -> No
 
 def test_hospital_whose_generator_fails_to_start_is_out() -> None:
     assert states_from(cut(hospital(fails_to_start=True).world(), [supplier_id(P)]), 0.0) == {0.0}
+
+
+def test_the_floor_after_the_generator_stops_is_ruled_with_its_two_alternatives() -> None:
+    rule = RULES.rule("dynamics.floor_after_generator_stops")
+    assert rule.value == "trip on what arrives"
+    assert rule.theta_alternatives == (
+        "throttle: runs at what arrives",
+        "the essential fraction while at least that share arrives, else out",
+    )
+    assert rule.grade == "J"
+    assert rule.ruling is not None
+    assert rule.ruling.date == "2026-10-19"
+
+
+def test_a_hospital_trips_on_what_arrives_once_its_generator_stops() -> None:
+    trip_point = RULES.number("dynamics.trip_point")
+    for kappa, expected in ((trip_point + 0.01, 1.0), (trip_point - 0.01, 0.0)):
+        node = OneNode(C.TERTIARY, Layer.HEALTHCARE, HOSPITAL)
+        node.generator(72.0, "reserves.hospital.generator_fuel_h", fails_to_start=True)
+        run = cut(node.needs(P, kappa).world(), [])
+        assert node.dependencies[0].mode == "step_to_floor"
+        assert run.at(TARGET, 0.0) == expected, kappa
+
+
+def test_an_alternative_floor_after_the_generator_stops_is_not_yet_selectable() -> None:
+    world = hospital(fails_to_start=True).world(
+        floor_after_generator_stops="throttle: runs at what arrives"
+    )
+    with pytest.raises(ValueError, match="selectable only in a later phase"):
+        cut(world, [supplier_id(P)])
 
 
 def test_hospital_water_cut_runs_on_stored_water_about_72_h_then_trips() -> None:

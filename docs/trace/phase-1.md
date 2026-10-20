@@ -1,6 +1,6 @@
 # Phase 1 — TRACE entry
 
-*Phase 1 closes on recipe schema version 3 and structure spec v0.15, as `0.1.0` (Work Order 9, G1). The `v0.1.0` tag waits for Foreman's word after PR 9c merges. The closing summary comes first. The records kept while each work order was built follow it, unchanged apart from their heading level.*
+*Phase 1 closes on recipe schema version 3 and structure spec v0.16, as `0.1.0` (Work Order 9, G1). The `v0.1.0` tag waits for Foreman's word after PR 9c merges. The closing summary comes first. The records kept while each work order was built follow it, unchanged apart from their heading level.*
 
 ## What Phase 1 built
 
@@ -60,7 +60,7 @@ The crew, repair and storm sensitivity copies of the pilot are fixtures, not gol
 
 The hand-trace test compares every value in the trace: crew arrivals, preparation and completions; back-in-service hours; hours out for all 15 end-use nodes; the score (52.25); the named states; and the three things that did not happen.
 
-**Whole suite at close:** 1,448 tests, all passing on Windows and Linux CI (PR 9c), with 97% line coverage of `src/`.
+**Whole suite at close:** 1,450 tests, all passing on Windows and Linux CI (PR 9c), with 97% line coverage of `src/`.
 
 ### Waiting for later phases
 
@@ -100,7 +100,10 @@ Each departure is recorded with its reason in the decision named, or in the reco
   - Degradation Profiles v0.3 corrects v0.2 to the world as built;
   - a fuel delivery waits for the depot's settled state within its step (decision 0014).
 - **The stated area of an extract** is the world's whole map area, not the extent of what was emitted (spec v0.15 §4.6; decision 0017).
-- **Rule card 2's floor line** still carries a CONFIRM marker. When a generator's fuel runs out, the engine trips, rather than taking what arrives. This is reported for a ruling, and the card is unchanged.
+- **A hospital after its generator stops.** The spec did not say how a hospital responds once its generator stops, and card 2's draft said it runs at what arrives. Foreman ruled option A, the engine as built: it responds as a trip on the power that arrives.
+  - The ruling is recorded as `dynamics.floor_after_generator_stops`, with two alternatives that stop the run if named.
+  - Card 2 is reworded, and no card prints a CONFIRM note.
+  - See WO-09c answers 2, spec v0.16 §4.5 and decision 0017.
 - **Placeholders.** Values marked `placeholder (open decision: …)` in the registry, among them the Taiwan-scale counts, stand until they are ruled. The Modeling Rules page (`swm rules`) lists every one.
 
 # Records kept while Phase 1 was built
@@ -270,3 +273,10 @@ Where the engine departs from structure v0.12 §4.5 (reported, not changed):
 **How it was tested.**
 - All 12 comparisons pass with the fixture as sent. It was not edited or regenerated.
 - No golden changed.
+
+**Card 2's floor line (WO-09c answers 2).**
+- **The ruling.** Foreman ruled that once a hospital's generator stops, the hospital responds as a trip on what arrives.
+- **Registry.** The ruling is recorded as `dynamics.floor_after_generator_stops`. Naming either alternative stops the run, as for the other two dynamics entries.
+- **Engine.** The engine now reads the rule; its behaviour is unchanged.
+- **Card 2.** The card is reworded and its CONFIRM note removed.
+- **Golden changes.** The registry stamp moved in every stage statistics file, every resolved recipe, every run record and every manifest. Each manifest's Theta List also gains the new entry, and `rule_cards.pdf` prints card 2's new text. No run, score or other file moved.

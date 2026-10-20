@@ -345,7 +345,13 @@ class _Engine:
             return FULL
         if mode == "throttle":
             return received
-        # A trip, or a step to the floor with no generator to step onto.
+        if mode == "step_to_floor" and self.settings.floor_after_generator_stops != TRIP:
+            raise ValueError(
+                "dynamics.floor_after_generator_stops is "
+                f"'{self.settings.floor_after_generator_stops}': its alternatives are recorded "
+                "but become selectable only in a later phase"
+            )
+        # A trip, or a step to the floor with no generator to step onto (spec v0.16 §4.5).
         return FULL if received >= self.settings.trip_point else 0.0
 
     def _cover(self, node_id: str, layer: Layer) -> Stock | None:
@@ -837,6 +843,8 @@ ALONG_THE_LINE = "along the line within a job; via the road between jobs"
 """The ruled value of ``dynamics.line_point_travel`` (WO-09g answers 2)."""
 HIGHEST_SUPPLIED_WEIGHT = "highest supplied weight"
 """The ruled value of ``dynamics.substation_crew_rank`` (WO-09g answers, 1)."""
+TRIP = "trip on what arrives"
+"""The ruled value of ``dynamics.floor_after_generator_stops`` (WO-09c answers 2)."""
 
 
 def trip_hours(legs: Legs, settings: Settings, relaxed: frozenset[str] = frozenset()) -> float:

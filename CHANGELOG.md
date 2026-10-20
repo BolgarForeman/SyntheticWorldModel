@@ -6,7 +6,7 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ## 0.1.0 — Phase 1
 
-Phase 1 closes on **recipe schema version 3** and **structure spec v0.15**. Recipes of versions 1 and 2 are migrated on loading. The `v0.1.0` tag is set on `main` on Foreman's word, after PR 9c merges.
+Phase 1 closes on **recipe schema version 3** and **structure spec v0.16**. Recipes of versions 1 and 2 are migrated on loading. The `v0.1.0` tag is set on `main` on Foreman's word, after PR 9c merges.
 - **What it is:** a small constructed world, built end to end from one recipe and one root seed, with zero-error sources, a truth manifest, 8 reference runs and a hand-trace game.
 - **Records:** what was built, how it was tested and every departure are in `docs/trace/phase-1.md`. The closing rulings are in decision 0017.
 
@@ -140,6 +140,7 @@ Phase 1 closes on **recipe schema version 3** and **structure spec v0.15**. Reci
 
 ### Changed
 
+- Once a hospital's generator stops, the hospital responds as a trip on the power that arrives: the engine as built, now ruled. The ruling is recorded as `dynamics.floor_after_generator_stops`, with two alternatives in the Theta List. Rule card 2 is reworded and no card prints a CONFIRM note (decision 0017; structure v0.16 §4.5).
 - Between failure points of the same line, a crew walks along the line instead of going via the road (`dynamics.line_point_travel`, with two alternatives in the Theta List; decision 0017; structure v0.14 §4.5). Only scenario 7's reference run changes: 52.25 service-hours lost, down from 63.75. The trace game's teaching text is approved, and the game prints it without DRAFT marks.
 - In group 2 of the default crew order, a distribution substation ranks by the highest Lifeline weight among the end uses it supplies, its own included (`dynamics.substation_crew_rank`, with its two alternatives in the Theta List; decision 0017; structure v0.13 §4.5). The pilot's reference runs are unchanged.
 - The hand-trace pack can be traced by hand (Work Order 9, Part A):
