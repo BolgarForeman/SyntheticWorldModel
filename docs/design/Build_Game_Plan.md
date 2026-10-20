@@ -68,16 +68,15 @@ A recipe goes in and a world comes out, end to end, at 24 nodes, with every stag
 ### Phase 2 — Answer-key solver
 
 - **Model requests:** class, model, objective, service weights, budget.
-- **The four pilot models:**
+- **Three pilot models** (ruled 2026-10-20, Phase 2 ruling sheet; the informative model moves to Phase 4):
   - defensive: protect condition, add reserve;
   - offensive: strike k nodes;
-  - restorative: sequence two crews;
-  - informative: observe one or two couplings.
-- **Answer keys:** brute force at hand-check size, cross-checked against a MIP.
-- **Per request:** the second-best margin, true criticality, the shortcut test (highest degree, largest capacity, nearest supplier) and the decision-relevant dose.
+  - restorative: sequence two crews.
+- **Answer keys:** brute force at hand-check size, cross-checked against a time-expanded MIP of the engine's dynamics.
+- **Per request:** the spread of every answer's distance from the best; each rule of thumb's distance (most connections, biggest, nearest supplier); true criticality; the decision-relevant dose.
 - **The "assumes:" stamp.**
 
-**Done when:** every key is found by brute force and agrees with the solver. The uniqueness and shortcut checks report, and never silently regenerate.
+**Done when:** every key is found by brute force and agrees with the MIP on its score. Every key reports; none is silently regenerated.
 
 ### Phase 3 — Error induction (parametric)
 
@@ -94,6 +93,7 @@ A recipe goes in and a world comes out, end to end, at 24 nodes, with every stag
 This phase connects the generator to the pipeline, runs the carried and flattened runs, and produces the Ch7 figures.
 
 - **Dependency:** the pipeline stages (ingestion through the composed product) are separate work. The pilot needs a thin version of each. This phase is where the two tracks meet.
+- **The informative answer key** (moved from Phase 2, ruled 2026-10-20): choose couplings to observe, at 1 unit each, to reduce uncertainty about the network, against the belief the pipeline produces. Its uncertainty measure is ruled on its own sheet first.
 - **Done when:** the pilot spec's list is met:
   - at zero doubt, both runs return the same recommendation;
   - one hand trace matches the code;

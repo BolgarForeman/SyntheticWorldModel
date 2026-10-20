@@ -1,6 +1,6 @@
 # Pilot Spec — The Full Chain on a Hand-Checkable Constructed World
 
-*v0.7 · 2026-10-09 · feeds Ch7 §7.2 and Figures 7.1, 7.2 and 7.4 · aligned with World_Generator_Structure v0.9 and the pilot recipe in the SyntheticWorldModel repository*
+*v0.8 · 2026-10-20 · feeds Ch7 §7.2 and Figures 7.1, 7.2 and 7.4 · aligned with World_Generator_Structure v0.17 and the pilot recipe in the SyntheticWorldModel repository*
 
 ## Purpose
 
@@ -41,10 +41,10 @@ All four are posed on the same network, dynamics, criticality and ledger. The ob
 
 | Class | The toy model | Answer key |
 |---|---|---|
-| **Defensive (INROP-D)** | Spend a budget of 3–4 on protection actions (defined below) before the storm to minimize expected unserved demand-hours | Brute force over every affordable action set, cross-checked against the MIP |
-| **Offensive (INROP-O)** | Strike k nodes (k = 2, 3), degrading their condition, to maximize unserved demand-hours. The attack is posed on its own, not coupled to the defender | Brute force |
-| **Restorative (INROP-R)** | After one fixed storm scenario (scenario 7, the one with the most towered-line failures), sequence the world's two repair crews across the failed nodes and failed overhead lines to minimize unserved demand-hours during recovery | Brute force over repair orders |
-| **Informative (INROP-I)** | Choose one or two uncertain cross-layer edges to observe before hardening, to maximize the improvement in the defensive decision | Enumeration over the observation choices and their outcomes |
+| **Defensive (INROP-D)** | Spend up to a budget of 3 or 4 on protection actions (defined below) before the storm to minimize expected unserved demand-hours over the 8 scenarios, equally weighted | Brute force over every affordable action set, cross-checked against the MIP |
+| **Offensive (INROP-O)** | Strike k nodes (k = 2, 3) on the calm island, with no storm, to maximize unserved demand-hours. A struck node takes complete damage and is repaired by the crews in the default order. The attack is posed on its own, not coupled to the defender | Brute force, cross-checked against the MIP |
+| **Restorative (INROP-R)** | After one fixed storm scenario (scenario 7, the one with the most towered-line failures), sequence the world's two repair crews across the failed nodes and failed overhead lines to minimize unserved demand-hours during recovery. A plan gives each crew an ordered list of jobs; every failed element is repaired once, by one crew | Brute force over repair orders, cross-checked against the MIP |
+| **Informative (INROP-I)** | Choose one or two cross-layer couplings to observe, at 1 unit each, to reduce uncertainty about the network. It is its own optimization, not observe-then-defend (ruled 2026-09-29) | Against the pipeline's belief, so its key is built in Phase 4 (ruled 2026-10-20); the uncertainty measure is ruled first |
 
 The coupled attacker–defender formulation stays future research. Attack itself is in the family and is exercised here. Attacking a reserve directly, such as draining a tank without damaging the facility, is in scope for the full demonstration and is left out of the pilot only.
 
@@ -55,7 +55,7 @@ Node state is condition × supply level, with a reserve held against a dependenc
 | Action | Cost | What it changes | Real-world instance |
 |---|---|---|---|
 | **Protect condition** | 2 | The storm cannot damage the element: a protected facility or overhead line keeps condition 1 in every scenario. Its supply level can still fall through a cascade. This is the fortification convention, so it gives an upper bound on the value of real hardening | A flood wall or raised switchgear at a substation; a sealed pump station; a hardened pole line |
-| **Add reserve** | 1 | The node gains a reserve on one inbound dependency, which extends τ on that edge. The node keeps operating on the reserve and fails only if supply has not returned when the reserve runs out | A backup generator with 72 hours of fuel at a hospital; elevated storage above a water pump station; a battery bank at a telecom exchange |
+| **Add reserve** | 1 | The node gains a reserve on one inbound dependency: a new stock where it has none, otherwise hours added to the one it has. The reserve covers the whole window (72 h) at the node's full draw, so that supply cannot fail the node within the window: the counterpart of the fortification convention (ruled 2026-10-20) | A backup generator with 72 hours of fuel at a hospital; elevated storage above a water pump station; a battery bank at a telecom exchange |
 
 At most one of each action per element (protection may target a facility or an overhead line; a reserve targets a node). A protected node can still go dark when the node feeding it fails, and a node with a reserve can still be destroyed by the storm. That separation is the point of the pair: the optimizer faces a real trade between one wall and two generators.
 
@@ -104,6 +104,16 @@ The measure is distance to the optimum, normalized as (objective of the recommen
 ## Deliberately out of scope
 
 The following are left out: a second model within any class, the coupled attacker–defender formulation, error mechanisms beyond simple parametric noise, the tempo and equity objectives, the simulation tier, layer-level generate-six-hide-one, and full source fidelity beyond one small file per layer.
+
+## Changes from v0.7
+
+Ruled by the author, 2026-10-20 (Phase 2 ruling sheet, `evidence/Phase2_Answer_Key_Ruling_Sheet_v0_2.md`):
+- **Defensive:** the expected loss over the 8 scenarios, equally weighted; the budget is a ceiling. A reserve may go on any inbound dependency, new where none exists, and covers the whole window at full draw.
+- **Offensive:** the calm island, no storm; a strike is complete damage, repaired by the crews in the default order.
+- **Restorative:** each crew's ordered list of jobs; every failed element repaired once, by one crew.
+- **Informative:** stated as ruled on 2026-09-29; its answer key moves to Phase 4, against the pipeline's belief.
+- **Answer keys:** cross-checked by a time-expanded MIP for the three Phase 2 models, solved with HiGHS. Each request is posed under both the Lifeline and Equal weights.
+- **The 8 scenarios are a sample.** The key is the best answer against them, not against the storm in general; the full study widens the sample.
 
 ## Changes from v0.6
 

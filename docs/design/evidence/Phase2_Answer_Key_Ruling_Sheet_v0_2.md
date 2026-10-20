@@ -1,6 +1,6 @@
-# Phase 2, the answer-key solver: ruling sheet v0.1
+# Phase 2, the answer-key solver: ruling sheet v0.2
 
-*2026-10-19 · design side, for Foreman · to be ruled one item at a time · follows Phase 1's close (tag v0.1.0)*
+*2026-10-20 · design side, for Foreman · all 12 items ruled 2026-10-19 and 2026-10-20 (rulings first, the items as put below) · follows Phase 1's close (tag v0.1.0)*
 
 ## What Phase 2 is for
 
@@ -25,7 +25,26 @@ Later, the pipeline answers the same questions from the emitted sources alone, o
 - A key that fails a check is reported, never silently regenerated.
 - Informative (ruled 2026-09-29): its own optimization, spending a limited resource on network elements to reduce uncertainty about the network; not "observe, then defend"; collection costs 1 unit per task.
 
-## Items to rule
+## Rulings (Foreman, 2026-10-19 and 2026-10-20)
+
+| Item | Ruling |
+|---|---|
+| Q1 Order of build | **A.** One pull request per model, the MIP last. With Q9, the PRs are 10a frame and restorative, 10b offensive, 10c defensive, 10d the MIP and the reports across all keys |
+| Q2 Restorative plan | **A.** Each crew an ordered list of jobs; every failed element once, by one crew; both from the base at hour 0; the engine's rules |
+| Q3 Offensive world | **A.** The calm world, no storm |
+| Q4 What a strike does | **B.** Complete damage, repaired by the crews in the default order. Lines are not targets |
+| Q5 Add reserve | **A.** Any one inbound dependency of any node: a new stock where none exists, otherwise hours added |
+| Q6 Reserve size | **A.** The whole window (72 h) at the node's full draw |
+| Q7 Defensive scoring | **A.** Expected loss over the 8 scenarios, equally weighted; the budget a ceiling |
+| Q8 Search size | **A.** Both budgets in full, on every core, reusing what repeats; timed first and reported before budget 4; a 48-hour ceiling per request (placeholder for the instance bound). Asked on the way: the 8 scenarios stay; the pilot is illustrative and the full study widens the sample, and the write-up says the key is optimal against the sampled storms |
+| Q9 Informative | **C.** Out of Phase 2: on the true world nothing is uncertain, so a key would be "purely performance". Built in Phase 4 against the pipeline's belief, as ruled 2026-09-29; the pilot spec's line corrected |
+| Q10 MIP | **A.** A time-expanded MIP of the engine's dynamics for the three models, solved with HiGHS; agreement on the optimum's objective. The crew constraints get their own short sheet before that PR |
+| Q11 What a key reports | Ruled part by part, after Foreman's challenge: distance from the optimum is the only measure. **Spread** of every answer (share within 1, 5 and 10% of the optimum; a random answer's mean distance) replaces the second-best margin. **No acceptability band** in the key (A). **Rules of thumb** reported as distances, not pass/fail (A). **True criticality** under each request's own scenarios (A). **Dose** zero with a note until Phase 3, and the **stamp** as the spec plus the scenarios (A) |
+| Q12 Pilot requests | **B.** Ten requests: defensive at budgets 3 and 4, offensive at k = 2 and 3, restorative on scenario 7, each under both Lifeline and Equal weights; 72-hour window; recipe schema version 4 |
+
+**Amended by these rulings:** structure v0.17 §5 and §7; Pilot Spec v0.8; Build Game Plan Phase 2 and Phase 4.
+
+## Items as put to Foreman (v0.1)
 
 **Q1. Order of build: one pull request per model, the MIP last.**
 - 10a: the solver's frame (requests in, stamped keys out, `swm solve`) with the restorative model, the smallest search.

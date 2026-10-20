@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.16 · 2026-10-19 · companion to the World Generator Interface mockup v0.5 and recipe schema v3 · supersedes v0.15*
+*v0.17 · 2026-10-20 · companion to the World Generator Interface mockup v0.5 and recipe schema v4 · supersedes v0.16*
 
 ## 1. What this is
 
@@ -622,16 +622,27 @@ A recipe carries any number of requests. Each is solved on the true world.
 
 A third preset, **Custom**, sets any class to any weight from 0 to 100. The end-use categories follow FEMA's Community Lifelines (health and medical, energy, communications, transportation, food and water); the numbers are the author's judgment and are stated as such. Running the same world under Lifeline and Equal is a planned sensitivity test: if the carried run's advantage holds under both, the result does not rest on the weights.
 
-**Each answer key produces:**
+**How an answer is measured.** Every answer is scored by its distance from the optimum: (its objective − the optimum's) ÷ (the objective with no action − the optimum's), mirrored for the offensive model. Zero is the optimum. Rank among answers is not used: a near-tie costs almost nothing, as it should (ruled 2026-10-20).
 
-- the optimum;
-- the margin to the second-best answer;
-- the acceptability threshold;
-- true criticality under that request's objective and weights;
-- the shortcut test result (§7);
-- the decision-relevant dose: how much of the planted error touches elements that matter to this request's answer.
+**Each answer key produces** (ruled 2026-10-20, Phase 2 ruling sheet):
 
-**The stamp.** Every answer key is stamped "assumes:" followed by the class, model, objective, service weights, budget and window it was solved under, and the SHA-256 of the resolved recipe. A key is only valid against a result that was posed the same way. Swapping models means adding a request, not rebuilding the world.
+- the optimum, and its objective;
+- **the spread of every answer:** the share of all affordable answers within 1%, 5% and 10% of the optimum, and the mean distance of a random answer. Brute force scores every answer, so this shows how hard the question is: where many answers lie near the optimum, any sensible method scores well and the question cannot separate the carried and flattened runs. It replaces the margin to the second-best answer;
+- **each rule of thumb's distance** from the optimum (§7);
+- **true criticality:** for each node, the objective when that node alone takes complete damage, less the objective without it, under the request's own scenarios and weights;
+- **the decision-relevant dose:** how much of the planted error touches elements that matter to this request's answer. Zero until error is planted (Phase 3), and stated as such.
+
+No acceptability band is fixed in the key; any "within X%" summary is computed from the distances when results are written up.
+
+**The stamp.** Every answer key is stamped "assumes:" followed by the class, model, objective, service weights, budget, window and the scenarios it was solved over (all of them, the calm world, or one named scenario), and the SHA-256 of the resolved recipe. A key is only valid against a result that was posed the same way. Swapping models means adding a request, not rebuilding the world.
+
+**The three Phase 2 models** (ruled 2026-10-20; the pilot's sizes):
+- **Defensive, protect condition and add reserve.** Up to the budget (3 or 4) spent before the storm: protect condition (cost 2; the element is undamaged in every scenario) or add a reserve (cost 1; a stock on any one inbound dependency of a node, new where none exists, covering the whole window at the node's full draw). Objective: expected weighted service-hours lost over the scenarios, equally weighted.
+- **Offensive, strike nodes.** k nodes (2 or 3) struck at hour 0 on the calm world, with no storm. A struck node takes complete damage and is repaired by the crews in the default order. Lines are not targets.
+- **Restorative, sequence repair crews.** One named scenario (7 in the pilot). A plan gives each crew an ordered list of jobs; every failed element is repaired once, by one crew; both start at the base at hour 0; travel, preparation and switching follow §4.5.
+- **Informative** answer keys need the pipeline's belief and are built in Phase 4.
+
+**How keys are found.** By brute force, over every affordable answer, skipping only what is provably identical: an answer that protects an element no scenario damages scores the same as the answer without it, and a scenario with no damage is run once, since no action changes it. A request whose search would exceed the instance bound (48 hours on the build machine, placeholder; §10 item 6) stops and is reported. Each key is cross-checked by a time-expanded MIP of the same dynamics, solved with HiGHS; the two must agree on the optimum's objective. Where answers tie, any tied answer agrees.
 
 ## 6. Outputs
 
@@ -654,8 +665,8 @@ A third preset, **Custom**, sets any class to any weight from 0 to 100. The end-
 
 **Request checks** — every answer key must pass:
 
-4. **Uniqueness.** The optimum is unique, with the second-best answer worse by a stated margin.
-5. **Quiet planting.** Simple shortcuts do not recover the optimum: highest degree, largest capacity, nearest supplier.
+4. **Spread** (replaces uniqueness, ruled 2026-10-20). Each key reports the share of answers near the optimum (§5). A near-tie is information, not a failure.
+5. **Quiet planting.** Each rule of thumb's answer is scored by its distance from the optimum: most connections first, biggest first (the largest share of its own layer's capacity), and nearest supplier (the question solved on a world where every consumer is fed by its nearest eligible supplier, then scored on the true world). A rule at distance 0 means the question was too easy for it. Reported, not pass/fail (ruled 2026-10-20).
 
 A world or key that fails a check is reported, not silently regenerated.
 
@@ -696,6 +707,14 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.16
+
+Ruled by the author, 2026-10-20 (Phase 2 ruling sheet, `evidence/Phase2_Answer_Key_Ruling_Sheet_v0_2.md`):
+- §5: answers measured by distance from the optimum only; the second-best margin and the acceptability band replaced by the spread of every answer; each rule of thumb reported as a distance; true criticality under each request's own scenarios; the dose zero until Phase 3; the stamp names the scenarios.
+- §5: the three Phase 2 models defined; the informative key moved to Phase 4.
+- §5: keys by brute force with provably identical answers skipped, a 48-hour instance bound (placeholder), and a time-expanded MIP cross-check with HiGHS.
+- §7: check 4 becomes the spread; check 5 reported as distances.
 
 ## Changes from v0.15
 
