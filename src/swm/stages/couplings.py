@@ -311,6 +311,53 @@ def build_couplings(
     )
 
 
+def eligible_suppliers(
+    couplings: Couplings,
+    terrain: TerrainResult,
+    layers: LayersResult,
+    requirements: RequirementsResult,
+    rules: Registry,
+) -> dict[tuple[str, Layer], tuple[str, ...]]:
+    """Return every consumer's eligible suppliers of each commodity, nearest first.
+
+    The same eligibility the stage builds from, read without any draw: the dependency table's
+    suppliers, rule 4's transmission substation for a large load, and rule 3's reach for
+    transport. It moves no stream and changes nothing in the world.
+
+    Parameters
+    ----------
+    couplings : Couplings
+        The resolved recipe's couplings section.
+    terrain : TerrainResult
+        The terrain stage's output.
+    layers : LayersResult
+        The layers stage's output.
+    requirements : RequirementsResult
+        The requirements stage's output.
+    rules : Registry
+        The modeling rules in force.
+
+    Returns
+    -------
+    dict of (consumer id, supplier layer) to tuple of str
+        Supplier node ids, nearest first, ties by node id.
+
+    Spec: structure v0.6 §4.3 and §4.3a; Work Order 10, B4 (the nearest-supplier rule).
+    """
+    world = _World(terrain, layers, rules)
+    large = _LargeLoads.from_rules(requirements, rules, couplings.distribution_voltage_kv)
+    eligible: dict[tuple[str, Layer], tuple[str, ...]] = {}
+    for pair in DEFAULT_COUPLINGS:
+        if layers.states[pair[0]] == LayerState.OFF or layers.states[pair[1]] == LayerState.OFF:
+            continue
+        needs = _needs_of(pair, world, large)
+        if pair[0] == Layer.TRANSPORT:
+            _reach(needs, world)
+        for need in needs:
+            eligible[(need.consumer.node_id, pair[0])] = tuple(n.node_id for n in need.eligible)
+    return eligible
+
+
 SUBSTATIONS = frozenset({NodeClass.DISTRIBUTION_SUBSTATION, NodeClass.TRANSMISSION_SUBSTATION})
 
 

@@ -4,6 +4,34 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ## Unreleased
 
+### Added
+
+- The answer-key solver's frame and the restorative model (Work Order 10, PR 10a; decision 0018):
+  - **`swm solve <recipe> -o <dir>`** writes one answer key per request to `answer_keys/`, with an index and one bz2-compressed file per search holding every answer and its objective under each weighting. Requests that differ only in their weights share one search.
+  - **Every key holds:**
+    - the stamp;
+    - the optimum, with every tied answer;
+    - the distance measure and its range;
+    - the spread (shares within 1, 5 and 10%, and a random answer's mean distance);
+    - the three rules of thumb as distances;
+    - true criticality for every node;
+    - the dose (0 until Phase 3);
+    - the note that the key is optimal against the named scenarios.
+  - **Each search is timed first** and held under a 48-hour ceiling per request (`solve.instance_bound_h`, a placeholder). Times go to the console only.
+  - **The restorative model** searches every crew plan for one named scenario. The engine takes a plan as its crew policy beside the default order, which is unchanged.
+  - **Rules** `solve.spread_bands_pct` and `solve.instance_bound_h`.
+
+### Changed
+
+- **Recipe schema version 4:**
+  - offensive requests gain `world` and `strike_damage`;
+  - defensive requests gain `reserve_hours`;
+  - restorative requests need `scenario`.
+- **Migration:** version 1–3 recipes migrate, except a version 3 restorative request, which is refused with the field named.
+- **The pilot** carries ten requests: defensive at budgets 3 and 4, offensive at k = 2 and 3, and restorative on scenario 7, each under Lifeline and Equal weights. Every fixture moves to version 4 with them.
+- **Dynamics checks:** the three ruled dynamics rules are checked when a run starts.
+- **Retired objective:** "acceptability threshold" is retired, with its text kept in its history (ruling Q11).
+
 ## 0.1.0 — Phase 1
 
 Phase 1 closes on **recipe schema version 3** and **structure spec v0.16**. Recipes of versions 1 and 2 are migrated on loading. The `v0.1.0` tag is set on `main` on Foreman's word, after PR 9c merges.

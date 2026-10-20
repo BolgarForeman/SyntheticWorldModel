@@ -228,6 +228,7 @@ def test_the_page_renders_every_rule_and_the_hash() -> None:
     assert page.count('<article class="rule"') == len(registry.rules)
     assert 'value="grade-J"' in page
     assert 'value="status-open"' in page
+    assert page.count('<span class="badge plain">answer-key setting</span>') == 2
 
 
 def test_the_page_is_deterministic() -> None:

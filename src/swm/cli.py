@@ -27,6 +27,7 @@ from swm.recipe.buildability import unbuilt_features
 from swm.recipe.io import (
     canonical_yaml,
     load_recipe,
+    recipe_sha256,
     write_binary,
     write_canonical_yaml,
     write_csv,
@@ -40,6 +41,7 @@ from swm.rng import stream_record
 from swm.rules.page import rules_page_html
 from swm.rules.registry import Registry, load_registry
 from swm.rules.theta import theta_text
+from swm.solve.solver import KEY_DIR, SolveError, SolveInputs, solve
 from swm.stages import buffers as buffers_stage
 from swm.stages import couplings as couplings_stage
 from swm.stages import crews as crews_stage
@@ -681,6 +683,27 @@ def _build_command(resolution: Resolution, arguments: argparse.Namespace) -> Non
     sys.stdout.write(f"{len(emitted.files)} source files, the truth manifest and the trace pack\n")
 
 
+def _solve_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    """Write one answer key per request, and their index, to ``answer_keys/`` (WO 10, B1)."""
+    recipe = resolution.recipe
+    built = _built(resolution)
+    engine = _engine(resolution, built)
+    layers = built.requirements.layers
+    eligible = couplings_stage.eligible_suppliers(
+        recipe.couplings, built.terrain, layers, built.requirements, built.rules
+    )
+    inputs = SolveInputs(recipe, recipe_sha256(recipe), built.rules, engine.world, engine.damage,
+                         layers, eligible)  # fmt: skip
+    try:
+        files = solve(inputs)
+    except SolveError as error:
+        raise CommandError(str(error)) from error
+    out_dir = Path(arguments.out_dir) / KEY_DIR
+    for name, body in sorted(files.items()):
+        write_binary(body, out_dir / name)
+    sys.stdout.write(f"{len(files)} files in {out_dir.as_posix()}\n")
+
+
 def _request(
     resolution: Resolution, engine: _Engine, scenario: int, arguments: argparse.Namespace
 ) -> RunRequest:
@@ -835,6 +858,7 @@ COMMANDS: dict[str, Callable[[Resolution, argparse.Namespace], None]] = {
     "simulate": _simulate_command,
     "emit": _emit_command,
     "build": _build_command,
+    "solve": _solve_command,
     "trace-pack": _trace_pack_command,
     "preview-couplings": _preview_couplings_command,
     "export-gis": _export_gis_command,
@@ -918,6 +942,11 @@ def _parser() -> argparse.ArgumentParser:
     emit_command = commands.add_parser("emit", help="write the world's source files, sources/")
     emit_command.add_argument("recipe", help="recipe YAML file")
     emit_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    solve_command = commands.add_parser(
+        "solve", help="find each request's answer key by brute force; write answer_keys/"
+    )
+    solve_command.add_argument("recipe", help="recipe YAML file")
+    solve_command.add_argument("-o", "--out-dir", required=True, help="output folder")
     build_command = commands.add_parser(
         "build", help="write the world's full tree: resolved recipe, sources, truth, trace pack"
     )

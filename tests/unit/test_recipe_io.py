@@ -20,13 +20,13 @@ def resolved(text: str) -> Recipe:
 
 
 def test_unknown_version_names_the_versions_this_code_reads() -> None:
-    with pytest.raises(RecipeVersionError, match=r"recipe_version 4 is not supported.*1, 2, 3"):
-        parse_recipe("recipe_version: 4\n")
+    with pytest.raises(RecipeVersionError, match=r"recipe_version 5 is not supported.*1, 2, 3, 4"):
+        parse_recipe("recipe_version: 5\n")
 
 
 def test_a_version_1_recipe_loads_with_depots_read_as_crew_base() -> None:
     recipe = parse_recipe("recipe_version: 1\nunobserved:\n  crews: 3\n  depots: 4\n")
-    assert recipe.recipe_version == 3
+    assert recipe.recipe_version == 4
     assert (recipe.unobserved.crews, recipe.unobserved.crew_base) == (3, 4)
     assert parse_recipe("recipe_version: 1\n") == parse_recipe("recipe_version: 2\n")
 
@@ -40,7 +40,7 @@ def test_crew_base_under_version_1_or_depots_under_version_2_fail_clearly() -> N
 
 def test_a_version_2_recipe_loads_with_nothing_relaxed_or_removed() -> None:
     recipe = parse_recipe("recipe_version: 2\n")
-    assert recipe.recipe_version == 3
+    assert recipe.recipe_version == 4
     assert recipe.modeling_rules.relaxed_limits == ()
     assert recipe.dynamics.removed_dependencies == ()
     assert recipe == parse_recipe("recipe_version: 3\n")

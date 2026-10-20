@@ -9,6 +9,7 @@
 *.pbf binary
 *.gpkg binary
 *.zip binary
+*.bz2 binary
 
 # The built pilot's goldens hold real-source idioms (CRLF lines, byte-order marks, shapefiles,
 # spreadsheets): stored byte for byte.

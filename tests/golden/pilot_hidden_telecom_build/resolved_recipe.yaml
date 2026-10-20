@@ -1,8 +1,8 @@
-recipe_version: 3
+recipe_version: 4
 root_seed: 91577
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: 3c6f08695cca0c417c42c27b62df35632fedc7c3f34a2c930c731cc211f52672
+  registry_sha256: c6b08b07ba1f3ae37b580b4b97b78779604b10f4747a7b76c85d78f658ccdbae
   overrides: {}
   relaxed_limits: []
   out_of_range: []
@@ -261,6 +261,7 @@ answer_key_requests:
   budget_cost_units: 3
   protect_condition_cost_units: 2
   add_reserve_cost_units: 1
+  reserve_hours: window
 - model: protect_condition_and_add_reserve
   member_class: defensive
   objective: unserved_demand_hours
@@ -270,6 +271,7 @@ answer_key_requests:
   budget_cost_units: 4
   protect_condition_cost_units: 2
   add_reserve_cost_units: 1
+  reserve_hours: window
 - model: strike_nodes
   member_class: offensive
   objective: unserved_demand_hours
@@ -277,6 +279,8 @@ answer_key_requests:
   custom_weights: null
   window_h: 72
   strikes_k: 2
+  world: calm
+  strike_damage: complete
 - model: strike_nodes
   member_class: offensive
   objective: unserved_demand_hours
@@ -284,16 +288,57 @@ answer_key_requests:
   custom_weights: null
   window_h: 72
   strikes_k: 3
+  world: calm
+  strike_damage: complete
 - model: sequence_repair_crews
   member_class: restorative
   objective: unserved_demand_hours
   service_weights: lifeline
   custom_weights: null
   window_h: 72
-- model: observe_uncertain_couplings
-  member_class: informative
+  scenario: 7
+- model: protect_condition_and_add_reserve
+  member_class: defensive
   objective: unserved_demand_hours
-  service_weights: lifeline
+  service_weights: equal
   custom_weights: null
   window_h: 72
-  observations_n: 1
+  budget_cost_units: 3
+  protect_condition_cost_units: 2
+  add_reserve_cost_units: 1
+  reserve_hours: window
+- model: protect_condition_and_add_reserve
+  member_class: defensive
+  objective: unserved_demand_hours
+  service_weights: equal
+  custom_weights: null
+  window_h: 72
+  budget_cost_units: 4
+  protect_condition_cost_units: 2
+  add_reserve_cost_units: 1
+  reserve_hours: window
+- model: strike_nodes
+  member_class: offensive
+  objective: unserved_demand_hours
+  service_weights: equal
+  custom_weights: null
+  window_h: 72
+  strikes_k: 2
+  world: calm
+  strike_damage: complete
+- model: strike_nodes
+  member_class: offensive
+  objective: unserved_demand_hours
+  service_weights: equal
+  custom_weights: null
+  window_h: 72
+  strikes_k: 3
+  world: calm
+  strike_damage: complete
+- model: sequence_repair_crews
+  member_class: restorative
+  objective: unserved_demand_hours
+  service_weights: equal
+  custom_weights: null
+  window_h: 72
+  scenario: 7

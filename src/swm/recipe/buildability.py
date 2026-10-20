@@ -26,6 +26,7 @@ class Arrival(StrEnum):
     PHASE_1 = "Phase 1"
     PHASE_2 = "Phase 2"
     PHASE_3 = "Phase 3"
+    PHASE_4 = "Phase 4"
     PHASE_5 = "Phase 5"
     PHASE_6 = "Phase 6"
     PHASE_8 = "Phase 8"
@@ -79,7 +80,8 @@ FEATURE_ARRIVALS: dict[str, Arrival] = {
     "model:protect_condition_and_add_reserve": Arrival.PHASE_2,
     "model:strike_nodes": Arrival.PHASE_2,
     "model:sequence_repair_crews": Arrival.PHASE_2,
-    "model:observe_uncertain_couplings": Arrival.PHASE_2,
+    # Ruling Q9 (decision 0018): the informative key is built against the pipeline's belief.
+    "model:observe_uncertain_couplings": Arrival.PHASE_4,
     "model:add_redundant_feeds": Arrival.NOT_YET_SCHEDULED,
     "model:drain_reserves": Arrival.NOT_YET_SCHEDULED,
     "model:stage_crews_at_depots": Arrival.NOT_YET_SCHEDULED,

@@ -1,0 +1,61 @@
+answer_keys:
+- request: 0
+  model: protect_condition_and_add_reserve
+  service_weights: lifeline
+  status: not solved
+  key: null
+  note: 'not built in this release: the defensive model arrives with PR 10c'
+- request: 1
+  model: protect_condition_and_add_reserve
+  service_weights: lifeline
+  status: not solved
+  key: null
+  note: 'not built in this release: the defensive model arrives with PR 10c'
+- request: 2
+  model: strike_nodes
+  service_weights: lifeline
+  status: not solved
+  key: null
+  note: 'not built in this release: the offensive model arrives with PR 10b'
+- request: 3
+  model: strike_nodes
+  service_weights: lifeline
+  status: not solved
+  key: null
+  note: 'not built in this release: the offensive model arrives with PR 10b'
+- request: 4
+  model: sequence_repair_crews
+  service_weights: lifeline
+  status: solved
+  key: request_04_sequence_repair_crews_lifeline.yaml
+  note: null
+- request: 5
+  model: protect_condition_and_add_reserve
+  service_weights: equal
+  status: not solved
+  key: null
+  note: 'not built in this release: the defensive model arrives with PR 10c'
+- request: 6
+  model: protect_condition_and_add_reserve
+  service_weights: equal
+  status: not solved
+  key: null
+  note: 'not built in this release: the defensive model arrives with PR 10c'
+- request: 7
+  model: strike_nodes
+  service_weights: equal
+  status: not solved
+  key: null
+  note: 'not built in this release: the offensive model arrives with PR 10b'
+- request: 8
+  model: strike_nodes
+  service_weights: equal
+  status: not solved
+  key: null
+  note: 'not built in this release: the offensive model arrives with PR 10b'
+- request: 9
+  model: sequence_repair_crews
+  service_weights: equal
+  status: solved
+  key: request_09_sequence_repair_crews_equal.yaml
+  note: null
