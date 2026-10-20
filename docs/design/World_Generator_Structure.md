@@ -34,7 +34,7 @@ Five commitments follow.
 - **Machine-agnostic.** A small per-machine file says where source data lives. The same recipe runs on either machine and produces the same world.
 - **Independent random streams.** One root seed, with a child stream spawned for each stage, each source and each drawn quantity, keyed by a stable name (never seeds built by arithmetic). A separate terrain seed enters the terrain streams only, so the ground can be rerolled on its own. The spawn tree is stored with the world, so changing the errors never moves the terrain, and paired runs hold the world fixed.
 - **The same world on every machine.** The recipe and seeds give the same bytes on Windows and Linux. World-building arithmetic therefore avoids operations whose last digit differs between platforms (transcendental functions, library reductions), or quantizes their results.
-- **Plant quietly.** Nothing planted may be recoverable by a simple shortcut: highest degree, largest capacity, nearest supplier. The check runs per answer-key request (§7).
+- **Plant quietly.** What is planted should not be recoverable by a simple shortcut: highest degree, largest capacity, nearest supplier. Each request reports how close each shortcut comes, as a distance from the optimum (§7).
 - **Synthetic identifiers.** Real code-list formats with synthetic values from a reserved range. No real place codes, airport codes, port codes or wiki identifiers.
 - **Synthetic centroid.** Every constructed world is anchored at Point Nemo, the Pacific pole of inaccessibility (about 48.88°S, 123.39°W). It is the ocean point farthest from any land, so no synthetic asset can fall on or be mistaken for a real place, and it signals plainly that the world is fictional.
 - **Scale-free realism.** Realism is set by per-layer statistics (degree, spacing, links per node, concentration), not by absolute counts, so the same targets hold from the hand-check world to the continental one.
@@ -524,7 +524,7 @@ Where a class has a telecom tolerance row, the tolerance acts first: full functi
 
 **Saved reference runs.** The pilot's 8 scenarios run for 72 h with no actions and the default crew order. Each is saved as golden files, stamped with the horizon and the policy, recording every node state, stock level, crew position and job, and repair completion, plus unweighted hours out per end-use node. `swm simulate --scenario N` prints and plots any run.
 
-**The Theta List.** Every modelling choice is tracked in the tuple under Θ, so a decision maker can be told every choice behind a result. It spans four domains: the constructed world's truth θ\* (every registry rule and every dynamics choice above); the constructed world's error model (Phase 3); the real-world chain (the Chapter 5 pipeline, recorded in the same format in its own repository); and each analysis run's declared θ̂. Each entry carries its framework sub-type (construction, dynamics, analysis, stopping) and symbol, the θ\* value and each run's θ̂ value, its alternatives, its relaxed value, what a flattened run does with it, its sensitivity status and its ruling. The 72 h window is a stopping entry. Objectives (the metric, the acceptability threshold, the service weights) are outside the tuple: they are the questions being answered, recorded with each request. The list is built into the rules registry; `swm rules --theta` prints it, and the dissertation appendix prints from the same source.
+**The Theta List.** Every modelling choice is tracked in the tuple under Θ, so a decision maker can be told every choice behind a result. It spans four domains: the constructed world's truth θ\* (every registry rule and every dynamics choice above); the constructed world's error model (Phase 3); the real-world chain (the Chapter 5 pipeline, recorded in the same format in its own repository); and each analysis run's declared θ̂. Each entry carries its framework sub-type (construction, dynamics, analysis, stopping) and symbol, the θ\* value and each run's θ̂ value, its alternatives, its relaxed value, what a flattened run does with it, its sensitivity status and its ruling. The 72 h window is a stopping entry. Objectives (the metric and the service weights) are outside the tuple: they are the questions being answered, recorded with each request. The list is built into the rules registry; `swm rules --theta` prints it, and the dissertation appendix prints from the same source.
 
 **Difficulty and tiers** (unchanged):
 - **Tier:** exact, simulation, or both. The exact tier is restricted to forms that admit a provable optimum, declared as a simplification. Both runs worlds sized to fit both tiers (the overlap band), so the two can be compared directly.
@@ -663,12 +663,12 @@ No acceptability band is fixed in the key; any "within X%" summary is computed f
 2. **Realism.** Each layer falls inside reference ranges measured from the Taiwan data, such as degree, spacing, links per node and concentration.
 3. **Realized error.** Measured error rates fall within a stated tolerance of the requested rates, against the two-level denominator.
 
-**Request checks** — every answer key must pass:
+**Request checks** — every answer key reports (ruled 2026-10-20; neither is pass/fail):
 
 4. **Spread** (replaces uniqueness, ruled 2026-10-20). Each key reports the share of answers near the optimum (§5). A near-tie is information, not a failure.
 5. **Quiet planting.** Each rule of thumb's answer is scored by its distance from the optimum: most connections first, biggest first (the largest share of its own layer's capacity), and nearest supplier (the question solved on a world where every consumer is fed by its nearest eligible supplier, then scored on the true world). A rule at distance 0 means the question was too easy for it. Reported, not pass/fail (ruled 2026-10-20).
 
-A world or key that fails a check is reported, not silently regenerated.
+A world that fails a check, or a key whose search stops at the instance bound, is reported, not silently regenerated.
 
 ## 8. Documentation
 
@@ -714,7 +714,7 @@ Ruled by the author, 2026-10-20 (Phase 2 ruling sheet, `evidence/Phase2_Answer_K
 - §5: answers measured by distance from the optimum only; the second-best margin and the acceptability band replaced by the spread of every answer; each rule of thumb reported as a distance; true criticality under each request's own scenarios; the dose zero until Phase 3; the stamp names the scenarios.
 - §5: the three Phase 2 models defined; the informative key moved to Phase 4.
 - §5: keys by brute force with provably identical answers skipped, a 48-hour instance bound (placeholder), and a time-expanded MIP cross-check with HiGHS.
-- §7: check 4 becomes the spread; check 5 reported as distances.
+- §7: check 4 becomes the spread; check 5 reported as distances; request checks report rather than pass or fail. §3 "Plant quietly" and the Theta List's objectives (no acceptability threshold) follow.
 
 ## Changes from v0.15
 

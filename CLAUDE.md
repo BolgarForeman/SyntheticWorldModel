@@ -79,8 +79,8 @@ docs/
 - **The checks from the specification** are automated tests:
   - identity;
   - realized error;
-  - uniqueness;
-  - quiet planting;
+  - spread (replaces uniqueness; reported, not pass/fail);
+  - quiet planting (each rule of thumb reported as a distance);
   - realism, from Phase 5.
 - **Property tests** (`hypothesis`) for invariants:
   - the feed shares always total 100%;
@@ -89,7 +89,7 @@ docs/
   - the same recipe gives the same bytes;
   - changing the error seed never moves terrain or infrastructure.
 - **Golden worlds.** A few fixture recipes (the pilot world, a hidden-layer world, a nodes-only world) with checked-in output hashes. A hash change must be explained in the pull request.
-- **Answer keys** are found by brute force and must agree with the MIP.
+- **Answer keys** are found by brute force and must agree with the MIP on their score.
 - **Hand trace.** The pilot scenario traced by hand is stored as expected values, and the code must match it.
 - **Tests assert behaviour, not just coverage.** Target at least 90% line coverage on `src/`, but a test that only executes lines doesn't count.
 

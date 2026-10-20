@@ -37,7 +37,7 @@ The analyst works from a belief graph produced from the truth by simple parametr
 
 ## The four models, one per member-class
 
-All four are posed on the same network, dynamics, criticality and ledger. The objective throughout is unserved demand-hours over a 72-hour window: the hours each end-use node is out of service (a fraction when supply is partial), times its class weight under the Lifeline preset, summed. Structure v0.3 §5 gives the end-use classes and weights.
+All four are posed on the same network, dynamics, criticality and ledger. The objective throughout is unserved demand-hours over a 72-hour window: the hours each end-use node is out of service (a fraction when supply is partial), times its class weight, summed. Each request is posed under both the Lifeline and Equal presets (ruled 2026-10-20). Structure v0.3 §5 gives the end-use classes and weights.
 
 | Class | The toy model | Answer key |
 |---|---|---|
@@ -94,7 +94,7 @@ The measure is distance to the optimum, normalized as (objective of the recommen
 ## Done when
 
 1. The generator emits the world, the source files and the truth manifest from a seed, and re-emits them identically.
-2. Every answer key is found by brute force and agrees with the solver.
+2. Every answer key is found by brute force and agrees with the MIP on its score (the informative key from Phase 4).
 3. **At zero doubt the two runs return the same recommendation** in every model. This is a built-in test. If it fails, the harness is wrong, not the method.
 4. One storm scenario is traced by hand on the printed network and matches the code: cascade, criticality ranking and score.
 5. The ledger walks one recommendation from each model back to its source records.

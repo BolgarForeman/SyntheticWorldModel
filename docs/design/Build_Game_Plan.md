@@ -136,7 +136,7 @@ This phase connects the generator to the pipeline, runs the carried and flattene
 | Phase | What the pilot gets from it |
 |---|---|
 | 1 | The 24-node world, its sources and its truth manifest |
-| 2 | Answer keys for all four models |
+| 2 | Answer keys for the defensive, offensive and restorative models (the informative key comes in Phase 4) |
 | 3 | The doubt the carried run carries and the flattened run flattens |
 | 4 | The runs, the figures and the run note |
 
@@ -144,7 +144,7 @@ Phases 1–3 need no corpus measurements and no anchors beyond placeholders. Tha
 
 ## 5. Working method
 
-- **Tests from the start.** The five checks (identity, realism, realized error, uniqueness, quiet planting) are written as automated tests as each stage lands. Each check is added in the phase whose stage it tests.
+- **Tests from the start.** The five checks (identity, realism, realized error, spread, quiet planting) are written as automated tests as each stage lands. Each check is added in the phase whose stage it tests.
 - **TRACE as you go.** Each phase closes with a short TRACE entry: what was built, how it was tested, and what changed from the design. This is much cheaper than writing it up at the end.
 - **Recipe versions.** Any change to the recipe schema bumps its version, and old recipes either load or fail loudly.
 - **Fixture worlds.** A handful of saved recipes (the pilot world, a hidden-layer world, a nodes-only world) rebuild on every change as a regression suite.

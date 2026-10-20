@@ -29,7 +29,7 @@ Later, the pipeline answers the same questions from the emitted sources alone, o
 
 | Item | Ruling |
 |---|---|
-| Q1 Order of build | **A.** One pull request per model, the MIP last. With Q9, the PRs are 10a frame and restorative, 10b offensive, 10c defensive, 10d the MIP and the reports across all keys |
+| Q1 Order of build | **A.** One pull request per model, the MIP last. With Q9, the PRs are 10a frame and restorative, 10b offensive, 10c defensive, 10d the MIP. The reports every key carries are built with the frame in 10a (a change of order, not of content) |
 | Q2 Restorative plan | **A.** Each crew an ordered list of jobs; every failed element once, by one crew; both from the base at hour 0; the engine's rules |
 | Q3 Offensive world | **A.** The calm world, no storm |
 | Q4 What a strike does | **B.** Complete damage, repaired by the crews in the default order. Lines are not targets |
