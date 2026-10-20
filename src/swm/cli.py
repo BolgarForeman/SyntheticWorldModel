@@ -579,6 +579,7 @@ def _engine(resolution: Resolution, built: _Built | None = None) -> _Engine:
             nodes=tuple(sorted(f.node_id for f in scenario.facilities)),
             lines=tuple(sorted(o.line_id for o in scenario.failed_lines)),
             failure_points=failure_points(scenario.lines, b.scenarios.lines),
+            states=tuple(sorted((f.node_id, f.damage_state.value) for f in scenario.facilities)),
         )
         for scenario in b.scenarios.scenarios
     )

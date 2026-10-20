@@ -4,6 +4,15 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ## Unreleased
 
+### Fixed
+
+- **A damaged facility is now repaired at the damage state its scenario drew** (decision 0019; structure §4.4a). Before, every damaged facility took complete damage's crew work and lead time.
+  - A strike names complete damage explicitly.
+  - A node with several repair records and no named state is refused.
+  - The trace pack's damaged-facility table reads the same records.
+  - No golden or reference run moves.
+- **`BUILT_FEATURES`** now lists everything built through Phase 1 and PR 26, so the buildability report no longer calls those features unbuilt.
+
 ### Added
 
 - The answer-key solver's frame and the restorative model (Work Order 10, PR 10a; decision 0018):

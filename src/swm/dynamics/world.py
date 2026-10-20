@@ -153,6 +153,9 @@ class FacilityRepair:
     parts_lead_h: float
     """max(0, Hazus lead time - crew-bound lead time); runs from hour 0 with no crew."""
     crew_work_h: float
+    damage_state: str | None = None
+    """The Hazus damage state the record repairs. None only in a constructed world that holds
+    one record per node, whatever its state."""
 
 
 @dataclass(frozen=True)
@@ -182,6 +185,13 @@ class Damage:
     nodes: tuple[str, ...]
     lines: tuple[str, ...]
     failure_points: tuple[FailurePoint, ...]
+    states: tuple[tuple[str, str], ...] = ()
+    """Each damaged node's Hazus damage state, by node id: the state its scenario drew, or
+    complete for a strike (ruling Q4)."""
+
+    def state_of(self, node_id: str) -> str | None:
+        """Return a damaged node's damage state, or None if the damage names none."""
+        return dict(self.states).get(node_id)
 
 
 @dataclass(frozen=True)
@@ -388,6 +398,7 @@ def world_from_stages(stages: StageOutputs, rules: Registry) -> EngineWorld:
                 p.node_id,
                 max(0.0, p.lead_time_h - rules.number("repair.crew_bound_lead_h")),
                 p.crew_work_h,
+                p.damage_state,
             )
             for p in stages.repair.permanent
         ),

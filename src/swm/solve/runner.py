@@ -12,6 +12,7 @@ from dataclasses import dataclass, field, replace
 from swm.dynamics.engine import simulate
 from swm.dynamics.records import Run, RunRequest
 from swm.dynamics.world import Damage, EngineWorld
+from swm.recipe.schema import DamageState
 
 Plan = tuple[tuple[str, tuple[str, ...]], ...]
 """A crew plan: each crew's ordered repair jobs, by element id."""
@@ -57,8 +58,19 @@ class Runner:
         return replace(self, world=world, runs=0)
 
 
+COMPLETE = DamageState.COMPLETE.value
+"""A strike's damage state (ruling Q4)."""
+
+
 def with_node(damage: Damage, node_id: str) -> Damage:
-    """Return a damage with one more node taking complete damage at hour 0 (ruling Q4)."""
-    if node_id in damage.nodes:
-        return damage
-    return replace(damage, nodes=tuple(sorted((*damage.nodes, node_id))))
+    """Return a damage with one more node taking complete damage at hour 0 (ruling Q4).
+
+    The strike names its state, complete; a node the scenario already damaged takes complete
+    damage in its place.
+    """
+    states = {**dict(damage.states), node_id: COMPLETE}
+    return replace(
+        damage,
+        nodes=tuple(sorted({*damage.nodes, node_id})),
+        states=tuple(sorted(states.items())),
+    )

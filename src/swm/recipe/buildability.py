@@ -116,10 +116,24 @@ BUILT_FEATURES: frozenset[str] = frozenset(
         "couplings",
         "couplings_hidden",
         "couplings_two_way",
+        "unobserved_quantities",
+        "crews_and_crew_bases",
+        "hazard:storm_corridor",
+        "tier:exact",
+        "transfer_form:linear",
+        "transfer_form:threshold",
+        "emission",
+        "model:sequence_repair_crews",
+        "objective:unserved_demand_hours",
+        "service_weights:lifeline",
+        "service_weights:equal",
     }
 )
-"""Features the generator builds today: the spine-island terrain (Work Order 2), the layers
-stage (Work Order 3) and the couplings stage (Work Order 4)."""
+"""Features the build handles today: everything Phase 1 built (Work Orders 2-9: terrain,
+layers, couplings, the unobserved quantities, crews, the storm, the exact-tier engine with the
+linear and threshold transfer forms, and emission) and the restorative answer key with its
+objective and weights (PR 26). The step transfer form is in the Phase 1 table but the engine
+refuses it, so it is not listed."""
 
 
 @dataclass(frozen=True)

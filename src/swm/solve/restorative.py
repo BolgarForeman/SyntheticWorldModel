@@ -11,6 +11,7 @@ import itertools
 import math
 from collections.abc import Iterator, Sequence
 
+from swm.dynamics.engine import facility_repair
 from swm.dynamics.records import CrewEntry
 from swm.dynamics.world import Damage, EngineWorld
 from swm.solve.runner import Plan, Runner
@@ -37,8 +38,11 @@ def repair_jobs(world: EngineWorld, damage: Damage) -> tuple[str, ...]:
 
     Spec: structure v0.16 §4.5 (repair and crews); Work Order 10, C1.
     """
-    repairable = {r.node_id for r in world.repairs} - set(world.unrepairable)
-    nodes = [n for n in damage.nodes if n in repairable]
+    unrepairable = set(world.unrepairable)
+    nodes = [
+        n for n in damage.nodes
+        if n not in unrepairable and facility_repair(world, damage, n) is not None
+    ]  # fmt: skip
     return tuple(sorted({*nodes, *damage.lines}))
 
 
