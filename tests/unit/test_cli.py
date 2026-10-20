@@ -396,10 +396,12 @@ def test_check_recipe_prints_notes_and_buildability(
     assert "  - errors.sources.osm_fuel.links_pct is ignored" in out
     assert "Not yet buildable:\n" in out
     assert "  - error_mechanism:parametric: Phase 3\n" in out
-    assert "  - model:strike_nodes: Phase 2\n" in out
-    # Built in Phase 1 or PR 26, so not reported (BUILT_FEATURES, decision 0019 PR).
-    for built in ("map_type:spine_island", "tier:exact", "model:sequence_repair_crews"):
-        assert built not in out
+    assert "  - model:protect_condition_and_add_reserve: Phase 2\n" in out
+    # Built in Phase 1, PR 26 or PR 10b, so not reported (BUILT_FEATURES).
+    built = ("map_type:spine_island", "tier:exact", "model:sequence_repair_crews",
+             "model:strike_nodes")  # fmt: skip
+    for feature in built:
+        assert feature not in out
 
 
 def test_check_recipe_reports_none_when_nothing_to_say(

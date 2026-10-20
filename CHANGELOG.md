@@ -15,6 +15,7 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ### Added
 
+- **The offensive model** (Work Order 10, PR 10b; decision 0018). `swm solve` searches every set of k nodes struck on the calm world, each taking complete damage repaired by the crews in the default order, and writes its key with the mirrored measure. Large batches run across every core, with results collected in order.
 - The answer-key solver's frame and the restorative model (Work Order 10, PR 10a; decision 0018):
   - **`swm solve <recipe> -o <dir>`** writes one answer key per request to `answer_keys/`, with an index and one bz2-compressed file per search holding every answer and its objective under each weighting. Requests that differ only in their weights share one search.
   - **Every key holds:**

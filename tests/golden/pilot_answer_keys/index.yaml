@@ -14,15 +14,15 @@ answer_keys:
 - request: 2
   model: strike_nodes
   service_weights: lifeline
-  status: not solved
-  key: null
-  note: 'not built in this release: the offensive model arrives with PR 10b'
+  status: solved
+  key: request_02_strike_nodes_lifeline.yaml
+  note: null
 - request: 3
   model: strike_nodes
   service_weights: lifeline
-  status: not solved
-  key: null
-  note: 'not built in this release: the offensive model arrives with PR 10b'
+  status: solved
+  key: request_03_strike_nodes_lifeline.yaml
+  note: null
 - request: 4
   model: sequence_repair_crews
   service_weights: lifeline
@@ -44,15 +44,15 @@ answer_keys:
 - request: 7
   model: strike_nodes
   service_weights: equal
-  status: not solved
-  key: null
-  note: 'not built in this release: the offensive model arrives with PR 10b'
+  status: solved
+  key: request_07_strike_nodes_equal.yaml
+  note: null
 - request: 8
   model: strike_nodes
   service_weights: equal
-  status: not solved
-  key: null
-  note: 'not built in this release: the offensive model arrives with PR 10b'
+  status: solved
+  key: request_08_strike_nodes_equal.yaml
+  note: null
 - request: 9
   model: sequence_repair_crews
   service_weights: equal

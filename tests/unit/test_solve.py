@@ -359,9 +359,22 @@ def test_swm_solve_reproduces_the_golden_keys(solved: Path) -> None:
 
 
 def test_a_second_solve_writes_the_same_bytes(solved: Path, tmp_path: Path) -> None:
-    assert main(["solve", str(PILOT), "-o", str(tmp_path)]) == 0
-    for path in sorted(solved.iterdir()):
-        assert (tmp_path / "answer_keys" / path.name).read_bytes() == path.read_bytes()
+    # The restorative requests alone: the golden comparison above already holds a second run
+    # of every key, and the offensive search is long to repeat in CI.
+    recipe = tmp_path / "restorative.yaml"
+    text = PILOT.read_text(encoding="utf-8").split("answer_key_requests:")[0]
+    requests = "".join(
+        f"  - {{model: sequence_repair_crews, member_class: restorative, scenario: 7, "
+        f"service_weights: {weights}}}\n"
+        for weights in ("lifeline", "equal")
+    )
+    recipe.write_text(text + "answer_key_requests:\n" + requests, encoding="utf-8", newline="\n")
+    assert main(["solve", str(recipe), "-o", str(tmp_path / "a")]) == 0
+    assert main(["solve", str(recipe), "-o", str(tmp_path / "b")]) == 0
+    first = sorted((tmp_path / "a" / "answer_keys").iterdir())
+    assert len(first) == 4
+    for path in first:
+        assert (tmp_path / "b" / "answer_keys" / path.name).read_bytes() == path.read_bytes()
 
 
 def test_plan_text_names_a_crew_with_no_jobs() -> None:
@@ -434,3 +447,86 @@ def test_the_budget_counts_what_it_allows() -> None:
     assert budget.allows(1, "first")
     assert not budget.allows(2, "second")
     assert budget.spent_runs == 1
+
+
+# --- The offensive model (Work Order 10, Part D) --------------------------------------------
+
+OFFENSIVE = {2: ("request_02", "request_07"), 3: ("request_03", "request_08")}
+
+
+def offensive_key(folder: Path, request: str, weights: str) -> dict[str, Any]:
+    name = f"{request}_strike_nodes_{weights}.yaml"
+    loaded: dict[str, Any] = yaml.safe_load((folder / name).read_text(encoding="utf-8"))
+    return loaded
+
+
+def test_a_struck_node_is_out_for_the_whole_window_and_the_crews_repair_it() -> None:
+    from swm.solve.offensive import strike
+
+    _, engine = pilot()
+    node = "SWM-HLT-0001"
+    run = simulate(engine.world, RunRequest(strike([node])))
+    assert set(run.state(node)) == {0.0}
+    assert run.hours_out[node] == 72.0
+    jobs = {e.job_id for _, log in run.crews for e in log}
+    assert f"repair:{node}" in jobs
+
+
+def test_every_set_of_k_nodes_is_searched(solved: Path) -> None:
+    def rows(k: int) -> list[dict[str, str]]:
+        body = bz2.decompress((solved / f"search_0{k}_strike_nodes_answers.csv.bz2").read_bytes())
+        return list(csv.DictReader(io.StringIO(body.decode("utf-8"))))
+
+    assert len(rows(2)) == 276
+    assert len(rows(3)) == 2024
+    assert all(len(row["answer"].split(", ")) == 2 for row in rows(2))
+
+
+@pytest.mark.parametrize("k", [2, 3])
+def test_the_offensive_optimum_is_the_largest_loss_and_its_measure_mirrors(
+    solved: Path, k: int
+) -> None:
+    request, _ = OFFENSIVE[k]
+    record = offensive_key(solved, request, "lifeline")
+    rows = bz2.decompress(
+        (solved / f"search_0{k}_strike_nodes_answers.csv.bz2").read_bytes()
+    ).decode("utf-8")
+    values = [float(r[f"{request}_lifeline"]) for r in csv.DictReader(io.StringIO(rows))]
+    assert record["optimum"]["objective"] == max(values)
+    assert record["no_action"] == {"answer": "no strike", "objective": 0.0}
+    assert record["measure"]["distance"].startswith("(optimum - objective)")
+    for rule in record["rules_of_thumb"]:
+        gap = record["optimum"]["objective"] - rule["objective"]
+        expected = gap / record["measure"]["range"]
+        assert rule["distance"] == round(expected, 6)
+    assert "the calm world" in record["assumes"]
+
+
+def test_k_1_equals_true_criticality_on_the_calm_world(tmp_path: Path) -> None:
+    from swm.solve.solver import solve
+
+    resolution, _ = pilot()
+    requests = (StrikeNodes(strikes_k=1),
+                StrikeNodes(strikes_k=1, service_weights=WeightPreset.EQUAL))  # fmt: skip
+    one = resolution.recipe.model_copy(update={"answer_key_requests": requests})
+    files = solve(replace(_inputs(_built(resolution).rules), recipe=one))
+    for index, weights in ((0, "lifeline"), (1, "equal")):
+        record = yaml.safe_load(files[f"request_{index:02d}_strike_nodes_{weights}.yaml"])
+        rows = bz2.decompress(files["search_00_strike_nodes_answers.csv.bz2"]).decode("utf-8")
+        struck = {r["answer"]: float(r[f"request_0{index}_{weights}"])
+                  for r in csv.DictReader(io.StringIO(rows))}  # fmt: skip
+        critical = {row["node"]: row["objective"] for row in record["true_criticality"]}
+        assert struck == critical
+        assert all(row["increase"] == row["objective"] for row in record["true_criticality"])
+
+
+def test_a_batch_across_every_core_equals_the_same_runs_in_order(monkeypatch: Any) -> None:
+    from swm.solve import runner as runner_module
+    from swm.solve.offensive import strike
+
+    _, engine = pilot()
+    jobs = [(strike([n.node_id]), None) for n in engine.world.nodes[:6]]
+    serial = Runner(engine.world, 72.0).hours_out_all(jobs)
+    monkeypatch.setattr(runner_module, "PARALLEL_FROM", 1)
+    parallel = Runner(engine.world, 72.0).hours_out_all(jobs)
+    assert parallel == serial

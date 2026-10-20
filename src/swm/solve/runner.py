@@ -6,7 +6,9 @@ induction, and nothing in the generator imports it (CLAUDE.md §3).
 Spec: structure v0.17 §5; Work Order 10, B1.
 """
 
-from collections.abc import Mapping
+import os
+from collections.abc import Mapping, Sequence
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field, replace
 
 from swm.dynamics.engine import simulate
@@ -17,6 +19,12 @@ from swm.recipe.schema import DamageState
 Plan = tuple[tuple[str, tuple[str, ...]], ...]
 """A crew plan: each crew's ordered repair jobs, by element id."""
 PLAN_POLICY = "crew plan"
+PARALLEL_FROM = 64
+"""CHOICE: a batch of at least this many runs is spread across every core (ruling Q8); a
+smaller one runs in this process, where starting workers would cost more than it saves.
+Results come back in the order asked, so a key never depends on the core count."""
+Job = tuple[Damage, Plan | None]
+"""One run of a batch: the damage, and a crew plan or None for the default order."""
 
 
 @dataclass
@@ -53,6 +61,31 @@ class Runner:
         """Return a run's hours out per end-use node, in h."""
         return self.run(damage, plan).hours_out
 
+    def hours_out_all(self, jobs: Sequence[Job]) -> list[Mapping[str, float]]:
+        """Return the hours out of many runs, in the order given, across every core.
+
+        Parameters
+        ----------
+        jobs : sequence of Job
+            Each run's damage and plan.
+
+        Returns
+        -------
+        list of Mapping[str, float]
+            Each run's hours out per end-use node, in the order of ``jobs``.
+
+        Spec: Work Order 10, B5 and E5 (every core, the results collected in order).
+        """
+        self.runs += len(jobs)
+        if len(jobs) < PARALLEL_FROM:
+            return [dict(_play(self.world, self.window_h, job)) for job in jobs]
+        workers = os.cpu_count() or 1
+        chunk = max(1, len(jobs) // (workers * 4))
+        with ProcessPoolExecutor(
+            max_workers=workers, initializer=_load, initargs=(self.world, self.window_h)
+        ) as pool:
+            return list(pool.map(_play_loaded, jobs, chunksize=chunk))
+
     def on(self, world: EngineWorld) -> "Runner":
         """Return a runner for another world over the same window, sharing no count."""
         return replace(self, world=world, runs=0)
@@ -74,3 +107,23 @@ def with_node(damage: Damage, node_id: str) -> Damage:
         nodes=tuple(sorted({*damage.nodes, node_id})),
         states=tuple(sorted(states.items())),
     )
+
+
+_WORKER: list[tuple[EngineWorld, float]] = []
+"""A worker process's world and window, set once when the pool starts it."""
+
+
+def _load(world: EngineWorld, window_h: float) -> None:
+    _WORKER[:] = [(world, window_h)]
+
+
+def _play_loaded(job: Job) -> dict[str, float]:
+    world, window_h = _WORKER[0]
+    return _play(world, window_h, job)
+
+
+def _play(world: EngineWorld, window_h: float, job: Job) -> dict[str, float]:
+    damage, plan = job
+    policy = PLAN_POLICY if plan is not None else "default crew order"
+    request = RunRequest(damage, horizon_h=window_h, policy=policy, plan=plan)
+    return dict(simulate(world, request).hours_out)

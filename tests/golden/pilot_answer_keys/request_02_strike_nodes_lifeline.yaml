@@ -1,0 +1,163 @@
+assumes: offensive; strike_nodes; unserved_demand_hours; service weights lifeline; budget 2 nodes struck; window 72 h; the calm world; resolved recipe sha256 35642658f6fea214226072062cf7efd3f52cd2bfca3e76feed8e32d9a9e968b7
+status: solved
+optimum:
+  objective: 4467.35
+  answers:
+  - SWM-FUE-0001, SWM-HLT-0001
+  - SWM-HLT-0001, SWM-POW-0001
+  - SWM-HLT-0001, SWM-POW-0002
+no_action:
+  answer: no strike
+  objective: 0.0
+measure:
+  distance: (optimum - objective) / (optimum - no-strike objective)
+  range: 4467.35
+  range_is_zero: false
+spread:
+  answers: 276
+  within_1_pct: 0.01087
+  within_5_pct: 0.054348
+  within_10_pct: 0.23913
+  mean_distance: 0.474719
+answers_file: search_02_strike_nodes_answers.csv.bz2
+rules_of_thumb:
+- rule: most connections first
+  ranking:
+  - SWM-TEL-0001
+  - SWM-POW-0002
+  - SWM-POW-0003
+  - SWM-HLT-0002
+  - SWM-FUE-0002
+  - SWM-TRN-0003
+  - SWM-FUE-0003
+  - SWM-POW-0004
+  - SWM-WAT-0003
+  - SWM-HLT-0001
+  - SWM-TEL-0003
+  - SWM-TEL-0004
+  - SWM-TRN-0001
+  - SWM-TRN-0002
+  - SWM-FUE-0001
+  - SWM-FUE-0004
+  - SWM-POW-0001
+  - SWM-WAT-0002
+  - SWM-HLT-0003
+  - SWM-HLT-0004
+  - SWM-TEL-0002
+  - SWM-WAT-0004
+  - SWM-WAT-0001
+  - SWM-TRN-0004
+  answer: SWM-POW-0002, SWM-TEL-0001
+  objective: 4363.45
+  distance: 0.023258
+- rule: biggest first
+  basis: share of its layer's total in the same unit
+  ranking:
+  - SWM-POW-0001
+  - SWM-WAT-0001
+  - SWM-POW-0002
+  - SWM-FUE-0001
+  - SWM-WAT-0002
+  - SWM-WAT-0003
+  - SWM-FUE-0002
+  - SWM-POW-0003
+  - SWM-POW-0004
+  - SWM-FUE-0003
+  - SWM-FUE-0004
+  - SWM-WAT-0004
+  - SWM-HLT-0001
+  - SWM-HLT-0002
+  - SWM-HLT-0003
+  - SWM-HLT-0004
+  - SWM-TEL-0001
+  - SWM-TEL-0002
+  - SWM-TEL-0003
+  - SWM-TEL-0004
+  - SWM-TRN-0001
+  - SWM-TRN-0002
+  - SWM-TRN-0003
+  - SWM-TRN-0004
+  answer: SWM-POW-0001, SWM-WAT-0001
+  objective: 4150.85
+  distance: 0.070847
+- rule: nearest supplier
+  answer: SWM-FUE-0001, SWM-HLT-0001
+  objective: 4467.35
+  distance: 0.0
+true_criticality:
+- node: SWM-FUE-0001
+  objective: 4150.85
+  increase: 4150.85
+- node: SWM-FUE-0002
+  objective: 2287.25
+  increase: 2287.25
+- node: SWM-FUE-0003
+  objective: 288.0
+  increase: 288.0
+- node: SWM-FUE-0004
+  objective: 288.0
+  increase: 288.0
+- node: SWM-HLT-0001
+  objective: 720.0
+  increase: 720.0
+- node: SWM-HLT-0002
+  objective: 504.0
+  increase: 504.0
+- node: SWM-HLT-0003
+  objective: 216.0
+  increase: 216.0
+- node: SWM-HLT-0004
+  objective: 432.0
+  increase: 432.0
+- node: SWM-POW-0001
+  objective: 4150.85
+  increase: 4150.85
+- node: SWM-POW-0002
+  objective: 4150.85
+  increase: 4150.85
+- node: SWM-POW-0003
+  objective: 159.25
+  increase: 159.25
+- node: SWM-POW-0004
+  objective: 121.0
+  increase: 121.0
+- node: SWM-TEL-0001
+  objective: 2245.2
+  increase: 2245.2
+- node: SWM-TEL-0002
+  objective: 43.375
+  increase: 43.375
+- node: SWM-TEL-0003
+  objective: 68.575
+  increase: 68.575
+- node: SWM-TEL-0004
+  objective: 118.45
+  increase: 118.45
+- node: SWM-TRN-0001
+  objective: 504.0
+  increase: 504.0
+- node: SWM-TRN-0002
+  objective: 432.0
+  increase: 432.0
+- node: SWM-TRN-0003
+  objective: 1080.0
+  increase: 1080.0
+- node: SWM-TRN-0004
+  objective: 0.0
+  increase: 0.0
+- node: SWM-WAT-0001
+  objective: 3525.6
+  increase: 3525.6
+- node: SWM-WAT-0002
+  objective: 3525.6
+  increase: 3525.6
+- node: SWM-WAT-0003
+  objective: 3525.6
+  increase: 3525.6
+- node: SWM-WAT-0004
+  objective: 507.5
+  increase: 507.5
+decision_relevant_dose:
+  value: 0
+  note: no error planted until Phase 3
+note: optimal against the scenarios named in the stamp, a sample of the storm, not the storm in general

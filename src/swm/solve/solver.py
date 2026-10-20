@@ -5,7 +5,7 @@ holds the stamp, the optimum with every tied answer, the measure and the spread,
 thumb's distance, true criticality, the dose and the note (B3). Every answer and its objective
 under each weighting is kept beside the key, compressed, so the spread can be recomputed.
 
-Spec: structure v0.17 §5 and §7; Work Order 10, Parts B and C.
+Spec: structure v0.17 §5 and §7; Work Order 10, Parts B, C and D.
 """
 
 import bz2
@@ -24,13 +24,15 @@ from swm.recipe.schema import (
     ObserveUncertainCouplings,
     Recipe,
     SequenceRepairCrews,
+    StrikeNodes,
 )
 from swm.rules.registry import Registry
 from swm.solve.ceiling import Budget
 from swm.solve.measure import Range, spread
+from swm.solve.offensive import CALM, NO_STRIKE, strike, strike_sets, strike_text, targets
 from swm.solve.requests import Search, searches, stamp
-from swm.solve.restorative import plan_count, plan_text, plans, ranked_plan, repair_jobs
-from swm.solve.runner import Plan, Runner, with_node
+from swm.solve.restorative import plan_text, plans, ranked_plan, repair_jobs
+from swm.solve.runner import Job, Runner, with_node
 from swm.solve.thumbs import (
     BIGGEST,
     BIGGEST_BASIS,
@@ -56,8 +58,11 @@ SAMPLE_NOTE = (
 NO_ACTION_RESTORATIVE = "the default crew order"
 """CHOICE: the restorative model's no-action answer is the default crew order: what the crews
 do when no plan is given. Every plan repairs every job, so no plan repairs nothing."""
+DISTANCE = "(objective - optimum) / (no-action objective - optimum)"
+DISTANCE_MIRRORED = "(optimum - objective) / (optimum - no-strike objective)"
+"""The offensive model maximizes, so its measure mirrors (Work Order 10, D3)."""
+NOT_RUN = "not run: it would pass the instance bound (solve.instance_bound_h)"
 NOT_YET_BUILT = {
-    "strike_nodes": "not built in this release: the offensive model arrives with PR 10b",
     "protect_condition_and_add_reserve": (
         "not built in this release: the defensive model arrives with PR 10c"
     ),
@@ -97,6 +102,22 @@ class Weighting:
     weights: Mapping[str, float]
 
 
+@dataclass(frozen=True)
+class Found:
+    """A search's results, before any weighting: what every key of the search is built from."""
+
+    answers: list[tuple[str, Mapping[str, float]]]
+    """Every affordable answer, as the key prints it, and its run's hours out."""
+    no_action: tuple[str, Mapping[str, float]]
+    mirrored: bool
+    """True when the model maximizes (the offensive model)."""
+    thumbs: dict[str, tuple[tuple[str, ...], list[str | None]]]
+    """Each rule of thumb's ranking and its answer per weighting; None where it was not run."""
+    criticality: Mapping[str, Mapping[str, float]] | None
+    """Each node's hours out with it alone completely damaged; None where it was not run."""
+    criticality_base: Mapping[str, float]
+
+
 def solve(inputs: SolveInputs) -> dict[str, bytes]:
     """Solve every request of a recipe and return the key files, by path under ``answer_keys``.
 
@@ -125,17 +146,17 @@ def solve(inputs: SolveInputs) -> dict[str, bytes]:
     index_rows = []
     for search in searches(requests):
         first = requests[search.first]
-        if not isinstance(first, SequenceRepairCrews):
+        if not isinstance(first, SequenceRepairCrews | StrikeNodes):
             note = NOT_YET_BUILT.get(first.model, f"no answer key for {first.model} in Phase 2")
             index_rows += [
                 _index_row(i, requests[i], "not solved", None, note) for i in search.request_indices
             ]
             continue
-        found = _restorative(inputs, search)
-        files.update(found)
+        written = _search(inputs, search)
+        files.update(written)
         for i in search.request_indices:
             name = _key_name(i, requests[i])
-            key = yaml.safe_load(found[name].decode("utf-8"))
+            key = yaml.safe_load(written[name].decode("utf-8"))
             index_rows.append(_index_row(i, requests[i], str(key["status"]), name, None))
     index_rows.sort(key=lambda row: int(str(row["request"])))
     files["index.yaml"] = canonical_yaml({"answer_keys": index_rows})
@@ -163,67 +184,52 @@ def _answers_name(search: Search, model: str) -> str:
     return f"search_{search.first:02d}_{model}_answers.csv.bz2"
 
 
-# --- The restorative search (Part C) --------------------------------------------------------
-
-
-def _restorative(inputs: SolveInputs, search: Search) -> dict[str, bytes]:
-    """Search every plan of one scenario and write one key per request of the search."""
+def _search(inputs: SolveInputs, search: Search) -> dict[str, bytes]:
+    """Run one search, timed first and under the ceiling, and write its keys and answers."""
     requests = [inputs.recipe.answer_key_requests[i] for i in search.request_indices]
     first = requests[0]
-    assert isinstance(first, SequenceRepairCrews)
-    if not 0 <= first.scenario < len(inputs.damage):
-        raise SolveError(
-            f"answer_key_requests[{search.first}].scenario {first.scenario} is not among the "
-            f"{len(inputs.damage)} drawn"
-        )
-    damage = inputs.damage[first.scenario]
+    assert isinstance(first, SequenceRepairCrews | StrikeNodes)
+    weightings = []
+    for position, (i, r) in enumerate(zip(search.request_indices, requests, strict=True)):
+        assert isinstance(r, SequenceRepairCrews | StrikeNodes)
+        weights = node_weights(r, inputs.world.nodes)
+        weightings.append(Weighting(i, position, f"request_{i:02d}_{r.service_weights}", weights))
     runner = Runner(inputs.world, float(first.window_h))
-    weightings = [
-        Weighting(i, position, f"request_{i:02d}_{r.service_weights}",
-                  node_weights(r, inputs.world.nodes))
-        for position, (i, r) in enumerate(zip(search.request_indices, requests, strict=True))
-        if isinstance(r, SequenceRepairCrews)
-    ]  # fmt: skip
-    crews = [c.crew_id for c in inputs.world.crews]
-    jobs = repair_jobs(inputs.world, damage)
-    count = plan_count(len(jobs), len(crews))
     budget = Budget(inputs.rules.number("solve.instance_bound_h"))
-    budget.time_sample(lambda: runner.hours_out(damage))
-    what = f"request {search.first} (sequence_repair_crews, scenario {first.scenario})"
-    if not budget.allows(count, f"{what}: {count} plans"):
-        return _stopped(search, requests, inputs.recipe_sha256, count)
-    scored = [(plan, runner.hours_out(damage, plan)) for plan in plans(jobs, crews)]
-    default = runner.hours_out(damage)
-    answers = _answers_file(scored, weightings)
-    thumbs = _restorative_thumbs(inputs, runner, budget, damage, jobs, scored, weightings, what)
-    critical = _criticality(inputs, runner, budget, damage, default, weightings, what)
-    files = {_answers_name(search, first.model): answers}
+    if isinstance(first, SequenceRepairCrews):
+        found = _restorative(inputs, search, first, runner, budget, weightings)
+    else:
+        found = _offensive(inputs, search, first, runner, budget, weightings)
+    if found is None:
+        return _stopped(search, requests, inputs.recipe_sha256)
+    bands = [float(b) for b in inputs.rules.value("solve.spread_bands_pct")]
+    name = _answers_name(search, first.model)
+    files = {name: _answers_file(found.answers, weightings)}
     for weighting, request in zip(weightings, requests, strict=True):
-        assert isinstance(request, SequenceRepairCrews)
+        assert isinstance(request, SequenceRepairCrews | StrikeNodes)
         files[_key_name(weighting.index, request)] = _key(
-            inputs, request, weighting, scored, default, thumbs, critical,
-            _answers_name(search, first.model),
-        )  # fmt: skip
+            inputs, request, weighting, found, name, bands
+        )
     return files
 
 
 def _stopped(
-    search: Search, requests: Sequence[object], recipe_sha256: str, count: int
+    search: Search, requests: Sequence[AnswerKeyRequest], recipe_sha256: str
 ) -> dict[str, bytes]:
     files = {}
     for index, request in zip(search.request_indices, requests, strict=True):
-        assert isinstance(request, SequenceRepairCrews)
+        assert isinstance(request, SequenceRepairCrews | StrikeNodes)
         files[_key_name(index, request)] = canonical_yaml({
             "assumes": stamp(request, recipe_sha256),
             "status": "stopped",
-            "note": f"the search's {count} answers project past the instance bound "
-                    "(solve.instance_bound_h); the projection is printed when it runs",
+            "note": "the search projects past the instance bound (solve.instance_bound_h); its "
+                    "answer count and projected time are printed when it runs",
         })  # fmt: skip
     return files
 
 
 def _answers_file(
-    scored: Sequence[tuple[Plan, Mapping[str, float]]], weightings: Sequence[Weighting]
+    answers: Sequence[tuple[str, Mapping[str, float]]], weightings: Sequence[Weighting]
 ) -> bytes:
     """Every answer and its objective under each weighting, as bz2-compressed CSV.
 
@@ -233,126 +239,203 @@ def _answers_file(
     buffer = io.StringIO()
     writer = csv.writer(buffer, lineterminator="\n")
     writer.writerow(["answer", *(w.column for w in weightings)])
-    for plan, hours in scored:
-        writer.writerow(
-            [plan_text(plan), *(f"{objective(hours, w.weights):.6f}" for w in weightings)]
-        )
+    for text, hours in answers:
+        writer.writerow([text, *(f"{objective(hours, w.weights):.6f}" for w in weightings)])
     return bz2.compress(buffer.getvalue().encode("utf-8"), compresslevel=9)
 
 
-def _restorative_thumbs(
+def _best(
+    answers: Sequence[tuple[str, Mapping[str, float]]], weights: Mapping[str, float], mirrored: bool
+) -> str:
+    """Return the best answer under one weighting; ties go to the first in search order.
+
+    CHOICE: a rule of thumb solved on the nearest-supplier copy takes the first of its tied
+    optima, in the order the search lists answers.
+    """
+    values = [objective(hours, weights) for _, hours in answers]
+    best = max(values) if mirrored else min(values)
+    return answers[values.index(best)][0]
+
+
+def _criticality(
+    runner: Runner, budget: Budget, base: Damage, nodes: Sequence[str], what: str
+) -> Mapping[str, Mapping[str, float]] | None:
+    """Return each node's hours out with it alone completely damaged on top of ``base``.
+
+    The crews work in the default order, as for a strike (ruling Q4; Work Order 10, B3).
+    """
+    if not budget.allows(len(nodes), f"{what}: true criticality"):
+        return None
+    struck = runner.hours_out_all([(with_node(base, node), None) for node in nodes])
+    return dict(zip(nodes, struck, strict=True))
+
+
+# --- The restorative search (Part C) --------------------------------------------------------
+
+
+def _restorative(
     inputs: SolveInputs,
+    search: Search,
+    request: SequenceRepairCrews,
     runner: Runner,
     budget: Budget,
-    damage: Damage,
-    jobs: Sequence[str],
-    scored: Sequence[tuple[Plan, Mapping[str, float]]],
     weightings: Sequence[Weighting],
-    what: str,
-) -> dict[str, list[tuple[tuple[str, ...], Plan | None]]]:
-    """Each rule of thumb's ranking and answer, per weighting; None where it was not run."""
-    thumbs: dict[str, list[tuple[tuple[str, ...], Plan | None]]] = {}
+) -> Found | None:
+    """Search every crew plan of one scenario; None if the search would pass the ceiling."""
+    if not 0 <= request.scenario < len(inputs.damage):
+        raise SolveError(
+            f"answer_key_requests[{search.first}].scenario {request.scenario} is not among the "
+            f"{len(inputs.damage)} drawn"
+        )
+    damage = inputs.damage[request.scenario]
+    crews = [c.crew_id for c in inputs.world.crews]
+    jobs = repair_jobs(inputs.world, damage)
+    every = list(plans(jobs, crews))
+    budget.time_sample(lambda: runner.hours_out(damage))
+    what = f"request {search.first} (sequence_repair_crews, scenario {request.scenario})"
+    if not budget.allows(len(every), f"{what}: {len(every)} plans"):
+        return None
+    hours = runner.hours_out_all([(damage, plan) for plan in every])
+    answers = [(plan_text(plan), h) for plan, h in zip(every, hours, strict=True)]
+    default = runner.hours_out(damage)
+    thumbs: dict[str, tuple[tuple[str, ...], list[str | None]]] = {}
     shares = capacity_shares(inputs.layers)
     for rule, ranking in (
         (MOST_CONNECTIONS, rank_by_degree(jobs, inputs.world)),
         (BIGGEST, rank_by_capacity(jobs, shares)),
     ):
-        if budget.allows(len(ranking), f"{what}: {rule}"):
-            plan = ranked_plan(runner, damage, ranking)
-            thumbs[rule] = [(ranking, plan) for _ in weightings]
-        else:
-            thumbs[rule] = [(ranking, None) for _ in weightings]
-    copy = runner.on(nearest_supplier_world(inputs.world, inputs.eligible))
-    count = len(scored)
-    if budget.allows(count, f"{what}: {NEAREST_SUPPLIER} ({count} plans on the copy)"):
-        on_copy = [(plan, copy.hours_out(damage, plan)) for plan, _ in scored]
-        thumbs[NEAREST_SUPPLIER] = [
-            ((), min(on_copy, key=lambda item: objective(item[1], w.weights))[0])
-            for w in weightings
-        ]
-    else:
-        thumbs[NEAREST_SUPPLIER] = [((), None) for _ in weightings]
-    return thumbs
+        answer = (
+            plan_text(ranked_plan(runner, damage, ranking))
+            if budget.allows(len(ranking), f"{what}: {rule}")
+            else None
+        )
+        thumbs[rule] = (ranking, [answer for _ in weightings])
+    thumbs[NEAREST_SUPPLIER] = ((), _nearest(inputs, runner, budget, weightings, what, [
+        (plan_text(plan), (damage, plan)) for plan in every], mirrored=False))  # fmt: skip
+    nodes = [n.node_id for n in inputs.world.nodes]
+    return Found(answers, (NO_ACTION_RESTORATIVE, default), False, thumbs,
+                 _criticality(runner, budget, damage, nodes, what), default)  # fmt: skip
 
 
-def _criticality(
+def _nearest(
     inputs: SolveInputs,
     runner: Runner,
     budget: Budget,
-    damage: Damage,
-    default: Mapping[str, float],
     weightings: Sequence[Weighting],
     what: str,
-) -> list[list[dict[str, object]]] | None:
-    """Return each node's true criticality per weighting, or None where it was not run.
+    answers: Sequence[tuple[str, Job]],
+    mirrored: bool,
+) -> list[str | None]:
+    """Solve on the nearest-supplier copy by the same search; return its answer per weighting."""
+    if not budget.allows(
+        len(answers), f"{what}: {NEAREST_SUPPLIER} ({len(answers)} runs on the copy)"
+    ):
+        return [None for _ in weightings]
+    copy = runner.on(nearest_supplier_world(inputs.world, inputs.eligible))
+    hours = copy.hours_out_all([job for _, job in answers])
+    on_copy = [(text, h) for (text, _), h in zip(answers, hours, strict=True)]
+    return [_best(on_copy, w.weights, mirrored) for w in weightings]
 
-    A node's criticality is the objective with it alone completely damaged on top of the
-    scenario, crews in the default order, less the objective without it (Work Order 10, B3).
-    """
-    nodes = [n.node_id for n in inputs.world.nodes]
-    if not budget.allows(len(nodes), f"{what}: true criticality"):
+
+# --- The offensive search (Part D) ----------------------------------------------------------
+
+
+def _offensive(
+    inputs: SolveInputs,
+    search: Search,
+    request: StrikeNodes,
+    runner: Runner,
+    budget: Budget,
+    weightings: Sequence[Weighting],
+) -> Found | None:
+    """Search every set of k nodes struck on the calm world; None if it would pass the ceiling."""
+    nodes = targets(inputs.world)
+    sets = list(strike_sets(nodes, request.strikes_k))
+    budget.time_sample(lambda: runner.hours_out(strike(sets[0])))
+    what = f"request {search.first} (strike_nodes, k = {request.strikes_k})"
+    if not budget.allows(len(sets), f"{what}: {len(sets)} strikes"):
         return None
-    struck = {node: runner.hours_out(with_node(damage, node)) for node in nodes}
-    rows = []
-    for w in weightings:
-        base = objective(default, w.weights)
-        rows.append([
-            {"node": node, "objective": objective(struck[node], w.weights),
-             "increase": round(objective(struck[node], w.weights) - base, 6)}
-            for node in nodes
-        ])  # fmt: skip
-    return rows
+    hours = runner.hours_out_all([(strike(s), None) for s in sets])
+    answers = [(strike_text(s), h) for s, h in zip(sets, hours, strict=True)]
+    calm = runner.hours_out(CALM)
+    shares = capacity_shares(inputs.layers)
+    thumbs: dict[str, tuple[tuple[str, ...], list[str | None]]] = {}
+    for rule, ranking in (
+        (MOST_CONNECTIONS, rank_by_degree(nodes, inputs.world)),
+        (BIGGEST, rank_by_capacity(nodes, shares)),
+    ):
+        # Striking the top k is an answer the search already scored: no run is needed.
+        answer = strike_text(ranking[: request.strikes_k])
+        thumbs[rule] = (ranking, [answer for _ in weightings])
+    thumbs[NEAREST_SUPPLIER] = ((), _nearest(inputs, runner, budget, weightings, what, [
+        (strike_text(s), (strike(s), None)) for s in sets], mirrored=True))  # fmt: skip
+    return Found(answers, (NO_STRIKE, calm), True, thumbs,
+                 _criticality(runner, budget, CALM, nodes, what), calm)  # fmt: skip
+
+
+# --- The key (Part B) -----------------------------------------------------------------------
 
 
 def _key(
     inputs: SolveInputs,
-    request: SequenceRepairCrews,
+    request: SequenceRepairCrews | StrikeNodes,
     weighting: Weighting,
-    scored: Sequence[tuple[Plan, Mapping[str, float]]],
-    default: Mapping[str, float],
-    thumbs: Mapping[str, list[tuple[tuple[str, ...], Plan | None]]],
-    critical: list[list[dict[str, object]]] | None,
+    found: Found,
     answers_name: str,
+    bands: Sequence[float],
 ) -> bytes:
     """One request's key (Work Order 10, B3)."""
-    objectives = {plan: objective(hours, weighting.weights) for plan, hours in scored}
-    best = min(objectives.values())
-    tied = [plan_text(plan) for plan, value in objectives.items() if value == best]
-    measure = Range(best, objective(default, weighting.weights))
-    bands = [float(b) for b in inputs.rules.value("solve.spread_bands_pct")]
-    column = weighting.position
-    rules = []
-    for rule, per_weighting in thumbs.items():
-        ranking, plan = per_weighting[column]
-        row: dict[str, object] = {"rule": rule}
-        if rule == BIGGEST:
-            row["basis"] = BIGGEST_BASIS
-        if ranking:
-            row["ranking"] = list(ranking)
-        if plan is None:
-            row["status"] = "not run: it would pass the instance bound (solve.instance_bound_h)"
-        else:
-            value = objectives[plan]
-            row.update({"answer": plan_text(plan), "objective": value,
-                        "distance": measure.distance(value)})  # fmt: skip
-        rules.append(row)
+    objectives = {text: objective(hours, weighting.weights) for text, hours in found.answers}
+    best = max(objectives.values()) if found.mirrored else min(objectives.values())
+    tied = [text for text, value in objectives.items() if value == best]
+    no_action_text, no_action_hours = found.no_action
+    measure = Range(best, objective(no_action_hours, weighting.weights), found.mirrored)
     return canonical_yaml({
         "assumes": stamp(request, inputs.recipe_sha256),
         "status": "solved",
         "optimum": {"objective": best, "answers": tied},
-        "no_action": {"answer": NO_ACTION_RESTORATIVE, "objective": measure.no_action},
+        "no_action": {"answer": no_action_text, "objective": measure.no_action},
         "measure": {
-            "distance": "(objective - optimum) / (no-action objective - optimum)",
+            "distance": DISTANCE_MIRRORED if found.mirrored else DISTANCE,
             "range": measure.width,
             "range_is_zero": measure.zero,
         },
         "spread": spread(list(objectives.values()), measure, bands),
         "answers_file": answers_name,
-        "rules_of_thumb": rules,
-        "true_criticality": (
-            critical[column] if critical is not None
-            else "not run: it would pass the instance bound (solve.instance_bound_h)"
-        ),
+        "rules_of_thumb": _thumb_rows(found, weighting, objectives, measure),
+        "true_criticality": _criticality_rows(found, weighting),
         "decision_relevant_dose": {"value": 0, "note": DOSE_NOTE},
         "note": SAMPLE_NOTE,
     })  # fmt: skip
+
+
+def _thumb_rows(
+    found: Found, weighting: Weighting, objectives: Mapping[str, float], measure: Range
+) -> list[dict[str, object]]:
+    rows = []
+    for rule, (ranking, answers) in found.thumbs.items():
+        row: dict[str, object] = {"rule": rule}
+        if rule == BIGGEST:
+            row["basis"] = BIGGEST_BASIS
+        if ranking:
+            row["ranking"] = list(ranking)
+        answer = answers[weighting.position]
+        if answer is None:
+            row["status"] = NOT_RUN
+        else:
+            value = objectives[answer]
+            row.update({"answer": answer, "objective": value,
+                        "distance": measure.distance(value)})  # fmt: skip
+        rows.append(row)
+    return rows
+
+
+def _criticality_rows(found: Found, weighting: Weighting) -> list[dict[str, object]] | str:
+    if found.criticality is None:
+        return NOT_RUN
+    base = objective(found.criticality_base, weighting.weights)
+    rows: list[dict[str, object]] = []
+    for node, hours in found.criticality.items():
+        value = objective(hours, weighting.weights)
+        rows.append({"node": node, "objective": value, "increase": round(value - base, 6)})
+    return rows
