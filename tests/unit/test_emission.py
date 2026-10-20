@@ -660,10 +660,16 @@ def test_a_name_reads_town_direction_word_number() -> None:
 # --- Every world writes the same files (item 5) ---------------------------------------------
 
 
+EXPECTED_VALUES = "hand_trace_"
+"""Fixtures of expected values, not recipes (the hand trace, WO-09 F1)."""
+
+
 def test_every_fixture_world_writes_the_same_source_files() -> None:
     expected = set(pilot().sources.files)
     assert "sources/facility_register/A21030000I-D21003-003.csv" in expected
     for path in sorted(FIXTURES.rglob("*.yaml")):
+        if path.name.startswith(EXPECTED_VALUES):
+            continue
         assert set(world(path.read_text(encoding="utf-8")).sources.files) == expected, path
 
 

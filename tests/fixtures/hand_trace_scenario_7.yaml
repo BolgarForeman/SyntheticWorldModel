@@ -1,0 +1,84 @@
+# Hand-trace expected values: the pilot world, scenario 7 (Work Order 9, F1).
+#
+# Source: the design side's sealed hand trace of scenario 7 (written 2026-10-11, before any
+# engine result was seen; docs/design/evidence/Hand_Trace_Scenario_7_Design_Side_v0_1.md),
+# recomputed under Foreman's travel ruling of 2026-10-19 (spec v0.14 section 4.5, decision
+# 0017). Comparison: docs/design/evidence/Hand_Trace_Comparison_Scenario_7_v0_1.md.
+#
+# Resolution: the engine's 15-minute step. Every hour below is a step hour (a multiple of
+# 0.25). The trace worked at the step; it carries no finer precision, so the test compares
+# step hours exactly and nothing finer.
+#
+# Written by hand. Do not regenerate from the engine. If the engine stops matching, the test
+# fails and the difference is reported (CLAUDE.md section 10), never "fixed" here.
+
+world: pilot
+scenario: 7
+horizon_h: 72
+
+damage:
+  - POW-L0004
+  - TEL-L0001
+  - TEL-L0002
+
+crews:
+  CRW-0001:
+    - job: POW-L0004
+      arrives_h: 1.75        # exact failure-point position; the trace's km-segment table gave 1.798 h
+      prepared_h: 3.75
+      done_h: null          # not finished within the 72-hour horizon
+  CRW-0002:
+    - job: TEL-L0002
+      arrives_h: 3.0
+      prepared_h: 5.0
+      failure_points_done_h: [11.0, 18.0]   # walks 1.0 h along the line between them
+      done_h: 18.0
+    - job: TEL-L0001
+      arrives_h: 26.25       # 8.245 h via the road between jobs
+      prepared_h: 28.25
+      done_h: 34.25
+
+repairs_back_in_service_h:
+  TEL-L0002: 18.0
+  TEL-L0001: 34.25
+  POW-L0004: null           # still down at the horizon; the second feed covers its load
+
+# Hours out per end-use node over the horizon. Every end-use node is listed.
+hours_out:
+  FUE-0003: 0.0
+  FUE-0004: 0.0
+  HLT-0001: 0.0
+  HLT-0002: 0.0
+  HLT-0003: 0.0
+  HLT-0004: 0.0
+  POW-0003: 0.0
+  POW-0004: 0.0
+  TEL-0002: 34.25
+  TEL-0003: 18.0
+  TEL-0004: 0.0
+  TRN-0001: 0.0
+  TRN-0002: 0.0
+  TRN-0003: 0.0
+  WAT-0004: 0.0
+
+score:
+  weighted_service_hours_lost: 52.25
+  hours_out: 52.25
+
+# State of named nodes at named step hours (1 = serving, 0 = out).
+states:
+  - {node: TEL-0002, hour_h: 0.0, state: 0}
+  - {node: TEL-0002, hour_h: 34.0, state: 0}
+  - {node: TEL-0002, hour_h: 34.25, state: 1}
+  - {node: TEL-0003, hour_h: 0.0, state: 0}
+  - {node: TEL-0003, hour_h: 17.75, state: 0}
+  - {node: TEL-0003, hour_h: 18.0, state: 1}
+  - {node: TEL-0004, hour_h: 0.0, state: 1}
+  - {node: HLT-0001, hour_h: 72.0, state: 1}
+  - {node: POW-0003, hour_h: 72.0, state: 1}
+  - {node: POW-0004, hour_h: 72.0, state: 1}
+
+# What did not happen in this storm (the trace's findings).
+no_stock_drawn: true
+no_fuel_delivery: true
+no_manual_switching: true

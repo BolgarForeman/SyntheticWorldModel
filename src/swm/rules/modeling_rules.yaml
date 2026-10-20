@@ -10517,6 +10517,34 @@ rules:
   theta_domain: truth
   theta_symbol: R
   theta_alternatives: [always via the road, whichever way is shorter]
+- id: dynamics.floor_after_generator_stops
+  title: How a hospital responds to the power that arrives once its generator stops
+  stage: dynamics
+  value: trip on what arrives
+  units: null
+  applies_to: {layer: healthcare, node_class: null, condition: generator stopped}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Work Order 9c, answers 2 (decision 0017)', url: docs/work_orders/WO-09c-answers-2.md,
+    quote: null, verified: null}
+  - {citation: Structure v0.16 §4.5 (responses), url: docs/design/World_Generator_Structure.md,
+    quote: null, verified: null}
+  reasoning: A hospital on its generator runs at the essential fraction. Once the generator stops (no fuel,
+    or it fails to run) it responds as a trip on the power that arrives, fully while it receives at least
+    the trip point, otherwise out. This is the engine as built (option A).
+  status: placeholder
+  open_decision: realism ranges
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-19'
+    decision: '0017'
+  history: []
+  theta_role: dynamics
+  theta_domain: truth
+  theta_symbol: R
+  theta_alternatives: ['throttle: runs at what arrives', 'the essential fraction while at least that share
+      arrives, else out']
 - id: strength.supply_days
   title: Days of its own stock a supplier delivers in a day's turnover
   stage: strength

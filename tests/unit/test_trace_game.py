@@ -126,15 +126,11 @@ def test_the_travel_drill_is_timed_from_where_the_crew_stands() -> None:
     assert card.expected == pytest.approx((line_done,))
 
 
-AWAITING_RULING = {"throttle_trip_floor"}
-"""Card 2's floor line asks for the engine; the engine's answer is reported for a ruling and the
-card is left as the design side wrote it (PR 19, final pass)."""
-
-
 def test_no_rule_card_still_asks_for_the_engine() -> None:
+    # Card 2's floor line was the last; Foreman ruled it (WO-09c answers 2, decision 0017).
     for card in rule_cards(pilot()[0].rules):
         text = "\n".join((*card.front, *card.back))
-        assert ("CONFIRM WITH ENGINE" in text) == (card.name in AWAITING_RULING), card.name
+        assert "CONFIRM" not in text, card.name
         assert "[To be written" not in text, card.name
 
 

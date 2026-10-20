@@ -4,8 +4,15 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ## Unreleased
 
+## 0.1.0 — Phase 1
+
+Phase 1 closes on **recipe schema version 3** and **structure spec v0.16**. Recipes of versions 1 and 2 are migrated on loading. The `v0.1.0` tag is set on `main` on Foreman's word, after PR 9c merges.
+- **What it is:** a small constructed world, built end to end from one recipe and one root seed, with zero-error sources, a truth manifest, 8 reference runs and a hand-trace game.
+- **Records:** what was built, how it was tested and every departure are in `docs/trace/phase-1.md`. The closing rulings are in decision 0017.
+
 ### Added
 
+- The hand-trace acceptance test (Work Order 9, PR 9c; F0 as changed by Foreman). `tests/unit/test_hand_trace.py` checks the engine's scenario 7 run against the design side's hand-written `tests/fixtures/hand_trace_scenario_7.yaml`, at the 15-minute step and exactly. The Phase 1 TRACE entry and decision 0017 are completed.
 - Golden worlds, error settings and property tests (Work Order 9, PR 9b):
   - **Two fixture worlds,** each the pilot with one change: `pilot_hidden_telecom` (telecom hidden) and `pilot_power_nodes_only` (power reports nodes only). Their full `swm build` output is checked in with hashes. Tests prove that every stage hash, the manifest's true world and all 8 reference runs equal the pilot's, and that every file that differs from the pilot's golden build has a stated reason.
   - **The manifest's hidden section** counts a coupling as hidden when either end's layer is hidden. It also lists the links that nodes-only sources withhold (`withheld_links`).
@@ -133,6 +140,7 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ### Changed
 
+- Once a hospital's generator stops, the hospital responds as a trip on the power that arrives: the engine as built, now ruled. The ruling is recorded as `dynamics.floor_after_generator_stops`, with two alternatives in the Theta List. Rule card 2 is reworded and no card prints a CONFIRM note (decision 0017; structure v0.16 §4.5).
 - Between failure points of the same line, a crew walks along the line instead of going via the road (`dynamics.line_point_travel`, with two alternatives in the Theta List; decision 0017; structure v0.14 §4.5). Only scenario 7's reference run changes: 52.25 service-hours lost, down from 63.75. The trace game's teaching text is approved, and the game prints it without DRAFT marks.
 - In group 2 of the default crew order, a distribution substation ranks by the highest Lifeline weight among the end uses it supplies, its own included (`dynamics.substation_crew_rank`, with its two alternatives in the Theta List; decision 0017; structure v0.13 §4.5). The pilot's reference runs are unchanged.
 - The hand-trace pack can be traced by hand (Work Order 9, Part A):

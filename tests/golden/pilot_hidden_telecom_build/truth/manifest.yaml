@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: 976a0b234cffb8ce917430384f432b735a7ccd95f11f459678888c15425cdfc4
+  registry_sha256: 3c6f08695cca0c417c42c27b62df35632fedc7c3f34a2c930c731cc211f52672
   overrides: {}
   relaxed_limits: []
   out_of_range: []
@@ -9796,7 +9796,7 @@ declared_departures:
 - 'Error settings recorded, not applied (Phase 1: zero-error emission): facility_register, osm_fuel, osm_health, osm_power, osm_transport, osm_water, ourairports, wri_gppd.'
 theta:
   registry_version: '0.1'
-  registry_sha256: 976a0b234cffb8ce917430384f432b735a7ccd95f11f459678888c15425cdfc4
+  registry_sha256: 3c6f08695cca0c417c42c27b62df35632fedc7c3f34a2c930c731cc211f52672
   overrides: {}
   relaxed_limits: []
   theta_list:
@@ -9872,6 +9872,23 @@ theta:
       by: the author (Foreman)
       date: '2026-09-29'
       decision: 0009
+  - theta_id: dynamics.floor_after_generator_stops
+    domain: truth
+    sub_type: dynamics
+    symbol: R
+    chosen: 'How a hospital responds to the power that arrives once its generator stops: trip on what arrives.'
+    alternatives:
+    - 'throttle: runs at what arrives'
+    - the essential fraction while at least that share arrives, else out
+    registry_ids:
+    - dynamics.floor_after_generator_stops
+    relaxed: null
+    carried_vs_flattened: keeps
+    sensitivity: none planned
+    ruling:
+      by: the author (Foreman)
+      date: '2026-10-19'
+      decision: '0017'
   - theta_id: dynamics.line_point_travel
     domain: truth
     sub_type: dynamics

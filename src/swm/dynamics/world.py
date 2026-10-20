@@ -253,6 +253,11 @@ class Settings:
 
     Read from ``dynamics.line_point_travel``.
     """
+    floor_after_generator_stops: str = "trip on what arrives"
+    """How a node that steps to a floor on its generator responds once the generator stops.
+
+    Read from ``dynamics.floor_after_generator_stops``.
+    """
 
 
 def settings_from(rules: Registry) -> Settings:
@@ -288,6 +293,7 @@ def settings_from(rules: Registry) -> Settings:
         mobilisation_h=rules.number("crews.outlying_island_mobilisation_h"),
         substation_rank=str(rules.value("dynamics.substation_crew_rank")),
         line_point_travel=str(rules.value("dynamics.line_point_travel")),
+        floor_after_generator_stops=str(rules.value("dynamics.floor_after_generator_stops")),
     )
 
 
