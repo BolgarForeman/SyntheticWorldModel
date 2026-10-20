@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.15 · 2026-10-19 · companion to the World Generator Interface mockup v0.5 and recipe schema v3 · supersedes v0.14*
+*v0.16 · 2026-10-19 · companion to the World Generator Interface mockup v0.5 and recipe schema v3 · supersedes v0.15*
 
 ## 1. What this is
 
@@ -484,7 +484,7 @@ Ruled by the author, 2026-10-02 to 2026-10-09 (decision 0014). The ruling sheet 
 **Response to a shortfall** (the consumer's failure mode on each commodity, §4.4a), on the received share R:
 - **throttle:** R;
 - **trip:** 1 while R ≥ 0.9, else 0 (the trip point is a placeholder, J);
-- **step to a floor:** hospitals on generator run at the essential fraction, 0.6.
+- **step to a floor:** hospitals on generator run at the essential fraction, 0.6. Once the generator stops (no fuel, or it fails to run), the hospital responds as a trip on what arrives: 1 while R ≥ the trip point, else 0 (ruled 2026-10-19, PR 24 answers; alternatives recorded: R, as a throttle; the essential fraction while R ≥ it, else 0).
 
 Where a class has a telecom tolerance row, the tolerance acts first: full function for T hours, then d_eff = 1 − κ(1 − d).
 
@@ -696,6 +696,11 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.15
+
+Ruled by the author, 2026-10-19 (PR 24 answers):
+- §4.5 response: a hospital whose generator has stopped responds as a trip on the power that arrives. Alternatives recorded: runs at what arrives (throttle); the essential fraction while at least that share arrives, else out.
 
 ## Changes from v0.14
 
