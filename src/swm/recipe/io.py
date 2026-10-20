@@ -96,7 +96,30 @@ def parse_recipe(text: str) -> Recipe:
         )
     if version in (1, 2):
         data = _migrate_version_2(data)
+    if version in (1, 2, 3):
+        data = _migrate_version_3(data)
     return Recipe.model_validate(data)
+
+
+def _migrate_version_3(data: dict[str, Any]) -> dict[str, Any]:
+    """Read a version 3 recipe as version 4, with the new request fields at their defaults.
+
+    Version 4 adds an offensive request's ``world`` and ``strike_damage``, a defensive
+    request's ``reserve_hours`` (each with one value, its default) and a restorative request's
+    ``scenario``, which has no default. A version 3 restorative request names no scenario, so it
+    is refused with the field named rather than given one.
+
+    Spec: CLAUDE.md §8; Work Order 10, A1.
+    """
+    requests = data.get("answer_key_requests")
+    for index, request in enumerate(requests if isinstance(requests, list) else ()):
+        if isinstance(request, dict) and request.get("model") == "sequence_repair_crews":
+            raise RecipeVersionError(
+                f"answer_key_requests[{index}].scenario: a sequence_repair_crews request names "
+                "the scenario its crews repair from recipe_version 4; set recipe_version: 4 "
+                "and add scenario"
+            )
+    return dict(data, recipe_version=RECIPE_VERSION)
 
 
 def _migrate_version_2(data: dict[str, Any]) -> dict[str, Any]:
@@ -113,7 +136,7 @@ def _migrate_version_2(data: dict[str, Any]) -> dict[str, Any]:
             raise RecipeVersionError(
                 f"{section}.{field} is a recipe_version 3 setting; set recipe_version: 3"
             )
-    return dict(data, recipe_version=RECIPE_VERSION)
+    return dict(data, recipe_version=3)
 
 
 def _migrate_version_1(data: dict[str, Any]) -> dict[str, Any]:
@@ -121,7 +144,7 @@ def _migrate_version_1(data: dict[str, Any]) -> dict[str, Any]:
 
     Spec: CLAUDE.md §8 (old recipes load or fail with a clear message); decision 0011.
     """
-    migrated = dict(data, recipe_version=RECIPE_VERSION)
+    migrated = dict(data, recipe_version=2)
     unobserved = data.get("unobserved")
     if not isinstance(unobserved, dict):
         return migrated

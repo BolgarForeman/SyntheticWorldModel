@@ -10545,6 +10545,54 @@ rules:
   theta_symbol: R
   theta_alternatives: ['throttle: runs at what arrives', 'the essential fraction while at least that share
       arrives, else out']
+- id: solve.spread_bands_pct
+  title: The bands the spread of every answer is counted in
+  stage: solve
+  value: [1.0, 5.0, 10.0]
+  units: '% of the range from no action to the optimum'
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Phase 2 answer-key ruling sheet v0.2, ruling Q11 (decision 0018)', url: docs/design/evidence/Phase2_Answer_Key_Ruling_Sheet_v0_2.md,
+    quote: null, verified: null}
+  - {citation: Structure v0.17 §5 (the spread of every answer), url: docs/design/World_Generator_Structure.md,
+    quote: null, verified: null}
+  reasoning: Each answer key reports the share of all affordable answers within 1, 5 and 10% of the optimum,
+    as a fraction of the range from no action to the optimum. They show how hard the question is; they
+    are not an acceptability band (ruling Q11).
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-20'
+    decision: '0018'
+  history: []
+  theta_role: world_content
+- id: solve.instance_bound_h
+  title: The ceiling on one request's brute-force search, on the build machine
+  stage: solve
+  value: 48.0
+  units: h
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Phase 2 answer-key ruling sheet v0.2, ruling Q8 (decision 0018)', url: docs/design/evidence/Phase2_Answer_Key_Ruling_Sheet_v0_2.md,
+    quote: null, verified: null}
+  - {citation: Structure v0.17 §5 (how keys are found) and §10 item 6, url: docs/design/World_Generator_Structure.md,
+    quote: null, verified: null}
+  reasoning: A request's main search and its rules of thumb together may take at most this long. A search
+    projected past it stops before starting and is reported; a rule of thumb that would pass it is reported
+    as not run (Work Order 10, B5).
+  status: placeholder
+  open_decision: 'open decision 6: the exact-tier instance bound'
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-20'
+    decision: '0018'
+  history: []
+  theta_role: world_content
 - id: strength.supply_days
   title: Days of its own stock a supplier delivers in a day's turnover
   stage: strength
@@ -10959,6 +11007,11 @@ theta:
     decision: '0014'
 objectives:
 - {name: metric, description: 'Unserved demand-hours, weighted by service weight.'}
-- {name: acceptability threshold, description: 'The level of service a decision maker accepts, recorded
-    with each request.'}
+- name: acceptability threshold
+  description: 'Retired: no acceptability band is fixed in the key; any "within X%" summary is computed from
+    the distances when results are written up (ruling Q11).'
+  retired: true
+  history:
+  - {value: 'The level of service a decision maker accepts, recorded with each request.', units: null,
+    date: '2026-10-20', decision: '0018'}
 - {name: service weights, description: 'Lifeline, Equal or Custom weights over the end-use classes (§4.1).'}

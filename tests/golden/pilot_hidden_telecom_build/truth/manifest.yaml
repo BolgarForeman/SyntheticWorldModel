@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: 3c6f08695cca0c417c42c27b62df35632fedc7c3f34a2c930c731cc211f52672
+  registry_sha256: 429094490620a2a7435f2d1bbaf6a9fb234cde36234e71cef81e075c0c78cf73
   overrides: {}
   relaxed_limits: []
   out_of_range: []
@@ -9796,7 +9796,7 @@ declared_departures:
 - 'Error settings recorded, not applied (Phase 1: zero-error emission): facility_register, osm_fuel, osm_health, osm_power, osm_transport, osm_water, ourairports, wri_gppd.'
 theta:
   registry_version: '0.1'
-  registry_sha256: 3c6f08695cca0c417c42c27b62df35632fedc7c3f34a2c930c731cc211f52672
+  registry_sha256: 429094490620a2a7435f2d1bbaf6a9fb234cde36234e71cef81e075c0c78cf73
   overrides: {}
   relaxed_limits: []
   theta_list:

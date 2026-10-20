@@ -11,12 +11,12 @@ from typing import Annotated, Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-RECIPE_VERSION: Literal[3] = 3
+RECIPE_VERSION: Literal[4] = 4
 """The recipe schema version this module defines. Version 2 renamed ``unobserved.depots`` to
 ``unobserved.crew_base`` (decision 0011); version 3 added ``modeling_rules.relaxed_limits`` and
 ``dynamics.removed_dependencies`` (decision 0014)."""
 
-SUPPORTED_RECIPE_VERSIONS = (1, 2, 3)
+SUPPORTED_RECIPE_VERSIONS = (1, 2, 3, 4)
 """Recipe versions this code reads; versions 1 and 2 are migrated on loading
 (``swm.recipe.io``)."""
 
@@ -1208,6 +1208,11 @@ class ProtectConditionAndAddReserve(_Request):
     add_reserve_cost_units: int = Field(
         1, ge=1, description="Cost of adding a reserve at one node (pilot value)."
     )
+    reserve_hours: Literal["window"] = Field(
+        "window",
+        description="How big an added reserve is. window: the request's window at the node's "
+        "full draw (ruling Q6).",
+    )
 
 
 class AddRedundantFeeds(_Request):
@@ -1227,6 +1232,14 @@ class StrikeNodes(_Request):
     )
     member_class: MemberClass = Field(MemberClass.OFFENSIVE, description="Offensive.")
     strikes_k: int = Field(2, ge=1, le=20, description="Number of nodes struck.")
+    world: Literal["calm"] = Field(
+        "calm", description="The world struck. calm: no storm, the attack alone (ruling Q3)."
+    )
+    strike_damage: Literal["complete"] = Field(
+        "complete",
+        description="What a strike does. complete: complete damage, repaired by the crews in "
+        "the default order (ruling Q4).",
+    )
 
 
 class DrainReserves(_Request):
@@ -1245,6 +1258,9 @@ class SequenceRepairCrews(_Request):
         "sequence_repair_crews", description="The model within the member-class."
     )
     member_class: MemberClass = Field(MemberClass.RESTORATIVE, description="Restorative.")
+    scenario: int = Field(
+        ge=0, description="The storm scenario whose damage the crews repair (ruling Q2)."
+    )
 
 
 class StageCrewsAtDepots(_Request):
@@ -1341,7 +1357,7 @@ class Recipe(_Section):
     Spec: structure v0.2 §3 (the recipe is the record) and §4; Work Order 1, item 2.
     """
 
-    recipe_version: Literal[3] = Field(
+    recipe_version: Literal[4] = Field(
         RECIPE_VERSION, description="The recipe schema version the recipe was written for."
     )
     root_seed: int = Field(

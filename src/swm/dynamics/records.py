@@ -46,6 +46,10 @@ class RunRequest:
     """Coupling edges deleted from the world before the run (D11)."""
     policy: str = "default crew order"
     scenario: int | None = None
+    plan: tuple[tuple[str, tuple[str, ...]], ...] | None = None
+    """A crew plan: each crew's ordered repair jobs, by element id (Work Order 10, C2). None
+    keeps the default crew order. Switching trips are not planned: they arise from the world's
+    state and go to crews by the default rule."""
 
 
 @dataclass(frozen=True)

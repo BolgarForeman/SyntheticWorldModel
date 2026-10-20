@@ -71,6 +71,7 @@ class Stage(StrEnum):
     STORM = "storm"
     DYNAMICS = "dynamics"
     EMISSION = "emission"
+    SOLVE = "solve"
 
 
 class ThetaRole(StrEnum):
@@ -276,6 +277,10 @@ class Objective(_Strict):
 
     name: str = Field(min_length=1)
     description: str = Field(min_length=1)
+    retired: bool = Field(
+        False, description="Retired objectives stay in the registry, with their history."
+    )
+    history: tuple[HistoryItem, ...] = ()
 
 
 class Registry(_Strict):

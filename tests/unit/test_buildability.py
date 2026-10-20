@@ -33,9 +33,9 @@ PILOT_FEATURES = {
     "model:protect_condition_and_add_reserve",
     "model:strike_nodes",
     "model:sequence_repair_crews",
-    "model:observe_uncertain_couplings",
     "objective:unserved_demand_hours",
     "service_weights:lifeline",
+    "service_weights:equal",
 }
 
 

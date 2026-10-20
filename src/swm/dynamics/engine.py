@@ -150,6 +150,8 @@ class _Engine:
         self.crews = [_Crew(c.crew_id, Site(c.site), 0.0) for c in world.crews]
         self.completions: list[Completion] = []
         self.deliveries: list[Delivery] = []
+        self.plan = {crew: list(jobs) for crew, jobs in request.plan or ()}
+        _check_ruled_dynamics(self.settings)
 
     # --- Set-up ---------------------------------------------------------------------------
 
@@ -174,6 +176,7 @@ class _Engine:
     def run(self) -> Run:
         steps = int(self.horizon / self.step + 0.5)
         self._open_jobs()
+        self._check_plan()
         self._dispatch_units()
         times, states, levels, passes, capped = [], [], [], [], []
         crew_at: list[tuple[tuple[str, str], ...]] = []
@@ -483,10 +486,26 @@ class _Engine:
             self.pending.append((emergency.arrival_h, f"unit:{emergency.node_id}"))
         self.pending.sort()
 
+    def _check_plan(self) -> None:
+        """Check that a plan names distinct crews and every repair job once (Work Order 10, C1)."""
+        if self.request.plan is None:
+            return
+        crews = {c.crew_id for c in self.crews}
+        named = [crew for crew, _ in self.request.plan]
+        if len(set(named)) != len(named) or not set(named) <= crews:
+            raise ValueError(f"crew plan: crews {named} are not distinct crews of the world")
+        planned = sorted(e for jobs in self.plan.values() for e in jobs)
+        repairs = sorted(j.element_id for j in self.jobs.values() if j.kind != "switching")
+        if planned != repairs:
+            raise ValueError(f"crew plan: plans {planned}, but the repair jobs are {repairs}")
+
     def _assign(self, t: float) -> None:
         """Give each crew free before the step ends the best open job, from where it stands."""
         if "crews.pilot" in self.relaxed:
             self._assign_unlimited(t)
+            return
+        if self.request.plan is not None:
+            self._assign_planned(t)
             return
         end = t + self.step
         while True:
@@ -500,6 +519,36 @@ class _Engine:
                 open_jobs, key=lambda j: (j.priority, self._hours(crew.site, j.sites[0]), j.job_id)
             )
             self._work(crew, job, start)
+
+    def _assign_planned(self, t: float) -> None:
+        """Give each crew free before the step ends its next planned job (Work Order 10, C2).
+
+        A switching trip is never planned. A free crew weighs any open one against its next
+        planned job by the default rule's key, so a trip goes to crews as the default order
+        sends it.
+        """
+        end = t + self.step
+        waiting = {c.crew_id for c in self.crews}
+        while True:
+            free = [c for c in self.crews if c.free_at < end and c.crew_id in waiting]
+            if not free:
+                return
+            crew = min(free, key=lambda c: (c.free_at, c.crew_id))
+            # CHOICE: a free crew chooses between its next planned job and the open switching
+            # trips by the default rule's key (priority, hours from where it stands, job id).
+            options = [j for j in self.jobs.values() if j.crew_id is None and j.kind == "switching"]
+            planned = self.plan.get(crew.crew_id, [])
+            if planned:
+                options.append(self.jobs[f"repair:{planned[0]}"])
+            if not options:
+                waiting.discard(crew.crew_id)
+                continue
+            job = min(
+                options, key=lambda j: (j.priority, self._hours(crew.site, j.sites[0]), j.job_id)
+            )
+            if job.kind != "switching":
+                planned.pop(0)
+            self._work(crew, job, max(crew.free_at, t))
 
     def _assign_unlimited(self, t: float) -> None:
         """Every job gets its own crew at once, from the nearest crew start (D8)."""
@@ -837,6 +886,37 @@ def substation_weight(world: EngineWorld, node_id: str) -> float:
         and any(e.supplier_id == node_id for group in d.groups for e in group)
     ]
     return max((w for w in (weights[node_id], *supplied) if w is not None), default=0.0)
+
+
+def _check_ruled_dynamics(settings: Settings) -> None:
+    """Stop a run whose registry names a recorded alternative of a ruled dynamics rule.
+
+    Each ruled rule's alternatives are recorded for a later phase, not yet selectable, so a run
+    that names one stops before it starts (Work Order 10, C4).
+
+    Parameters
+    ----------
+    settings : Settings
+        The engine's settings, read from the registry.
+
+    Raises
+    ------
+    ValueError
+        If any of the three rules names an alternative.
+
+    Spec: structure v0.16 §4.5; decision 0017; Work Order 10, C4.
+    """
+    ruled = (
+        ("dynamics.substation_crew_rank", settings.substation_rank, HIGHEST_SUPPLIED_WEIGHT),
+        ("dynamics.line_point_travel", settings.line_point_travel, ALONG_THE_LINE),
+        ("dynamics.floor_after_generator_stops", settings.floor_after_generator_stops, TRIP),
+    )
+    for rule_id, value, chosen in ruled:
+        if value != chosen:
+            raise ValueError(
+                f"{rule_id} is '{value}': its alternatives are recorded but become selectable "
+                "only in a later phase"
+            )
 
 
 ALONG_THE_LINE = "along the line within a job; via the road between jobs"

@@ -8,7 +8,7 @@
 # Subtype attributes (decision 0007, R9) are drawn in the layers stage, not set here. The
 # pilot's one generation plant is fuel_kind lng, and its one import terminal carries product
 # lng, so the pilot's fuel -> power runs from the import terminal to the plant.
-recipe_version: 2
+recipe_version: 4
 
 terrain:
   map_type: spine_island
@@ -69,7 +69,7 @@ dynamics:
 errors:
   default_mechanism: parametric
 
-answer_key_requests:
+answer_key_requests:            # ruling Q12 (Work Order 10, A2): five requests, each twice
   - model: protect_condition_and_add_reserve
     member_class: defensive
     budget_cost_units: 3
@@ -92,10 +92,31 @@ answer_key_requests:
     objective: unserved_demand_hours
   - model: sequence_repair_crews
     member_class: restorative
+    scenario: 7
     service_weights: lifeline
     objective: unserved_demand_hours
-  - model: observe_uncertain_couplings
-    member_class: informative
-    observations_n: 1
-    service_weights: lifeline
+  - model: protect_condition_and_add_reserve
+    member_class: defensive
+    budget_cost_units: 3
+    service_weights: equal
+    objective: unserved_demand_hours
+  - model: protect_condition_and_add_reserve
+    member_class: defensive
+    budget_cost_units: 4
+    service_weights: equal
+    objective: unserved_demand_hours
+  - model: strike_nodes
+    member_class: offensive
+    strikes_k: 2
+    service_weights: equal
+    objective: unserved_demand_hours
+  - model: strike_nodes
+    member_class: offensive
+    strikes_k: 3
+    service_weights: equal
+    objective: unserved_demand_hours
+  - model: sequence_repair_crews
+    member_class: restorative
+    scenario: 7
+    service_weights: equal
     objective: unserved_demand_hours

@@ -129,8 +129,9 @@ def theta_text(registry: Registry, relaxed_limits: Iterable[str] = ()) -> str:
         lines += _section(sub_type.value, [e for e in entries if e.sub_type == sub_type], relaxed)
     construction = [e for e in entries if e.sub_type == ThetaRole.CONSTRUCTION]
     lines += _section("construction choices", construction, relaxed)
-    lines += ["", f"== objectives, outside Θ ({len(registry.objectives)}) =="]
-    lines += [f"- {o.name}: {o.description}" for o in registry.objectives]
+    objectives = [o for o in registry.objectives if not o.retired]
+    lines += ["", f"== objectives, outside Θ ({len(objectives)}) =="]
+    lines += [f"- {o.name}: {o.description}" for o in objectives]
     return "\n".join(lines) + "\n"
 
 

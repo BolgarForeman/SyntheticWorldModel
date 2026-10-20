@@ -130,7 +130,7 @@ def test_every_rule_is_classified() -> None:
     counts = classification_counts(RULES)
     assert sum(counts.values()) == len(RULES.rules)
     assert counts == {"construction": 169, "dynamics": 115, "stopping": 1, "analysis": 0,
-                      "world_content": 90}  # fmt: skip
+                      "world_content": 92}  # fmt: skip
     for rule in RULES.rules:
         if rule.theta_role == ThetaRole.WORLD_CONTENT:
             assert rule.theta_domain is None
@@ -176,10 +176,15 @@ def test_swm_rules_theta_is_deterministic_and_keeps_objectives_outside(
     assert capsysbinary.readouterr().out == first
     text = first.decode("utf-8")
     assert text == theta_text(RULES)
-    body, objectives = text.split("== objectives, outside Θ (3) ==")
-    for name in ("metric", "acceptability threshold", "service weights"):
+    body, objectives = text.split("== objectives, outside Θ (2) ==")
+    for name in ("metric", "service weights"):
         assert f"- {name}:" in objectives
         assert f"\n{name} [" not in body
+    # Retired by ruling Q11 (decision 0018): no acceptability band in the key.
+    assert "acceptability threshold" not in text
+    retired = next(o for o in RULES.objectives if o.name == "acceptability threshold")
+    assert retired.retired
+    assert retired.history[0].decision == "0018"
     sections = [line for line in body.splitlines() if line.startswith("==")]
     assert sections == ["== dynamics (117) ==", "== stopping (1) ==", "== analysis (1) ==",
                         "== construction choices (169) =="]  # fmt: skip

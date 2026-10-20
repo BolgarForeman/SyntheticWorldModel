@@ -29,6 +29,7 @@ STAGE_TITLES = {
     Stage.SIZING: "Sizing",
     Stage.LAYERS: "Layers",
     Stage.DRAWS: "Draws",
+    Stage.SOLVE: "Answer keys",
 }
 """Stages in page order, with their headings."""
 

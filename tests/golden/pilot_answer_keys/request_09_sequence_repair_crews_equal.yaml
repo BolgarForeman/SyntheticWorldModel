@@ -1,0 +1,121 @@
+assumes: 'assumes: restorative; sequence_repair_crews; unserved_demand_hours; service weights equal; budget none (the world''s crews); window 72 h; scenario 7; resolved recipe sha256 b530981822885e68e2f113f01cbb1171ae707f11dd7a55590a96862f145175c7'
+status: solved
+optimum:
+  objective: 30.75
+  answers:
+  - 'CRW-0001: SWM-TEL-L0001, SWM-POW-L0004; CRW-0002: SWM-TEL-L0002'
+  - 'CRW-0001: SWM-TEL-L0001; CRW-0002: SWM-TEL-L0002, SWM-POW-L0004'
+  - 'CRW-0001: SWM-TEL-L0002, SWM-POW-L0004; CRW-0002: SWM-TEL-L0001'
+  - 'CRW-0001: SWM-TEL-L0002; CRW-0002: SWM-TEL-L0001, SWM-POW-L0004'
+no_action:
+  answer: the default crew order
+  objective: 52.25
+measure:
+  distance: (objective - optimum) / (no-action objective - optimum)
+  range: 21.5
+  range_is_zero: false
+spread:
+  answers: 24
+  within_1_pct: 0.166667
+  within_5_pct: 0.166667
+  within_10_pct: 0.166667
+  mean_distance: 2.176453
+answers_file: search_04_sequence_repair_crews_answers.csv.bz2
+rules_of_thumb:
+- rule: most connections first
+  ranking:
+  - SWM-POW-L0004
+  - SWM-TEL-L0001
+  - SWM-TEL-L0002
+  answer: 'CRW-0001: SWM-POW-L0004; CRW-0002: SWM-TEL-L0001, SWM-TEL-L0002'
+  objective: 49.1125
+  distance: 0.85407
+- rule: biggest first
+  ranking:
+  - SWM-POW-L0004
+  - SWM-TEL-L0001
+  - SWM-TEL-L0002
+  answer: 'CRW-0001: SWM-POW-L0004; CRW-0002: SWM-TEL-L0001, SWM-TEL-L0002'
+  objective: 49.1125
+  distance: 0.85407
+- rule: nearest supplier
+  answer: 'CRW-0001: SWM-TEL-L0001, SWM-POW-L0004; CRW-0002: SWM-TEL-L0002'
+  objective: 30.75
+  distance: 0.0
+true_criticality:
+- node: SWM-FUE-0001
+  objective: 962.4
+  increase: 910.15
+- node: SWM-FUE-0002
+  objective: 616.1375
+  increase: 563.8875
+- node: SWM-FUE-0003
+  objective: 223.2
+  increase: 170.95
+- node: SWM-FUE-0004
+  objective: 223.2
+  increase: 170.95
+- node: SWM-HLT-0001
+  objective: 223.2
+  increase: 170.95
+- node: SWM-HLT-0002
+  objective: 216.0
+  increase: 163.75
+- node: SWM-HLT-0003
+  objective: 223.2
+  increase: 170.95
+- node: SWM-HLT-0004
+  objective: 223.2
+  increase: 170.95
+- node: SWM-POW-0001
+  objective: 962.4
+  increase: 910.15
+- node: SWM-POW-0002
+  objective: 962.4
+  increase: 910.15
+- node: SWM-POW-0003
+  objective: 180.6
+  increase: 128.35
+- node: SWM-POW-0004
+  objective: 176.2
+  increase: 123.95
+- node: SWM-TEL-0001
+  objective: 589.2
+  increase: 536.95
+- node: SWM-TEL-0002
+  objective: 151.2
+  increase: 98.95
+- node: SWM-TEL-0003
+  objective: 151.2
+  increase: 98.95
+- node: SWM-TEL-0004
+  objective: 206.95
+  increase: 154.7
+- node: SWM-TRN-0001
+  objective: 223.2
+  increase: 170.95
+- node: SWM-TRN-0002
+  objective: 223.2
+  increase: 170.95
+- node: SWM-TRN-0003
+  objective: 439.2
+  increase: 386.95
+- node: SWM-TRN-0004
+  objective: 151.2
+  increase: 98.95
+- node: SWM-WAT-0001
+  objective: 849.65
+  increase: 797.4
+- node: SWM-WAT-0002
+  objective: 849.65
+  increase: 797.4
+- node: SWM-WAT-0003
+  objective: 849.65
+  increase: 797.4
+- node: SWM-WAT-0004
+  objective: 237.95
+  increase: 185.7
+decision_relevant_dose:
+  value: 0
+  note: no error planted until Phase 3
+note: optimal against the scenarios named in the stamp, a sample of the storm, not the storm in general
