@@ -176,6 +176,9 @@ def test_the_key_holds_every_part_of_b3(solved: Path) -> None:
     resolution, _ = pilot()
     assert record["assumes"] == stamp(resolution.recipe.answer_key_requests[4], _sha(resolution))
     assert "scenario 7" in record["assumes"]
+    assert record["assumes"].startswith("restorative; sequence_repair_crews;")
+    biggest = next(r for r in record["rules_of_thumb"] if r["rule"] == "biggest first")
+    assert biggest["basis"] == "share of its layer's total in the same unit"
     assert record["spread"]["answers"] == 24
     assert set(record["spread"]) >= {
         "within_1_pct",

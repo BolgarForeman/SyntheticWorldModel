@@ -186,6 +186,8 @@ def _card(rule: Rule) -> str:
         badges.append(f'<span class="badge plain">{rule.jurisdiction.value}</span>')
     if rule.theta_role == ThetaRole.WORLD_CONTENT:
         badges.append('<span class="badge plain">world content</span>')
+    elif rule.theta_role == ThetaRole.ANSWER_KEY:
+        badges.append('<span class="badge plain">answer-key setting</span>')
     else:
         symbol = rule.theta_symbol.value if rule.theta_symbol else "none"
         badges.append(f'<span class="badge plain">θ*-{rule.theta_role.value} ({symbol})</span>')

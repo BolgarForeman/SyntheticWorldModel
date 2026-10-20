@@ -10568,7 +10568,7 @@ rules:
     date: '2026-10-20'
     decision: '0018'
   history: []
-  theta_role: world_content
+  theta_role: answer_key
 - id: solve.instance_bound_h
   title: The ceiling on one request's brute-force search, on the build machine
   stage: solve
@@ -10592,7 +10592,7 @@ rules:
     date: '2026-10-20'
     decision: '0018'
   history: []
-  theta_role: world_content
+  theta_role: answer_key
 - id: strength.supply_days
   title: Days of its own stock a supplier delivers in a day's turnover
   stage: strength

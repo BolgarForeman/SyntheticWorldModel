@@ -13,6 +13,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 from swm.rules.registry import (
+    OUTSIDE_THETA,
     Flattened,
     Registry,
     Relaxed,
@@ -69,7 +70,7 @@ def theta_list(registry: Registry) -> tuple[Entry, ...]:
     entries += [
         _from_rule(rule)
         for rule in registry.rules
-        if rule.theta_role != ThetaRole.WORLD_CONTENT and rule.id not in covered
+        if rule.theta_role not in OUTSIDE_THETA and rule.id not in covered
     ]
     order = {role: i for i, role in enumerate((*TRUTH_SUB_TYPES, ThetaRole.CONSTRUCTION))}
     return tuple(sorted(entries, key=lambda e: (order[e.sub_type], e.theta_id)))
@@ -132,7 +133,18 @@ def theta_text(registry: Registry, relaxed_limits: Iterable[str] = ()) -> str:
     objectives = [o for o in registry.objectives if not o.retired]
     lines += ["", f"== objectives, outside Θ ({len(objectives)}) =="]
     lines += [f"- {o.name}: {o.description}" for o in objectives]
+    settings = [r for r in registry.rules if r.theta_role == ThetaRole.ANSWER_KEY]
+    lines += ["", f"== answer-key settings, outside Θ ({len(settings)}) =="]
+    lines += [
+        f"- {r.id}: {r.title}: {_setting(r.value)} {r.units or ''}".rstrip() for r in settings
+    ]
     return "\n".join(lines) + "\n"
+
+
+def _setting(value: object) -> str:
+    if isinstance(value, list | tuple):
+        return ", ".join(f"{v:g}" if isinstance(v, float) else str(v) for v in value)
+    return f"{value:g}" if isinstance(value, float) else str(value)
 
 
 def _section(title: str, entries: list[Entry], relaxed: frozenset[str]) -> list[str]:

@@ -17,6 +17,8 @@ MOST_CONNECTIONS = "most connections first"
 BIGGEST = "biggest first"
 NEAREST_SUPPLIER = "nearest supplier"
 RULES_OF_THUMB = (MOST_CONNECTIONS, BIGGEST, NEAREST_SUPPLIER)
+BIGGEST_BASIS = "share of its layer's total in the same unit"
+"""How biggest first ranks, as the key states it (WO-10a answers, 2)."""
 
 CAPACITY_ATTRIBUTES = ("capacity_mw", "capacity_mva", "capacity_m3_per_day", "storage_m3")
 """CHOICE: the node attributes that carry capacity, each in its own unit. An element's share is

@@ -2,7 +2,7 @@ recipe_version: 4
 root_seed: 91577
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: 429094490620a2a7435f2d1bbaf6a9fb234cde36234e71cef81e075c0c78cf73
+  registry_sha256: c6b08b07ba1f3ae37b580b4b97b78779604b10f4747a7b76c85d78f658ccdbae
   overrides: {}
   relaxed_limits: []
   out_of_range: []

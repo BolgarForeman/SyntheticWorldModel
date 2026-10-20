@@ -130,9 +130,9 @@ def test_every_rule_is_classified() -> None:
     counts = classification_counts(RULES)
     assert sum(counts.values()) == len(RULES.rules)
     assert counts == {"construction": 169, "dynamics": 115, "stopping": 1, "analysis": 0,
-                      "world_content": 92}  # fmt: skip
+                      "world_content": 90, "answer_key": 2}  # fmt: skip
     for rule in RULES.rules:
-        if rule.theta_role == ThetaRole.WORLD_CONTENT:
+        if rule.theta_role in (ThetaRole.WORLD_CONTENT, ThetaRole.ANSWER_KEY):
             assert rule.theta_domain is None
         else:
             assert rule.theta_domain == ThetaDomain.TRUTH
@@ -285,3 +285,14 @@ def test_an_override_outside_a_ruled_range_is_noted_but_allowed() -> None:
         {"modeling_rules": {"overrides": {"repair.manual_switching_h": 2.0}}}
     )
     assert resolve(inside).recipe.modeling_rules.out_of_range == ()
+
+
+def test_the_answer_key_settings_sit_outside_theta_with_the_objectives() -> None:
+    settings = [r for r in RULES.rules if r.theta_role == ThetaRole.ANSWER_KEY]
+    assert [r.id for r in settings] == ["solve.spread_bands_pct", "solve.instance_bound_h"]
+    assert all(r.theta_domain is None and r.theta_symbol is None for r in settings)
+    assert not {e.theta_id for e in theta_list(RULES)} & {r.id for r in settings}
+    text = theta_text(RULES)
+    _, outside = text.split("== answer-key settings, outside Θ (2) ==")
+    assert "- solve.spread_bands_pct:" in outside
+    assert "- solve.instance_bound_h:" in outside

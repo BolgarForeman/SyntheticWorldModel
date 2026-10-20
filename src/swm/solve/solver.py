@@ -33,6 +33,7 @@ from swm.solve.restorative import plan_count, plan_text, plans, ranked_plan, rep
 from swm.solve.runner import Plan, Runner, with_node
 from swm.solve.thumbs import (
     BIGGEST,
+    BIGGEST_BASIS,
     MOST_CONNECTIONS,
     NEAREST_SUPPLIER,
     capacity_shares,
@@ -324,6 +325,8 @@ def _key(
     for rule, per_weighting in thumbs.items():
         ranking, plan = per_weighting[column]
         row: dict[str, object] = {"rule": rule}
+        if rule == BIGGEST:
+            row["basis"] = BIGGEST_BASIS
         if ranking:
             row["ranking"] = list(ranking)
         if plan is None:

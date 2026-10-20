@@ -32,3 +32,12 @@
   - the objective "acceptability threshold" is retired, its text moved to its history (Q11).
 - **The engine** takes a crew plan as its crew policy, beside the default order (Work Order 10, C2). With the default order it is unchanged: every reference run and the hand-trace test are byte-identical. The three ruled dynamics rules are now checked when a run starts (C4).
 - **Scenario 7** has 24 plans. The optimum is 30.75 weighted service-hours (Lifeline), tied four ways; the default crew order scores 52.25.
+
+## PR 26 answers (WO-10a answers; design side, within the rulings)
+
+- **No action for the restorative measure** is the default crew order, as the pilot spec's reference runs give it.
+- **Biggest first** ranks by each element's share of its layer's total in the same unit, with no conversion between units. The key states the basis.
+- **The nearest-supplier copy** is as built: only couplings not already among the nearest move, each to the next nearest unused eligible supplier, keeping κ and running on no line.
+- **A registry role for answer-key settings.** `theta_role: answer_key` marks rules that say how keys are found and reported. They sit outside Θ, like the objectives, and `swm rules --theta` lists them beside the objectives. The spread bands and the instance bound take it.
+- **The stamp.** The key's `assumes` value no longer repeats its own label.
+- **The repair-state departure** is fixed in its own pull request, `wo10f/repair-state`, before PR 10b.

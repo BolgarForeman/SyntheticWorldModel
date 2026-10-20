@@ -82,6 +82,13 @@ class ThetaRole(StrEnum):
     STOPPING = "stopping"
     ANALYSIS = "analysis"
     WORLD_CONTENT = "world_content"
+    ANSWER_KEY = "answer_key"
+    """How answer keys are found and reported: outside Θ, like the objectives (WO-10a answers,
+    4)."""
+
+
+OUTSIDE_THETA = frozenset({ThetaRole.WORLD_CONTENT, ThetaRole.ANSWER_KEY})
+"""Roles that are not Theta entries: they carry no domain and no symbol."""
 
 
 class ThetaDomain(StrEnum):
@@ -225,10 +232,11 @@ class Rule(_Strict):
 
     @model_validator(mode="after")
     def _theta(self) -> Self:
-        content = self.theta_role == ThetaRole.WORLD_CONTENT
-        if content != (self.theta_domain is None) or content != (self.theta_symbol is None):
+        outside = self.theta_role in OUTSIDE_THETA
+        if outside != (self.theta_domain is None) or outside != (self.theta_symbol is None):
             raise ValueError(
-                f"{self.id}: a Theta entry needs a domain and a symbol; world content has none"
+                f"{self.id}: a Theta entry needs a domain and a symbol; world content and "
+                "answer-key settings have none"
             )
         return self
 
@@ -267,8 +275,8 @@ class ThetaEntry(_Strict):
 
     @model_validator(mode="after")
     def _a_theta_sub_type(self) -> Self:
-        if self.sub_type == ThetaRole.WORLD_CONTENT:
-            raise ValueError(f"{self.theta_id}: world content is not a Theta entry")
+        if self.sub_type in OUTSIDE_THETA:
+            raise ValueError(f"{self.theta_id}: {self.sub_type} is not a Theta entry")
         return self
 
 

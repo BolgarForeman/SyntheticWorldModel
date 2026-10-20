@@ -93,7 +93,7 @@ def weights_text(request: SolvedRequest) -> str:
 
 
 def stamp(request: SolvedRequest, recipe_sha256: str) -> str:
-    """Return the key's stamp: "assumes:" and every field the key is valid for.
+    """Return the key's stamp: every field the key is valid for (the key names it ``assumes``).
 
     Parameters
     ----------
@@ -110,7 +110,7 @@ def stamp(request: SolvedRequest, recipe_sha256: str) -> str:
     Spec: structure v0.17 §5 (the stamp); Work Order 10, B3.
     """
     return (
-        f"assumes: {request.member_class}; {request.model}; {request.objective}; "
+        f"{request.member_class}; {request.model}; {request.objective}; "
         f"service weights {weights_text(request)}; budget {budget_text(request)}; "
         f"window {request.window_h} h; {scenarios_text(request)}; "
         f"resolved recipe sha256 {recipe_sha256}"
