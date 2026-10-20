@@ -83,12 +83,9 @@ class OsmData:
     nodes: tuple[OsmNode, ...]
     ways: tuple[OsmWay, ...]
     elements: tuple[OsmElement, ...]
-
-    def bounds(self) -> tuple[float, float, float, float]:
-        """Return (min lon, min lat, max lon, max lat) over every node."""
-        lons = [n.location[0] for n in self.nodes]
-        lats = [n.location[1] for n in self.nodes]
-        return min(lons), min(lats), max(lons), max(lats)
+    map_area: tuple[float, float, float, float]
+    """(west, south, east, north): the area the extract says it covers, the world's whole map
+    area, never the extent of what was emitted (spec v0.15 §4.6)."""
 
 
 @dataclass
@@ -138,7 +135,8 @@ def osm_data(world: ObservedWorld) -> OsmData:
         tags = {"name": town.name, "place": "town"}
         osm_id = builder.node(town.centre, tags)
         builder.elements.append(OsmElement(f"town-{town.town_id}", "town", node=osm_id))
-    return OsmData(tuple(builder.nodes), tuple(builder.ways), tuple(builder.elements))
+    return OsmData(tuple(builder.nodes), tuple(builder.ways), tuple(builder.elements),
+                   world.map_area)  # fmt: skip
 
 
 def _carried(world: ObservedWorld, node: ObservedNode) -> bool:

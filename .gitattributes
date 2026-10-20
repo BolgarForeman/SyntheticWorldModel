@@ -14,3 +14,7 @@
 # spreadsheets): stored byte for byte.
 tests/golden/pilot_build/** binary
 tests/golden/pilot_build/SHA256SUMS text eol=lf
+tests/golden/pilot_hidden_telecom_build/** binary
+tests/golden/pilot_hidden_telecom_build/SHA256SUMS text eol=lf
+tests/golden/pilot_power_nodes_only_build/** binary
+tests/golden/pilot_power_nodes_only_build/SHA256SUMS text eol=lf

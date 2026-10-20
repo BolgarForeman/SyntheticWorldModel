@@ -37,3 +37,25 @@ This matches the design side's recomputed trace on every point. Rule card 10's d
 ## Teaching text approved (REVIEW_LOG.md)
 
 Foreman approved all twelve rule cards, the field manual and the debrief on 2026-10-19. The game prints them without DRAFT marks. Card 2's floor line still carries a CONFIRM marker; the engine's answer is reported for a ruling, and the card is unchanged.
+
+## Hidden couplings in the truth manifest (WO-09b answers, review)
+
+**Context.** Work Order 9, B3 asks the manifest to list a hidden layer's couplings under hidden couplings. The manifest listed only couplings that were not switched on.
+
+**Decision (accepted as built; a `CHOICE:` in `swm/manifest/truth.py`).**
+- A coupling is listed as hidden when it is switched off, or when either end's layer is hidden.
+- Each row keeps its `switched_on` flag, so the two kinds stay distinct.
+- A new `withheld_links` key lists the links that nodes-only sources withhold.
+
+**Effect.** The change touches the manifest only; no world changes. The pilot hides no layer, so its hidden couplings are unchanged. Its manifest gains `withheld_links`, listing its 6 nodes-only fuel and healthcare links.
+
+## The area a file says it covers (WO-09b answers, answer 2; structure v0.15 §4.6)
+
+**Context.** The OpenStreetMap extract's bounds and every Overpass query's search area were the extent of what was emitted. Hiding telecom therefore shrank the box, which hinted at where the hidden objects were not.
+
+**Decision (option A, ruled by Foreman 2026-10-19).**
+- **Fixed by the terrain, never by what is emitted.** The `.osm` `<bounds>`, the `.pbf` header box and every Overpass search area are the world's whole map area: the smallest latitude and longitude box holding the terrain grid's four corners, at 7 decimals.
+- **Format-defined boxes are unchanged.** A shapefile's header box and an Overpass element's own `bounds` stay the extent of what that file or element holds, as the real formats define them.
+- **Alternatives recorded:** the island's land plus a margin; the extent of what was emitted, which was the earlier behaviour.
+
+**Effect.** The pilot's bounds and query areas change once, and nothing in the world moves. Hiding a layer or withholding links now moves no other file's stated area.

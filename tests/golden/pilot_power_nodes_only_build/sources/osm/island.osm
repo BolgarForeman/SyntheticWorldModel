@@ -1,0 +1,327 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="swm">
+  <bounds minlat="-49.0304644" minlon="-123.6274826" maxlat="-48.7224721" maxlon="-123.1605361"/>
+  <node id="900000000000" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8607984" lon="-123.3088206">
+    <tag k="industrial" v="oil"/>
+    <tag k="landuse" v="industrial"/>
+    <tag k="name" v="Coribrook Fuel Terminal"/>
+  </node>
+  <node id="900000000001" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8740026" lon="-123.3162569"/>
+  <node id="900000000002" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8740130" lon="-123.3124342"/>
+  <node id="900000000003" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8715033" lon="-123.3124186"/>
+  <node id="900000000004" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8714929" lon="-123.3162411"/>
+  <node id="900000000005" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8727530" lon="-123.3143377"/>
+  <node id="900000000006" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8559555" lon="-123.3287438">
+    <tag k="amenity" v="fuel"/>
+    <tag k="fuel:HGV_diesel" v="yes"/>
+    <tag k="name" v="Coribrook Fuel Depot"/>
+  </node>
+  <node id="900000000007" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8828562" lon="-123.5031488">
+    <tag k="amenity" v="fuel"/>
+    <tag k="fuel:HGV_diesel" v="yes"/>
+    <tag k="name" v="Selimere Fuel Depot"/>
+  </node>
+  <node id="900000000008" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8556880" lon="-123.3445137"/>
+  <node id="900000000009" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8556955" lon="-123.3419927"/>
+  <node id="900000000010" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8537445" lon="-123.3419794"/>
+  <node id="900000000011" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8537370" lon="-123.3445003"/>
+  <node id="900000000012" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8547163" lon="-123.3432465"/>
+  <node id="900000000013" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8825414" lon="-123.5059856"/>
+  <node id="900000000014" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8825504" lon="-123.5039355"/>
+  <node id="900000000015" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8807614" lon="-123.5039175"/>
+  <node id="900000000016" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8807524" lon="-123.5059676"/>
+  <node id="900000000017" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8816514" lon="-123.5049516"/>
+  <node id="900000000018" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8029087" lon="-123.4425526">
+    <tag k="amenity" v="clinic"/>
+    <tag k="beds" v="8"/>
+    <tag k="healthcare" v="clinic"/>
+    <tag k="name" v="Selimere Clinic"/>
+  </node>
+  <node id="900000000019" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8403639" lon="-123.3395218">
+    <tag k="healthcare" v="blood_bank"/>
+    <tag k="name" v="Coribrook Blood Bank"/>
+  </node>
+  <node id="900000000020" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8622703" lon="-123.3156745"/>
+  <node id="900000000021" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8622974" lon="-123.3056131"/>
+  <node id="900000000022" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8569227" lon="-123.3055804"/>
+  <node id="900000000023" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8568956" lon="-123.3156407"/>
+  <node id="900000000024" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8595966" lon="-123.3106272"/>
+  <node id="900000000025" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8708480" lon="-123.4077154"/>
+  <node id="900000000026" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8708540" lon="-123.4060098"/>
+  <node id="900000000027" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8692915" lon="-123.4059971"/>
+  <node id="900000000028" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8692855" lon="-123.4077027"/>
+  <node id="900000000029" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8700697" lon="-123.4068562"/>
+  <node id="900000000030" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8815678" lon="-123.3019974"/>
+  <node id="900000000031" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8815695" lon="-123.3013808"/>
+  <node id="900000000032" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8807629" lon="-123.3013759"/>
+  <node id="900000000033" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8807613" lon="-123.3019926"/>
+  <node id="900000000034" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8811654" lon="-123.3016867"/>
+  <node id="900000000035" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8725228" lon="-123.4833651"/>
+  <node id="900000000036" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8725252" lon="-123.4828060"/>
+  <node id="900000000037" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8718161" lon="-123.4827991"/>
+  <node id="900000000038" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8718138" lon="-123.4833583"/>
+  <node id="900000000039" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8721695" lon="-123.4830821"/>
+  <node id="900000000040" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8392189" lon="-123.3213810">
+    <tag k="name" v="Coribrook Telephone Exchange"/>
+    <tag k="operator" v="SWM Telecom A"/>
+    <tag k="telecom" v="exchange"/>
+  </node>
+  <node id="900000000041" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.7460974" lon="-123.5687505">
+    <tag k="man_made" v="mast"/>
+    <tag k="name" v="Selimere Mast"/>
+    <tag k="operator" v="SWM Telecom A"/>
+    <tag k="tower:type" v="communication"/>
+  </node>
+  <node id="900000000042" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.7750947" lon="-123.5111260">
+    <tag k="man_made" v="mast"/>
+    <tag k="operator" v="SWM Telecom A"/>
+    <tag k="tower:type" v="communication"/>
+  </node>
+  <node id="900000000043" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8481931" lon="-123.4919196">
+    <tag k="man_made" v="mast"/>
+    <tag k="name" v="Selimere Mast"/>
+    <tag k="operator" v="SWM Telecom A"/>
+    <tag k="tower:type" v="communication"/>
+  </node>
+  <node id="900000000044" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8319535" lon="-123.3764524"/>
+  <node id="900000000045" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8320158" lon="-123.3568692"/>
+  <node id="900000000046" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8150928" lon="-123.3567491"/>
+  <node id="900000000047" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8150305" lon="-123.3763256"/>
+  <node id="900000000048" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8235236" lon="-123.3665991"/>
+  <node id="900000000049" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8277385" lon="-123.3715258"/>
+  <node id="900000000050" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8277697" lon="-123.3617342"/>
+  <node id="900000000051" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8193082" lon="-123.3616741"/>
+  <node id="900000000052" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8192770" lon="-123.3714624"/>
+  <node id="900000000053" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8518106" lon="-123.3380646"/>
+  <node id="900000000054" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8519032" lon="-123.3048591"/>
+  <node id="900000000055" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8314126" lon="-123.3047348"/>
+  <node id="900000000056" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8313200" lon="-123.3379267"/>
+  <node id="900000000057" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8416128" lon="-123.3213963"/>
+  <node id="900000000058" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8581259" lon="-123.3995035">
+    <tag k="industrial" v="logistics"/>
+    <tag k="landuse" v="industrial"/>
+    <tag k="name" v="Coribrook Freight Yard"/>
+  </node>
+  <node id="900000000059" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8745480" lon="-123.4867342">
+    <tag k="man_made" v="bridge"/>
+    <tag k="name" v="Selimere Bridge"/>
+  </node>
+  <node id="900000000060" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8331662" lon="-123.3449124"/>
+  <node id="900000000061" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8288243" lon="-123.4502357"/>
+  <node id="900000000062" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8289221" lon="-123.4244492"/>
+  <node id="900000000063" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8225161" lon="-123.4243951"/>
+  <node id="900000000064" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8224183" lon="-123.4501783"/>
+  <node id="900000000065" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8256709" lon="-123.4373146"/>
+  <node id="900000000066" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8199189" lon="-123.4278478"/>
+  <node id="900000000067" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8199297" lon="-123.4249300"/>
+  <node id="900000000068" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8171414" lon="-123.4249064"/>
+  <node id="900000000069" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8171306" lon="-123.4278241"/>
+  <node id="900000000070" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8185301" lon="-123.4263771"/>
+  <node id="900000000071" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8426628" lon="-123.3703656">
+    <tag k="man_made" v="pumping_station"/>
+    <tag k="name" v="Coribrook Pumping Station"/>
+    <tag k="substance" v="water"/>
+  </node>
+  <node id="900000000072" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8713773" lon="-123.3742064">
+    <tag k="content" v="water"/>
+    <tag k="man_made" v="storage_tank"/>
+    <tag k="name" v="Coribrook Water Tank"/>
+  </node>
+  <node id="900000000073" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8500064" lon="-123.3160090">
+    <tag k="name" v="Coribrook"/>
+    <tag k="place" v="town"/>
+  </node>
+  <node id="900000000074" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.8768558" lon="-123.5067180">
+    <tag k="name" v="Selimere"/>
+    <tag k="place" v="town"/>
+  </node>
+  <node id="900000000075" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1" lat="-48.9033340" lon="-123.4724887">
+    <tag k="name" v="Peliwyn Bay"/>
+    <tag k="place" v="town"/>
+  </node>
+  <way id="900000000000" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000001"/>
+    <nd ref="900000000002"/>
+    <nd ref="900000000003"/>
+    <nd ref="900000000004"/>
+    <nd ref="900000000001"/>
+    <tag k="industrial" v="oil"/>
+    <tag k="landuse" v="industrial"/>
+    <tag k="name" v="Coribrook Oil Terminal"/>
+  </way>
+  <way id="900000000001" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000008"/>
+    <nd ref="900000000009"/>
+    <nd ref="900000000010"/>
+    <nd ref="900000000011"/>
+    <nd ref="900000000008"/>
+    <tag k="amenity" v="hospital"/>
+    <tag k="beds" v="1964"/>
+    <tag k="healthcare" v="hospital"/>
+    <tag k="name" v="Coribrook Hospital"/>
+  </way>
+  <way id="900000000002" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000013"/>
+    <nd ref="900000000014"/>
+    <nd ref="900000000015"/>
+    <nd ref="900000000016"/>
+    <nd ref="900000000013"/>
+    <tag k="amenity" v="hospital"/>
+    <tag k="beds" v="407"/>
+    <tag k="healthcare" v="hospital"/>
+    <tag k="name" v="Selimere Hospital"/>
+  </way>
+  <way id="900000000003" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000020"/>
+    <nd ref="900000000021"/>
+    <nd ref="900000000022"/>
+    <nd ref="900000000023"/>
+    <nd ref="900000000020"/>
+    <tag k="name" v="Coribrook Power Station"/>
+    <tag k="plant:method" v="combustion"/>
+    <tag k="plant:output:electricity" v="52.4 MW"/>
+    <tag k="plant:source" v="gas"/>
+    <tag k="power" v="plant"/>
+  </way>
+  <way id="900000000004" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000025"/>
+    <nd ref="900000000026"/>
+    <nd ref="900000000027"/>
+    <nd ref="900000000028"/>
+    <nd ref="900000000025"/>
+    <tag k="name" v="Peliwyn Bay Substation"/>
+    <tag k="power" v="substation"/>
+    <tag k="substation" v="transmission"/>
+    <tag k="voltage" v="161000"/>
+  </way>
+  <way id="900000000005" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000030"/>
+    <nd ref="900000000031"/>
+    <nd ref="900000000032"/>
+    <nd ref="900000000033"/>
+    <nd ref="900000000030"/>
+    <tag k="name" v="Coribrook Substation"/>
+    <tag k="power" v="substation"/>
+    <tag k="substation" v="distribution"/>
+    <tag k="voltage" v="22800"/>
+  </way>
+  <way id="900000000006" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000035"/>
+    <nd ref="900000000036"/>
+    <nd ref="900000000037"/>
+    <nd ref="900000000038"/>
+    <nd ref="900000000035"/>
+    <tag k="name" v="Selimere Substation"/>
+    <tag k="power" v="substation"/>
+    <tag k="substation" v="distribution"/>
+    <tag k="voltage" v="22800"/>
+  </way>
+  <way id="900000000007" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000040"/>
+    <nd ref="900000000041"/>
+    <tag k="communication" v="line"/>
+  </way>
+  <way id="900000000008" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000040"/>
+    <nd ref="900000000042"/>
+    <tag k="communication" v="line"/>
+  </way>
+  <way id="900000000009" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000040"/>
+    <nd ref="900000000043"/>
+    <tag k="communication" v="line"/>
+  </way>
+  <way id="900000000010" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000044"/>
+    <nd ref="900000000045"/>
+    <nd ref="900000000046"/>
+    <nd ref="900000000047"/>
+    <nd ref="900000000044"/>
+    <tag k="landuse" v="harbour"/>
+    <tag k="name" v="Coribrook Port"/>
+  </way>
+  <way id="900000000011" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000049"/>
+    <nd ref="900000000050"/>
+    <nd ref="900000000051"/>
+    <nd ref="900000000052"/>
+    <nd ref="900000000049"/>
+    <tag k="industrial" v="port"/>
+    <tag k="landuse" v="industrial"/>
+  </way>
+  <way id="900000000012" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000053"/>
+    <nd ref="900000000054"/>
+    <nd ref="900000000055"/>
+    <nd ref="900000000056"/>
+    <nd ref="900000000053"/>
+    <tag k="aeroway" v="aerodrome"/>
+    <tag k="name" v="Coribrook Airport"/>
+  </way>
+  <way id="900000000013" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000059"/>
+    <nd ref="900000000057"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="900000000014" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000059"/>
+    <nd ref="900000000058"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="900000000015" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000048"/>
+    <nd ref="900000000060"/>
+    <nd ref="900000000057"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="900000000016" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000048"/>
+    <nd ref="900000000058"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="900000000017" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000057"/>
+    <nd ref="900000000058"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="900000000018" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000061"/>
+    <nd ref="900000000062"/>
+    <nd ref="900000000063"/>
+    <nd ref="900000000064"/>
+    <nd ref="900000000061"/>
+    <tag k="name" v="Selimere Reservoir"/>
+    <tag k="natural" v="water"/>
+    <tag k="water" v="reservoir"/>
+  </way>
+  <way id="900000000019" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000066"/>
+    <nd ref="900000000067"/>
+    <nd ref="900000000068"/>
+    <nd ref="900000000069"/>
+    <nd ref="900000000066"/>
+    <tag k="man_made" v="water_works"/>
+    <tag k="name" v="Selimere Water Works"/>
+  </way>
+  <way id="900000000020" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000065"/>
+    <nd ref="900000000070"/>
+    <tag k="location" v="underground"/>
+    <tag k="man_made" v="pipeline"/>
+    <tag k="substance" v="water"/>
+  </way>
+  <way id="900000000021" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000070"/>
+    <nd ref="900000000071"/>
+    <tag k="location" v="underground"/>
+    <tag k="man_made" v="pipeline"/>
+    <tag k="substance" v="water"/>
+  </way>
+  <way id="900000000022" version="1" timestamp="2026-01-01T00:00:00Z" uid="1" user="swm" changeset="1">
+    <nd ref="900000000071"/>
+    <nd ref="900000000072"/>
+    <tag k="location" v="underground"/>
+    <tag k="man_made" v="pipeline"/>
+    <tag k="substance" v="water"/>
+  </way>
+</osm>

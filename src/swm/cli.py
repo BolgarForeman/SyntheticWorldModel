@@ -35,6 +35,7 @@ from swm.recipe.io import (
     write_stream_record,
 )
 from swm.recipe.resolve import Resolution, resolve
+from swm.recipe.schema import RECORDED_NOT_APPLIED, errors_above_zero
 from swm.rng import stream_record
 from swm.rules.page import rules_page_html
 from swm.rules.registry import Registry, load_registry
@@ -589,7 +590,15 @@ def _observed(resolution: Resolution, built: _Built) -> ObservedWorld:
                           recipe.root_seed)  # fmt: skip
 
 
+def _warn_errors_not_applied(resolution: Resolution) -> None:
+    """Print one warning naming every source whose error settings Phase 1 does not apply (C2)."""
+    sources = errors_above_zero(resolution.recipe.errors)
+    if sources:
+        sys.stderr.write(f"warning: {RECORDED_NOT_APPLIED}: {', '.join(sources)}\n")
+
+
 def _emit_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
+    _warn_errors_not_applied(resolution)
     built = _built(resolution)
     _write_sources(emit_sources(_observed(resolution, built)), Path(arguments.out_dir))
 
@@ -655,6 +664,7 @@ def _write_trace_pack(
 def _build_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
     """Write the world's full tree: resolved recipe, sources, truth and trace pack (E1)."""
     out_dir = Path(arguments.out_dir)
+    _warn_errors_not_applied(resolution)
     built = _built(resolution)
     write_resolved_recipe(resolution.recipe, out_dir)
     observed = _observed(resolution, built)

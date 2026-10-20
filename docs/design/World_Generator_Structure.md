@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.14 · 2026-10-19 · companion to the World Generator Interface mockup v0.5 and recipe schema v3 · supersedes v0.13*
+*v0.15 · 2026-10-19 · companion to the World Generator Interface mockup v0.5 and recipe schema v3 · supersedes v0.14*
 
 ## 1. What this is
 
@@ -539,6 +539,7 @@ Where a class has a telecom tolerance row, the tolerance acts first: full functi
   - Overlapping assets appear in each of their sources.
   - All attributes the real source carries are emitted, scored or not (§4.7).
   - The true correspondence across sources is written to the truth manifest.
+  - **The area a file says it covers is fixed by the terrain** (ruled 2026-10-19, PR 23 answers): an OpenStreetMap extract's bounds and every Overpass query's search area are the world's whole map area, the smallest latitude and longitude box holding the terrain grid's four corners, at the file's precision. They never depend on what is emitted, hidden or switched off, so hiding a layer moves nothing in another file. A shapefile's header box and an element's own bounds are the extent of what that file or element holds, as the real formats define them.
 - **How each source is written** (ruled 2026-10-10, decision 0015; `evidence/Emission_Ruling_Sheet_v0_2.md`):
   - **OpenStreetMap in three forms, built from the same features** (corrected 2026-10-10, PR 8 answers): the canonical `.osm.pbf` extract for the island (with a plain-text `.osm` copy); Geofabrik-style free shapefiles for the classes those carry; and Overpass-style GeoJSON for each query the pipeline runs. The last two are how the pipeline ingests Taiwan today. Each source's scope decides which features it contributes, and its own error settings apply to those features in Phase 3. The manifest records which records in each form are the same element.
   - **Outlines where real mapping uses them.** Classes usually mapped as areas (plants, substations, hospitals, water works, reservoirs, ports, airports, tank farms, refineries) are closed outlines with a rectangular footprint sized by class (J); the rest are points. The true location is the outline's centre. Lines on emitted layers are ways: power lines through their tower points, pipelines, mains and communication lines.
@@ -695,6 +696,11 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.14
+
+Ruled by the author, 2026-10-19 (PR 23 answers):
+- §4.6 the area a file says it covers: an OpenStreetMap extract's bounds and every Overpass query's search area are the world's whole map area, fixed by the terrain. Alternatives recorded: the island's land plus a margin; the extent of what was emitted (the earlier behaviour, which let a hidden layer move the box).
 
 ## Changes from v0.13
 

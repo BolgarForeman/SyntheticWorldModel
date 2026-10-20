@@ -146,7 +146,7 @@ def overpass_files(data: OsmData) -> tuple[dict[str, bytes], tuple[OverpassRecor
 
 
 def _poly(data: OsmData) -> str:
-    west, south, east, north = data.bounds()
+    west, south, east, north = data.map_area
     corners = ((south, west), (north, west), (north, east), (south, east))
     return 'poly:"' + " ".join(f"{lat:.7f} {lon:.7f}" for lat, lon in corners) + '"'
 

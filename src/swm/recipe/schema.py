@@ -1096,6 +1096,40 @@ class Errors(_Section):
     )
 
 
+RECORDED_NOT_APPLIED = "error settings recorded, not applied (Phase 1: zero-error emission)"
+"""The Phase 1 notice for error settings above zero (WO-09 C2, ruled by Foreman 2026-10-11)."""
+
+
+def errors_above_zero(errors: Errors) -> tuple[Source, ...]:
+    """Return the sources whose error settings would plant an error, in source order.
+
+    CHOICE: a source's settings are above zero when any rate is above 0, its coverage is below
+    100 or its snapshot is older than 0 years; the mechanism alone plants nothing.
+
+    Parameters
+    ----------
+    errors : Errors
+        A recipe's error settings, normally resolved.
+
+    Returns
+    -------
+    tuple of Source
+        The sources whose settings Phase 1 records but does not apply.
+
+    Spec: Work Order 9, C2; structure §4.7.
+    """
+    return tuple(
+        source for source in sorted(errors.sources) if _plants_error(errors.sources[source])
+    )
+
+
+def _plants_error(settings: SourceErrors) -> bool:
+    rates = (settings.phantom_pct, settings.missing_pct, settings.merged_pct,
+             settings.location_pct, settings.attributes_pct, settings.links_pct,
+             settings.labels_pct)  # fmt: skip
+    return any(r > 0 for r in rates) or settings.coverage_pct < 100 or settings.snapshot_age_y > 0
+
+
 # --- Ensemble -------------------------------------------------------------------------------
 
 
