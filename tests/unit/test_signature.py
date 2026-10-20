@@ -14,6 +14,8 @@ from swm.stages.layers import LayersResult, signature_allows
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 C = NodeClass
+EXPECTED_VALUES = "hand_trace_"
+"""Fixtures of expected values, not recipes (the hand trace, WO-09 F1)."""
 ALL = frozenset(NodeClass)
 
 
@@ -25,7 +27,11 @@ def fixture_layers(name: str) -> LayersResult:
 
 @pytest.mark.parametrize(
     "name",
-    sorted(str(p.relative_to(FIXTURES)) for p in FIXTURES.rglob("*.yaml")),
+    sorted(
+        str(p.relative_to(FIXTURES))
+        for p in FIXTURES.rglob("*.yaml")
+        if not p.name.startswith(EXPECTED_VALUES)
+    ),
 )
 def test_no_fixture_world_builds_a_link_its_signature_forbids(name: str) -> None:
     assert link_signature_problems(fixture_layers(name)) == []

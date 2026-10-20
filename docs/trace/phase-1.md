@@ -1,6 +1,109 @@
-# Phase 1 — notes toward the TRACE entry
+# Phase 1 — TRACE entry
 
-*Notes kept as Phase 1 is built; the entry is completed when the phase closes (`v0.1.0`).*
+*Phase 1 closes on recipe schema version 3 and structure spec v0.15, as `0.1.0` (Work Order 9, G1). The `v0.1.0` tag waits for Foreman's word after PR 9c merges. The closing summary comes first. The records kept while each work order was built follow it, unchanged apart from their heading level.*
+
+## What Phase 1 built
+
+Phase 1 builds a small constructed world end to end, from one recipe and one root seed:
+- the terrain;
+- six interdependent infrastructure layers and their couplings;
+- the storm, and the engine that plays each storm out;
+- the sources, written in their real formats with zero error, beside a truth manifest and a hand-trace game.
+
+| Work order | What it built |
+|---|---|
+| 0 | The scaffold: the uv project and `swm` package, the CLI, CI on Windows and Linux, `CLAUDE.md`, the decision log and the TRACE log. |
+| 1 | The spawn tree (`stable_id`, named streams off one root seed, the stream record). Recipe schema v1: validation, resolution of defaults, canonical YAML, `swm resolve` and `swm check-recipe`. The pilot recipe and its goldens. |
+| 2 | The terrain: a spine island with elevation, coastline, drainage, land cover and towns (`swm terrain`, `swm preview-terrain`). Service weights. |
+| 3 | The layers: all six sited, classed and linked by signature on Point Nemo coordinates (EPSG:32710). `swm layers`, `swm export-gis` and `swm preview-world`. |
+| 4 | The dependency table, subtype attributes and the couplings stage (`swm couplings`, `swm preview-couplings`). Power is sized to load. |
+| 5 | The modeling rules registry (decision 0009), from which every rule is read. The requirements, buffers, strength, crews and repair stages, and the undisturbed-supply check. Recipe schema v2 (decision 0011). |
+| 6 | The storm (wind field and flood depth; decision 0012) and the scenarios (line and facility damage). Mapped power lines on terrain routes (decision 0013). |
+| 7 | The dynamics engine and `swm simulate`; the calm-world and link-signature checks; the pilot's 8 reference runs. Recipe schema v3 (decision 0014). |
+| 8 | Emission from an observed-only world into seven source formats. The truth manifest, `swm emit` and `swm build`. The pilot's whole build as goldens (decision 0015). |
+| 9 | The hand-trace pack (9a) and the trace game (9g). Two more golden worlds, the Phase 1 error-settings notice and property tests (9b). The hand-trace acceptance test and these records (9c). Decision 0017. |
+
+## How it was tested
+
+### Golden worlds
+
+Each golden world is a recipe with checked-in output and hashes. CI rebuilds each one on Windows and on Linux, and the output must match byte for byte.
+
+| Golden | Recipe | What is golden |
+|---|---|---|
+| `pilot_hand_check` | the pilot | resolved recipe, stream record, and every stage's statistics and hashes (terrain to scenarios) |
+| `pilot_reference_runs` | the pilot | the 8 storm scenarios played for 72 h: states, stocks, crews and the run record |
+| `pilot_build` | the pilot | the whole `swm build` tree: sources, truth manifest and trace pack (139 files) |
+| `pilot_board_sizes` | the pilot | the trace game's board at every print size |
+| `pilot_hidden_telecom_build` | the pilot, telecom hidden | the whole build tree |
+| `pilot_power_nodes_only_build` | the pilot, power reporting nodes only | the whole build tree |
+
+The crew, repair and storm sensitivity copies of the pilot are fixtures, not goldens. They exercise paths the pilot does not reach, such as flood damage at severity 70.
+
+### Checks, and where they ran
+
+| Check | Proven by | Result |
+|---|---|---|
+| Identity: same recipe, same bytes, every platform | every golden above, on Windows and Linux CI; `test_same_bytes_properties.py` for any seed | pass |
+| Hiding or thinning a source changes what is emitted, never what exists | `test_fixture_worlds.py`: for both fixture worlds, the stage hashes, the manifest's true world and all 8 reference runs equal the pilot's, and every differing file has a stated reason | pass |
+| No unobserved field reaches an emitted file; emission never imports the dynamics or error induction | `test_emission.py` (separation and import tests) | pass |
+| Error settings move nothing that exists | `test_error_settings_properties.py` (holds trivially in Phase 1; bites from Phase 3) | pass |
+| Error settings recorded, not applied (C2) | `test_error_settings.py`: one warning, the declared departure, the recipe note, sources byte-equal to a zero-rate build | pass |
+| Feed shares total 100% | `test_feed_mix.py`; `test_couplings_properties.py` (realised) | pass |
+| Nodes = area × density within rounding | `test_node_density_properties.py` | pass |
+| Adding a stream moves no existing stream | `test_rng_properties.py` | pass |
+| Terrain, layers and couplings invariants for any valid section | `test_terrain_properties.py`, `test_layers_properties.py`, `test_couplings_properties.py` | pass |
+| World checks: undisturbed supply, link signature, calm world, calm run | `swm check`, `test_strength.py`, `test_signature.py` and `test_dynamics.py`, on the pilot and the severity-70 copy | pass |
+| Degradation profiles v0.3 | `test_degradation_profiles.py`: one test per profile, each limit also at its relaxed value | pass |
+| The rule cards' drills | `test_trace_game.py`: each of the 12 drills is played by the engine at build | pass |
+| **Hand-trace acceptance (F0, as changed):** the design side's sealed trace of scenario 7 | `test_hand_trace.py` against `tests/fixtures/hand_trace_scenario_7.yaml`, compared exactly at the 15-minute step | pass (see below) |
+
+The hand-trace test compares every value in the trace: crew arrivals, preparation and completions; back-in-service hours; hours out for all 15 end-use nodes; the score (52.25); the named states; and the three things that did not happen.
+
+**Whole suite at close:** 1,448 tests, all passing on Windows and Linux CI (PR 9c), with 97% line coverage of `src/`.
+
+### Waiting for later phases
+
+- Realized error, uniqueness and quiet planting: Phase 3, when errors are applied.
+- "Zero error reproduces the clean emission": Phase 3.
+- Answer keys found by brute force and checked against the MIP: Phase 2.
+- Realism ranges: Phase 5.
+
+### Validation
+
+- **Face validity.** The author reviewed the terrain, layer, storm, extract and trace-pack previews (figures below).
+- **Teaching text.** Foreman approved the rule cards, field manual and debrief (`docs/design/trace_game/REVIEW_LOG.md`).
+- **Not yet done.** Expert review and the docking reimplementation.
+
+## Departures from the design
+
+Each departure is recorded with its reason in the decision named, or in the records below.
+
+- **Error settings are recorded, not applied.** Phase 1 emits every source with zero error.
+  - A recipe's error settings are kept in the resolved recipe, which notes beside its errors section that they are not applied.
+  - `swm build` and `swm emit` print a warning naming each source above zero.
+  - The manifest declares the departure (WO-09 C2, ruled 2026-10-11; decision 0017).
+- **The manifest's declared departures** (decision 0015):
+  - the register's coordinates stand in the address column;
+  - names are in English only;
+  - footprints are rectangles;
+  - PBF blobs are uncompressed;
+  - register coordinates are at 6 decimals;
+  - WRI columns the world does not hold are left empty;
+  - three Overpass queries are inferred from landed tags;
+  - the register's file is named in ASCII;
+  - there is no source overlap until Phase 3.
+- **Telecom fallback and travel.** The engine's telecom fallback and travel legs went beyond what spec v0.12 §4.5 said. Both were reported in PR 19. Travel along a line was then ruled (decision 0017), and v0.14 records the rest.
+- **The hand-trace acceptance test.** Work Order 9 named Foreman's son's play-test as the test. Foreman ruled the play-test a nice-to-have; the test is the design side's sealed trace of scenario 7 against the engine (WO-09c answers, F0; decision 0017).
+- **The engine's calibration and timing:**
+  - the line-loss calibration targets the expected share, not one realized draw (PR 7b answers);
+  - Degradation Profiles v0.3 corrects v0.2 to the world as built;
+  - a fuel delivery waits for the depot's settled state within its step (decision 0014).
+- **The stated area of an extract** is the world's whole map area, not the extent of what was emitted (spec v0.15 §4.6; decision 0017).
+- **Rule card 2's floor line** still carries a CONFIRM marker. When a generator's fuel runs out, the engine trips, rather than taking what arrives. This is reported for a ruling, and the card is unchanged.
+- **Placeholders.** Values marked `placeholder (open decision: …)` in the registry, among them the Taiwan-scale counts, stand until they are ruled. The Modeling Rules page (`swm rules`) lists every one.
+
+# Records kept while Phase 1 was built
 
 ## The dynamics engine (Work Order 7, PRs 7a and 7b; decision 0014)
 
@@ -142,3 +245,28 @@ Where the engine departs from structure v0.12 §4.5 (reported, not changed):
 **Golden changes.** Scenario 7's run changes: crew 2's second walk on TEL-L0002 takes 1.0 h instead of 6.7 h, and everything after it moves 5.725 h earlier. The other seven runs change only in the registry stamp.
 
 **Teaching text.** The rule cards, field manual and debrief are approved and print without DRAFT marks. Card 2's floor line is reported against the engine: when the generator's fuel runs out, the engine trips, rather than taking what arrives.
+
+## Golden worlds, error settings and property tests (Work Order 9, PR 9b)
+
+**What was built.**
+- Two fixture worlds, each the pilot with one change: telecom hidden, and power reporting nodes only. Both have golden builds.
+- The manifest lists a hidden layer's couplings as hidden and records the links nodes-only sources withhold.
+- The Phase 1 error-settings notice (C2).
+- Property tests for the error seed, nodes = area × density, and same bytes for any seed.
+- Under spec v0.15 §4.6, every extract's bounds and Overpass search area are the world's whole map area.
+
+**How it was tested.** The fixture worlds equal the pilot in every stage hash, the manifest's true world and all 8 reference runs. Every file that differs from the pilot's goldens is listed with its reason, and the bounds and search areas equal the pilot's.
+
+**Golden changes.**
+- The pilot's resolved recipes gain the C2 note, and its manifest gains `withheld_links` and the C2 departure.
+- The pilot's bounds and query areas changed once, to the map area. Nothing in the world moved.
+
+## Hand-trace values and the Phase 1 records (Work Order 9, PR 9c)
+
+**What was built.**
+- `test_hand_trace.py` checks the engine's scenario 7 run against the design side's hand-written fixture, at the 15-minute step and exactly.
+- An event's step hour is the first step at or after it, where the engine applies its effect.
+
+**How it was tested.**
+- All 12 comparisons pass with the fixture as sent. It was not edited or regenerated.
+- No golden changed.

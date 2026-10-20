@@ -4,8 +4,15 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ## Unreleased
 
+## 0.1.0 — Phase 1
+
+Phase 1 closes on **recipe schema version 3** and **structure spec v0.15**. Recipes of versions 1 and 2 are migrated on loading. The `v0.1.0` tag is set on `main` on Foreman's word, after PR 9c merges.
+- **What it is:** a small constructed world, built end to end from one recipe and one root seed, with zero-error sources, a truth manifest, 8 reference runs and a hand-trace game.
+- **Records:** what was built, how it was tested and every departure are in `docs/trace/phase-1.md`. The closing rulings are in decision 0017.
+
 ### Added
 
+- The hand-trace acceptance test (Work Order 9, PR 9c; F0 as changed by Foreman). `tests/unit/test_hand_trace.py` checks the engine's scenario 7 run against the design side's hand-written `tests/fixtures/hand_trace_scenario_7.yaml`, at the 15-minute step and exactly. The Phase 1 TRACE entry and decision 0017 are completed.
 - Golden worlds, error settings and property tests (Work Order 9, PR 9b):
   - **Two fixture worlds,** each the pilot with one change: `pilot_hidden_telecom` (telecom hidden) and `pilot_power_nodes_only` (power reports nodes only). Their full `swm build` output is checked in with hashes. Tests prove that every stage hash, the manifest's true world and all 8 reference runs equal the pilot's, and that every file that differs from the pilot's golden build has a stated reason.
   - **The manifest's hidden section** counts a coupling as hidden when either end's layer is hidden. It also lists the links that nodes-only sources withhold (`withheld_links`).
