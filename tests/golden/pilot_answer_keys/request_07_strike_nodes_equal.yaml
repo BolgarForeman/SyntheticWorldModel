@@ -1,4 +1,4 @@
-assumes: offensive; strike_nodes; unserved_demand_hours; service weights equal; budget 2 nodes struck; window 72 h; the calm world; resolved recipe sha256 35642658f6fea214226072062cf7efd3f52cd2bfca3e76feed8e32d9a9e968b7
+assumes: offensive; strike_nodes; unserved_demand_hours; service weights equal; budget 2 nodes struck; window 72 h; the calm world; resolved recipe sha256 6de24d78705c51d312db32e1d0c480f896ddad9e6610255e2125fafcf9badf2c
 status: solved
 optimum:
   objective: 988.125
