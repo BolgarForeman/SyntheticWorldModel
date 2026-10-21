@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.17 · 2026-10-20 · companion to the World Generator Interface mockup v0.5 and recipe schema v4 · supersedes v0.16*
+*v0.18 · 2026-10-21 · companion to the World Generator Interface mockup v0.5 and recipe schema v4 · supersedes v0.17*
 
 ## 1. What this is
 
@@ -637,7 +637,7 @@ No acceptability band is fixed in the key; any "within X%" summary is computed f
 **The stamp.** Every answer key is stamped "assumes:" followed by the class, model, objective, service weights, budget, window and the scenarios it was solved over (all of them, the calm world, or one named scenario), and the SHA-256 of the resolved recipe. A key is only valid against a result that was posed the same way. Swapping models means adding a request, not rebuilding the world.
 
 **The three Phase 2 models** (ruled 2026-10-20; the pilot's sizes):
-- **Defensive, protect condition and add reserve.** Up to the budget (3 or 4) spent before the storm: protect condition (cost 2; the element is undamaged in every scenario) or add a reserve (cost 1; a stock on any one inbound dependency of a node, new where none exists, covering the whole window at the node's full draw). Objective: expected weighted service-hours lost over the scenarios, equally weighted.
+- **Defensive, protect condition and add reserve.** Up to the budget (3 or 4) spent before the storm: protect condition (cost 2; the element is undamaged in every scenario) or add a reserve (cost 1; a stock on any one inbound dependency of a node whose commodity can be stored, new where none exists, covering the whole window at the node's full draw). Storable: power, water, fuel, and transport (as stockpiled supplies). Telecom cannot be stored, so a telecom dependency takes no reserve; a telecom site's battery is a reserve on its power (ruled 2026-10-21, PR 30 answers; telecom outages have their own fallback rule, §4.5). Objective: expected weighted service-hours lost over the scenarios, equally weighted.
 - **Offensive, strike nodes.** k nodes (2 or 3) struck at hour 0 on the calm world, with no storm. A struck node takes complete damage and is repaired by the crews in the default order. Lines are not targets.
 - **Restorative, sequence repair crews.** One named scenario (7 in the pilot). A plan gives each crew an ordered list of jobs; every failed element is repaired once, by one crew; both start at the base at hour 0; travel, preparation and switching follow §4.5.
 - **Informative** answer keys need the pipeline's belief and are built in Phase 4.
@@ -707,6 +707,11 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.17
+
+Ruled by the author, 2026-10-21 (PR 30 answers):
+- §5 defensive: reserves go only on dependencies whose commodity can be stored (power, water, fuel, transport as stockpiled supplies); none on telecom. Alternative recorded: reserves on every dependency, telecom included (the earlier build).
 
 ## Changes from v0.16
 
