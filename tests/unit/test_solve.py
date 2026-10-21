@@ -351,23 +351,19 @@ def test_the_golden_keys_match_their_recorded_hashes() -> None:
         assert hashlib.sha256((GOLDEN / name).read_bytes()).hexdigest() == digest, name
 
 
-def test_a_second_solve_writes_the_same_bytes(solved: Path, tmp_path: Path) -> None:
-    # The restorative requests alone: the golden comparison above already holds a second run
-    # of every key, and the offensive search is long to repeat in CI.
-    recipe = tmp_path / "restorative.yaml"
-    text = PILOT.read_text(encoding="utf-8").split("answer_key_requests:")[0]
-    requests = "".join(
-        f"  - {{model: sequence_repair_crews, member_class: restorative, scenario: 7, "
-        f"service_weights: {weights}}}\n"
-        for weights in ("lifeline", "equal")
-    )
-    recipe.write_text(text + "answer_key_requests:\n" + requests, encoding="utf-8", newline="\n")
-    assert main(["solve", str(recipe), "-o", str(tmp_path / "a")]) == 0
-    assert main(["solve", str(recipe), "-o", str(tmp_path / "b")]) == 0
-    first = sorted((tmp_path / "a" / "answer_keys").iterdir())
-    assert len(first) == 4
-    for path in first:
-        assert (tmp_path / "b" / "answer_keys" / path.name).read_bytes() == path.read_bytes()
+def test_swm_solve_of_one_search_writes_its_golden_bytes(tmp_path: Path) -> None:
+    """The restorative search through the command, end to end: its keys and answers file are
+    the golden bytes (every key's full re-solve is the slow test in ``test_answer_keys.py``)."""
+    out = tmp_path / "keys"
+    assert main(["solve", str(PILOT), "-o", str(out), "--request", str(RESTORATIVE[0])]) == 0
+    written = sorted(p.name for p in (out / "answer_keys").iterdir() if p.name != "index.yaml")
+    assert written == [
+        "request_04_sequence_repair_crews_lifeline.yaml",
+        "request_09_sequence_repair_crews_equal.yaml",
+        "search_04_sequence_repair_crews_answers.csv.bz2",
+    ]
+    for name in written:
+        assert (out / "answer_keys" / name).read_bytes() == (GOLDEN / name).read_bytes(), name
 
 
 def test_plan_text_names_a_crew_with_no_jobs() -> None:
@@ -406,10 +402,9 @@ def test_nothing_in_the_generator_imports_the_solver() -> None:
 
 
 def _inputs(rules: Any) -> Any:
-    from swm.cli import solve_inputs
+    from solve_helpers import pilot_inputs
 
-    resolution, _ = pilot()
-    return replace(solve_inputs(resolution), rules=rules)
+    return replace(pilot_inputs(), rules=rules)
 
 
 def test_a_search_projected_past_the_ceiling_stops_and_is_reported(capsys: Any) -> None:

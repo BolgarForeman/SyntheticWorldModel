@@ -18,7 +18,6 @@ Spec: structure v0.17 §5; Work Order 10, B3 and E6 (amended for every model, 20
 
 import bz2
 import csv
-import functools
 import hashlib
 import io
 from pathlib import Path
@@ -27,9 +26,8 @@ from typing import Any
 import pytest
 import yaml
 
-from swm.cli import solve_inputs
+from solve_helpers import pilot_inputs
 from swm.recipe.io import load_recipe
-from swm.recipe.resolve import resolve
 from swm.recipe.schema import StrikeNodes
 from swm.solve.measure import Range, spread
 from swm.solve.requests import Search, searches
@@ -44,9 +42,8 @@ STABLE_HASH_SAMPLE = 50
 objective, and the 50 answers whose SHA-256 of their text is smallest."""
 
 
-@functools.cache
 def inputs() -> Any:
-    return solve_inputs(resolve(load_recipe(PILOT)))
+    return pilot_inputs()
 
 
 def golden_searches() -> list[Search]:
@@ -139,6 +136,7 @@ def chosen(search: Search) -> list[str]:
     return list(picked)
 
 
+@pytest.mark.keys
 @pytest.mark.parametrize("name", sorted(SEARCHES))
 def test_chosen_answers_rescore_byte_exact_against_the_stored_scores(name: str) -> None:
     search = SEARCHES[name]

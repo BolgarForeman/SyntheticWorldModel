@@ -3,19 +3,16 @@
 Spec: structure v0.17 §5; Phase 2 rulings Q5-Q8; Work Order 10, E1-E5.
 """
 
-import functools
 import math
 from typing import Any
 
 import pytest
 
 from dynamics_helpers import RULES, TARGET, OneNode, supplier_id
-from swm.cli import solve_inputs
+from solve_helpers import pilot_inputs
 from swm.dynamics.engine import simulate
 from swm.dynamics.records import AddReserve, AddStock, Protect, RunRequest
 from swm.dynamics.world import Damage
-from swm.recipe.io import load_recipe
-from swm.recipe.resolve import resolve
 from swm.recipe.schema import Layer, NodeClass
 from swm.solve.defensive import (
     NO_ACTION,
@@ -35,12 +32,8 @@ W = Layer.WATER
 WINDOW_H = 72.0
 
 
-@functools.cache
 def inputs() -> Any:
-    from pathlib import Path
-
-    path = Path(__file__).resolve().parents[1] / "fixtures" / "pilot_hand_check.yaml"
-    return solve_inputs(resolve(load_recipe(path)))
+    return pilot_inputs()
 
 
 # --- The actions (E1, E2) -------------------------------------------------------------------

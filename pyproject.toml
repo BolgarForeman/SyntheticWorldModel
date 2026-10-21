@@ -92,6 +92,7 @@ pythonpath = ["tests"]
 addopts = ["--import-mode=importlib", "--cov=swm", "--cov-report=term-missing", "-m", "not slow"]
 markers = [
     "slow: the full answer-key re-solve; run with -m slow on any change to dynamics/, solve/ or a dynamics rule (Work Order 10, E6 as amended)",
+    "keys: the byte-exact re-score of every answer key; CI runs it as its own job, without coverage tracing",
 ]
 
 [tool.coverage.run]
