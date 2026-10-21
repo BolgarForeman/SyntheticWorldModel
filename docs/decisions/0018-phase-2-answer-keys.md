@@ -41,3 +41,15 @@
 - **A registry role for answer-key settings.** `theta_role: answer_key` marks rules that say how keys are found and reported. They sit outside Θ, like the objectives, and `swm rules --theta` lists them beside the objectives. The spread bands and the instance bound take it.
 - **The stamp.** The key's `assumes` value no longer repeats its own label.
 - **The repair-state departure** is fixed in its own pull request, `wo10f/repair-state`, before PR 10b.
+
+## PR 10b: the offensive model
+
+- **The search:** every set of k distinct nodes is struck at hour 0 on the calm world (Q3), with complete damage named explicitly and repaired by the crews in the default order (Q4; decision 0019). Lines are not targets. There are 276 sets at k = 2 and 2,024 at k = 3.
+- **The measure** mirrors: (optimum − objective) ÷ (optimum − no-strike objective). The no-strike objective is the calm world's, 0.
+- **The rules of thumb:**
+  - most connections first and biggest first strike the top k of their ranking;
+  - nearest supplier strikes the best set found on the copy, scored on the true world.
+- **Every core.** A batch of 64 runs or more is spread across every core; results come back in the order asked, so no key depends on the core count.
+- **The pilot's offensive keys (Lifeline):**
+  - **k = 2:** optimum 4,467.35, tied three ways (the tertiary hospital with the LNG terminal, the plant or the transmission substation).
+  - **k = 3:** optimum 4,690.85, tied three ways (the same, with HLT-0004).

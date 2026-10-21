@@ -124,6 +124,7 @@ BUILT_FEATURES: frozenset[str] = frozenset(
         "transfer_form:threshold",
         "emission",
         "model:sequence_repair_crews",
+        "model:strike_nodes",
         "objective:unserved_demand_hours",
         "service_weights:lifeline",
         "service_weights:equal",
@@ -131,9 +132,9 @@ BUILT_FEATURES: frozenset[str] = frozenset(
 )
 """Features the build handles today: everything Phase 1 built (Work Orders 2-9: terrain,
 layers, couplings, the unobserved quantities, crews, the storm, the exact-tier engine with the
-linear and threshold transfer forms, and emission) and the restorative answer key with its
-objective and weights (PR 26). The step transfer form is in the Phase 1 table but the engine
-refuses it, so it is not listed."""
+linear and threshold transfer forms, and emission) and the restorative and offensive answer
+keys with their objective and weights (PRs 26 and 10b). The step transfer form is in the Phase 1
+table but the engine refuses it, so it is not listed."""
 
 
 @dataclass(frozen=True)
