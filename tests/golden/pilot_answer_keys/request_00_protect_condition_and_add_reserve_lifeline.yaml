@@ -1,56 +1,40 @@
-assumes: defensive; protect_condition_and_add_reserve; unserved_demand_hours; service weights lifeline; budget 3 cost units; window 72 h; every scenario, equally weighted; resolved recipe sha256 35642658f6fea214226072062cf7efd3f52cd2bfca3e76feed8e32d9a9e968b7
+assumes: defensive; protect_condition_and_add_reserve; unserved_demand_hours; service weights lifeline; budget 3 cost units; window 72 h; every scenario, equally weighted; resolved recipe sha256 6de24d78705c51d312db32e1d0c480f896ddad9e6610255e2125fafcf9badf2c
 status: solved
 optimum:
   objective: 2.625
   answers:
   - protect SWM-TEL-L0002
   - protect SWM-TEL-L0002; reserve SWM-FUE-0001 power
-  - protect SWM-TEL-L0002; reserve SWM-FUE-0001 telecom
   - protect SWM-TEL-L0002; reserve SWM-FUE-0001 transport
   - protect SWM-TEL-L0002; reserve SWM-FUE-0002 power
   - protect SWM-TEL-L0002; reserve SWM-FUE-0003 power
-  - protect SWM-TEL-L0002; reserve SWM-FUE-0003 telecom
   - protect SWM-TEL-L0002; reserve SWM-FUE-0003 transport
   - protect SWM-TEL-L0002; reserve SWM-FUE-0004 power
-  - protect SWM-TEL-L0002; reserve SWM-FUE-0004 telecom
   - protect SWM-TEL-L0002; reserve SWM-FUE-0004 transport
   - protect SWM-TEL-L0002; reserve SWM-HLT-0001 power
-  - protect SWM-TEL-L0002; reserve SWM-HLT-0001 telecom
   - protect SWM-TEL-L0002; reserve SWM-HLT-0001 transport
   - protect SWM-TEL-L0002; reserve SWM-HLT-0001 water
   - protect SWM-TEL-L0002; reserve SWM-HLT-0002 power
-  - protect SWM-TEL-L0002; reserve SWM-HLT-0002 telecom
   - protect SWM-TEL-L0002; reserve SWM-HLT-0002 transport
   - protect SWM-TEL-L0002; reserve SWM-HLT-0002 water
   - protect SWM-TEL-L0002; reserve SWM-HLT-0003 power
-  - protect SWM-TEL-L0002; reserve SWM-HLT-0003 telecom
   - protect SWM-TEL-L0002; reserve SWM-HLT-0003 transport
   - protect SWM-TEL-L0002; reserve SWM-HLT-0003 water
   - protect SWM-TEL-L0002; reserve SWM-HLT-0004 power
-  - protect SWM-TEL-L0002; reserve SWM-HLT-0004 telecom
   - protect SWM-TEL-L0002; reserve SWM-HLT-0004 transport
   - protect SWM-TEL-L0002; reserve SWM-POW-0001 fuel
-  - protect SWM-TEL-L0002; reserve SWM-POW-0001 telecom
   - protect SWM-TEL-L0002; reserve SWM-POW-0001 water
-  - protect SWM-TEL-L0002; reserve SWM-POW-0002 telecom
-  - protect SWM-TEL-L0002; reserve SWM-POW-0003 telecom
-  - protect SWM-TEL-L0002; reserve SWM-POW-0004 telecom
   - protect SWM-TEL-L0002; reserve SWM-TEL-0001 power
   - protect SWM-TEL-L0002; reserve SWM-TEL-0002 power
   - protect SWM-TEL-L0002; reserve SWM-TEL-0003 power
   - protect SWM-TEL-L0002; reserve SWM-TEL-0004 power
   - protect SWM-TEL-L0002; reserve SWM-TRN-0001 fuel
   - protect SWM-TEL-L0002; reserve SWM-TRN-0001 power
-  - protect SWM-TEL-L0002; reserve SWM-TRN-0001 telecom
   - protect SWM-TEL-L0002; reserve SWM-TRN-0002 fuel
   - protect SWM-TEL-L0002; reserve SWM-TRN-0002 power
-  - protect SWM-TEL-L0002; reserve SWM-TRN-0002 telecom
   - protect SWM-TEL-L0002; reserve SWM-TRN-0003 fuel
-  - protect SWM-TEL-L0002; reserve SWM-TRN-0003 telecom
   - protect SWM-TEL-L0002; reserve SWM-WAT-0002 power
-  - protect SWM-TEL-L0002; reserve SWM-WAT-0002 telecom
   - protect SWM-TEL-L0002; reserve SWM-WAT-0003 power
-  - protect SWM-TEL-L0002; reserve SWM-WAT-0003 telecom
 no_action:
   answer: no action
   objective: 8.59375
@@ -59,11 +43,11 @@ measure:
   range: 5.96875
   range_is_zero: false
 spread:
-  answers: 19984
-  within_1_pct: 0.002402
-  within_5_pct: 0.002402
-  within_10_pct: 0.002402
-  mean_distance: 0.994379
+  answers: 6752
+  within_1_pct: 0.004739
+  within_5_pct: 0.004739
+  within_10_pct: 0.004739
+  mean_distance: 0.988908
 answers_file: search_00_protect_condition_and_add_reserve_answers.csv.bz2
 rules_of_thumb:
 - rule: most connections first
