@@ -30,9 +30,11 @@ from dataclasses import dataclass, field
 
 from swm.dynamics.records import (
     AddReserve,
+    AddStock,
     Completion,
     CrewEntry,
     Delivery,
+    Protect,
     Run,
     RunRequest,
 )
@@ -49,6 +51,10 @@ from swm.dynamics.world import (
 from swm.recipe.schema import Layer, NodeClass
 
 FULL = 1.0
+ADDED_STOCK = "added reserve"
+"""The kind (and rule label) of a stock an answer key's reserve creates (Work Order 10, E2)."""
+HOURS_OF_FULL_DRAW = 1.0
+"""An added stock is counted in hours of the node's full draw, so it draws one per hour."""
 
 
 def simulate(world: EngineWorld, request: RunRequest) -> Run:
@@ -127,12 +133,12 @@ class _Engine:
         self._actions()
         self.level = dict(self.capacity)
         self.by_cover: dict[tuple[str, Layer], list[Stock]] = {}
-        for stock in sorted(world.stocks, key=lambda s: (s.generator, s.stock_id)):
+        for stock in sorted(self.stocks.values(), key=lambda s: (s.generator, s.stock_id)):
             self.by_cover.setdefault((stock.node_id, stock.covers), []).append(stock)
         self.generators = {g.node_id: g for g in world.generators}
         self.run_h: dict[str, float] = {}
         self.stopped: set[str] = set()
-        protected = {a.element_id for a in request.actions if not isinstance(a, AddReserve)}
+        protected = {a.element_id for a in request.actions if isinstance(a, Protect)}
         damage = request.damage
         self.condition = {n: FULL for n in self.nodes}
         for node_id in damage.nodes:
@@ -159,7 +165,9 @@ class _Engine:
 
     def _actions(self) -> None:
         for action in self.request.actions:
-            if isinstance(action, AddReserve):
+            if isinstance(action, AddStock):
+                self._add_stock(action)
+            elif isinstance(action, AddReserve):
                 if action.stock_id not in self.stocks:
                     raise ValueError(f"add reserve: no stock {action.stock_id}")
                 stock = self.stocks[action.stock_id]
@@ -172,6 +180,21 @@ class _Engine:
                 and action.element_id not in self.request.damage.lines
             ):
                 raise ValueError(f"protect: no element {action.element_id}")
+
+    def _add_stock(self, action: AddStock) -> None:
+        """Create a new stock, in hours of full draw, where the node has none (WO 10, E2)."""
+        if action.node_id not in self.nodes:
+            raise ValueError(f"add stock: no node {action.node_id}")
+        if any(
+            s.node_id == action.node_id and s.covers == action.covers for s in self.stocks.values()
+        ):
+            raise ValueError(f"add stock: {action.node_id} already holds a {action.covers} stock")
+        stock_id = f"{action.node_id}:{ADDED_STOCK}:{action.covers}"
+        self.stocks[stock_id] = Stock(
+            stock_id, action.node_id, ADDED_STOCK, action.covers, action.hours,
+            HOURS_OF_FULL_DRAW, "none", ADDED_STOCK,
+        )  # fmt: skip
+        self.capacity[stock_id] = action.hours
 
     # --- The run ----------------------------------------------------------------------------
 

@@ -69,7 +69,8 @@ FEATURE_ARRIVALS: dict[str, Arrival] = {
     "tier:both": Arrival.PHASE_5,
     "transfer_form:linear": Arrival.PHASE_1,
     "transfer_form:threshold": Arrival.PHASE_1,
-    "transfer_form:step": Arrival.PHASE_1,
+    # The spec holds the step form "for later worlds"; the engine refuses it (PR 27, question 1).
+    "transfer_form:step": Arrival.PHASE_5,
     "transfer_form:concave": Arrival.PHASE_5,
     "error_mechanism:parametric": Arrival.PHASE_3,
     "error_mechanism:process": Arrival.PHASE_6,
@@ -125,6 +126,7 @@ BUILT_FEATURES: frozenset[str] = frozenset(
         "emission",
         "model:sequence_repair_crews",
         "model:strike_nodes",
+        "model:protect_condition_and_add_reserve",
         "objective:unserved_demand_hours",
         "service_weights:lifeline",
         "service_weights:equal",
@@ -132,9 +134,8 @@ BUILT_FEATURES: frozenset[str] = frozenset(
 )
 """Features the build handles today: everything Phase 1 built (Work Orders 2-9: terrain,
 layers, couplings, the unobserved quantities, crews, the storm, the exact-tier engine with the
-linear and threshold transfer forms, and emission) and the restorative and offensive answer
-keys with their objective and weights (PRs 26 and 10b). The step transfer form is in the Phase 1
-table but the engine refuses it, so it is not listed."""
+linear and threshold transfer forms, and emission) and the restorative, offensive and
+defensive answer keys with their objective and weights (PRs 26, 10b and 10c)."""
 
 
 @dataclass(frozen=True)

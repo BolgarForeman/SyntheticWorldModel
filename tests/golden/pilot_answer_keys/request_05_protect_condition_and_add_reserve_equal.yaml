@@ -1,0 +1,270 @@
+assumes: defensive; protect_condition_and_add_reserve; unserved_demand_hours; service weights equal; budget 3 cost units; window 72 h; every scenario, equally weighted; resolved recipe sha256 35642658f6fea214226072062cf7efd3f52cd2bfca3e76feed8e32d9a9e968b7
+status: solved
+optimum:
+  objective: 2.625
+  answers:
+  - protect SWM-TEL-L0002
+  - protect SWM-TEL-L0002; reserve SWM-FUE-0001 power
+  - protect SWM-TEL-L0002; reserve SWM-FUE-0001 telecom
+  - protect SWM-TEL-L0002; reserve SWM-FUE-0001 transport
+  - protect SWM-TEL-L0002; reserve SWM-FUE-0002 power
+  - protect SWM-TEL-L0002; reserve SWM-FUE-0003 power
+  - protect SWM-TEL-L0002; reserve SWM-FUE-0003 telecom
+  - protect SWM-TEL-L0002; reserve SWM-FUE-0003 transport
+  - protect SWM-TEL-L0002; reserve SWM-FUE-0004 power
+  - protect SWM-TEL-L0002; reserve SWM-FUE-0004 telecom
+  - protect SWM-TEL-L0002; reserve SWM-FUE-0004 transport
+  - protect SWM-TEL-L0002; reserve SWM-HLT-0001 power
+  - protect SWM-TEL-L0002; reserve SWM-HLT-0001 telecom
+  - protect SWM-TEL-L0002; reserve SWM-HLT-0001 transport
+  - protect SWM-TEL-L0002; reserve SWM-HLT-0001 water
+  - protect SWM-TEL-L0002; reserve SWM-HLT-0002 power
+  - protect SWM-TEL-L0002; reserve SWM-HLT-0002 telecom
+  - protect SWM-TEL-L0002; reserve SWM-HLT-0002 transport
+  - protect SWM-TEL-L0002; reserve SWM-HLT-0002 water
+  - protect SWM-TEL-L0002; reserve SWM-HLT-0003 power
+  - protect SWM-TEL-L0002; reserve SWM-HLT-0003 telecom
+  - protect SWM-TEL-L0002; reserve SWM-HLT-0003 transport
+  - protect SWM-TEL-L0002; reserve SWM-HLT-0003 water
+  - protect SWM-TEL-L0002; reserve SWM-HLT-0004 power
+  - protect SWM-TEL-L0002; reserve SWM-HLT-0004 telecom
+  - protect SWM-TEL-L0002; reserve SWM-HLT-0004 transport
+  - protect SWM-TEL-L0002; reserve SWM-POW-0001 fuel
+  - protect SWM-TEL-L0002; reserve SWM-POW-0001 telecom
+  - protect SWM-TEL-L0002; reserve SWM-POW-0001 water
+  - protect SWM-TEL-L0002; reserve SWM-POW-0002 telecom
+  - protect SWM-TEL-L0002; reserve SWM-POW-0003 telecom
+  - protect SWM-TEL-L0002; reserve SWM-POW-0004 telecom
+  - protect SWM-TEL-L0002; reserve SWM-TEL-0001 power
+  - protect SWM-TEL-L0002; reserve SWM-TEL-0002 power
+  - protect SWM-TEL-L0002; reserve SWM-TEL-0003 power
+  - protect SWM-TEL-L0002; reserve SWM-TEL-0004 power
+  - protect SWM-TEL-L0002; reserve SWM-TRN-0001 fuel
+  - protect SWM-TEL-L0002; reserve SWM-TRN-0001 power
+  - protect SWM-TEL-L0002; reserve SWM-TRN-0001 telecom
+  - protect SWM-TEL-L0002; reserve SWM-TRN-0002 fuel
+  - protect SWM-TEL-L0002; reserve SWM-TRN-0002 power
+  - protect SWM-TEL-L0002; reserve SWM-TRN-0002 telecom
+  - protect SWM-TEL-L0002; reserve SWM-TRN-0003 fuel
+  - protect SWM-TEL-L0002; reserve SWM-TRN-0003 telecom
+  - protect SWM-TEL-L0002; reserve SWM-WAT-0002 power
+  - protect SWM-TEL-L0002; reserve SWM-WAT-0002 telecom
+  - protect SWM-TEL-L0002; reserve SWM-WAT-0003 power
+  - protect SWM-TEL-L0002; reserve SWM-WAT-0003 telecom
+no_action:
+  answer: no action
+  objective: 8.59375
+measure:
+  distance: (objective - optimum) / (no-action objective - optimum)
+  range: 5.96875
+  range_is_zero: false
+spread:
+  answers: 19984
+  within_1_pct: 0.002402
+  within_5_pct: 0.002402
+  within_10_pct: 0.002402
+  mean_distance: 0.994379
+answers_file: search_00_protect_condition_and_add_reserve_answers.csv.bz2
+rules_of_thumb:
+- rule: most connections first
+  ranking:
+  - SWM-TEL-0001
+  - SWM-POW-0002
+  - SWM-POW-0003
+  - SWM-HLT-0002
+  - SWM-FUE-0002
+  - SWM-TRN-0003
+  - SWM-FUE-0003
+  - SWM-POW-0004
+  - SWM-WAT-0003
+  - SWM-HLT-0001
+  - SWM-TEL-0003
+  - SWM-TEL-0004
+  - SWM-TRN-0001
+  - SWM-TRN-0002
+  - SWM-FUE-0001
+  - SWM-FUE-0004
+  - SWM-POW-0001
+  - SWM-WAT-0002
+  - SWM-HLT-0003
+  - SWM-HLT-0004
+  - SWM-TEL-0002
+  - SWM-WAT-0004
+  - SWM-CPL-0001
+  - SWM-CPL-0002
+  - SWM-CPL-0003
+  - SWM-CPL-0004
+  - SWM-CPL-0005
+  - SWM-CPL-0006
+  - SWM-CPL-0007
+  - SWM-CPL-0008
+  - SWM-CPL-0009
+  - SWM-CPL-0010
+  - SWM-CPL-0011
+  - SWM-CPL-0012
+  - SWM-CPL-0013
+  - SWM-CPL-0014
+  - SWM-CPL-0015
+  - SWM-CPL-0016
+  - SWM-CPL-0017
+  - SWM-CPL-0018
+  - SWM-CPL-0019
+  - SWM-CPL-0020
+  - SWM-CPL-0021
+  - SWM-CPL-0022
+  - SWM-CPL-0023
+  - SWM-POW-L0001
+  - SWM-POW-L0002
+  - SWM-POW-L0003
+  - SWM-POW-L0004
+  - SWM-POW-L0005
+  - SWM-TEL-L0001
+  - SWM-TEL-L0002
+  - SWM-TEL-L0003
+  - SWM-WAT-0001
+  - SWM-TRN-0004
+  answer: no action
+  objective: 8.59375
+  distance: 1.0
+- rule: biggest first
+  basis: share of its layer's total in the same unit
+  ranking:
+  - SWM-POW-0001
+  - SWM-WAT-0001
+  - SWM-POW-0002
+  - SWM-FUE-0001
+  - SWM-WAT-0002
+  - SWM-WAT-0003
+  - SWM-FUE-0002
+  - SWM-POW-0003
+  - SWM-POW-0004
+  - SWM-FUE-0003
+  - SWM-FUE-0004
+  - SWM-WAT-0004
+  - SWM-CPL-0001
+  - SWM-CPL-0002
+  - SWM-CPL-0003
+  - SWM-CPL-0004
+  - SWM-CPL-0005
+  - SWM-CPL-0006
+  - SWM-CPL-0007
+  - SWM-CPL-0008
+  - SWM-CPL-0009
+  - SWM-CPL-0010
+  - SWM-CPL-0011
+  - SWM-CPL-0012
+  - SWM-CPL-0013
+  - SWM-CPL-0014
+  - SWM-CPL-0015
+  - SWM-CPL-0016
+  - SWM-CPL-0017
+  - SWM-CPL-0018
+  - SWM-CPL-0019
+  - SWM-CPL-0020
+  - SWM-CPL-0021
+  - SWM-CPL-0022
+  - SWM-CPL-0023
+  - SWM-HLT-0001
+  - SWM-HLT-0002
+  - SWM-HLT-0003
+  - SWM-HLT-0004
+  - SWM-POW-L0001
+  - SWM-POW-L0002
+  - SWM-POW-L0003
+  - SWM-POW-L0004
+  - SWM-POW-L0005
+  - SWM-TEL-0001
+  - SWM-TEL-0002
+  - SWM-TEL-0003
+  - SWM-TEL-0004
+  - SWM-TEL-L0001
+  - SWM-TEL-L0002
+  - SWM-TEL-L0003
+  - SWM-TRN-0001
+  - SWM-TRN-0002
+  - SWM-TRN-0003
+  - SWM-TRN-0004
+  answer: no action
+  objective: 8.59375
+  distance: 1.0
+- rule: nearest supplier
+  answer: protect SWM-TEL-L0002
+  objective: 2.625
+  distance: 0.0
+true_criticality:
+- node: SWM-FUE-0001
+  objective: 953.65
+  increase: 945.05625
+- node: SWM-FUE-0002
+  objective: 490.985937
+  increase: 482.392187
+- node: SWM-FUE-0003
+  objective: 92.9625
+  increase: 84.36875
+- node: SWM-FUE-0004
+  objective: 92.9625
+  increase: 84.36875
+- node: SWM-HLT-0001
+  objective: 92.9625
+  increase: 84.36875
+- node: SWM-HLT-0002
+  objective: 92.0625
+  increase: 83.46875
+- node: SWM-HLT-0003
+  objective: 92.9625
+  increase: 84.36875
+- node: SWM-HLT-0004
+  objective: 92.9625
+  increase: 84.36875
+- node: SWM-POW-0001
+  objective: 953.65
+  increase: 945.05625
+- node: SWM-POW-0002
+  objective: 953.65
+  increase: 945.05625
+- node: SWM-POW-0003
+  objective: 51.39375
+  increase: 42.8
+- node: SWM-POW-0004
+  objective: 53.4
+  increase: 44.80625
+- node: SWM-TEL-0001
+  objective: 589.2
+  increase: 580.60625
+- node: SWM-TEL-0002
+  objective: 58.915625
+  increase: 50.321875
+- node: SWM-TEL-0003
+  objective: 61.034375
+  increase: 52.440625
+- node: SWM-TEL-0004
+  objective: 78.83125
+  increase: 70.2375
+- node: SWM-TRN-0001
+  objective: 92.9625
+  increase: 84.36875
+- node: SWM-TRN-0002
+  objective: 92.9625
+  increase: 84.36875
+- node: SWM-TRN-0003
+  objective: 308.9625
+  increase: 300.36875
+- node: SWM-TRN-0004
+  objective: 20.9625
+  increase: 12.36875
+- node: SWM-WAT-0001
+  objective: 824.65
+  increase: 816.05625
+- node: SWM-WAT-0002
+  objective: 824.65
+  increase: 816.05625
+- node: SWM-WAT-0003
+  objective: 824.65
+  increase: 816.05625
+- node: SWM-WAT-0004
+  objective: 107.7125
+  increase: 99.11875
+decision_relevant_dose:
+  value: 0
+  note: no error planted until Phase 3
+note: optimal against the scenarios named in the stamp, a sample of the storm, not the storm in general

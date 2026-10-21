@@ -30,7 +30,7 @@ from swm.recipe.schema import (
 from swm.solve.measure import Range, spread
 from swm.solve.requests import searches, stamp
 from swm.solve.restorative import plan_count, plan_text, plans, repair_jobs
-from swm.solve.runner import Runner
+from swm.solve.runner import Job, Runner
 from swm.solve.thumbs import nearest_supplier_world, rank_by_capacity, rank_by_degree
 from swm.solve.weights import node_weights, objective
 from swm.stages import couplings as couplings_stage
@@ -53,10 +53,10 @@ def pilot() -> tuple[Resolution, Any]:
 
 
 @pytest.fixture(scope="module")
-def solved(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    out_dir = tmp_path_factory.mktemp("solve")
-    assert main(["solve", str(PILOT), "-o", str(out_dir)]) == 0
-    return out_dir / "answer_keys"
+def solved() -> Path:
+    """The golden keys. CI reads them; the full re-solve that rebuilds them is marked slow
+    (``tests/unit/test_answer_keys.py``)."""
+    return GOLDEN
 
 
 def key(folder: Path, index: int) -> dict[str, Any]:
@@ -351,13 +351,6 @@ def test_the_golden_keys_match_their_recorded_hashes() -> None:
         assert hashlib.sha256((GOLDEN / name).read_bytes()).hexdigest() == digest, name
 
 
-def test_swm_solve_reproduces_the_golden_keys(solved: Path) -> None:
-    written = sorted(p.name for p in solved.iterdir())
-    assert written == sorted(recorded_hashes())
-    for name in written:
-        assert (solved / name).read_bytes() == (GOLDEN / name).read_bytes(), name
-
-
 def test_a_second_solve_writes_the_same_bytes(solved: Path, tmp_path: Path) -> None:
     # The restorative requests alone: the golden comparison above already holds a second run
     # of every key, and the offensive search is long to repeat in CI.
@@ -413,29 +406,22 @@ def test_nothing_in_the_generator_imports_the_solver() -> None:
 
 
 def _inputs(rules: Any) -> Any:
-    from swm.recipe.io import recipe_sha256
-    from swm.solve.solver import SolveInputs
+    from swm.cli import solve_inputs
 
-    resolution, engine = pilot()
-    built = _built(resolution)
-    eligible = couplings_stage.eligible_suppliers(
-        resolution.recipe.couplings, built.terrain, built.requirements.layers,
-        built.requirements, built.rules,
-    )  # fmt: skip
-    return SolveInputs(resolution.recipe, recipe_sha256(resolution.recipe), rules, engine.world,
-                       engine.damage, built.requirements.layers, eligible)  # fmt: skip
+    resolution, _ = pilot()
+    return replace(solve_inputs(resolution), rules=rules)
 
 
 def test_a_search_projected_past_the_ceiling_stops_and_is_reported(capsys: Any) -> None:
-    from swm.solve.solver import solve
+    from swm.solve.solver import index_file, solve
 
     resolution, _ = pilot()
     rules = _built(resolution).rules.with_overrides({"solve.instance_bound_h": 1e-9})
-    files = solve(_inputs(rules))
+    files = solve(_inputs(rules), only=[RESTORATIVE[0]])
     record = yaml.safe_load(files["request_04_sequence_repair_crews_lifeline.yaml"])
     assert record["status"] == "stopped"
     assert "instance bound" in record["note"]
-    index = yaml.safe_load(files["index.yaml"])["answer_keys"]
+    index = yaml.safe_load(index_file(resolution.recipe.answer_key_requests, files))["answer_keys"]
     assert [row["status"] for row in index if row["request"] in RESTORATIVE] == ["stopped"] * 2
     assert "24 plans: 24 runs, projected" in capsys.readouterr().out
 
@@ -525,8 +511,8 @@ def test_a_batch_across_every_core_equals_the_same_runs_in_order(monkeypatch: An
     from swm.solve.offensive import strike
 
     _, engine = pilot()
-    jobs = [(strike([n.node_id]), None) for n in engine.world.nodes[:6]]
-    serial = Runner(engine.world, 72.0).hours_out_all(jobs)
+    jobs = [Job(strike([n.node_id])) for n in engine.world.nodes[:6]]
+    serial = Runner(engine.world, 72.0).rows(jobs)
     monkeypatch.setattr(runner_module, "PARALLEL_FROM", 1)
-    parallel = Runner(engine.world, 72.0).hours_out_all(jobs)
-    assert parallel == serial
+    parallel = Runner(engine.world, 72.0).rows(jobs)
+    assert parallel.tobytes() == serial.tobytes()

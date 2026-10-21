@@ -89,7 +89,10 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["tests"]
-addopts = ["--import-mode=importlib", "--cov=swm", "--cov-report=term-missing"]
+addopts = ["--import-mode=importlib", "--cov=swm", "--cov-report=term-missing", "-m", "not slow"]
+markers = [
+    "slow: the full answer-key re-solve; run with -m slow on any change to dynamics/, solve/ or a dynamics rule (Work Order 10, E6 as amended)",
+]
 
 [tool.coverage.run]
 branch = true

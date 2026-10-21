@@ -12,6 +12,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 
 from swm.dynamics.world import Damage
+from swm.recipe.schema import Layer
 
 
 @dataclass(frozen=True)
@@ -29,7 +30,20 @@ class AddReserve:
     hours: float
 
 
-Action = Protect | AddReserve
+@dataclass(frozen=True)
+class AddStock:
+    """Give a node a new stock on one commodity it has none for (Work Order 10, E2).
+
+    The stock is counted in hours of the node's full draw: it drains at most one hour per hour,
+    so a stock of the window's hours covers the node for the whole window (ruling Q6).
+    """
+
+    node_id: str
+    covers: Layer
+    hours: float
+
+
+Action = Protect | AddReserve | AddStock
 
 
 @dataclass(frozen=True)

@@ -3,7 +3,7 @@
 The solver reads the true world and calls the dynamics engine; it never imports error
 induction, and nothing in the generator imports it (CLAUDE.md §3).
 
-Spec: structure v0.17 §5; Work Order 10, B1.
+Spec: structure v0.17 §5; Work Order 10, B1 and B5.
 """
 
 import os
@@ -11,8 +11,11 @@ from collections.abc import Mapping, Sequence
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field, replace
 
+import numpy as np
+from numpy.typing import NDArray
+
 from swm.dynamics.engine import simulate
-from swm.dynamics.records import Run, RunRequest
+from swm.dynamics.records import Action, Run, RunRequest
 from swm.dynamics.world import Damage, EngineWorld
 from swm.recipe.schema import DamageState
 
@@ -23,8 +26,15 @@ PARALLEL_FROM = 64
 """CHOICE: a batch of at least this many runs is spread across every core (ruling Q8); a
 smaller one runs in this process, where starting workers would cost more than it saves.
 Results come back in the order asked, so a key never depends on the core count."""
-Job = tuple[Damage, Plan | None]
-"""One run of a batch: the damage, and a crew plan or None for the default order."""
+
+
+@dataclass(frozen=True)
+class Job:
+    """One run of a batch: the damage, a crew plan (None: the default order) and the actions."""
+
+    damage: Damage
+    plan: Plan | None = None
+    actions: tuple[Action, ...] = ()
 
 
 @dataclass
@@ -34,6 +44,11 @@ class Runner:
     world: EngineWorld
     window_h: float
     runs: int = field(default=0)
+
+    @property
+    def end_uses(self) -> tuple[str, ...]:
+        """Return the end-use nodes, in id order: the columns of every row of hours out."""
+        return tuple(sorted(n.node_id for n in self.world.nodes if n.end_use_weight is not None))
 
     def run(self, damage: Damage, plan: Plan | None = None) -> Run:
         """Play a damage out, under the default crew order or a plan.
@@ -53,38 +68,43 @@ class Runner:
         Spec: structure v0.16 §4.5; Work Order 10, C2.
         """
         self.runs += 1
-        policy = PLAN_POLICY if plan is not None else "default crew order"
-        request = RunRequest(damage, horizon_h=self.window_h, policy=policy, plan=plan)
-        return simulate(self.world, request)
+        return simulate(self.world, _request(Job(damage, plan), self.window_h))
 
     def hours_out(self, damage: Damage, plan: Plan | None = None) -> Mapping[str, float]:
         """Return a run's hours out per end-use node, in h."""
         return self.run(damage, plan).hours_out
 
-    def hours_out_all(self, jobs: Sequence[Job]) -> list[Mapping[str, float]]:
-        """Return the hours out of many runs, in the order given, across every core.
+    def rows(self, jobs: Sequence[Job]) -> NDArray[np.float64]:
+        """Return the hours out of many runs, one row per job, across every core.
 
         Parameters
         ----------
         jobs : sequence of Job
-            Each run's damage and plan.
+            The runs.
 
         Returns
         -------
-        list of Mapping[str, float]
-            Each run's hours out per end-use node, in the order of ``jobs``.
+        numpy.ndarray
+            Hours out (h), shape (jobs, end uses), columns in ``end_uses`` order and rows in
+            the order of ``jobs``.
 
         Spec: Work Order 10, B5 and E5 (every core, the results collected in order).
         """
         self.runs += len(jobs)
+        columns = self.end_uses
+        table = np.empty((len(jobs), len(columns)), dtype=np.float64)
         if len(jobs) < PARALLEL_FROM:
-            return [dict(_play(self.world, self.window_h, job)) for job in jobs]
+            for index, job in enumerate(jobs):
+                table[index] = _play(self.world, self.window_h, columns, job)
+            return table
         workers = os.cpu_count() or 1
-        chunk = max(1, len(jobs) // (workers * 4))
+        chunk = max(1, len(jobs) // (workers * 8))
         with ProcessPoolExecutor(
-            max_workers=workers, initializer=_load, initargs=(self.world, self.window_h)
+            max_workers=workers, initializer=_load, initargs=(self.world, self.window_h, columns)
         ) as pool:
-            return list(pool.map(_play_loaded, jobs, chunksize=chunk))
+            for index, row in enumerate(pool.map(_play_loaded, jobs, chunksize=chunk)):
+                table[index] = row
+        return table
 
     def on(self, world: EngineWorld) -> "Runner":
         """Return a runner for another world over the same window, sharing no count."""
@@ -109,21 +129,28 @@ def with_node(damage: Damage, node_id: str) -> Damage:
     )
 
 
-_WORKER: list[tuple[EngineWorld, float]] = []
-"""A worker process's world and window, set once when the pool starts it."""
+def _request(job: Job, window_h: float) -> RunRequest:
+    policy = PLAN_POLICY if job.plan is not None else "default crew order"
+    return RunRequest(
+        job.damage, actions=job.actions, horizon_h=window_h, policy=policy, plan=job.plan
+    )
 
 
-def _load(world: EngineWorld, window_h: float) -> None:
-    _WORKER[:] = [(world, window_h)]
+_WORKER: list[tuple[EngineWorld, float, tuple[str, ...]]] = []
+"""A worker process's world, window and columns, set once when the pool starts it."""
 
 
-def _play_loaded(job: Job) -> dict[str, float]:
-    world, window_h = _WORKER[0]
-    return _play(world, window_h, job)
+def _load(world: EngineWorld, window_h: float, columns: tuple[str, ...]) -> None:
+    _WORKER[:] = [(world, window_h, columns)]
 
 
-def _play(world: EngineWorld, window_h: float, job: Job) -> dict[str, float]:
-    damage, plan = job
-    policy = PLAN_POLICY if plan is not None else "default crew order"
-    request = RunRequest(damage, horizon_h=window_h, policy=policy, plan=plan)
-    return dict(simulate(world, request).hours_out)
+def _play_loaded(job: Job) -> tuple[float, ...]:
+    world, window_h, columns = _WORKER[0]
+    return _play(world, window_h, columns, job)
+
+
+def _play(
+    world: EngineWorld, window_h: float, columns: tuple[str, ...], job: Job
+) -> tuple[float, ...]:
+    hours = simulate(world, _request(job, window_h)).hours_out
+    return tuple(hours[node] for node in columns)

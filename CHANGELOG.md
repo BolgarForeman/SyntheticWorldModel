@@ -15,6 +15,19 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ### Added
 
+- **The defensive model** (Work Order 10, PR 10c; decision 0018).
+  - `swm solve` searches every affordable mix of protected elements and added reserves, spending under the budget included.
+  - It scores each answer as the mean over the 8 scenarios.
+  - It reuses every run that repeats, and skips only what is provably identical.
+- **New stocks:** the engine creates a new stock where a reserve goes on a dependency with none (`AddStock`).
+- **`swm solve` options:**
+  - `--request` solves chosen searches only, and the index is rebuilt from every key in the folder;
+  - `--ceiling-h` sets a lower ceiling for one run.
+- **CI's checks on every answer key, without re-solving:**
+  - hashes, the full answer list and the optimum;
+  - the spread, recomputed;
+  - a byte-exact re-score of the ties, the rules of thumb, the 50 next-best and 50 stable-hash answers.
+  - The full re-solve is a `slow` test (`pytest -m slow`).
 - **The offensive model** (Work Order 10, PR 10b; decision 0018). `swm solve` searches every set of k nodes struck on the calm world, each taking complete damage repaired by the crews in the default order, and writes its key with the mirrored measure. Large batches run across every core, with results collected in order.
 - The answer-key solver's frame and the restorative model (Work Order 10, PR 10a; decision 0018):
   - **`swm solve <recipe> -o <dir>`** writes one answer key per request to `answer_keys/`, with an index and one bz2-compressed file per search holding every answer and its objective under each weighting. Requests that differ only in their weights share one search.
@@ -33,6 +46,7 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ### Changed
 
+- `transfer_form:step` now arrives in Phase 5, not Phase 1: the engine refuses it, and the spec holds it for later worlds.
 - **Recipe schema version 4:**
   - offensive requests gain `world` and `strike_damage`;
   - defensive requests gain `reserve_hours`;
