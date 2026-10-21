@@ -23,6 +23,7 @@ from swm.solve.defensive import (
     defences,
     reserves_of,
     scenario_actions,
+    storable,
 )
 from swm.solve.runner import Job, Runner
 from swm.solve.solver import defensive_plays, mean_rows
@@ -93,7 +94,7 @@ def test_an_added_stock_is_refused_where_the_node_already_holds_one() -> None:
 def test_a_reserve_goes_to_the_stock_the_engine_draws_first_or_creates_one() -> None:
     world = inputs()
     damage = world.damage[7]
-    for reserve in reserves_of(world.world):
+    for reserve in reserves_of(world.world, storable(world.rules)):
         (action,) = scenario_actions(Defence((), (reserve,)), damage, world.world.stocks, WINDOW_H)
         held = [s for s in world.world.stocks
                 if s.node_id == reserve.node_id and s.covers == reserve.covers]  # fmt: skip
@@ -107,18 +108,37 @@ def test_a_reserve_goes_to_the_stock_the_engine_draws_first_or_creates_one() -> 
 # --- The search (E1, E4) --------------------------------------------------------------------
 
 
-def test_the_pilot_has_47_dependencies_and_55_protectable_elements() -> None:
+def test_the_pilot_has_31_reservable_dependencies_and_55_protectable_elements() -> None:
     world = inputs()
-    assert len(reserves_of(world.world)) == 47
+    assert len(world.world.dependencies) == 47
+    assert len(reserves_of(world.world, storable(world.rules))) == 31
     assert len(world.protectable) == 55
 
 
-@pytest.mark.parametrize(("budget", "count"), [(3, 19_984), (4, 259_289)])
+def test_no_telecom_dependency_is_offered_a_reserve() -> None:
+    """Telecom cannot be stored (WO-10c answers, 1; Foreman, option A)."""
+    world = inputs()
+    reserves = reserves_of(world.world, storable(world.rules))
+    assert storable(world.rules) == (Layer.POWER, Layer.WATER, Layer.FUEL, Layer.TRANSPORT)
+    assert not [r for r in reserves if r.covers == Layer.TELECOM]
+    telecom = [d for d in world.world.dependencies if d.supplier_layer == Layer.TELECOM]
+    assert len(telecom) == 16
+    offered = {(r.node_id, r.covers) for r in reserves}
+    expected = {(d.consumer_id, d.supplier_layer) for d in world.world.dependencies
+                if d.supplier_layer != Layer.TELECOM}  # fmt: skip
+    assert offered == expected
+    rule = world.rules.rule("solve.reservable_commodities")
+    assert rule.theta_alternatives == ("every dependency, telecom included",)
+    every = defences(world.protectable, reserves, 4, 2, 1)
+    assert not [a for a in every if any(r.covers == Layer.TELECOM for r in a.reserves)]
+
+
+@pytest.mark.parametrize(("budget", "count"), [(3, 6_752), (4, 65_277)])
 def test_every_affordable_answer_is_searched_spending_under_the_budget_included(
     budget: int, count: int
 ) -> None:
     world = inputs()
-    reserves = reserves_of(world.world)
+    reserves = reserves_of(world.world, storable(world.rules))
     every = list(defences(world.protectable, reserves, budget, 2, 1))
     assert len(every) == count
     assert len(set(every)) == count
@@ -135,7 +155,9 @@ def test_every_affordable_answer_is_searched_spending_under_the_budget_included(
 
 def test_an_answer_reads_back_from_its_text() -> None:
     world = inputs()
-    for answer in list(defences(world.protectable, reserves_of(world.world), 2, 2, 1))[::37]:
+    for answer in list(
+        defences(world.protectable, reserves_of(world.world, storable(world.rules)), 2, 2, 1)
+    )[::37]:
         assert defence_of(defence_text(answer)) == answer
     assert defence_text(Defence()) == NO_ACTION
 
@@ -165,11 +187,11 @@ def test_each_skip_scores_exactly_what_it_assumes() -> None:
     damaged = {e for d in world.damage for e in (*d.nodes, *d.lines)}
     candidates = [n.node_id for n in world.world.nodes if n.node_id in world.protectable]
     undamaged_node = next(n for n in candidates if n not in damaged)
-    reserves = reserves_of(world.world)
+    reserves = reserves_of(world.world, storable(world.rules))
     sample = [
         Defence((undamaged_node,), (reserves[0],)),
         Defence(("SWM-TEL-L0002",), (reserves[5],)),
-        Defence((), (reserves[3], reserves[11], reserves[40])),
+        Defence((), (reserves[3], reserves[11], reserves[30])),
         Defence((undamaged_node,), ()),
     ]
     plays = defensive_plays(world, sample, WINDOW_H)
@@ -184,7 +206,9 @@ def test_each_skip_scores_exactly_what_it_assumes() -> None:
 
 def test_runs_are_shared_between_answers_only_when_they_are_the_same_run() -> None:
     world = inputs()
-    answers = list(defences(world.protectable, reserves_of(world.world), 2, 2, 1))
+    answers = list(
+        defences(world.protectable, reserves_of(world.world, storable(world.rules)), 2, 2, 1)
+    )
     plays = defensive_plays(world, answers, WINDOW_H)
     assert len(set(plays.jobs)) == len(plays.jobs)
     undamaged = [s for s, d in enumerate(world.damage) if not d.nodes and not d.lines]

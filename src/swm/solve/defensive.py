@@ -5,7 +5,8 @@ Up to the budget (a ceiling: units may be left unspent):
   element the storm can damage (facilities, overhead lines and routed power feeds);
 - **add reserve** (cost 1): a stock on one inbound dependency of one node, covering the
   request's window at the node's full draw: a new stock where the node has none for that
-  commodity, otherwise the window's hours added to the stock it has. At most one per dependency.
+  commodity, otherwise the window's hours added to the stock it has. At most one per dependency,
+  and only on a storable commodity: power, water, fuel and transport, never telecom (v0.18).
 
 The objective is the expected weighted service-hours lost over the scenarios, equally weighted.
 
@@ -19,6 +20,7 @@ from dataclasses import dataclass
 from swm.dynamics.records import Action, AddReserve, AddStock, Protect
 from swm.dynamics.world import Damage, EngineWorld, Stock
 from swm.recipe.schema import Layer
+from swm.rules.registry import Registry
 
 NO_ACTION = "no action"
 PROTECT = "protect"
@@ -49,9 +51,33 @@ class Defence:
         return {*self.protects, *(r.node_id for r in self.reserves)}
 
 
-def reserves_of(world: EngineWorld) -> tuple[Reserve, ...]:
-    """Return every inbound dependency a reserve can go on, in (node, commodity) order."""
-    return tuple(sorted({Reserve(d.consumer_id, d.supplier_layer) for d in world.dependencies}))
+def reserves_of(world: EngineWorld, storable: Sequence[Layer]) -> tuple[Reserve, ...]:
+    """Return every inbound dependency a reserve can go on, in (node, commodity) order.
+
+    Parameters
+    ----------
+    world : EngineWorld
+        The world.
+    storable : sequence of Layer
+        The commodities that can be stored (registry ``solve.reservable_commodities``):
+        telecom is not among them.
+
+    Returns
+    -------
+    tuple of Reserve
+        One per inbound dependency on a storable commodity.
+
+    Spec: structure v0.18 §5; WO-10c answers, 1.
+    """
+    return tuple(sorted(
+        {Reserve(d.consumer_id, d.supplier_layer) for d in world.dependencies
+         if d.supplier_layer in storable}
+    ))  # fmt: skip
+
+
+def storable(rules: Registry) -> tuple[Layer, ...]:
+    """Return the commodities a reserve can go on, from the registry."""
+    return tuple(Layer(value) for value in rules.value("solve.reservable_commodities"))
 
 
 def defences(

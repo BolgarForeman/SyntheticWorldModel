@@ -10593,6 +10593,31 @@ rules:
     decision: '0018'
   history: []
   theta_role: answer_key
+- id: solve.reservable_commodities
+  title: The commodities a defensive reserve can go on
+  stage: solve
+  value: [power, water, fuel, transport]
+  units: null
+  applies_to: {layer: null, node_class: null, condition: null}
+  grade: J
+  jurisdiction: null
+  sources:
+  - {citation: 'Work Order 10c, answers, 1 (decision 0018)', url: docs/work_orders/WO-10c-answers.md,
+    quote: null, verified: null}
+  - {citation: Structure v0.18 §5 (the defensive model), url: docs/design/World_Generator_Structure.md,
+    quote: null, verified: null}
+  reasoning: A reserve is a store, so it goes only on a dependency whose commodity can be stored, transport
+    as stockpiled supplies. Telecom cannot be stored; a telecom site's battery is a reserve on its power,
+    and telecom outages keep their own fallback rule (rule card 5).
+  status: ruled
+  open_decision: null
+  ruling:
+    by: the author (Foreman)
+    date: '2026-10-21'
+    decision: '0018'
+  history: []
+  theta_role: answer_key
+  theta_alternatives: ['every dependency, telecom included']
 - id: strength.supply_days
   title: Days of its own stock a supplier delivers in a day's turnover
   stage: strength

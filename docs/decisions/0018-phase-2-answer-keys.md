@@ -74,3 +74,12 @@
   - **Optimum:** 2.625 weighted service-hours under both weightings, against 8.59375 with no action. It is tied 48 ways: protect SWM-TEL-L0002, alone or with any one reserve, since no reserve changes anything.
   - **Why only that line:** it falls in both telecom-damaging scenarios (0 and 7). The telecom nodes it serves lose their own layer's link, which no reserve covers.
   - **The rules of thumb:** most connections first and biggest first find nothing better than no action among their top three elements (distance 1). Nearest supplier finds the optimum.
+
+## PR 30 answers: no reserve on telecom (WO-10c answers, 1; ruled by Foreman 2026-10-21, option A)
+
+- **Context.** The engine never draws a stock on a telecom dependency, which has its own tolerance rule instead, so a telecom reserve could never drain (PR 30, question 1).
+- **Decision.** A reserve goes only on a dependency whose commodity can be stored: power, water, fuel, and transport as stockpiled supplies.
+  - Telecom cannot be stored. A telecom site's battery is a reserve on its power, which stays allowed.
+  - Telecom outages keep their own fallback rule (rule card 5).
+- **Registry.** `solve.reservable_commodities`: [power, water, fuel, transport]. It is an answer-key setting, grade J, with the alternative "every dependency, telecom included" (the earlier build).
+- **Effect.** The pilot has 31 reservable dependencies of its 47 (16 were telecom). The defensive answers fall to 6,752 at budget 3 (from 19,984) and 65,277 at budget 4 (from 259,289). Spec v0.18 §5 and Pilot Spec v0.8 carry it.

@@ -46,6 +46,7 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ### Changed
 
+- A defensive reserve goes only on a storable commodity: power, water, fuel or transport, never telecom (`solve.reservable_commodities`; ruled by Foreman 2026-10-21; decision 0018). The pilot offers 31 reservable dependencies, and the defensive answers number 6,752 at budget 3 and 65,277 at budget 4.
 - `transfer_form:step` now arrives in Phase 5, not Phase 1: the engine refuses it, and the spec holds it for later worlds.
 - **Recipe schema version 4:**
   - offensive requests gain `world` and `strike_damage`;

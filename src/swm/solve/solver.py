@@ -40,6 +40,7 @@ from swm.solve.defensive import (
     defences,
     reserves_of,
     scenario_actions,
+    storable,
 )
 from swm.solve.measure import Range, spread
 from swm.solve.offensive import CALM, NO_STRIKE, strike, strike_sets, strike_text, targets
@@ -520,7 +521,8 @@ def _same(rows: NDArray[np.float64]) -> NDArray[np.float64]:
 
 def _defences(inputs: SolveInputs, request: ProtectConditionAndAddReserve) -> list[Defence]:
     return list(defences(
-        inputs.protectable, reserves_of(inputs.world), request.budget_cost_units,
+        inputs.protectable, reserves_of(inputs.world, storable(inputs.rules)),
+        request.budget_cost_units,
         request.protect_condition_cost_units, request.add_reserve_cost_units,
     ))  # fmt: skip
 
