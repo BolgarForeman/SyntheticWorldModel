@@ -41,7 +41,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from swm.coordinates import domain_origin_m
-from swm.dynamics.engine import crew_order, trip_hours
+from swm.dynamics.engine import crew_order, facility_repair, trip_hours
 from swm.dynamics.output import state_rows
 from swm.dynamics.records import Run
 from swm.dynamics.travel import Site
@@ -474,11 +474,10 @@ def damage_line_rows(inputs: TraceInputs) -> list[dict[str, object]]:
 
 def damage_facility_rows(inputs: TraceInputs) -> list[dict[str, object]]:
     """Return each damaged facility: damage state, crew work and parts lead time."""
-    repairs = {r.node_id: r for r in inputs.world.repairs}
     unrepairable = set(inputs.world.unrepairable)
     rows: list[dict[str, object]] = []
     for facility in inputs.damage.facilities:
-        repair = repairs.get(facility.node_id)
+        repair = facility_repair(inputs.world, inputs.engine_damage, facility.node_id)
         rows.append({
             "node": facility.node_id,
             "damage_state": facility.damage_state.value,

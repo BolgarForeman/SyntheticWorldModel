@@ -159,3 +159,20 @@ def test_features_with_no_switched_off_pairs_are_not_hidden() -> None:
     used = features_used(resolved("couplings:\n  two_way_pct: 0\n  switched_on:\n" + pairs))
     assert "couplings_hidden" not in used
     assert "couplings_two_way" not in used
+
+
+GOLDEN_RECIPES = ("pilot_hand_check", "pilot_hidden_telecom", "pilot_power_nodes_only")
+NOT_YET_HANDLED = {
+    "error_mechanism:parametric": "error settings are recorded, not applied (Phase 3)",
+    "source_overlap": "Phase 3",
+    "model:strike_nodes": "the offensive key arrives with PR 10b",
+    "model:protect_condition_and_add_reserve": "the defensive key arrives with PR 10c",
+}
+"""What the golden recipes use that the build does not yet handle, and why."""
+
+
+@pytest.mark.parametrize("name", GOLDEN_RECIPES)
+def test_every_feature_a_golden_recipe_uses_and_the_build_handles_is_listed(name: str) -> None:
+    path = Path(__file__).resolve().parents[1] / "fixtures" / f"{name}.yaml"
+    used = set(features_used(resolve(load_recipe(path)).recipe))
+    assert used - BUILT_FEATURES == set(NOT_YET_HANDLED)

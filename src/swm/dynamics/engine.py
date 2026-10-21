@@ -39,8 +39,10 @@ from swm.dynamics.records import (
 from swm.dynamics.travel import Legs, Site
 from swm.dynamics.world import (
     SUBSTATIONS,
+    Damage,
     EngineDependency,
     EngineWorld,
+    FacilityRepair,
     Settings,
     Stock,
 )
@@ -432,16 +434,15 @@ class _Engine:
     # --- Jobs and crews (D4) ----------------------------------------------------------------------
 
     def _open_jobs(self) -> None:
-        repairs = {r.node_id: r for r in self.world.repairs}
         unrepairable = set(self.world.unrepairable)
         lead = (
             0.0 if "repair.crew_bound_lead_h" in self.relaxed else self.settings.crew_bound_lead_h
         )
         parts_relaxed = "repair.parts_lead_time" in self.relaxed
         for node_id in sorted(n for n, c in self.condition.items() if c < FULL):
-            if node_id in unrepairable or node_id not in repairs:
+            repair = facility_repair(self.world, self.request.damage, node_id)
+            if node_id in unrepairable or repair is None:
                 continue
-            repair = repairs[node_id]
             parts = 0.0 if parts_relaxed else repair.parts_lead_h
             self.jobs[f"repair:{node_id}"] = _Job(
                 f"repair:{node_id}",
@@ -886,6 +887,49 @@ def substation_weight(world: EngineWorld, node_id: str) -> float:
         and any(e.supplier_id == node_id for group in d.groups for e in group)
     ]
     return max((w for w in (weights[node_id], *supplied) if w is not None), default=0.0)
+
+
+def facility_repair(world: EngineWorld, damage: Damage, node_id: str) -> FacilityRepair | None:
+    """Return the repair a damaged node takes: the record for the damage state it was given.
+
+    A storm-damaged facility takes the record for the state its scenario drew; a strike takes
+    complete damage, named in the damage (ruling Q4). A constructed world may hold one record per
+    node with no state, which serves whatever the state.
+
+    Parameters
+    ----------
+    world : EngineWorld
+        The world played out.
+    damage : Damage
+        The damage, with each damaged node's state.
+    node_id : str
+        A damaged node.
+
+    Returns
+    -------
+    FacilityRepair or None
+        The record, or None if the world holds no repair for the node.
+
+    Raises
+    ------
+    ValueError
+        If the node has several records and the damage names no state, or names one the world
+        holds no record for.
+
+    Spec: structure v0.7 §4.4a (repair by damage state); decision 0019.
+    """
+    records = [r for r in world.repairs if r.node_id == node_id]
+    if not records:
+        return None
+    state = damage.state_of(node_id)
+    if state is None:
+        if len(records) == 1:
+            return records[0]
+        raise ValueError(f"{node_id} is damaged, but the damage names no damage state")
+    for record in records:
+        if record.damage_state in (state, None):
+            return record
+    raise ValueError(f"{node_id}: no repair record for damage state {state}")
 
 
 def _check_ruled_dynamics(settings: Settings) -> None:
