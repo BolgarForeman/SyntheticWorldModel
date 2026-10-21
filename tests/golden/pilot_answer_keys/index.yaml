@@ -8,9 +8,9 @@ answer_keys:
 - request: 1
   model: protect_condition_and_add_reserve
   service_weights: lifeline
-  status: not solved
-  key: null
-  note: not solved yet
+  status: solved
+  key: request_01_protect_condition_and_add_reserve_lifeline.yaml
+  note: null
 - request: 2
   model: strike_nodes
   service_weights: lifeline
@@ -38,9 +38,9 @@ answer_keys:
 - request: 6
   model: protect_condition_and_add_reserve
   service_weights: equal
-  status: not solved
-  key: null
-  note: not solved yet
+  status: solved
+  key: request_06_protect_condition_and_add_reserve_equal.yaml
+  note: null
 - request: 7
   model: strike_nodes
   service_weights: equal
