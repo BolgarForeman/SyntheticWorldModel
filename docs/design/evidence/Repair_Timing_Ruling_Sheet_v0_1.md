@@ -35,6 +35,7 @@ A new large power transformer takes up to 36 months to procure today; before 202
   - The rebuild stays in the true world and the manifest as now: the facility's full return, usually beyond the window.
   - Service restored is a new, shorter path. The crew arrives, works for the class's service-restore time, and the node then gives service, at full or at a partial share.
   - Whichever path finishes first sets the node's state.
+- **Ruled A by Foreman, 2026-10-22.**
 - **B. Shorten the Hazus times.** One quantity again, but it would no longer mean what its source measures.
 - **C. As now.**
 
