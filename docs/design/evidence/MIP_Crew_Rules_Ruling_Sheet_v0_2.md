@@ -136,9 +136,15 @@ So this is an ambiguity in the spec, not clearly a bug. It matters: in the pilot
 **Q10. A MIP that doesn't finish** is reported as "MIP unfinished", with its bound and gap, never counted as agreement. Phase 2 closes only when every key agrees, or when you rule on the rest. *Recommended.*
 
 **Q11. A crew waiting for parts** (Part 3, E3). One spec line says the parts wait holds no crew; the next describes the crew repairing "once its parts are in"; the engine holds the crew on site.
-- **A. The job opens when the parts arrive.** The job is not dispatchable until its parts-ready hour; then the crew travels, does the 2 h assessment and works. Crews spend the wait on other jobs. *Recommended:* the simplest reading of "in parallel with no crew", and one rule the MIP carries easily.
+- **A. The job opens when the parts arrive.** The job is not dispatchable until its parts-ready hour; then the crew travels, does the 2 h assessment and works. Crews spend the wait on other jobs. *Recommended:* the simplest reading of "in parallel with no crew", and one rule the MIP carries easily. **Ruled A by Foreman, 2026-10-22, "for now".** He also questioned the lead times themselves: no crew would stand 3,900 h (about 160 days) at one site, and that doesn't match how fast service comes back after major events. See the open item below.
 - **B. Two visits:** a crew assesses early (2 h), leaves, and the job reopens for its work when the parts arrive. It is closer to field practice, but it is two jobs per repair and more crew logic to mirror.
 - **C. As now:** the crew waits on site. It keeps today's results and every key; the spec's first line is reworded to match. But any facility repair in a 72-hour window locks up a crew for the rest of it.
+
+## Open item raised with item 11: are the lead times the right quantity?
+
+Facility repair times come from the Hazus MR4 earthquake restoration functions (registry `repair.restoration_days`, ruled 2026-09-30, decision 0011). Complete damage there means 70 to 230 days to restored function, for example 180 days for a hospital and 230 for a bridge. Those figures are the time until the facility's own function is fully back. They rest on expert judgment and US earthquake experience, and they include procurement and rebuilding. After a typhoon, utilities restore *service* far faster than that, with workarounds: mobile substations, bypasses, rerouting and temporary repairs. The registry entry already says Taipower's typhoon record may be faster.
+
+The pilot's storm causes only slight and moderate damage (about 1 to 20 days). The very long leads come from complete damage, that is from strikes and from the criticality runs. Whether the world should hold a separate, shorter "service restored" time, or shorter typhoon-specific leads, changes the world. It belongs to the open decision on realism ranges, and it is not decided here.
 
 ## After the rulings
 
