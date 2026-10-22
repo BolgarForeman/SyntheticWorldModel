@@ -36,8 +36,10 @@ jobs:
       - name: Type check
         run: uv run mypy src
 
+      # The answer keys' byte-exact re-score runs in its own job (keys), without coverage
+      # tracing, which slows every engine run several times over.
       - name: Test with coverage
-        run: uv run pytest
+        run: uv run pytest -m "not slow and not keys"
 
       # Work Order 8, A5: the pilot's extract opens in osmium. The golden PBF is the built one
       # (the identity test above proves it), so osmium reads it straight from the repository.
@@ -47,3 +49,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y osmium-tool
           osmium fileinfo -e tests/golden/pilot_build/sources/osm/island.osm.pbf
+
+  keys:
+    # Work Order 10, E6 as amended: every answer key re-scored byte-exact on both platforms.
+    name: answer keys (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --locked --all-extras
+
+      - name: Re-score the answer keys
+        run: uv run pytest -m keys --no-cov

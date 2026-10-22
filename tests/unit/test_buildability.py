@@ -165,7 +165,6 @@ GOLDEN_RECIPES = ("pilot_hand_check", "pilot_hidden_telecom", "pilot_power_nodes
 NOT_YET_HANDLED = {
     "error_mechanism:parametric": "error settings are recorded, not applied (Phase 3)",
     "source_overlap": "Phase 3",
-    "model:protect_condition_and_add_reserve": "the defensive key arrives with PR 10c",
 }
 """What the golden recipes use that the build does not yet handle, and why."""
 

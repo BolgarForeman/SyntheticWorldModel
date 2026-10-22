@@ -94,9 +94,21 @@ def plans(jobs: Sequence[str], crews: Sequence[str]) -> Iterator[Plan]:
             )
 
 
+NO_JOBS = "no jobs"
+
+
 def plan_text(plan: Plan) -> str:
     """Return a plan as the key prints it: each crew and its jobs, in order."""
-    return "; ".join(f"{crew}: {', '.join(jobs) if jobs else 'no jobs'}" for crew, jobs in plan)
+    return "; ".join(f"{crew}: {', '.join(jobs) if jobs else NO_JOBS}" for crew, jobs in plan)
+
+
+def plan_of(text: str) -> Plan:
+    """Read a plan back from its printed text (the inverse of ``plan_text``)."""
+    plan = []
+    for part in text.split("; "):
+        crew, _, jobs = part.partition(": ")
+        plan.append((crew, () if jobs == NO_JOBS else tuple(jobs.split(", "))))
+    return tuple(plan)
 
 
 def ranked_plan(runner: Runner, damage: Damage, ranking: Sequence[str]) -> Plan:

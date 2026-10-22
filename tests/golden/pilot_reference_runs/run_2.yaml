@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: c6b08b07ba1f3ae37b580b4b97b78779604b10f4747a7b76c85d78f658ccdbae
+  registry_sha256: e7a111db7714a712ab34e0bf1222dedfe545306830d4b2e0a65c53c05f455407
   overrides: {}
   relaxed_limits: []
   out_of_range: []

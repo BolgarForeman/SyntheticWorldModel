@@ -41,7 +41,7 @@ from swm.rng import stream_record
 from swm.rules.page import rules_page_html
 from swm.rules.registry import Registry, load_registry
 from swm.rules.theta import theta_text
-from swm.solve.solver import KEY_DIR, SolveError, SolveInputs, solve
+from swm.solve.solver import KEY_DIR, SolveError, SolveInputs, index_file, solve
 from swm.stages import buffers as buffers_stage
 from swm.stages import couplings as couplings_stage
 from swm.stages import crews as crews_stage
@@ -685,7 +685,27 @@ def _build_command(resolution: Resolution, arguments: argparse.Namespace) -> Non
 
 
 def _solve_command(resolution: Resolution, arguments: argparse.Namespace) -> None:
-    """Write one answer key per request, and their index, to ``answer_keys/`` (WO 10, B1)."""
+    """Write answer keys to ``answer_keys/``, and its index of every key there (WO 10, B1).
+
+    ``--request`` solves only the searches of the requests it names, so a long search can run
+    apart; the index is rebuilt from every key the folder holds, so it reads the same however
+    many runs wrote them.
+    """
+    inputs = solve_inputs(resolution, arguments.ceiling_h)
+    try:
+        files = solve(inputs, arguments.request or ())
+    except SolveError as error:
+        raise CommandError(str(error)) from error
+    out_dir = Path(arguments.out_dir) / KEY_DIR
+    for name, body in sorted(files.items()):
+        write_binary(body, out_dir / name)
+    keys = {p.name: p.read_bytes() for p in sorted(out_dir.glob("request_*.yaml"))}
+    write_binary(index_file(resolution.recipe.answer_key_requests, keys), out_dir / "index.yaml")
+    sys.stdout.write(f"{len(files)} files and the index in {out_dir.as_posix()}\n")
+
+
+def solve_inputs(resolution: Resolution, ceiling_h: float | None = None) -> SolveInputs:
+    """Build the true world once and hand the solver what it reads (Work Order 10, B1)."""
     recipe = resolution.recipe
     built = _built(resolution)
     engine = _engine(resolution, built)
@@ -693,16 +713,9 @@ def _solve_command(resolution: Resolution, arguments: argparse.Namespace) -> Non
     eligible = couplings_stage.eligible_suppliers(
         recipe.couplings, built.terrain, layers, built.requirements, built.rules
     )
-    inputs = SolveInputs(recipe, recipe_sha256(recipe), built.rules, engine.world, engine.damage,
-                         layers, eligible)  # fmt: skip
-    try:
-        files = solve(inputs)
-    except SolveError as error:
-        raise CommandError(str(error)) from error
-    out_dir = Path(arguments.out_dir) / KEY_DIR
-    for name, body in sorted(files.items()):
-        write_binary(body, out_dir / name)
-    sys.stdout.write(f"{len(files)} files in {out_dir.as_posix()}\n")
+    protectable = tuple(sorted(e.element_id for e in built.scenarios.elements if e.protectable))
+    return SolveInputs(recipe, recipe_sha256(recipe), built.rules, engine.world, engine.damage,
+                       layers, eligible, protectable, ceiling_h)  # fmt: skip
 
 
 def _request(
@@ -948,6 +961,14 @@ def _parser() -> argparse.ArgumentParser:
     )
     solve_command.add_argument("recipe", help="recipe YAML file")
     solve_command.add_argument("-o", "--out-dir", required=True, help="output folder")
+    solve_command.add_argument(
+        "--request", type=int, action="append",
+        help="solve only this request's search (repeatable; default: every request)",
+    )  # fmt: skip
+    solve_command.add_argument(
+        "--ceiling-h", type=float, default=None,
+        help="a ceiling below the registry's instance bound for this run, in hours",
+    )  # fmt: skip
     build_command = commands.add_parser(
         "build", help="write the world's full tree: resolved recipe, sources, truth, trace pack"
     )

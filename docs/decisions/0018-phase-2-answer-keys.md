@@ -53,3 +53,33 @@
 - **The pilot's offensive keys (Lifeline):**
   - **k = 2:** optimum 4,467.35, tied three ways (the tertiary hospital with the LNG terminal, the plant or the transmission substation).
   - **k = 3:** optimum 4,690.85, tied three ways (the same, with HLT-0004).
+
+## PR 10c: the defensive model, and CI's checks on every key
+
+- **The search (E1–E4).**
+  - **Actions:** up to the budget, a ceiling, protect condition (cost 2) on any of the 55 elements the storm can damage, or add a reserve (cost 1) on any of the 47 inbound dependencies, at most one each.
+  - **The reserve:** the window's hours at the node's full draw. It is added to the node's first stock for that commodity, in the order the engine draws them, or it is a new stock where the node has none (E2).
+  - **The objective:** the mean of the 8 scenarios' weighted service-hours.
+  - **Answers:** 19,984 at budget 3 and 259,289 at budget 4.
+- **What is skipped, each provably identical (E4).**
+  - A scenario with no damage is one run, since no action changes it.
+  - In each scenario, a protection of an element that scenario did not damage is left out of the run. The engine protects only damaged elements, so answers that differ only in such protections share the run.
+  - Equal runs are played once (E5).
+- **CI's checks replace E6's sample rule, for every model (Foreman, 2026-10-21).**
+  - **Without a run:** CI verifies each key's and answers file's hash; that the answers file lists every affordable answer, by enumeration; that the stored optimum is the best score in it, ties listed; and the spread, recomputed from the file.
+  - **Re-scored byte-exact on both platforms:** the optimum and every tie, the three rules of thumb, the 50 next-best answers, and the 50 answers with the smallest SHA-256 of their text.
+  - **The full re-solve** is marked `slow`. It is required on any pull request that touches `dynamics/`, `solve/` or a dynamics rule in the registry.
+- **Buildability.** `transfer_form:step` arrives in Phase 5: the spec holds it for later worlds, and the engine refuses it (PR 27, question 1).
+- **The pilot's budget-3 keys.**
+  - **Optimum:** 2.625 weighted service-hours under both weightings, against 8.59375 with no action. It is tied 48 ways: protect SWM-TEL-L0002, alone or with any one reserve, since no reserve changes anything.
+  - **Why only that line:** it falls in both telecom-damaging scenarios (0 and 7). The telecom nodes it serves lose their own layer's link, which no reserve covers.
+  - **The rules of thumb:** most connections first and biggest first find nothing better than no action among their top three elements (distance 1). Nearest supplier finds the optimum.
+
+## PR 30 answers: no reserve on telecom (WO-10c answers, 1; ruled by Foreman 2026-10-21, option A)
+
+- **Context.** The engine never draws a stock on a telecom dependency, which has its own tolerance rule instead, so a telecom reserve could never drain (PR 30, question 1).
+- **Decision.** A reserve goes only on a dependency whose commodity can be stored: power, water, fuel, and transport as stockpiled supplies.
+  - Telecom cannot be stored. A telecom site's battery is a reserve on its power, which stays allowed.
+  - Telecom outages keep their own fallback rule (rule card 5).
+- **Registry.** `solve.reservable_commodities`: [power, water, fuel, transport]. It is an answer-key setting, grade J, with the alternative "every dependency, telecom included" (the earlier build).
+- **Effect.** The pilot has 31 reservable dependencies of its 47 (16 were telecom). The defensive answers fall to 6,752 at budget 3 (from 19,984) and 65,277 at budget 4 (from 259,289). Spec v0.18 §5 and Pilot Spec v0.8 carry it.

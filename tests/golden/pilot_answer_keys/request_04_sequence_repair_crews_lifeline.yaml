@@ -1,4 +1,4 @@
-assumes: restorative; sequence_repair_crews; unserved_demand_hours; service weights lifeline; budget none (the world's crews); window 72 h; scenario 7; resolved recipe sha256 35642658f6fea214226072062cf7efd3f52cd2bfca3e76feed8e32d9a9e968b7
+assumes: restorative; sequence_repair_crews; unserved_demand_hours; service weights lifeline; budget none (the world's crews); window 72 h; scenario 7; resolved recipe sha256 6de24d78705c51d312db32e1d0c480f896ddad9e6610255e2125fafcf9badf2c
 status: solved
 optimum:
   objective: 30.75
