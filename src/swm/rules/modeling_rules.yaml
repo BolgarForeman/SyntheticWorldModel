@@ -8935,15 +8935,20 @@ rules:
   sources:
   - {citation: Ruling T6, url: docs/design/evidence/Design_Targets_Ruling_Sheet_v0_2.md, quote: null,
     verified: null}
-  reasoning: Extensive and complete Hazus means run for weeks, so inside 72 h repair order would stop
-    mattering.
+  reasoning: The pilot storm's facility damage is kept as it is, at slight and moderate. Restated by ruling
+    R5 (decision 0020); it no longer rests on heavy damage stopping crew order from mattering, since a
+    quick path now brings heavy damage back inside the window.
   status: ruled
   open_decision: null
   ruling:
     by: the author (Foreman)
+    date: '2026-10-23'
+    decision: '0020'
+  history:
+  - value: [slight, moderate]
+    units: null
     date: '2026-09-29'
     decision: '0009'
-  history: []
   theta_role: dynamics
   theta_domain: truth
   theta_symbol: R
@@ -9000,26 +9005,44 @@ rules:
   theta_role: dynamics
   theta_domain: truth
   theta_symbol: R
-- id: repair.emergency.other_classes
-  title: No other class has an emergency mode
+- id: repair.service_restore.quick_paths
+  title: Quick paths that give heavily damaged facilities service back inside the window
   stage: repair
-  value: none inside a 72 h window
-  units: null
-  applies_to: {layer: null, node_class: null, condition: null}
+  value:
+    distribution_substation: {quick_path: 'mobile substation (repair.emergency.mobile_substation: a
+        pool, no crew)', crew_work_h: null, restored_share: null}
+    mast: {quick_path: 'mobile cell site (repair.emergency.mobile_cell_site: a pool, no crew)', crew_work_h: null,
+      restored_share: null}
+    transmission_substation: {quick_path: temporary bus or bypass, crew_work_h: 24.0, restored_share: 1.0}
+    pumping: {quick_path: portable pumps, crew_work_h: 8.0, restored_share: 1.0}
+    storage: {quick_path: 'bypass the tank, pump straight to the network', crew_work_h: 4.0, restored_share: 1.0}
+    airport: {quick_path: 'rapid runway repair, limited operations', crew_work_h: 24.0, restored_share: 0.5}
+  units: h of crew work; restored share of full service
+  applies_to: {layer: null, node_class: null, condition: extensive or complete damage}
   grade: J
   jurisdiction: null
   sources:
-  - {citation: Ruling T11, url: docs/design/evidence/Design_Targets_Ruling_Sheet_v0_2.md, quote: null,
-    verified: null}
-  reasoning: Hazus substation restoration already includes temporary measures at extensive and complete
-    damage; bridges, transmission and plants do not pay inside 72 h.
-  status: ruled
-  open_decision: null
+  - {citation: 'Repair timing ruling sheet v0.1, ruling R3 (decision 0020)', url: docs/design/evidence/Repair_Timing_Ruling_Sheet_v0_1.md,
+    quote: null, verified: null}
+  - {citation: 'Work Order 11, B3 and B4', url: docs/work_orders/WO-11.md, quote: null, verified: null}
+  reasoning: Hazus gives the time to rebuild; service comes back much sooner through workarounds. At extensive
+    and complete damage a node gives service inside the window only by a quick path its class has. A crew
+    quick path is a crew job, opened at hour 0 and worked in the default crew order with the node's own
+    key (travel, the assessment, then this work); on completion the node serves at the restored share
+    until its rebuild brings it to full. The two mobile units keep their pools. Every other class has
+    none and stays out for the window. The times and shares are the design side's judged placeholders,
+    for the rules review.
+  status: placeholder
+  open_decision: realism ranges
   ruling:
     by: the author (Foreman)
+    date: '2026-10-23'
+    decision: '0020'
+  history:
+  - value: none inside a 72 h window (repair.emergency.other_classes, ruling T11)
+    units: null
     date: '2026-09-29'
     decision: '0009'
-  history: []
   theta_role: dynamics
   theta_domain: truth
   theta_symbol: R
@@ -9107,9 +9130,11 @@ rules:
   theta_domain: truth
   theta_symbol: R
 - id: repair.parts_lead_time
-  title: Parts lead time (derived)
+  title: Parts lead time (derived), and when a rebuild job opens
   stage: repair
-  value: max(0, Hazus lead time − repair.crew_bound_lead_h)
+  value:
+    rebuild_opens_at: 'the parts-ready hour: max(0, Hazus lead time − repair.crew_bound_lead_h)'
+    no_wait_states: [slight, moderate]
   units: null
   applies_to: {layer: null, node_class: null, condition: null}
   grade: J
@@ -9119,16 +9144,21 @@ rules:
     verified: null}
   - {citation: Work Order 7 and structure v0.9 §4.4a and §4.5 (decision 0014), url: docs/work_orders/WO-07.md,
     quote: null, verified: null}
-  reasoning: 'The rest of the Hazus lead time, max(0, lead time − crew-bound lead time). It runs in parallel
-    with no crew; in Phase 1 its clock starts at the end of the storm (D6). Derived: it carries no number
-    of its own.'
+  reasoning: 'The rest of the Hazus lead time, max(0, lead time − crew-bound lead time), from hour 0 with
+    no crew. A rebuild job is not open until its parts are ready: no crew is sent and none waits on site
+    (MIP sheet item 11). At slight and moderate damage the parts are on hand, so the job opens at hour 0
+    (ruling R2). Derived: it carries no number of its own.'
   status: placeholder
   open_decision: realism ranges
   ruling:
     by: the author (Foreman)
+    date: '2026-10-23'
+    decision: '0020'
+  history:
+  - value: max(0, Hazus lead time − repair.crew_bound_lead_h); the crew waits on site for it
+    units: null
     date: '2026-10-09'
     decision: '0014'
-  history: []
   range_open: true
   relaxed: zero
   theta_role: dynamics

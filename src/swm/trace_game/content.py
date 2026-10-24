@@ -256,7 +256,6 @@ STEP_SLACK = 1e-9
 ACTIVITY = {
     "travel": "arrives for",
     "assess": "finishes preparing",
-    "wait for parts": "has parts for",
     "repair": "finishes the work on",
     "switch": "finishes switching",
 }

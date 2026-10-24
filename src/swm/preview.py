@@ -656,7 +656,7 @@ def timeline_png(run: "Run", end_use: Sequence[str]) -> bytes:
     """Render a run's timeline: each end-use node's state over the hours, and the crews' jobs.
 
     The upper panel shades each end-use node's row by its state (dark is out); the lower panel
-    draws each crew's travel, assessment, wait for parts and work as bars.
+    draws each crew's travel, assessment and work as bars.
 
     Parameters
     ----------
@@ -690,8 +690,8 @@ def timeline_png(run: "Run", end_use: Sequence[str]) -> bytes:
         f"{run.summary()['hours_out']} unweighted hours out",
         fontsize=9,
     )
-    colours = {"travel": "#bbbbbb", "assess": "#ffbf00", "wait for parts": "#9ecae1",
-               "repair": "#d62728", "switch": "#9467bd"}  # fmt: skip
+    colours = {"travel": "#bbbbbb", "assess": "#ffbf00", "repair": "#d62728",
+               "switch": "#9467bd"}  # fmt: skip
     for row, crew_id in enumerate(crews):
         entries = dict(run.crews)[crew_id]
         for entry in entries:

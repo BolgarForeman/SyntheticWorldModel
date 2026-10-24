@@ -203,10 +203,12 @@ def test_the_crew_bound_lead_time_repeats_at_every_job() -> None:
 def test_parts_lead_times_run_in_parallel_from_the_end_of_the_storm() -> None:
     run = simulate(crew_world(parts_h=10.0), RunRequest(Damage(("A1", "A2"), (), ())))
     entries = dict(run.crews)["CREW"]
-    waits = [(e.start_h, e.end_h) for e in entries if e.activity == "wait for parts"]
-    # The first job waits for its parts to hour 10; the second's are in by then.
-    assert waits == [(2.0, 10.0)]
-    assert [c.time_h for c in run.completions] == [14.0, 20.0]
+    # Both jobs' parts run from hour 0, together, so both open at hour 10. No crew waits on
+    # site: the crew starts the first at 10 and goes straight on to the second (Work Order 11,
+    # B1; MIP sheet item 11).
+    assert entries[0].start_h == 10.0
+    assert "wait for parts" not in {e.activity for e in entries}
+    assert [c.time_h for c in run.completions] == [16.0, 22.0]
 
 
 def test_relaxing_the_crews_gives_every_job_its_own_crew_at_once() -> None:

@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.18 · 2026-10-21 · companion to the World Generator Interface mockup v0.5 and recipe schema v4 · supersedes v0.17*
+*v0.19 · 2026-10-23 · companion to the World Generator Interface mockup v0.5 and recipe schema v4 · supersedes v0.18*
 
 ## 1. What this is
 
@@ -447,13 +447,23 @@ The last two rows were added on 2026-09-29 under decision 0010: a non-towered ai
   - to trip: towered airport on telecom.
 - Heterogeneity default 10%. J with L support (US: NERC load modelling; Lee, Mitchell & Wallace 2007).
 
-**Repair.** Two alternative modes per eligible damaged node:
-- **Permanent:** a lead time that holds no crew (assessment and parts), then crew work hours, restoring full capacity. The centre is the Hazus restoration mean by class and damage state (Hazus MR4 technical manual; 6.1 values unverified) · L (US). Crew work hours are 8 h at slight damage, 24 h at moderate, 72 h at extensive and 168 h at complete (placeholders; the last two ruled 2026-09-30, decision 0011 addendum); lead time is the Hazus mean less the crew work, floored at 0. The centre is not shifted by default (repair compliance gap 0) and the spread is Hazus's own standard deviation ÷ mean; the recipe's heterogeneity lever for repair is an optional override (decision 0011 addendum).
+**Repair.** A damaged facility has two quantities: the **rebuild**, its full return, and **service restored**, when it gives service again (ruled 2026-10-22 and 2026-10-23, repair timing rulings R1–R5, decision 0020). Whichever comes first sets the node's state; the rebuild always ends at full.
+- **Rebuild (permanent):** a lead time that holds no crew (assessment and parts), then crew work hours, restoring full capacity. The centre is the Hazus restoration mean by class and damage state (Hazus MR4 technical manual; 6.1 values unverified) · L (US). Crew work hours are 8 h at slight damage, 24 h at moderate, 72 h at extensive and 168 h at complete (placeholders; the last two ruled 2026-09-30, decision 0011 addendum); lead time is the Hazus mean less the crew work, floored at 0.
+  - **When the rebuild job opens.** A rebuild job is not open until its parts are ready (the parts-ready hour, max(0, lead time − 2 h)): no crew is sent and none waits on site. Then the crew travels, assesses (2 h) and works (MIP crew-rules sheet, item 11).
+  - **Slight and moderate damage have no parts wait:** spares are on hand, so the job is open at hour 0 and is the assessment plus 8 h or 24 h of crew work. The remaining Hazus time stays in the truth manifest as the rebuild figure only (R2).
+  - The centre is not shifted by default (repair compliance gap 0) and the spread is Hazus's own standard deviation ÷ mean; the recipe's heterogeneity lever for repair is an optional override (decision 0011 addendum).
 - **Overhead lines:** 6 h crew work per failure point, no lead time (§4.3b).
 - **Emergency:** travel over roads from the crew base plus set-up, using one unit from a finite pool. It restores reduced capacity for the rest of the event.
   - Distribution substation: mobile substation, 12–24 h including travel, about 25 MVA against the node's normal peak load (L, US DOE).
   - Mast: mobile cell site, about 14 h, capacity 0.5 (L, US; capacity J).
-  - No other class has an emergency mode inside a 72 h window. Hazus substation restoration already includes temporary measures at extensive and complete damage.
+- **Quick paths (service restored).** At extensive and complete damage a node gives service inside the window only by a quick path its class has (R3; `repair.service_restore.quick_paths`, J, placeholders for the rules review):
+  - distribution substation: the mobile substation; mast: the mobile cell site (both above, from the pool, no crew);
+  - transmission substation: temporary bus or bypass, 24 h of crew work, full service;
+  - pumping station: portable pumps, 8 h, full service;
+  - water storage: bypass the tank and pump straight to the network, 4 h, full service;
+  - airport: rapid runway repair, limited operations, 24 h, half service;
+  - every other class: none; out for the window (generation, import terminal, tank farm, depot, refinery, exchange, hospitals and clinics, blood bank, seaport, freight yard, bridge; the reservoir is unrepairable).
+  - A crew quick path is a crew job (R4). It is open at hour 0 and worked in the default crew order with the node's own key: travel, the 2 h assessment, then the quick-path work. On completion the node gives service at the restored share. Its rebuild job stays and, once open, brings it to full. No new unit pools: widespread delay comes from crew and unit contention alone.
 - **Travel:** road travel time from the crew base is its own term, not a multiplier on repair time.
 - **Unrepairable in the window:** reservoirs.
 - **Pilot:**
@@ -502,8 +512,8 @@ Where a class has a telecom tolerance row, the tolerance acts first: full functi
 **Repair and crews.**
 - Recovery is all or nothing in Phase 1.
 - **Crew-bound lead time** (mobilize, assess, stage): 2 h (J) plus travel, starting when a crew is assigned and repeating at every job.
-- **Parts lead time:** the rest of the Hazus lead time, max(0, lead time − 2 h). It runs in parallel with no crew; in Phase 1 its clock starts at the end of the storm.
-- **A crew's sequence:** assigned → travel → assess → repair once its parts are in → travel to the next job. Crews move job to job; they do not return to base.
+- **Parts lead time:** the rest of the Hazus lead time, max(0, lead time − 2 h), and none at slight or moderate damage (§4.4a). It runs from the end of the storm with no crew. A rebuild job is not open until its parts are ready: no crew is sent and none waits on site.
+- **A crew's sequence:** assigned to an open job → travel → assess → work → travel to the next job. Crews move job to job; they do not return to base. A quick-path job (§4.4a) is a crew job like any other, open at hour 0.
 - **Travel** uses the road network, then off road at 2 km/h to a line's failure point (§4.3b). In Phase 1 one line is one job for one crew. Between failure points of the same line, the crew walks along the line at off-road speed; between different jobs, it walks or drives to the nearest road, drives, and walks or drives back in (ruled 2026-10-19; alternatives: always via the road; whichever way is shorter).
 - **Default crew order** (the restorative model replaces it): (1) towered lines and transmission substations; (2) distribution substations and feeds to end uses, highest Lifeline weight first, where a distribution substation ranks by the highest Lifeline weight among the end uses it supplies, its own weight included (ruled 2026-10-19; alternatives: its own weight only, or the sum over what it supplies); (3) everything else. Ties go to the shortest travel, then the lowest id. Emergency units go to eligible damaged nodes in the same order.
 - **Manual switching:** when a repair should re-energize a substation whose telecom is down, power returns only after a crew travels there and switches by hand: 1 h on site (range 0.5–2 h, J) plus travel as for repairs. The trip uses a crew like any job. It does not apply when the repair is at the substation itself.
@@ -707,6 +717,11 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.18
+
+Ruled by the author, 2026-10-22 and 2026-10-23 (repair timing ruling sheet, `evidence/Repair_Timing_Ruling_Sheet_v0_1.md`, R1–R5; MIP crew-rules sheet item 11; decision 0020):
+- §4.4a and §4.5 repair: two quantities, the rebuild (Hazus) and service restored. A rebuild job opens only when its parts are ready, and no crew waits on site; slight and moderate damage have no parts wait; at extensive and complete damage, service comes back inside the window only by a class's quick path, a crew job (transmission substation, pumping, storage, airport) or a mobile unit (distribution substation, mast). "Repair once its parts are in" removed from the crew's sequence.
 
 ## Changes from v0.17
 

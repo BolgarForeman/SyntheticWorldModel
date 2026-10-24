@@ -4,6 +4,21 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ## Unreleased
 
+### Changed (Work Order 11; decision 0020)
+
+- **Two repair paths.** A damaged facility has a rebuild (Hazus) and a service-restored path, and whichever comes first sets its state.
+- **The rebuild job** opens only when its parts are ready; no crew waits on site, and the "wait for parts" activity is gone.
+- **Slight and moderate damage** have no parts wait.
+- **Quick paths.** At extensive and complete damage, a node gives service inside the window only by its class's quick path (`repair.service_restore.quick_paths`).
+  - **Crew jobs:** the transmission substation, pumping station, water storage and airport have one, opened at hour 0 and worked in the default crew order.
+  - **Mobile units:** the distribution substation and the mast keep theirs.
+- **Rule card 8** is reworded; its drill now answers 16 h.
+
+### Fixed (Work Order 11, A1–A2)
+
+- A cancelled switching trip no longer strands a newer one in the job list.
+- A stock that runs out mid-step passes on only the remainder of the need to the next stock.
+
 ### Fixed
 
 - **A damaged facility is now repaired at the damage state its scenario drew** (decision 0019; structure §4.4a). Before, every damaged facility took complete damage's crew work and lead time.

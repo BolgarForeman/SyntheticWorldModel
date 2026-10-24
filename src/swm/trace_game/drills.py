@@ -281,7 +281,11 @@ def fuel_deliveries(rules: Registry) -> tuple[float, ...]:
 
 
 def crew_sequence(rules: Registry) -> tuple[float, ...]:
-    """Card 8: a crew 1 h from F; parts in at 5 h; 8 h of work: the hour the work is done."""
+    """Card 8: a crew 1 h from F, being rebuilt: the hour the work is done.
+
+    The job opens when the parts arrive at 5 h; then 1 h of travel, the preparation and 8 h of
+    work (Work Order 11, B1).
+    """
     world = _world(
         rules,
         [_source("A", Layer.POWER, NodeClass.GENERATION),

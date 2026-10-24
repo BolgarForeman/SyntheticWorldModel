@@ -169,6 +169,19 @@ class Emergency:
 
 
 @dataclass(frozen=True)
+class QuickPath:
+    """A crew quick path that gives a heavily damaged node service back inside the window.
+
+    The crew travels, assesses and works ``crew_work_h``; the node then serves at its restored
+    share until its rebuild brings it to full (ruling R3; Work Order 11, B3-B4).
+    """
+
+    node_id: str
+    crew_work_h: float
+    restored_share: float
+
+
+@dataclass(frozen=True)
 class FailurePoint:
     """One place a failed line must be repaired: a failed kilometre or a collapsed tower."""
 
@@ -226,6 +239,8 @@ class EngineWorld:
     pump_capacity_m3_per_h: Mapping[str, float] = field(default_factory=dict)
     legs: LegFinder = straight_legs
     """How crews travel between sites: the world's roads, or straight lines in a test."""
+    quick_paths: tuple[QuickPath, ...] = ()
+    """Each node whose class has a crew quick path (``repair.service_restore.quick_paths``)."""
 
     def node(self, node_id: str) -> EngineNode:
         """Return a node by id."""
@@ -396,7 +411,7 @@ def world_from_stages(stages: StageOutputs, rules: Registry) -> EngineWorld:
         repairs=tuple(
             FacilityRepair(
                 p.node_id,
-                max(0.0, p.lead_time_h - rules.number("repair.crew_bound_lead_h")),
+                _parts_lead_h(p.damage_state, p.lead_time_h, rules),
                 p.crew_work_h,
                 p.damage_state,
             )
@@ -414,6 +429,7 @@ def world_from_stages(stages: StageOutputs, rules: Registry) -> EngineWorld:
             line.line_id for line in stages.lines if line.structure == Structure.TOWER
         ),
         settings=settings_from(rules),
+        quick_paths=_quick_paths(layers, rules),
         pump_capacity_m3_per_h={
             node.node_id: float(dict(node.attributes)["capacity_m3_per_day"]) / 24.0
             for node in layers.nodes
@@ -629,6 +645,36 @@ def _crew_starts(crews: CrewsResult, grid: Grid) -> tuple[CrewStart, ...]:
         base = bases[crew.base_id]
         result.append(CrewStart(crew.crew_id, cell_centre_m(base.row, base.column, grid)))
     return tuple(result)
+
+
+def _parts_lead_h(damage_state: str, lead_time_h: float, rules: Registry) -> float:
+    """Return a rebuild's parts lead: none where spares are on hand, else the Hazus remainder.
+
+    At slight and moderate damage the parts are stocked, so the job opens at hour 0 (ruling
+    R2). A heavier rebuild opens at max(0, Hazus lead time - crew-bound lead time).
+
+    Spec: structure v0.19 §4.4a; ruling R2 and item 11; Work Order 11, B1-B2.
+    """
+    rule = rules.value("repair.parts_lead_time")
+    if damage_state in rule["no_wait_states"]:
+        return 0.0
+    return max(0.0, lead_time_h - rules.number("repair.crew_bound_lead_h"))
+
+
+def _quick_paths(layers: LayersResult, rules: Registry) -> tuple[QuickPath, ...]:
+    """Return a crew quick path for every node whose class has one (ruling R3).
+
+    The mobile units' rows keep their pools and are not crew jobs; only rows with crew work
+    become quick paths.
+    """
+    table = rules.value("repair.service_restore.quick_paths")
+    paths = []
+    for node in sorted(layers.nodes, key=_id):
+        row = table.get(node.node_class.value)
+        if row is not None and row.get("crew_work_h") is not None:
+            paths.append(QuickPath(node.node_id, float(row["crew_work_h"]),
+                                   float(row["restored_share"])))  # fmt: skip
+    return tuple(paths)
 
 
 def _feeds_to_end_use(stages: StageOutputs, nodes: Mapping[str, Node]) -> dict[str, float]:
