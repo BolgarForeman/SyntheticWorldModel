@@ -441,16 +441,23 @@ def offensive_key(folder: Path, request: str, weights: str) -> dict[str, Any]:
     return loaded
 
 
-def test_a_struck_node_is_out_for_the_whole_window_and_the_crews_repair_it() -> None:
+def test_a_struck_node_is_out_until_its_quick_path_or_for_the_window_without_one() -> None:
+    """Work Order 11, B5: a struck node with a quick path comes back when it finishes; one
+    whose class has none is out for the window. Its rebuild's parts are not in inside the
+    window, so no crew is sent to it."""
     from swm.solve.offensive import strike
 
     _, engine = pilot()
-    node = "SWM-HLT-0001"
-    run = simulate(engine.world, RunRequest(strike([node])))
-    assert set(run.state(node)) == {0.0}
-    assert run.hours_out[node] == 72.0
-    jobs = {e.job_id for _, log in run.crews for e in log}
-    assert f"repair:{node}" in jobs
+    hospital = "SWM-HLT-0001"
+    run = simulate(engine.world, RunRequest(strike([hospital])))
+    assert set(run.state(hospital)) == {0.0}
+    assert run.hours_out[hospital] == 72.0
+    assert f"repair:{hospital}" not in {e.job_id for _, log in run.crews for e in log}
+    airport = "SWM-TRN-0002"
+    run = simulate(engine.world, RunRequest(strike([airport])))
+    done = next(c.time_h for c in run.completions if c.element_id == airport)
+    assert set(run.state(airport)[: run.times.index(done)]) == {0.0}
+    assert run.at(airport, done) == 0.5
 
 
 def test_every_set_of_k_nodes_is_searched(solved: Path) -> None:
