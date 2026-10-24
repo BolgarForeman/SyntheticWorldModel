@@ -81,6 +81,8 @@ Settled under R4: the new quick paths are crew jobs; only the two mobile units u
 - ruling T11, that no other class has an emergency mode;
 - decision 0011's split of the Hazus time into crew work and lead.
 
+**Confirmed by Foreman, 2026-10-23.** The pilot storm stays at slight and moderate facility damage; only T6's reason is restated (the storm's results are kept, not because heavy damage would stop crew order mattering).
+
 Item 11 of the MIP sheet (a job opens when its parts arrive) stands for whatever wait remains: the rebuild, and R2 B if chosen.
 
 ## After the rulings
