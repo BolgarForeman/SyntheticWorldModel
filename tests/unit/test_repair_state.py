@@ -25,6 +25,7 @@ FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 PILOT = FIXTURES / "pilot_hand_check.yaml"
 SEVERITY_70 = FIXTURES / "storm_sensitivity" / "pilot_severity_70.yaml"
 NODE = "SWM-POW-0002"
+WINDOW_H = 72.0
 """A transmission substation: repairable, with a record at every damage state."""
 
 
@@ -52,12 +53,20 @@ def test_a_facility_takes_the_crew_work_and_lead_time_of_its_damage_state(
     stage = stage_record(state)
     assert record.crew_work_h == stage.crew_work_h
     lead = engine.world.settings.crew_bound_lead_h
-    assert record.parts_lead_h == pytest.approx(max(0.0, stage.lead_time_h - lead))
+    # Slight and moderate repairs use stocked spares: no parts wait (ruling R2).
+    no_wait = state in (DamageState.SLIGHT, DamageState.MODERATE)
+    expected_parts = 0.0 if no_wait else max(0.0, stage.lead_time_h - lead)
+    assert record.parts_lead_h == pytest.approx(expected_parts)
     run = simulate(engine.world, RunRequest(damage))
     work = [e for _, log in run.crews for e in log if e.job_id == f"repair:{NODE}"]
+    if record.parts_lead_h >= WINDOW_H:
+        # The rebuild does not open inside the window; the quick path does (ruling R3).
+        assert not work
+        assert [e for _, log in run.crews for e in log if e.job_id == f"quick:{NODE}"]
+        return
     repair = next(e for e in work if e.activity == "repair")
     assert repair.end_h - repair.start_h == pytest.approx(stage.crew_work_h)
-    assert repair.start_h >= record.parts_lead_h
+    assert work[0].start_h >= record.parts_lead_h
 
 
 def test_the_four_states_take_four_different_repairs() -> None:

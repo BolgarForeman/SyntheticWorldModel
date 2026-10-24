@@ -1,6 +1,6 @@
 modeling_rules:
   registry_version: '0.1'
-  registry_sha256: e7a111db7714a712ab34e0bf1222dedfe545306830d4b2e0a65c53c05f455407
+  registry_sha256: a2fc685c381f637ba828b08f9da415a4e99158dfffc27d10d57fb4898c215f1a
   overrides: {}
   relaxed_limits: []
   out_of_range: []
@@ -9796,7 +9796,7 @@ declared_departures:
 - 'Error settings recorded, not applied (Phase 1: zero-error emission): facility_register, osm_fuel, osm_health, osm_power, osm_transport, osm_water, ourairports, wri_gppd.'
 theta:
   registry_version: '0.1'
-  registry_sha256: e7a111db7714a712ab34e0bf1222dedfe545306830d4b2e0a65c53c05f455407
+  registry_sha256: a2fc685c381f637ba828b08f9da415a4e99158dfffc27d10d57fb4898c215f1a
   overrides: {}
   relaxed_limits: []
   theta_list:
@@ -10058,21 +10058,6 @@ theta:
       by: the author (Foreman)
       date: '2026-09-29'
       decision: 0009
-  - theta_id: repair.emergency.other_classes
-    domain: truth
-    sub_type: dynamics
-    symbol: R
-    chosen: 'No other class has an emergency mode: none inside a 72 h window.'
-    alternatives: []
-    registry_ids:
-    - repair.emergency.other_classes
-    relaxed: null
-    carried_vs_flattened: keeps
-    sensitivity: none planned
-    ruling:
-      by: the author (Foreman)
-      date: '2026-09-29'
-      decision: 0009
   - theta_id: repair.hazus_restoration_days
     domain: truth
     sub_type: dynamics
@@ -10123,7 +10108,7 @@ theta:
     domain: truth
     sub_type: dynamics
     symbol: R
-    chosen: 'Parts lead time (derived): max(0, Hazus lead time − repair.crew_bound_lead_h).'
+    chosen: 'Parts lead time (derived), and when a rebuild job opens: the table in the registry.'
     alternatives: []
     registry_ids:
     - repair.parts_lead_time
@@ -10132,8 +10117,8 @@ theta:
     sensitivity: none planned
     ruling:
       by: the author (Foreman)
-      date: '2026-10-09'
-      decision: '0014'
+      date: '2026-10-23'
+      decision: '0020'
   - theta_id: repair.pilot_damage_states
     domain: truth
     sub_type: dynamics
@@ -10147,8 +10132,23 @@ theta:
     sensitivity: none planned
     ruling:
       by: the author (Foreman)
-      date: '2026-09-29'
-      decision: 0009
+      date: '2026-10-23'
+      decision: '0020'
+  - theta_id: repair.service_restore.quick_paths
+    domain: truth
+    sub_type: dynamics
+    symbol: R
+    chosen: 'Quick paths that give heavily damaged facilities service back inside the window: the table in the registry.'
+    alternatives: []
+    registry_ids:
+    - repair.service_restore.quick_paths
+    relaxed: null
+    carried_vs_flattened: keeps
+    sensitivity: none planned
+    ruling:
+      by: the author (Foreman)
+      date: '2026-10-23'
+      decision: '0020'
   - theta_id: repair.travel
     domain: truth
     sub_type: dynamics

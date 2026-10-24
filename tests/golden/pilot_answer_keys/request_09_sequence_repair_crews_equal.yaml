@@ -1,4 +1,4 @@
-assumes: restorative; sequence_repair_crews; unserved_demand_hours; service weights equal; budget none (the world's crews); window 72 h; scenario 7; resolved recipe sha256 6de24d78705c51d312db32e1d0c480f896ddad9e6610255e2125fafcf9badf2c
+assumes: restorative; sequence_repair_crews; unserved_demand_hours; service weights equal; budget none (the world's crews); window 72 h; scenario 7; resolved recipe sha256 1a4850acf79517c16f857ceced8eb805e072a3e00ce341136964c8662d23a333
 status: solved
 optimum:
   objective: 30.75
@@ -45,77 +45,77 @@ rules_of_thumb:
   distance: 0.0
 true_criticality:
 - node: SWM-FUE-0001
-  objective: 962.4
-  increase: 910.15
+  objective: 962.25
+  increase: 910.0
 - node: SWM-FUE-0002
-  objective: 616.1375
-  increase: 563.8875
+  objective: 523.0
+  increase: 470.75
 - node: SWM-FUE-0003
-  objective: 223.2
-  increase: 170.95
+  objective: 124.25
+  increase: 72.0
 - node: SWM-FUE-0004
-  objective: 223.2
-  increase: 170.95
+  objective: 124.25
+  increase: 72.0
 - node: SWM-HLT-0001
-  objective: 223.2
-  increase: 170.95
+  objective: 124.25
+  increase: 72.0
 - node: SWM-HLT-0002
-  objective: 216.0
-  increase: 163.75
+  objective: 124.25
+  increase: 72.0
 - node: SWM-HLT-0003
-  objective: 223.2
-  increase: 170.95
+  objective: 124.25
+  increase: 72.0
 - node: SWM-HLT-0004
-  objective: 223.2
-  increase: 170.95
+  objective: 124.25
+  increase: 72.0
 - node: SWM-POW-0001
-  objective: 962.4
-  increase: 910.15
+  objective: 962.25
+  increase: 910.0
 - node: SWM-POW-0002
-  objective: 962.4
-  increase: 910.15
+  objective: 962.25
+  increase: 910.0
 - node: SWM-POW-0003
-  objective: 180.6
-  increase: 128.35
+  objective: 81.65
+  increase: 29.4
 - node: SWM-POW-0004
-  objective: 176.2
-  increase: 123.95
+  objective: 77.25
+  increase: 25.0
 - node: SWM-TEL-0001
   objective: 589.2
   increase: 536.95
 - node: SWM-TEL-0002
-  objective: 151.2
-  increase: 98.95
+  objective: 71.125
+  increase: 18.875
 - node: SWM-TEL-0003
-  objective: 151.2
-  increase: 98.95
+  objective: 82.85
+  increase: 30.6
 - node: SWM-TEL-0004
-  objective: 206.95
-  increase: 154.7
+  objective: 111.6
+  increase: 59.35
 - node: SWM-TRN-0001
-  objective: 223.2
-  increase: 170.95
+  objective: 124.25
+  increase: 72.0
 - node: SWM-TRN-0002
-  objective: 223.2
-  increase: 170.95
+  objective: 156.375
+  increase: 104.125
 - node: SWM-TRN-0003
-  objective: 439.2
-  increase: 386.95
+  objective: 340.25
+  increase: 288.0
 - node: SWM-TRN-0004
-  objective: 151.2
-  increase: 98.95
+  objective: 52.25
+  increase: 0.0
 - node: SWM-WAT-0001
-  objective: 849.65
-  increase: 797.4
+  objective: 849.5
+  increase: 797.25
 - node: SWM-WAT-0002
-  objective: 849.65
-  increase: 797.4
+  objective: 849.5
+  increase: 797.25
 - node: SWM-WAT-0003
-  objective: 849.65
-  increase: 797.4
+  objective: 847.7
+  increase: 795.45
 - node: SWM-WAT-0004
-  objective: 237.95
-  increase: 185.7
+  objective: 71.0375
+  increase: 18.7875
 decision_relevant_dose:
   value: 0
   note: no error planted until Phase 3

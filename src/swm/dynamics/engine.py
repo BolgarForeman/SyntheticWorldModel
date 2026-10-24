@@ -45,6 +45,7 @@ from swm.dynamics.world import (
     EngineDependency,
     EngineWorld,
     FacilityRepair,
+    QuickPath,
     Settings,
     Stock,
 )
@@ -414,8 +415,7 @@ class _Engine:
             if node_id not in self.deenergized:
                 continue
             if self._telecom_up(node_id) or self.condition[node_id] < FULL:
-                self.deenergized.discard(node_id)
-                self._cancel_switching(node_id)
+                self._clear_mark(node_id)
                 changed = True
             elif node_id not in self.switching:
                 self._open_switching(node_id, t)
@@ -449,7 +449,14 @@ class _Engine:
         self.switching[node_id] = job
         self.jobs[job_id] = job
 
-    def _cancel_switching(self, node_id: str) -> None:
+    def _clear_mark(self, node_id: str) -> None:
+        """Clear a substation's de-energised mark and cancel its trip still waiting for a crew.
+
+        Only an unassigned trip is cancelled: an assigned one is still travelled and worked.
+        Either way the trip leaves the index, so a newer trip for the node is never left behind
+        in the job list (sheet E1; Work Order 11, A1).
+        """
+        self.deenergized.discard(node_id)
         job = self.switching.pop(node_id, None)
         if job is not None and job.crew_id is None:
             del self.jobs[job.job_id]
@@ -477,6 +484,7 @@ class _Engine:
                 lead,
                 parts,
             )
+        self._open_quick_paths(lead)
         for line_id in sorted(self.down_lines):
             points = sorted((p for p in self.points if p.line_id == line_id), key=lambda p: p.km)
             # A crew works a line's failure points in order along the line (ruled, decision
@@ -492,6 +500,25 @@ class _Engine:
                 0.0,
                 along_km=tuple(p.km for p in points),
             )
+
+    def _open_quick_paths(self, lead: float) -> None:
+        """Open a quick-path job, at hour 0, for each heavily damaged node whose class has one.
+
+        It is a crew job, worked in the default crew order with the node's own key: travel, the
+        assessment, then the quick-path work; on completion the node gives its restored share.
+        The node's rebuild job stays, and once open brings it to full (Work Order 11, B3-B4).
+        """
+        for path in quick_paths(self.world, self.request.damage):
+            if self.condition[path.node_id] >= FULL:
+                continue
+            job_id = f"{QUICK}:{path.node_id}"
+            self.jobs[job_id] = _Job(
+                job_id, QUICK, path.node_id, self._priority(path.node_id),
+                (Site(self.nodes[path.node_id].site),), (path.crew_work_h,), lead, 0.0,
+            )  # fmt: skip
+
+    def _quick_share(self, node_id: str) -> float:
+        return next(p.restored_share for p in self.world.quick_paths if p.node_id == node_id)
 
     def _priority(self, element_id: str) -> tuple[int, float]:
         return crew_order(self.world, element_id)
@@ -519,7 +546,7 @@ class _Engine:
         if len(set(named)) != len(named) or not set(named) <= crews:
             raise ValueError(f"crew plan: crews {named} are not distinct crews of the world")
         planned = sorted(e for jobs in self.plan.values() for e in jobs)
-        repairs = sorted(j.element_id for j in self.jobs.values() if j.kind != "switching")
+        repairs = sorted(plan_token(j) for j in self.jobs.values() if j.kind != "switching")
         if planned != repairs:
             raise ValueError(f"crew plan: plans {planned}, but the repair jobs are {repairs}")
 
@@ -534,7 +561,7 @@ class _Engine:
         end = t + self.step
         while True:
             free = [c for c in self.crews if c.free_at < end]
-            open_jobs = [j for j in self.jobs.values() if j.crew_id is None]
+            open_jobs = [j for j in self.jobs.values() if j.crew_id is None and _open(j, t)]
             if not free or not open_jobs:
                 return
             crew = min(free, key=lambda c: (c.free_at, c.crew_id))
@@ -562,8 +589,10 @@ class _Engine:
             # trips by the default rule's key (priority, hours from where it stands, job id).
             options = [j for j in self.jobs.values() if j.crew_id is None and j.kind == "switching"]
             planned = self.plan.get(crew.crew_id, [])
-            if planned:
-                options.append(self.jobs[f"repair:{planned[0]}"])
+            # CHOICE: a crew whose next planned job is not yet open takes only open switching
+            # trips until it opens (WO-11 answers, 2).
+            if planned and _open(self.jobs[plan_job_id(planned[0])], t):
+                options.append(self.jobs[plan_job_id(planned[0])])
             if not options:
                 waiting.discard(crew.crew_id)
                 continue
@@ -576,7 +605,7 @@ class _Engine:
 
     def _assign_unlimited(self, t: float) -> None:
         """Every job gets its own crew at once, from the nearest crew start (D8)."""
-        for job in [j for j in self.jobs.values() if j.crew_id is None]:
+        for job in [j for j in self.jobs.values() if j.crew_id is None and _open(j, t)]:
             start = min(
                 self.world.crews, key=lambda c: (self._hours(Site(c.site), job.sites[0]), c.crew_id)
             )
@@ -585,7 +614,7 @@ class _Engine:
             self._work(crew, job, t)
 
     def _work(self, crew: _Crew, job: _Job, start: float) -> None:
-        """Lay out a job's travel, crew-bound lead, wait for parts and work; queue its end."""
+        """Lay out a job's travel, crew-bound lead and work; queue its end."""
         job.crew_id = crew.crew_id
         clock = start
         site = crew.site
@@ -601,11 +630,6 @@ class _Engine:
                     CrewEntry(crew.crew_id, job.job_id, "assess", clock, clock + job.lead_h)
                 )
                 clock += job.lead_h
-            if index == 0 and job.parts_ready_h > clock:
-                crew.log.append(
-                    CrewEntry(crew.crew_id, job.job_id, "wait for parts", clock, job.parts_ready_h)
-                )
-                clock = job.parts_ready_h
             activity = "switch" if job.kind == "switching" else "repair"
             crew.log.append(CrewEntry(crew.crew_id, job.job_id, activity, clock, clock + work_h))
             clock += work_h
@@ -665,10 +689,18 @@ class _Engine:
         elif job.kind == "facility":
             self.condition[job.element_id] = FULL
             # The crew is at the substation it repaired, so it switches it on site (D5).
-            self.deenergized.discard(job.element_id)
+            self._clear_mark(job.element_id)
+        elif job.kind == QUICK:
+            share = self._quick_share(job.element_id)
+            if self.condition[job.element_id] < share:
+                self.condition[job.element_id] = share
+            self._clear_mark(job.element_id)
         else:
-            self.deenergized.discard(job.element_id)
-            self.switching.pop(job.element_id, None)
+            # A finished trip leaves the index only if it is the node's indexed trip; a newer
+            # trip there stays until its own mark clears (Work Order 11, A1).
+            if self.switching.get(job.element_id) is job:
+                del self.switching[job.element_id]
+            self._clear_mark(job.element_id)
         first = self.completed_priority is None or job.priority < self.completed_priority
         if job.kind != "switching" and first:
             self.completed_priority = job.priority
@@ -739,12 +771,19 @@ class _Engine:
         self, node_id: str, layer: Layer, received: float, floor_draw: bool, dt: float,
         drawing: set[str],
     ) -> None:  # fmt: skip
-        """Draw the shortfall from the node's stocks in order, battery before generator."""
+        """Draw the shortfall from the node's stocks in order, battery before generator.
+
+        A stock that covers only part of the step's need passes on the rest: the next stock is
+        charged the uncovered share at its own draw rate (sheet E2; Work Order 11, A2).
+        """
+        # CHOICE: the remainder passes as the uncovered share of the step's need, so each stock
+        # is charged at its own draw rate (WO-11 answers, 2).
+        uncovered = FULL
         for stock in self.by_cover.get((node_id, layer), ()):
             if stock.generator and not self._generator_runs(node_id):
                 continue
             share = FULL if (floor_draw and stock.generator) else FULL - received
-            need = stock.draw_per_h * share * dt
+            need = stock.draw_per_h * share * dt * uncovered
             drawing.add(stock.stock_id)
             if stock.generator:
                 self.run_h[node_id] = self.run_h.get(node_id, 0.0) + dt
@@ -756,6 +795,7 @@ class _Engine:
             self.level[stock.stock_id] -= taken
             if taken >= need:
                 return
+            uncovered *= (need - taken) / need
 
     def _refill(self, stock: Stock, dt: float) -> None:
         room = self.capacity[stock.stock_id] - self.level[stock.stock_id]
@@ -910,6 +950,65 @@ def substation_weight(world: EngineWorld, node_id: str) -> float:
         and any(e.supplier_id == node_id for group in d.groups for e in group)
     ]
     return max((w for w in (weights[node_id], *supplied) if w is not None), default=0.0)
+
+
+QUICK = "quick"
+"""The kind and job-id prefix of a quick-path job (Work Order 11, B4).
+
+CHOICE: ``quick:`` sorts before ``repair:`` and ``switch:``, so where the crew-order key ties, a
+crew takes the node's quick path before its rebuild (WO-11 answers, 2)."""
+QUICK_PATH_STATES = ("extensive", "complete")
+"""CHOICE: a quick path applies at extensive and complete damage only; slight and moderate
+rebuilds open at hour 0 and are short (ruling R3; WO-11 answers, 2)."""
+
+
+def _open(job: "_Job", t: float) -> bool:
+    """Return whether a job is open at a step: from the first step at or after its open hour.
+
+    CHOICE: a rebuild job opens at the first 15-minute step at or after its parts-ready hour,
+    as effects land on steps (WO-11 answers, 2).
+    """
+    return job.parts_ready_h <= t + 1e-12
+
+
+def plan_job_id(token: str) -> str:
+    """Return the job a plan token names: ``quick:<node>`` as it is, an element id's repair.
+
+    CHOICE: a plan lists quick-path jobs by their job id beside the element ids of repairs
+    (WO-11 answers, 2).
+    """
+    return token if token.startswith(f"{QUICK}:") else f"repair:{token}"
+
+
+def plan_token(job: "_Job") -> str:
+    """Return how a plan names a job: its job id for a quick path, else its element id."""
+    return job.job_id if job.kind == QUICK else job.element_id
+
+
+def quick_paths(world: EngineWorld, damage: Damage) -> tuple[QuickPath, ...]:
+    """Return the quick paths a damage opens, in node order.
+
+    A quick path opens for a damaged node at extensive or complete damage whose class has one.
+
+    Parameters
+    ----------
+    world : EngineWorld
+        The world played out.
+    damage : Damage
+        The damage, with each damaged node's state.
+
+    Returns
+    -------
+    tuple of QuickPath
+        One per node a quick-path job opens for.
+
+    Spec: structure v0.19 §4.4a; ruling R3; Work Order 11, B3.
+    """
+    damaged = set(damage.nodes)
+    return tuple(
+        p for p in sorted(world.quick_paths, key=lambda p: p.node_id)
+        if p.node_id in damaged and damage.state_of(p.node_id) in QUICK_PATH_STATES
+    )  # fmt: skip
 
 
 def facility_repair(world: EngineWorld, damage: Damage, node_id: str) -> FacilityRepair | None:

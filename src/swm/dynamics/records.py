@@ -73,7 +73,7 @@ class CrewEntry:
     crew_id: str
     job_id: str
     activity: str
-    """travel, assess, wait for parts, repair or switch."""
+    """travel, assess, repair or switch."""
     start_h: float
     end_h: float
 

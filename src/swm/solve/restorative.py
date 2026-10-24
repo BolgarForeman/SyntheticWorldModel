@@ -11,7 +11,7 @@ import itertools
 import math
 from collections.abc import Iterator, Sequence
 
-from swm.dynamics.engine import facility_repair
+from swm.dynamics.engine import QUICK, facility_repair, quick_paths
 from swm.dynamics.records import CrewEntry
 from swm.dynamics.world import Damage, EngineWorld
 from swm.solve.runner import Plan, Runner
@@ -21,7 +21,8 @@ def repair_jobs(world: EngineWorld, damage: Damage) -> tuple[str, ...]:
     """Return the elements a scenario leaves for the crews: its repair jobs, in id order.
 
     A damaged node is a job when the world holds its repair and it is not unrepairable; every
-    downed line is a job. Switching trips are not jobs a plan sequences: they arise from the
+    downed line is a job; a node with a quick path opens one more, named ``quick:<node>``
+    (Work Order 11, B4). Switching trips are not jobs a plan sequences: they arise from the
     world's state (Work Order 10, C1).
 
     Parameters
@@ -34,16 +35,17 @@ def repair_jobs(world: EngineWorld, damage: Damage) -> tuple[str, ...]:
     Returns
     -------
     tuple of str
-        Element ids.
+        Element ids, and the quick-path job ids.
 
-    Spec: structure v0.16 §4.5 (repair and crews); Work Order 10, C1.
+    Spec: structure v0.19 §4.5 (repair and crews); Work Order 10, C1; Work Order 11, B4.
     """
     unrepairable = set(world.unrepairable)
     nodes = [
         n for n in damage.nodes
         if n not in unrepairable and facility_repair(world, damage, n) is not None
     ]  # fmt: skip
-    return tuple(sorted({*nodes, *damage.lines}))
+    quick = [f"{QUICK}:{p.node_id}" for p in quick_paths(world, damage)]
+    return tuple(sorted({*nodes, *damage.lines, *quick}))
 
 
 def plan_count(jobs: int, crews: int) -> int:

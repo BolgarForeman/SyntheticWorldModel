@@ -10,3 +10,4 @@ One line per item, as ruled. The coder applies each ruling, and removes any CONF
 - 2026-10-19 — Field manual and debrief page: approved for now ("good for now"); open to revision after play-testing.
 - 2026-10-19 — Rule card 10 changed by ruling (spec v0.14): between failure points of the same line, the crew walks along the line; the drill's answer is now 18.8 h.
 - 2026-10-19 — Rule card 2 changed by ruling (spec v0.16): when a hospital's generator fuel runs out, it responds like a trip, as the engine does. The CONFIRM note is removed.
+- 2026-10-23 — Rule card 8 changed by ruling (Work Order 11; repair timing R2 and MIP sheet item 11): slight and moderate repairs need no parts wait; a heavier rebuild's job opens only when its parts arrive. The drill's answer is now 16 h.
