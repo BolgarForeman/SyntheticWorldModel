@@ -66,13 +66,14 @@ A new large power transformer takes up to 36 months to procure today; before 202
 | Seaport, freight yard, bridge | None | out |
 | Reservoir | Unrepairable (as now) | out |
 
-Open for the work order: whether each new quick path needs a crew (the substation, pump, storage and runway paths would), a unit pool (as the mobile units have), or both.
+Settled under R4: the new quick paths are crew jobs; only the two mobile units use a pool.
 
 - **B. Give every class a temporary-service time.** Simpler, but it would claim a quick path for plants and bridges that has no basis.
 - **C. As now:** only the two mobile units.
 
 **R4. Widespread damage takes days.**
 - **A. From contention alone** (*recommended*). Delay comes from the limited crews (2 in the pilot) and mobile units (1 of each), which the engine already models, and from the crew order. Checked later against a realism range: Taipower's restoration curves after typhoons (for example Krathon, 2024), part of the open decision on realism ranges.
+**Ruled A by Foreman, 2026-10-23.** The new quick paths (R3) are crew jobs, worked in the default crew order; no new unit pools. The check against Taipower's restoration curves is a Phase 5 realism item.
 - **B. Add a shared spares pool** that runs out when many facilities are hit at once. More realistic at study scale, but a new mechanism with no data behind it yet. Deferred to Phase 5 (realism) unless the A check fails.
 
 **R5. What this reopens.** This changes three earlier rulings, so they move into the registry's history with this sheet's decision record:
