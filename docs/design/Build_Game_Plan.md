@@ -21,6 +21,8 @@ The design is far enough along to start writing code. Nothing has been coded yet
 - every world stays reproducible from a text file;
 - the interface can't hide a choice that isn't in the recipe.
 
+**Phase 2 closes as 0.2.0** (Work Order 12): every pilot answer key is found by brute force, and the MIP cross-check is held for after the proposal (decision 0021; `docs/trace/phase-2.md`).
+
 ## 2. Decisions to close before the first line of code
 
 | # | Decision | Recommendation | Why now |
@@ -72,11 +74,11 @@ A recipe goes in and a world comes out, end to end, at 24 nodes, with every stag
   - defensive: protect condition, add reserve;
   - offensive: strike k nodes;
   - restorative: sequence two crews.
-- **Answer keys:** brute force at hand-check size, cross-checked against a time-expanded MIP of the engine's dynamics.
+- **Answer keys:** brute force over every affordable answer at hand-check size. The time-expanded MIP cross-check of the engine's dynamics is held for after the proposal (decision 0021).
 - **Per request:** the spread of every answer's distance from the best; each rule of thumb's distance (most connections, biggest, nearest supplier); true criticality; the decision-relevant dose.
 - **The "assumes:" stamp.**
 
-**Done when:** every key is found by brute force and agrees with the MIP on its score. Every key reports; none is silently regenerated.
+**Done when:** every key is found by brute force over every affordable answer, with the MIP cross-check held under decision 0021. Every key reports; none is silently regenerated.
 
 ### Phase 3 — Error induction (parametric)
 

@@ -1,6 +1,6 @@
 # World Generator — Structure
 
-*v0.19 · 2026-10-23 · companion to the World Generator Interface mockup v0.5 and recipe schema v4 · supersedes v0.18*
+*v0.20 · 2026-10-24 · companion to the World Generator Interface mockup v0.5 and recipe schema v4 · supersedes v0.19*
 
 ## 1. What this is
 
@@ -517,6 +517,7 @@ Where a class has a telecom tolerance row, the tolerance acts first: full functi
 - **Travel** uses the road network, then off road at 2 km/h to a line's failure point (§4.3b). In Phase 1 one line is one job for one crew. Between failure points of the same line, the crew walks along the line at off-road speed; between different jobs, it walks or drives to the nearest road, drives, and walks or drives back in (ruled 2026-10-19; alternatives: always via the road; whichever way is shorter).
 - **Default crew order** (the restorative model replaces it): (1) towered lines and transmission substations; (2) distribution substations and feeds to end uses, highest Lifeline weight first, where a distribution substation ranks by the highest Lifeline weight among the end uses it supplies, its own weight included (ruled 2026-10-19; alternatives: its own weight only, or the sum over what it supplies); (3) everything else. Ties go to the shortest travel, then the lowest id. Emergency units go to eligible damaged nodes in the same order.
 - **Manual switching:** when a repair should re-energize a substation whose telecom is down, power returns only after a crew travels there and switches by hand: 1 h on site (range 0.5–2 h, J) plus travel as for repairs. The trip uses a crew like any job. It does not apply when the repair is at the substation itself.
+- **No black start (a stated limitation; decision 0021).** A loop of mutually dependent nodes that collapses completely, with no outside supply, stays down for the window: each step settles from the last, and nothing in the loop can start on its own. In the pilot this is the power, fuel and water loop, so a struck transmission substation or pumping station is repaired by its quick path but gives no service. A black-start rule is to be ruled after the proposal; no answer key's optimum depends on it.
 
 **Time.**
 - The storm acts at hour 0; all its damage is applied then.
@@ -652,7 +653,7 @@ No acceptability band is fixed in the key; any "within X%" summary is computed f
 - **Restorative, sequence repair crews.** One named scenario (7 in the pilot). A plan gives each crew an ordered list of jobs; every failed element is repaired once, by one crew; both start at the base at hour 0; travel, preparation and switching follow §4.5.
 - **Informative** answer keys need the pipeline's belief and are built in Phase 4.
 
-**How keys are found.** By brute force, over every affordable answer, skipping only what is provably identical: an answer that protects an element no scenario damages scores the same as the answer without it, and a scenario with no damage is run once, since no action changes it. A request whose search would exceed the instance bound (48 hours on the build machine, placeholder; §10 item 6) stops and is reported. Each key is cross-checked by a time-expanded MIP of the same dynamics, solved with HiGHS; the two must agree on the optimum's objective. Where answers tie, any tied answer agrees.
+**How keys are found.** By brute force, over every affordable answer, skipping only what is provably identical: an answer that protects an element no scenario damages scores the same as the answer without it, and a scenario with no damage is run once, since no action changes it. A request whose search would exceed the instance bound (48 hours on the build machine, placeholder; §10 item 6) stops and is reported. A time-expanded MIP cross-check of the same dynamics, solved with HiGHS, is held for after the proposal (decision 0021); its formulation is in the crew-rules sheet v0.2.
 
 ## 6. Outputs
 
@@ -717,6 +718,12 @@ The UA Research Security export ask carried over from an earlier problem set and
 - **Hidden state added for layers.** This implements generate-six-hide-one as a control.
 - **Supplier siting, dependency concentration and the coupled feed mix added** as coupling controls. Concentration replaces the hub count.
 - **Size set by area and density,** with a hold switch and presets from hand-check to continental.
+
+## Changes from v0.19
+
+Ruled by the author, 2026-10-23 and 2026-10-24 (decision 0021; Work Order 12):
+- §5, "How keys are found": the time-expanded MIP cross-check with HiGHS is held for after the proposal. Keys are found by brute force over every affordable answer; the MIP's formulation stays in the crew-rules sheet v0.2.
+- §4.5 repair: the black-start limitation stated. A completely collapsed loop with no outside supply stays down for the window; a black-start rule is to be ruled after the proposal.
 
 ## Changes from v0.18
 

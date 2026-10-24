@@ -4,6 +4,17 @@ All notable changes to this project are recorded here. Each phase closes with a 
 
 ## Unreleased
 
+## 0.2.0 — Phase 2
+
+Phase 2 closes on **recipe schema version 4** and **structure spec v0.20**. Version 1–3 recipes migrate on loading, except a version 3 restorative request, which is refused with the field named. The `v0.2.0` tag is set on `main` on Foreman's word, after the Work Order 12 pull request merges.
+- **What it is:** the answer-key solver. Every pilot request (defensive at budgets 3 and 4, offensive at k = 2 and 3, restorative on scenario 7, each under Lifeline and Equal weights) is found by brute force over every affordable answer, reports its spread, rules of thumb and criticality, and is checked byte for byte in CI on both platforms.
+- **Records:** what was built, how it was tested and every departure are in `docs/trace/phase-2.md`. The rulings are in decisions 0018–0021.
+
+### Changed (Work Order 12; decision 0021)
+
+- **The MIP cross-check is held** for after the proposal. CLAUDE.md §7, the Build Game Plan, WO-10, structure v0.20 and Pilot Spec v0.9 say keys are found by brute force, with the MIP held.
+- **Black start** is a stated limitation (structure v0.20 §4.5): a completely collapsed loop with no outside supply stays down for the window.
+
 ### Changed (Work Order 11; decision 0020)
 
 - **Two repair paths.** A damaged facility has a rebuild (Hazus) and a service-restored path, and whichever comes first sets its state.

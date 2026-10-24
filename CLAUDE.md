@@ -89,7 +89,7 @@ docs/
   - the same recipe gives the same bytes;
   - changing the error seed never moves terrain or infrastructure.
 - **Golden worlds.** A few fixture recipes (the pilot world, a hidden-layer world, a nodes-only world) with checked-in output hashes. A hash change must be explained in the pull request.
-- **Answer keys** are found by brute force and must agree with the MIP on their score.
+- **Answer keys** are found by brute force over every affordable answer. A time-expanded MIP cross-check (HiGHS) is held for after the proposal (decision 0021); once built, keys must agree with it on their score.
 - **Hand trace.** The pilot scenario traced by hand is stored as expected values, and the code must match it.
 - **Tests assert behaviour, not just coverage.** Target at least 90% line coverage on `src/`, but a test that only executes lines doesn't count.
 

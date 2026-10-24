@@ -1,6 +1,6 @@
 # Pilot Spec — The Full Chain on a Hand-Checkable Constructed World
 
-*v0.8 · 2026-10-20 · feeds Ch7 §7.2 and Figures 7.1, 7.2 and 7.4 · aligned with World_Generator_Structure v0.17 and the pilot recipe in the SyntheticWorldModel repository*
+*v0.9 · 2026-10-24 · feeds Ch7 §7.2 and Figures 7.1, 7.2 and 7.4 · aligned with World_Generator_Structure v0.20 and the pilot recipe in the SyntheticWorldModel repository*
 
 ## Purpose
 
@@ -41,9 +41,9 @@ All four are posed on the same network, dynamics, criticality and ledger. The ob
 
 | Class | The toy model | Answer key |
 |---|---|---|
-| **Defensive (INROP-D)** | Spend up to a budget of 3 or 4 on protection actions (defined below) before the storm to minimize expected unserved demand-hours over the 8 scenarios, equally weighted | Brute force over every affordable action set, cross-checked against the MIP |
-| **Offensive (INROP-O)** | Strike k nodes (k = 2, 3) on the calm island, with no storm, to maximize unserved demand-hours. A struck node takes complete damage and is repaired by the crews in the default order. The attack is posed on its own, not coupled to the defender | Brute force, cross-checked against the MIP |
-| **Restorative (INROP-R)** | After one fixed storm scenario (scenario 7, the one with the most towered-line failures), sequence the world's two repair crews across the failed nodes and failed overhead lines to minimize unserved demand-hours during recovery. A plan gives each crew an ordered list of jobs; every failed element is repaired once, by one crew | Brute force over repair orders, cross-checked against the MIP |
+| **Defensive (INROP-D)** | Spend up to a budget of 3 or 4 on protection actions (defined below) before the storm to minimize expected unserved demand-hours over the 8 scenarios, equally weighted | Brute force over every affordable action set; the MIP cross-check held (decision 0021) |
+| **Offensive (INROP-O)** | Strike k nodes (k = 2, 3) on the calm island, with no storm, to maximize unserved demand-hours. A struck node takes complete damage and is repaired by the crews in the default order. The attack is posed on its own, not coupled to the defender | Brute force over every set of k nodes; the MIP cross-check held (decision 0021) |
+| **Restorative (INROP-R)** | After one fixed storm scenario (scenario 7, the one with the most towered-line failures), sequence the world's two repair crews across the failed nodes and failed overhead lines to minimize unserved demand-hours during recovery. A plan gives each crew an ordered list of jobs; every failed element is repaired once, by one crew | Brute force over repair orders; the MIP cross-check held (decision 0021) |
 | **Informative (INROP-I)** | Choose one or two cross-layer couplings to observe, at 1 unit each, to reduce uncertainty about the network. It is its own optimization, not observe-then-defend (ruled 2026-09-29) | Against the pipeline's belief, so its key is built in Phase 4 (ruled 2026-10-20); the uncertainty measure is ruled first |
 
 The coupled attacker–defender formulation stays future research. Attack itself is in the family and is exercised here. Attacking a reserve directly, such as draining a tank without damaging the facility, is in scope for the full demonstration and is left out of the pilot only.
@@ -94,7 +94,7 @@ The measure is distance to the optimum, normalized as (objective of the recommen
 ## Done when
 
 1. The generator emits the world, the source files and the truth manifest from a seed, and re-emits them identically.
-2. Every answer key is found by brute force and agrees with the MIP on its score (the informative key from Phase 4).
+2. Every answer key is found by brute force over every affordable answer (the informative key from Phase 4). The MIP cross-check is held for after the proposal (decision 0021).
 3. **At zero doubt the two runs return the same recommendation** in every model. This is a built-in test. If it fails, the harness is wrong, not the method.
 4. One storm scenario is traced by hand on the printed network and matches the code: cascade, criticality ranking and score.
 5. The ledger walks one recommendation from each model back to its source records.
@@ -104,6 +104,12 @@ The measure is distance to the optimum, normalized as (objective of the recommen
 ## Deliberately out of scope
 
 The following are left out: a second model within any class, the coupled attacker–defender formulation, error mechanisms beyond simple parametric noise, the tempo and equity objectives, the simulation tier, layer-level generate-six-hide-one, and full source fidelity beyond one small file per layer.
+
+## Changes from v0.8
+
+Ruled by the author, 2026-10-23 (decision 0021; Work Order 12):
+- **Answer keys:** found by brute force over every affordable answer for the three Phase 2 models. The time-expanded MIP cross-check with HiGHS is held for after the proposal. Each request is still posed under both the Lifeline and Equal weights.
+- The three model rows and done-list item 2 say the same.
 
 ## Changes from v0.7
 
