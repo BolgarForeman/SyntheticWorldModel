@@ -50,6 +50,24 @@ A new large power transformer takes up to 36 months to procure today; before 202
   - Likely candidates: substations, by temporary bus or bypass, hours to a day; masts, by mobile cell site, as now.
   - Classes without a credible quick path stay out: plants, bridges, refineries, towered lines beyond their 72 h emergency rebuild.
   - A struck plant stays out for the window, which keeps the attack meaningful.
+**Ruled A by Foreman, 2026-10-23, with this class table unchanged.** Each row is a "good reason" claim with a placeholder time, to be sourced in the rules review:
+
+| Class | Quick path | Time (placeholder) |
+|---|---|---|
+| Distribution substation | Mobile substation (as now) | 12–24 h including travel |
+| Transmission substation | Temporary bus or bypass, or a transmission-class mobile unit | about 24 h of crew work |
+| Mast | Mobile cell site (as now) | about 14 h |
+| Pumping station | Portable pumps | about 8 h |
+| Water storage | Bypass the tank, pump straight to the network | about 4 h |
+| Airport | Rapid runway repair, limited operations | about 24 h |
+| Generation, import terminal, tank farm, depot, refinery | None | out for the window |
+| Telecom exchange | None (rerouting only where the network has the links) | out |
+| Tertiary, regional, clinic, blood bank | None for the building | out |
+| Seaport, freight yard, bridge | None | out |
+| Reservoir | Unrepairable (as now) | out |
+
+Open for the work order: whether each new quick path needs a crew (the substation, pump, storage and runway paths would), a unit pool (as the mobile units have), or both.
+
 - **B. Give every class a temporary-service time.** Simpler, but it would claim a quick path for plants and bridges that has no basis.
 - **C. As now:** only the two mobile units.
 
