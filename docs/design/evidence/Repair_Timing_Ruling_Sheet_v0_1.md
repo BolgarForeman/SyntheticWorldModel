@@ -41,6 +41,7 @@ A new large power transformer takes up to 36 months to procure today; before 202
 
 **R2. Slight and moderate damage: is there any parts wait?**
 - **A. None.** Repairs at these states use stocked spares, so the job is the 2 h assessment plus crew work (8 h or 24 h) (*recommended*). The Hazus remainder becomes the rebuild record only. A slight hit is then back in about 10 h of crew time, a moderate one in about 26 h.
+**Ruled A by Foreman, 2026-10-23.**
 - **B. A short regional-stock lead,** a registry placeholder (for example 12 h, like a fuel delivery).
 - **C. As now:** the Hazus remainder, median 9 h and 64 h.
 
